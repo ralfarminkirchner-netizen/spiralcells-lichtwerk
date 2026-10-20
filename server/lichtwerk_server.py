@@ -54,6 +54,7 @@ EINWURF_FELDER = {"work_id", "worktree_id", "new_worktree", "derived_from", "sou
 KANTEN_FELDER = {"edge_type", "from_variant_id", "to_variant_id", "note", "author_id"}
 LESEN = {"/api/graph", "/api/health", "/api/agents"}
 UMGEBUNG = [  # nur Lebenszeichen; TiSCH (9030) wird nie angefragt, er kostet Geld
+    {"name": "KiN OS", "satz": "KiN OS · der Fork der Zentrale", "port": 8895, "pfad": "/api/aios/runtime"},
     {"name": "Zentrale", "satz": "Zentrale · KREATiVTRAGWERK", "port": 8894, "pfad": "/"},
     {"name": "KiNFORMER", "satz": "KiNFORMER · die Formwerkstatt", "port": 9062, "pfad": "/"},
     {"name": "KiN", "satz": "KiNTEGRiTY · das Gedächtnis", "port": 9040, "pfad": "/api/health"},
@@ -338,6 +339,48 @@ def neu_seit(g: dict, seit: float) -> dict:
     stimmen = [[STIMMEN[i][0], k] for i, k in sorted(pro.items(), key=lambda x: (-x[1], x[0]))]
     return {"zahl": zahl, "stimmen": stimmen, "uebernahmen": uebernahmen, "faeden": faeden, "befunde": befunde,
             "monde": len(monde), "juengster": juengster}
+
+
+ZULETZT = 5
+MONATSKURZ = ["Jan.", "Feb.", "März", "Apr.", "Mai", "Juni", "Juli", "Aug.", "Sep.", "Okt.", "Nov.", "Dez."]
+
+
+def zuletzt_eintraege(g: dict, n: int = ZULETZT) -> list:
+    """Die jüngsten Einträge, ganz gleich seit wann; ohne Ralfs eigene und ohne Formen (wie letzte() in app/js/ankunft.js)."""
+    agenten = {a.get("id"): a for a in g.get("agents", [])}
+    baeume = {t.get("id"): t for t in g.get("worktrees", [])}
+    werke = {w.get("id"): w for w in g.get("works", [])}
+    namen = mond_namen(g.get("works", []))
+    liste = []
+    for v in g.get("variants", []):
+        st = stimme_von(agenten.get(v.get("author_id")))
+        werk = (baeume.get(v.get("worktree_id")) or {}).get("work_id")
+        if st == "mensch" or not werk or original_einer_form(g, v):
+            continue
+        liste.append((_ms(v.get("created_at")), v, st, werk))
+    liste.sort(key=lambda x: -x[0])
+    return [{"mond": namen.get(werk), "titel": kurz((werke.get(werk) or {}).get("title") or "Unbenannter Mond", 80),
+             "label": kurz(v.get("label") or "Unbenannte Ausprägung", 80),
+             "stimme": STIMMEN[st][0] if isinstance(st, int) else None, "wann": v.get("created_at")}
+            for t, v, st, werk in liste[:n]]
+
+
+def wann_menschlich(wert) -> str:
+    """Wie datum() in app/js/daten.js: „20. Okt., 18:30“, in Ralfs Ortszeit."""
+    from datetime import datetime, timezone
+    ms = _ms(wert)
+    if not ms:
+        return "ohne Datum"
+    d = datetime.fromtimestamp(ms / 1000, tz=timezone.utc).astimezone(BERLIN) if BERLIN else datetime.fromtimestamp(ms / 1000)
+    return "%d. %s, %02d:%02d" % (d.day, MONATSKURZ[d.month - 1], d.hour, d.minute)
+
+
+def zuletzt_satz(e) -> str:
+    """Wie zuletztSatzAus() in app/js/ankunft.js: ein Satz zum jüngsten Eintrag."""
+    if not e:
+        return ""
+    von = "von %s" % e["stimme"] if e.get("stimme") else "aus einer Quelle"
+    return "Zuletzt eingetragen: „%s“ %s in „%s“, %s." % (e["label"], von, e["titel"], wann_menschlich(e.get("wann")))
 
 
 _ZAHL = ["keine", "eine", "zwei", "drei", "vier", "fünf", "sechs", "sieben", "acht", "neun", "zehn", "elf", "zwölf"]
@@ -780,20 +823,26 @@ class Lichtwerk(BaseHTTPRequestHandler):
                 "ersetzt": menschlich(inhalt) != inhalt}
 
     def _form(self, q: dict) -> dict:
-        """Formen und den Herkunftssatz der Seite durch einen ehrlichen ersetzen (B2)."""
+        """Formen mit ehrlichem Herkunftssatz (B2). Sagt der KiNFORMER selbst, was blieb (Feld `blieb`, seit dem
+        20.10. abends), gilt sein Satz; ein älterer KiNFORMER bekommt den Satz vom Lichtwerk. Beide Wege setzen den
+        Absatz gleich, so ergibt derselbe Stoff dieselbe Seite, vor und nach einem Neustart des KiNFORMER."""
         richtung, titel, text = q["richtung"]["key"], q["titel"], q["text"]
         e = self._ausformen(titel, text, richtung)
-        n = None
-        if richtung in ("plakat", "lesetuch", "karten"):   # die Satzzahl liefert der KiNFORMER selbst
-            quelle = self._ausformen(titel, text, "lesetuch") if richtung == "plakat" else e
-            m = re.match(r"(\d+) (?:Sätze|Karten)", str(quelle.get("satz", "")))
-            n = int(m.group(1)) if m else None
-        blieb = was_blieb(richtung, e, n, text)
+        if isinstance(e.get("blieb"), str) and e["blieb"].strip():
+            blieb = re.sub(r"\s+", " ", e["blieb"]).strip()
+        else:
+            n = None
+            if richtung in ("plakat", "lesetuch", "karten"):   # die Satzzahl liefert der KiNFORMER selbst
+                quelle = self._ausformen(titel, text, "lesetuch") if richtung == "plakat" else e
+                m = re.match(r"(\d+) (?:Sätze|Karten)", str(quelle.get("satz", "")))
+                n = int(m.group(1)) if m else None
+            blieb = was_blieb(richtung, e, n, text)
         name = kurz(e.get("name") or q["richtung"]["name"], 40)
         herkunft = "Geformt von KiNFORMER als %s aus „%s“. %s" % (name, titel, blieb)
         ehrlich = len(HERKUNFT.findall(e["html"])) == 1 and e["html"].lstrip().lower().startswith("<!doctype html>") \
             and len(e["html"]) <= 2_000_000
-        seite = HERKUNFT.sub(lambda _m: '<p class="herkunft">%s</p>' % html.escape(herkunft, quote=False), e["html"]) \
+        # Escapen wie der KiNFORMER selbst (html.escape mit Anführungszeichen): bei ihm ändert das kein Zeichen
+        seite = HERKUNFT.sub(lambda _m: '<p class="herkunft">%s</p>' % html.escape(herkunft), e["html"]) \
             if ehrlich else e["html"]
         if not ehrlich:
             blieb = "Diese Form bleibt eine Vorschau: ihr Herkunftssatz ließ sich nicht ehrlich setzen."
@@ -898,7 +947,9 @@ class Lichtwerk(BaseHTTPRequestHandler):
         g = self._graph()
         z = neu_seit(g, seit) if seit else {"zahl": 0, "stimmen": [], "uebernahmen": 0, "faeden": 0, "befunde": 0, "monde": 0, "juengster": None}
         juengster = z.pop("juengster")
-        self._json(200, {"satz": satz_aus(z), **z, "mond": mond_namen(g.get("works", [])).get(juengster) if juengster else None})
+        zuletzt = zuletzt_eintraege(g)   # immer dabei, auch wenn seitdem nichts kam: der Leistenpunkt ist nie leer
+        self._json(200, {"satz": satz_aus(z), **z, "mond": mond_namen(g.get("works", [])).get(juengster) if juengster else None,
+                         "zuletzt": zuletzt, "zuletzt_satz": zuletzt_satz(zuletzt[0] if zuletzt else None)})
 
     def _standbild(self) -> None:
         name = parse_qs(urlsplit(self.path).query).get("name", [""])[0]
@@ -996,7 +1047,7 @@ def main(argv=None):
     p.add_argument("--leseeingang", type=int, default=None,
                    help="zweiter Port, der nur liest; Skizzen und Werkraum laufen dann dort")
     a = p.parse_args(argv)
-    verbund = (8894, 9062, 9040, 9030, 9031, 9084, 8401, 8400)
+    verbund = (8894, 8895, 9062, 9040, 9030, 9031, 9084, 8401, 8400)
     if a.port in verbund or a.leseeingang in verbund:
         sys.exit("Dieser Port gehört einem anderen Teil des Verbunds.")
     if a.leseeingang is not None and a.leseeingang == a.port:

@@ -90,6 +90,9 @@ export function baueNetz(N, U, wall, vis, aktiv, aktivDetail){
       const mitte = [o[0], o[1] + N.rM[n] * 0.25, o[2]];
       screenRing(mitte, N.rM[n] * 2.1, c, 1.1 * vis * fade * puls); screenRing(mitte, N.rM[n] * 2.45, c, 0.45 * vis * fade * puls);
       P(mitte[0], mitte[1], mitte[2], N.rM[n] * 2.6, c[0], c[1], c[2], 0.06 * vis * fade * puls); }
+    // Die letzten Einträge, immer: ein leiser, ruhiger Ring (Neues seit dem letzten Besuch leuchtet stärker)
+    else if(N.zuletzt && N.zuletzt.has(m.id)){ const st = N.zuletzt.get(m.id).find(x => typeof x.stimme === 'number'), c = st ? SEEDC[st.stimme] : WG;
+      screenRing([o[0], o[1] + N.rM[n] * 0.25, o[2]], N.rM[n] * 2.1, c, 0.38 * vis * fade); }
     const hs = toScreen(o[0], o[1], o[2]); U.monde[n] = hs;
   }
   // Fäden zwischen Monden: zart; „gehört zu“ silbern

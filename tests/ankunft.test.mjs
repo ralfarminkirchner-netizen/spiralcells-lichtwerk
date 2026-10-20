@@ -3,7 +3,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync, readdirSync} from 'node:fs';
 import {bestand} from '../app/js/daten.js';
-import {neuSeit, satzAus, zahlenVon, ankunftSatz} from '../app/js/ankunft.js';
+import {neuSeit, satzAus, zahlenVon, ankunftSatz, letzte, zuletztSatzAus, ZULETZT} from '../app/js/ankunft.js';
 import {grundname, namen, lies, bau, VON} from '../app/js/link.js';
 
 const datei = readdirSync('sicherung').filter(f => f.startsWith('state-vor-start-')).sort()[0];
@@ -59,4 +59,16 @@ test('Link lesen: nur bekannte Schlüssel und feste Herkunft', () => {
   assert.equal(bau('emile-durkheim', 'kinos'), '#mond=emile-durkheim&von=kinos');
   assert.equal(bau('emile-durkheim', 'fremd'), '#mond=emile-durkheim');
   for(const v of Object.values(VON)) assert.ok(v.adresse.startsWith('http://127.0.0.1:'));
+});
+
+test('Die letzten Einträge, immer: ohne Ralf und ohne Formen, jüngste zuerst; Satz wie im Server', () => {
+  for(const b of JSON.parse(readFileSync('tests/zuletzt-beispiele.json', 'utf8'))) assert.equal(zuletztSatzAus(b.eintrag), b.satz);
+  const B = bestand(state), liste = letzte(B);
+  assert.equal(liste.length, ZULETZT);
+  for(let i = 1; i < liste.length; i++) assert.ok(liste[i - 1].t >= liste[i].t);
+  const s = structuredClone(state), Z = B.monde.find(m => m.titel.startsWith('Zentrale'));
+  s.agents.push({id: 'ralf-probe', agent_type: 'human', handle: 'Ralf'});
+  s.worktrees.push({id: 'baum-ralf', work_id: Z.id, author_id: 'ralf-probe', created_at: '2026-10-21T08:00:00+00:00'});
+  s.variants.push({id: 'ralf-neu', worktree_id: 'baum-ralf', author_id: 'ralf-probe', label: 'Ralf', content: 'x', notes: '', created_at: '2030-01-01T00:00:00Z', derived_from: null, status: 'entwurf', tags: []});
+  assert.ok(!letzte(bestand(s)).some(e => e.id === 'ralf-neu'), 'Ralfs eigener Eintrag ist keine Nachricht für ihn');
 });

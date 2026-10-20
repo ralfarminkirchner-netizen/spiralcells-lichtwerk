@@ -382,6 +382,9 @@ export function baueZelle(Z, U, wall, rdt, vis){
   if(Z.formKoerner === undefined) Z.formKoerner = m.samen.map((s, i) => s.form ? i : -1).filter(i => i >= 0);
   for(const si of Z.formKoerner){ if(Z.gBorn[Z.seedCore[si]] === -1 || cl - Z.gBorn[Z.seedCore[si]] < 0.6) continue; Z.seedPos(si, TMP);
     screenRing(TMP, 0.022 * CAM.S, SILVER, 0.5 * vis * fog(TMP[0], TMP[1], TMP[2]) * (selSeed >= 0 && selSeed !== si ? 0.5 : 1)); }
+  // Die letzten Einträge tragen einen leisen Ring in ihrer Farbe
+  for(const si of (Z.zuletztIdx || [])){ const g0 = Z.seedCore[si]; if(Z.gBorn[g0] === -1 || cl - Z.gBorn[g0] < 0.6) continue; Z.seedPos(si, TMP);
+    const c = stimmFarbe(m.samen[si].stimme); screenRing(TMP, 0.03 * CAM.S, c, 0.3 * vis * fog(TMP[0], TMP[1], TMP[2]) * (selSeed >= 0 && selSeed !== si ? 0.5 : 1)); }
   // Silo-Mond: die Speichen der Stimmen, die hier nichts beigetragen haben, als Hauch (die Lücke ist ehrlich)
   if(!Z.traum && Z.voices.length && Z.voices.length < 5 && Math.abs(S.alpha - SPOKE) < 0.6 * DEG && !S.lockedOnce){
     const R = Math.max(0.05, S.Rs);

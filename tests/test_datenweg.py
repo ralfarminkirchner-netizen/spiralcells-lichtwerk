@@ -339,10 +339,18 @@ class Datenweg(unittest.TestCase):
     def test_11_umgebung_ohne_tisch_anfrage_und_ohne_pfade(self):
         s, a, _ = self.req("GET", "/lichtwerk/umgebung")
         self.assertEqual(s, 200)
-        self.assertEqual([u["name"] for u in a], ["Zentrale", "KiNFORMER", "KiN", "Werkraum", "TiSCH"])
-        self.assertEqual(a[3]["adresse"], "http://127.0.0.1:%d/werkraum.html" % self.LESE, "der Werkraum nur über den Leseeingang")
+        self.assertEqual([u["name"] for u in a], ["KiN OS", "Zentrale", "KiNFORMER", "KiN", "Werkraum", "TiSCH"])
+        self.assertEqual(a[4]["adresse"], "http://127.0.0.1:%d/werkraum.html" % self.LESE, "der Werkraum nur über den Leseeingang")
+        self.assertEqual(a[0]["adresse"], "http://127.0.0.1:8895/", "die Tür nach KiN OS, dem Fork der Zentrale")
+        self.assertIsInstance(a[0]["wach"], bool, "sie leuchtet nur, wenn KiN OS antwortet")
         self.assertIsNone(a[-1]["wach"])
         self.assertNotIn("/Volumes", json.dumps(a))
+
+    def test_12_kin_os_port_ist_gesperrt(self):
+        lauf = subprocess.run([sys.executable, os.path.join(WURZEL, "server", "lichtwerk_server.py"), "--port", "8895"],
+                              capture_output=True, text=True, timeout=10)
+        self.assertNotEqual(lauf.returncode, 0)
+        self.assertIn("anderen Teil des Verbunds", lauf.stderr)
 
     def test_99_echte_daten_unberuehrt(self):
         if self.echt_vorher:

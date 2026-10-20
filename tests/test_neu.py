@@ -66,12 +66,27 @@ class Neu(unittest.TestCase):
         # 09:30+02:00 ist 07:30Z: nach 07:45Z zählt von Codex nur c1
         self.assertEqual(server.neu_seit(graph(), server._ms("2026-10-21T07:45:00Z"))["stimmen"], [["Codex", 1], ["Hermes", 1]])
 
+    def test_zuletzt_wie_im_browser(self):
+        with open(os.path.join(WURZEL, "tests", "zuletzt-beispiele.json"), encoding="utf-8") as f:
+            for b in json.load(f):
+                self.assertEqual(server.zuletzt_satz(b["eintrag"]), b["satz"])
+        liste = server.zuletzt_eintraege(graph())
+        self.assertEqual(len(liste), 5)
+        self.assertEqual([e["label"] for e in liste[:3]], ["h1", "c1", "c2"], "jüngste zuerst, ohne Ralfs Einwurf und ohne Form")
+        self.assertEqual(liste[0], {"mond": "doppelt-19-okt-1405", "titel": "Doppelt", "label": "h1", "stimme": "Hermes",
+                                    "wann": "2026-10-21T08:10:00+00:00"})
+        self.assertIsNone(liste[3]["stimme"], "eine Übernahme hat keine Stimme")
+
     def test_lesewege(self):
         h = object.__new__(server.Lichtwerk)
         h._oben_json = Mock(return_value=(200, graph()))
         h._json = Mock()
         h._neu("")
         self.assertEqual(h._json.call_args.args[1]["satz"], "Seit deinem letzten Besuch ist nichts dazugekommen.")
+        leer = h._json.call_args.args[1]
+        self.assertEqual(len(leer["zuletzt"]), 5, "auch ohne Neues stehen die letzten Einträge da")
+        self.assertEqual(leer["zuletzt_satz"], "Zuletzt eingetragen: „h1“ von Hermes in „Doppelt“, 21. Okt., 10:10.")
+        self.assertEqual(set(leer) >= {"satz", "zahl", "stimmen", "uebernahmen", "faeden", "befunde", "monde", "mond"}, True, "nur additiv")
         h._neu("1792044000000")   # 2026-10-15 ist lange vor allem Neuen: alles nach dem 15. 08:00Z
         antwort = h._json.call_args.args[1]
         self.assertTrue(antwort["satz"].startswith("Seit deinem letzten Besuch eingetragen:"))

@@ -61,10 +61,14 @@ class Organ(unittest.TestCase):
     def setUp(self):
         Attrappe.aufrufe.clear()
 
-    def test_ohne_merker_nur_der_name(self):
+    def test_ohne_merker_der_juengste_eintrag(self):
+        Attrappe.antwort = {"satz": "Seit deinem letzten Besuch ist nichts dazugekommen.", "zahl": 0, "mond": None,
+                            "zuletzt_satz": "Zuletzt eingetragen: „Sternwerft · Codex“ von Codex in „KiN OS · Sichten“, 20. Okt., 17:36."}
         d = self.organ.read_spiralcells(None)
-        self.assertEqual((d["satz"], d["link"]), ("SPiRALCELLS", "http://127.0.0.1:%d/#von=kinos" % self.port))
-        self.assertEqual(Attrappe.aufrufe, [], "ohne Merker wird nicht einmal gefragt")
+        self.assertEqual((d["satz"], d["link"]), (Attrappe.antwort["zuletzt_satz"], "http://127.0.0.1:%d/#von=kinos" % self.port))
+        self.assertEqual(Attrappe.aufrufe, [("GET", "/lichtwerk/neu", None)], "nur lesen, ohne Origin")
+        Attrappe.antwort = {"satz": "x", "zahl": 0}
+        self.assertEqual(self.organ.read_spiralcells(None)["satz"], "SPiRALCELLS", "ohne jüngsten Eintrag nur der Name")
 
     def test_ankunft_fuehrt_in_den_mond(self):
         Attrappe.antwort = {"satz": "Seit deinem letzten Besuch eingetragen: zwei Ausprägungen von Codex.", "zahl": 2, "mond": "zentrale-material-bekommt-form"}
@@ -74,8 +78,11 @@ class Organ(unittest.TestCase):
         self.assertEqual(Attrappe.aufrufe, [("GET", "/lichtwerk/neu?seit=1792044000000", None)], "nur lesen, vom Server aus, ohne Origin")
 
     def test_still_und_fremder_name(self):
-        Attrappe.antwort = {"satz": "Seit deinem letzten Besuch ist nichts dazugekommen.", "zahl": 0, "mond": None}
-        self.assertTrue(self.organ.read_spiralcells(1)["link"].endswith("/#von=kinos"))
+        Attrappe.antwort = {"satz": "Seit deinem letzten Besuch ist nichts dazugekommen.", "zahl": 0, "mond": None,
+                            "zuletzt_satz": "Zuletzt eingetragen: „x“ von Codex in „y“, 20. Okt., 17:36."}
+        d = self.organ.read_spiralcells(1)
+        self.assertTrue(d["link"].endswith("/#von=kinos"))
+        self.assertEqual(d["satz"], "Zuletzt eingetragen: „x“ von Codex in „y“, 20. Okt., 17:36.", "nie leer: der jüngste Eintrag")
         Attrappe.antwort = {"satz": "x", "zahl": 1, "mond": "3f2a9c1e-7b4d-4e2a-9f10-1A2B3C4D5E6F/../x"}
         self.assertTrue(self.organ.read_spiralcells(1)["link"].endswith("/#von=kinos"), "kein fremder Name im Link")
 

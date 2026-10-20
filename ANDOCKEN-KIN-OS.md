@@ -52,6 +52,11 @@ GET http://127.0.0.1:8411/lichtwerk/neu?seit=<Zeitpunkt>
   (`WUNSCH-an-codex-statusbeleg.md`). Kommen mehr als zwölf Ausprägungen einer technischen Übernahme auf einmal,
   steht ein Satz statt einzelner Ankünfte.
 - Ist nichts dazugekommen: `"satz": "Seit deinem letzten Besuch ist nichts dazugekommen."` Das Bild bleibt still.
+- **Immer dabei, auch ohne `seit`** (seit 20.10. abends, auf Ralfs Wunsch „die letzten paar immer“): `zuletzt` mit den
+  bis zu fünf jüngsten Einträgen, je `{"mond": <name>, "titel", "label", "stimme": "Codex" oder null, "wann": <ISO-Zeit>}`,
+  ohne Ralfs eigene und ohne Formen, und `zuletzt_satz`, etwa
+  „Zuletzt eingetragen: „Sternwerft · Codex“ von Codex in „KiN OS · Sichten“, 20. Okt., 17:36.“ So ist der Leistenpunkt
+  nie leer. Alle anderen Felder bleiben, wie sie sind (nur additiv).
 - `/api/changes?since=` von SPiRALCELLS bitte nicht dafür nehmen: Es liefert nur Neueinfügungen und vergleicht die
   Zeit als Text.
 - Den Zeitpunkt „zuletzt in KiN OS“ merkt sich der Browser des Forks selbst (nur den Zeitpunkt, in try/catch) und

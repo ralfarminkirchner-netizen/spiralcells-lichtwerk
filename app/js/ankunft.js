@@ -66,3 +66,31 @@ export function zahlenVon(n){
     uebernahmen: n.uebernahmen, faeden: n.faeden, befunde: n.befunde, monde: n.monde.size};
 }
 export const ankunftSatz = n => satzAus(zahlenVon(n));
+
+/* Die letzten Einträge, immer (Ralf, 20.10. abends: „die letzten paar immer“): damit das Bild nie leer ist.
+   Ohne Ralfs eigene und ohne Formen; wie zuletzt_eintraege() im Server. */
+export const ZULETZT = 5;
+export function letzte(B, n = ZULETZT){
+  if(!B) return [];
+  const liste = [];
+  for(const v of B.roh.variants){
+    if(B.formen && B.formen.has(v.id)) continue;
+    const st = B.stimmeDer(v.id); if(st === MENSCH) continue;
+    const werk = B.werkVon(v.id), mond = werk && B.mondVon.get(werk); if(!mond) continue;
+    liste.push({id: v.id, mondId: mond.id, t: ms(v.created_at), stimme: st, label: v.label || 'Unbenannte Ausprägung', titel: mond.titel, wann: v.created_at});
+  }
+  return liste.sort((a, b) => b.t - a.t).slice(0, n);
+}
+const MONATE = ['Jan.', 'Feb.', 'März', 'Apr.', 'Mai', 'Juni', 'Juli', 'Aug.', 'Sep.', 'Okt.', 'Nov.', 'Dez.'];
+/* „20. Okt., 18:30“ in Ralfs Ortszeit, wie wann_menschlich() im Server */
+export function wannMenschlich(wert){
+  const t = Date.parse(wert); if(Number.isNaN(t)) return 'ohne Datum';
+  const p = Object.fromEntries(new Intl.DateTimeFormat('de-DE', {timeZone: 'Europe/Berlin', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit', hourCycle: 'h23'})
+    .formatToParts(new Date(t)).map(x => [x.type, x.value]));
+  return `${Number(p.day)}. ${MONATE[Number(p.month) - 1]}, ${p.hour}:${p.minute}`;
+}
+/* Ein Satz zum jüngsten Eintrag: {label, stimme (Name oder null), titel, wann}; gleich in zuletzt_satz() im Server */
+export function zuletztSatzAus(e){
+  if(!e) return '';
+  return `Zuletzt eingetragen: „${e.label}“ ${e.stimme ? 'von ' + e.stimme : 'aus einer Quelle'} in „${e.titel}“, ${wannMenschlich(e.wann)}.`;
+}

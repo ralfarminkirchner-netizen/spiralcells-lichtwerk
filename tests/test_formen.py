@@ -84,6 +84,10 @@ class Stellvertreter(BaseHTTPRequestHandler):
                 form["html"] = re.sub(r'<p class="herkunft">.*?</p>', "", form["html"], flags=re.S)
             elif Stellvertreter.verfaelscht == "doppelt":
                 form["html"] = re.sub(r'(<p class="herkunft">.*?</p>)', r"\1\1", form["html"], flags=re.S)
+            elif Stellvertreter.verfaelscht == "alt":   # ein KiNFORMER von vor dem 20.10. abends: ohne `blieb`, mit dem alten Satz
+                form.pop("blieb", None)
+                form["html"] = re.sub(r'(<p class="herkunft">Geformt von KiNFORMER als .*? aus „.*?“\. ).*?(</p>)',
+                                      r"\1Der Wortlaut ist unverändert übernommen und nur neu gesetzt.\2", form["html"], flags=re.S)
             self._antwort(200, form)
         except ValueError as f:
             self._antwort(400, {"error": str(f)})
@@ -424,6 +428,42 @@ class Formen(unittest.TestCase):
         with self.assertRaises(server.Fehler) as fehler:
             handler._behalten({"auspraegung": self.text["id"], "richtung": "plakat"})
         self.assertEqual((fehler.exception.status, fehler.exception.satz), (503, "Der KiNFORMER ruht gerade. Formen geht, sobald er wach ist."))
+
+    def test_21_kinformer_sagt_selbst_und_alter_kinformer_ergibt_dieselbe_seite(self):
+        """Der neue KiNFORMER liefert `blieb`; das Lichtwerk übernimmt seinen Satz. Ein alter KiNFORMER bekommt den Satz vom
+        Lichtwerk. Beide Wege ergeben Byte für Byte dieselbe Seite: eine vor dem Neustart behaltene Form gilt danach weiter."""
+        if "blieb" not in formweg.ausformen("Probe", "Eins. Zwei.", "karten"):
+            self.skipTest("formen_http.py sagt noch nicht selbst, was blieb")
+        unbenutzt = [v for v in self.alle_texte if v["id"] not in (self.text["id"], (self.mit_kennung or {}).get("id"))][2:5]
+        for v in unbenutzt:
+            for richtung in ("plakat", "lesetuch", "karten", "schaubild", "spiel"):
+                q = server.fuer_formen(v["content"], richtung)
+                titel = server.kurz(v["label"], 200)
+                neu = formweg.ausformen(titel, q, richtung)
+                s, f, _ = self.vorschau(v, richtung)
+                self.assertEqual((f["satz"], f["html"]), (neu["blieb"], neu["html"]), "neuer KiNFORMER, %s" % richtung)
+        try:
+            Stellvertreter.verfaelscht = "alt"
+            for v in self.alle_texte[-5:-2]:   # Texte, die noch kein anderer Test geformt hat (der Server merkt sich Formen)
+                for richtung in ("plakat", "lesetuch", "karten", "schaubild", "spiel"):
+                    q = server.fuer_formen(v["content"], richtung)
+                    neu = formweg.ausformen(server.kurz(v["label"], 200), q, richtung)
+                    s, f, _ = self.vorschau(v, richtung)
+                    self.assertEqual(f["html"], neu["html"], "alter KiNFORMER, %s" % richtung)
+                    self.assertNotIn("unverändert", re.findall(r'<p class="herkunft">(.*?)</p>', f["html"], re.S)[0])
+        finally:
+            Stellvertreter.verfaelscht = None
+
+    def test_22_satz_des_lichtwerks_gleich_dem_des_kinformer(self):
+        """An allen Texten der Testkopie: was_blieb() im Lichtwerk sagt dasselbe wie der KiNFORMER selbst."""
+        if "blieb" not in formweg.ausformen("Probe", "Eins. Zwei.", "karten"):
+            self.skipTest("formen_http.py sagt noch nicht selbst, was blieb")
+        for v in self.alle_texte:
+            for richtung in ("plakat", "lesetuch", "karten", "schaubild", "spiel"):
+                text = server.fuer_formen(v["content"], richtung)
+                e = formweg.ausformen("Probe", text, richtung)
+                n = len(formweg.saetze(text)) if richtung in ("plakat", "lesetuch", "karten") else None
+                self.assertEqual(server.was_blieb(richtung, e, n, text), e["blieb"], "%s · %s" % (richtung, v["label"][:40]))
 
     def test_99_echte_daten_unberuehrt(self):
         if self.echt_vorher:

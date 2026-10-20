@@ -35,7 +35,7 @@ const RUHEMOND = {id: '', titel: 'SPiRALCELLS ruht', samen: [], keim: [], stimme
 async function laden(){
   const [{daten, stand}, umg] = await Promise.all([schreib.lesenMitStand('/lichtwerk/graph'), schreib.lesen('/lichtwerk/umgebung').catch(() => [])]);
   W.B = bestand(daten); W.N = new Netz(W.B); W.umgebung = umg; W.N.tueren = umg.filter(u => u.adresse); W.stand = stand;
-  W.namen = link.namen(W.B.monde); W.geladen = Date.now(); W.N.neu = W.neuMonde || null;
+  W.namen = link.namen(W.B.monde); W.geladen = Date.now(); W.N.neu = W.neuMonde || null; zuletztMerken();
   W.ruht = false; document.body.classList.remove('ruht'); tuerNamen();
 }
 function ruhen(){
@@ -50,7 +50,7 @@ function oeffneMond(i, opt = {}){
   if(!opt.behalteWeg) U.weg = [];
   W.aktiv = i;
   const Z = new Zelle(m, {origin: W.N.pos[i], RM: W.RM, au: klang, ohneAufzug: !!opt.ohneAufzug});
-  W.Z = Z; clearSparks();
+  W.Z = Z; clearSparks(); zuletztMarkieren(Z);
   U.netDir = -1; U.netT = 0; U.kelchT = 0; U.zoom = 1; U.yawOff = 0; U.elevOff = 0; U.solo = -1; U.waehlen = null; U.bind = null;
   document.getElementById('seite').setAttribute('aria-pressed', 'false');
   B.waehle(null);
@@ -133,13 +133,14 @@ async function erneuernJetzt(von, opt){
   const alt = W.Z, altId = alt && alt.m.id, altSel = U.sel, altSelId = altSel && altSel.art === 'same' ? alt.m.samen[altSel.i]?.id : null, stufe = U.stufe;
   const altB = W.B; W.B = bestand(daten); W.stand = stand;
   const tueren = W.N ? W.N.tueren : []; W.N = new Netz(W.B); W.N.tueren = tueren; W.N.neu = W.neuMonde || null; W.namen = link.namen(W.B.monde);
+  zuletztMerken();
   if(!alt || !altId){ return; }
   const i = mondNachId(altId); if(i < 0) return;
   W.aktiv = i; const m = W.B.monde[i];
   // Hat sich an diesem Mond nichts geändert, bleibt die Zelle, wie sie ist (nur Bestand und Netz sind neu)
   const fingerabdruck = mm => mm.samen.map(s => s.id + s.status).join() + '|' + mm.keim.map(v => v.id + v.status).join() + '|' + mm.faeden.length + '|' + mm.befunde.length;
   if(fingerabdruck(m) === fingerabdruck(alt.m)){ alt.m = m; alt.origin = W.N.pos[i]; if(altSel && altSel.mond) altSel.mond = m; return; }
-  const Z = new Zelle(m, {origin: W.N.pos[i], RM: W.RM, au: klang, ohneAufzug: true});
+  const Z = new Zelle(m, {origin: W.N.pos[i], RM: W.RM, au: klang, ohneAufzug: true}); zuletztMarkieren(Z);
   // Bewegung übernehmen, damit nichts springt; Flüge (auch ein laufender Einwurf) wandern mit
   for(const k of ['theta', 'kv']) Z.S[k] = alt.S[k].slice();
   for(const k of ['clock', 'rb', 'r', 'psi', 'C', 'hold', 'holdT', 'holdP', 'alpha', 'aV', 'qTh', 'qI', 'hopP', 'hopTm', 'arrive', 'Rs', 'yRim', 'Sc', 'trH', 'trN', 'kickT', 'kickAmt', 'flights', 'waves', 'still', 'rot']) Z.S[k] = alt.S[k];
@@ -363,6 +364,15 @@ function linkFahrt(ziel){
   return 'zelle';
 }
 addEventListener('hashchange', () => { const ziel = link.lies(location.hash); if(W.B && !W.ruht && ziel.mond && (!W.namen || W.namen[W.aktiv] !== ziel.mond)) linkFahrt(ziel); });
+/* Die letzten Einträge, immer: ein leiser Ring im Netz und an ihren Körnern in der Zelle, damit das Bild nie leer ist */
+function zuletztMerken(){
+  W.zuletzt = ankunft.letzte(W.B); W.zuletztIds = new Set(W.zuletzt.map(e => e.id));
+  const monde = new Map(); for(const e of W.zuletzt){ if(!monde.has(e.mondId)) monde.set(e.mondId, []); monde.get(e.mondId).push(e); }
+  if(W.N) W.N.zuletzt = monde;
+  if(W.Z) zuletztMarkieren(W.Z);
+}
+function zuletztMarkieren(Z){ Z.zuletztIdx = W.zuletztIds ? Z.m.samen.map((s, i) => W.zuletztIds.has(s.id) ? i : -1).filter(i => i >= 0) : []; }
+function zuletztSatz(){ const e = W.zuletzt && W.zuletzt[0]; return e ? ankunft.zuletztSatzAus({label: kurz(e.label, 80), stimme: typeof e.stimme === 'number' ? STIMMEN[e.stimme].name : null, titel: kurz(e.titel, 80), wann: e.wann}) : ''; }
 /* Wiederkommen: nur, was seit dem letzten Besuch eingetragen wurde, fliegt ein, in echter Reihenfolge */
 function einflug(Z, liste){
   if(!liste || !Z || W.RM) return 0;
@@ -391,7 +401,8 @@ function start(){
       let best = -1, bt = -1; W.B.monde.forEach((m, j) => { if(m.stimmen.length && m.zeitspanne[1] > bt){ bt = m.zeitspanne[1]; best = j; } }); i = best >= 0 ? best : 0; }
     U.netK = 0; oeffneMond(i, {ohneAufzug: WERKSTATT || neu.zahl > 0});
   }
-  if(seit){ B.zeile(ankunft.ankunftSatz(neu)); W.titelBis = W.wall + 6; }
+  if(!WERKSTATT){ const satz = neu.zahl ? ankunft.ankunftSatz(neu) : seit ? ankunft.ankunftSatz(neu) + ' ' + zuletztSatz() : zuletztSatz();
+    if(satz.trim()){ B.zeile(satz.trim()); W.titelBis = W.wall + 7; } }
   // Der Merker wird erst gesetzt, wenn die Ankunft zu Ende gezeigt ist; ohne Merker war nichts neu
   const hier = ort !== 'netz' && W.Z && neu.monde.get(W.Z.m.id), dauer = neu.zahl && hier ? einflug(W.Z, hier) : 0;
   if(!WERKSTATT){ const geladen = W.geladen; setTimeout(() => ankunft.merke(geladen), dauer * 1000); }

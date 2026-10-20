@@ -5,9 +5,10 @@ Es liest nur, vom Server des Forks aus, nie aus dem Browser (die CSP des Lichtwe
 
     GET <Lichtwerk>/lichtwerk/neu?seit=<ms>   ein Satz und Zahlen zu den Ankünften (Zeiten als UTC verglichen)
 
-`seit` ist der Zeitpunkt „zuletzt in KiN OS“, den der Browser des Forks sich merkt (nur den Zeitpunkt). Ohne ihn steht
-nur „SPiRALCELLS“ da. Nennt der Satz eine Ankunft, führt der Link in den Mond der jüngsten Ankunft, mit `von=kinos`;
-sonst ins Netz. Keine Kennung in Satz oder Link. Ruht das Lichtwerk, ein ruhiger Satz.
+`seit` ist der Zeitpunkt „zuletzt in KiN OS“, den der Browser des Forks sich merkt (nur den Zeitpunkt). Nennt der Satz
+eine Ankunft, führt der Link in den Mond der jüngsten Ankunft, mit `von=kinos`; sonst ins Netz. Ist seitdem nichts
+gekommen oder fehlt `seit`, steht der jüngste Eintrag da (`zuletzt_satz`): Der Punkt ist nie leer (Ralf, 20.10.).
+Keine Kennung in Satz oder Link. Ruht das Lichtwerk, ein ruhiger Satz.
 """
 from __future__ import annotations
 
@@ -29,14 +30,13 @@ def _lies(pfad: str, zeit: float = 3.0):
 
 def read_spiralcells(seit: float | None = None) -> dict:
     netz = LICHTWERK + "/#von=kinos"
-    if not seit:
-        return {"key": "spiralcells", "status": "ready", "satz": "SPiRALCELLS", "link": netz, "zahl": 0}
     try:
-        d = _lies("/lichtwerk/neu?seit=%d" % int(seit))
+        d = _lies("/lichtwerk/neu" + ("?seit=%d" % int(seit) if seit else ""))
     except (urllib.error.URLError, OSError, ValueError):
         return {"key": "spiralcells", "status": "ruht", "satz": "SPiRALCELLS ruht gerade.", "link": netz, "zahl": 0}
-    satz = str(d.get("satz") or "SPiRALCELLS")
-    zahl = int(d.get("zahl") or 0)
+    zahl = int(d.get("zahl") or 0) if seit else 0
+    zuletzt = str(d.get("zuletzt_satz") or "").strip()
+    satz = str(d.get("satz") or "SPiRALCELLS") if zahl else zuletzt or (str(d.get("satz") or "") if seit else "") or "SPiRALCELLS"
     mond = d.get("mond")
     link = LICHTWERK + "/#mond=%s&von=kinos" % mond if zahl and isinstance(mond, str) and NAME.fullmatch(mond) else netz
     return {"key": "spiralcells", "status": "ready", "satz": satz, "link": link, "zahl": zahl}
