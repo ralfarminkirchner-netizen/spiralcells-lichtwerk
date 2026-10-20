@@ -65,9 +65,12 @@ Diese Entscheidungen fragst du nicht neu ab.
 - **Ralf hat es noch nie selbst benutzt.** Im echten Bestand gibt es noch keinen Eintrag „Ralf“. Jede Schreibprobe lief gegen Testkopien.
 - **Zu viele Türen.** 8411, 8420, 8895, 8894, der Werkraum, die Sternwerft und drei Sichten-Skizzen: Für Ralfs Tag ist das ein Labyrinth. Es gibt keine eine Tür, keinen einen Startknopf und kein ruhiges Bild davon, was gerade läuft.
 - **Gebaut, aber nicht live:**
-  - 8411 läuft noch mit dem Servercode von 21:52. Der Browser-Code ist neuer, weil `app/` ohne Neustart live geht. Der Neustart scheiterte am Speicherschutz.
+  - 8411 ist erledigt: Er läuft seit 23:22 mit dem getesteten Servercode (Commit 68ecd12, `--leseeingang 8420 --behalten`), von Claude gemessen.
   - Der ehrliche Herkunftssatz des KiNFORMER gilt erst nach einem Neustart von 9062, und den gibt es nur mit Ralfs Ja.
-- **Der 409-Weg ist nur aufgeschrieben.** Formt die Zentrale denselben Stoff nach der Änderung am KiNFORMER noch einmal, antwortet KiN mit 409. Der kleinste Weg ist eine Zeile in `aios_formen.py` (`KINFORMER-EHRLICH-ZENTRALE.md` §3). Im Fork darfst du ihn bauen, in `wirktragwerk` nur nach Ralfs Ja.
+- **Der 409-Weg ist nur aufgeschrieben, und die Reihenfolge zählt.** Nach dem Neustart von 9062 liefert der KiNFORMER für denselben Stoff eine neue Seite. Die Kennung, unter der Zentrale und Fork die Form in KiN ablegen, hängt aber nur an Werk, Richtung und Text. KiN antwortet dann mit 409, und Weiterformen bricht. Deshalb kommt erst die Zeile, dann der Neustart. Die Zeile nimmt die Seite in die Kennung auf, `+ form["html"]` in der Klammer von `hashlib.sha256((werk + richtung + text …`:
+  - im Fork `kin-os/aios_formen.py` Z. 663 (`kinos-form-`), gebaut von dir oder der Fork-Sitzung, mit Test,
+  - in `wirktragwerk/aios_formen.py` (`kinformer-`) nur nach Ralfs Ja; dort zuerst den unveränderten Stand allein einchecken, dann die Zeile (`KINFORMER-EHRLICH-ZENTRALE.md` §3).
+  Danach `formformer` gegen eine eigene Instanz auf einem freien Port prüfen, nie gegen 9062.
 - **KiN kennt KiN OS nicht.** „Wählen“ ruht im Fork, weil KiN den Ursprung 8895 nicht zulässt. „Ausprobieren“ öffnet eine Werkadresse mit Kennung. Beides lässt sich nur in KiN beheben, mit Ralfs Ja und über `betrieb.py`.
 - **Nicht geprüft:**
   - ein echtes iPhone,
@@ -90,11 +93,10 @@ Du kannst etwas, das die Bauer vor dir nicht konnten: Du siehst den Bildschirm w
 AiHDS OS bleibt daneben unverändert und umschaltbar. Die Sichten-Skizzen sind Vorschläge, kein Bestand. Übernimm, was trägt, und nenn den Autor.
 
 **C · Die offenen Schalter.** Sammle alles, was Ralfs Ja braucht, in **einer** Frage mit kurzen Punkten. Sonst fragst du bei jedem einzeln. Vermutlich gehören dazu:
-- Neustart von 9062 für den ehrlichen Satz,
-- der 409-Weg in `wirktragwerk`,
+- der 409-Weg in `wirktragwerk` und, danach, der Neustart von 9062 für den ehrlichen Satz (zusammen als ein Punkt, nie in umgekehrter Reihenfolge),
 - KiN lässt KiN OS zu (Wählen) und zeigt lesbare Werkadressen,
 - ob Codex den Statusbeleg baut (Brief liegt bereit).
-Den Neustart von 8411 darfst du ohne Frage machen, sobald der Schutz frei ist: erst `state.json` sichern, dann mit `--leseeingang 8420 --behalten` wie in der Startdatei, Prozesse nur per PID.
+8411 neu starten musst du nur, wenn du den Servercode änderst. Das darfst du ohne Frage, sobald der Schutz frei ist und die Tests grün sind: erst `state.json` sichern, dann mit `--leseeingang 8420 --behalten` wie in der Startdatei, Prozesse nur per PID.
 
 **D · Ralfs erster eigener Gang.** Bereite ihn vor und begleite ihn. Dafür schreibst du `ERSTER-GANG.md`: höchstens eine Seite mit fünf Schritten in Ralfs Sprache, etwa so:
 1. Öffnen.
@@ -135,6 +137,7 @@ Du führst ihn hin, aber das Halten ist seins. Danach prüfst du im Bestand, das
 7. **Ehrlichkeit im Bild:** Eine Form behauptet nicht mehr als das Original. Formen heben weder Reife, Kopplung noch Traumfeld. Einklang der Stimmen wird nie vorgetäuscht.
 8. **Git:** Im Lichtwerk und in kin-os checkst du deine eigenen Pfade ein, mit `git commit -- <pfade>`. In wirktragwerk, kintegrity und formformer gilt dasselbe, aber nur für Dateien, die du selbst angelegt oder geändert hast. Ändert dein Weg eine fremde Datei, checkst du zuerst ihren unveränderten Stand allein ein. Kein Push, kein Zweigwechsel, kein Stash, kein Reset. kintegrity bekommt von dir keinen ersten Commit.
 9. **Vor jeder Änderung** an einer Datei außerhalb von Git eine Kopie nach `sicherung/vorher-<datum>/`.
+   **`app/` geht sofort live.** 8411 liefert `spiralcells-lichtwerk/app/` ohne Neustart von der Platte. Am 20.10. brach ein doppelt angelegtes `export function` das Lichtwerk von 22:21 bis 22:30, während der Speicherschutz jede Probe sperrte. Darum änderst du JS und CSS zuerst in einer Kopie, prüfst sie (Node-Tests in `tests/`, Ladeprobe ohne Seitenfehler an einer eigenen Testkette) und kopierst erst dann nach `app/`. Vor jedem neuen `export` suchst du mit `grep`, ob der Name schon vergeben ist.
 10. **Computer Use:**
     - keine Anmeldungen, keine Passwörter, keine Systemeinstellungen,
     - nicht in fremde Chats tippen (Claude, Codex, Hermes),
@@ -157,7 +160,8 @@ Du führst ihn hin, aber das Halten ist seins. Danach prüfst du im Bestand, das
 
 - Ralf mit einem Doppelklick startet, in KiN OS landet und mit einem Tipp in der richtigen Zelle ist und mit einem Tipp zurück,
 - er selbst eine Form behalten hat und sie als silbernes Korn sieht und du im Bestand genau eine Fassung und einen Faden belegt hast,
-- auf 8411 der getestete Servercode läuft und alle Tests grün sind,
+- auf 8411 weiterhin getesteter Servercode läuft und alle Tests grün sind,
+- Weiterformen in Zentrale und Fork nach dem Neustart von 9062 keine 409 gibt (oder der Neustart mit Grund offen ist),
 - jede offene Ja-Frage in einer Nachricht gestellt und ihre Antwort umgesetzt oder als offen benannt ist,
 - `WEITERGEDACHT.md` daliegt und Rundgang-Bilder vorher und nachher den Unterschied zeigen,
 - keine fremde Datei verändert und kein bezahlter Aufruf gelaufen ist,
