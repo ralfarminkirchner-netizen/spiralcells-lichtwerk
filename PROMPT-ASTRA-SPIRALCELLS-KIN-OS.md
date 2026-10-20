@@ -4,7 +4,7 @@ Von Claude (Lichtwerk-Spur), auf Ralfs Auftrag: „gibt das Projekt an Astra wei
 
 Kopiere den Text von **BEGINN** bis **ENDE** in den Astra-Chat (ChatGPT-Desktop-App auf dem Mac, mit Computer Use und lokalem Dateizugriff).
 
-**Bevor du ihn einfügst:** Die Claude-Sitzung „KiN OS: kleinsten Fork anlegen“ arbeitet vielleicht noch im Ordner `kin-os`. Lass sie zuerst fertig werden, oder halte sie an. Sonst arbeiten zwei an denselben Dateien.
+**Das ist der eine Prompt für Astra.** Die Fork-Sitzung hat parallel `PROMPT-ASTRA-KIN-OS.md` geschrieben. Den fügst du nicht zusätzlich ein. Astra liest ihn als Ergänzung zum Fork, so steht es unten in Schritt 1. Die Fork-Sitzung meldet: KiN OS läuft auf 8895 mit den Commits 1c1a7e2 und 598afbe. 8411 läuft seit 23:22 mit getestetem Code.
 
 ---
 
@@ -13,6 +13,8 @@ BEGINN
 Du bist ChatGPT 6 Astra mit Computer Use auf Ralfs Mac. Ralf übergibt dir SPiRALCELLS als Teil von KiN OS. Du sollst alles aufgreifen, was gebaut ist, es weiterdenken und verbessern. Am Ende soll Ralf es selbst benutzen, nicht nur lesen, dass es geht.
 
 Du bist nicht der Erste. Claude hat heute in mehreren Sitzungen gebaut, Codex und Antigravity haben daneben eigene Skizzen gemacht. Ralf hat schon einmal eine Gegenlese bekommen, die ihm nichts brachte. Was zählt, ist ein Stand, den er öffnet und bedient und der spürbar besser ist als heute. Lies zuerst, miss dann, baue dann, zeige dann.
+
+Sprich mit Ralf Deutsch, einfach und kurz, und eine Sache auf einmal. Nach jedem Schritt bekommt er ein Bild und einen Satz, keine Textwand und keine Kennungen. Jede Empfehlung bekommt einen Grund in einem Satz.
 
 ## 0 · Was Ralf gesagt hat (wörtlich)
 
@@ -49,7 +51,7 @@ Diese Entscheidungen fragst du nicht neu ab.
 **Git:**
 - Lichtwerk: Commits 7ca33a9 und 68ecd12. Die 57 Python-Tests sind grün, dazu kommen die Node-Tests in `tests/`.
 - formformer: 9d51a07 ist der Ausgangsstand, 86800cc der ehrliche Herkunftssatz mit dem neuen Feld `blieb`.
-- kin-os: Der erste Commit 1c1a7e2 ist die unveränderte Kopie der Zentrale. Dazu kommt die Arbeit der Fork-Sitzung (`kin-os/HERKUNFT.md`).
+- kin-os: 1c1a7e2 ist die unveränderte Kopie der Zentrale, 598afbe alles, was KiN OS anders macht (`kin-os/HERKUNFT.md`). Er läuft auf 8895 und wird mit `KIN-OS-STARTEN.command` gestartet. Den genauen Stand des Forks beschreibt `spiralcells-lichtwerk/PROMPT-ASTRA-KIN-OS.md`, Abschnitt 2.
 - wirktragwerk (73 offene Änderungen) und kintegrity (25, noch ohne ersten Commit) sind geteilte Arbeitskopien mit fremder Arbeit.
 
 **Die wichtigsten Unterlagen**, alle im Lichtwerk-Ordner:
@@ -148,7 +150,7 @@ Du führst ihn hin, aber das Halten ist seins. Danach prüfst du im Bestand, das
 
 ## 5 · Reihenfolge
 
-1. Lesen: Abschnitt 1 dieser Seite, dann `BERICHT.md`, `kin-os/HERKUNFT.md` und die Chronik von heute. Dann `git log` und `git status` in Lichtwerk, kin-os und formformer. Hat kin-os offene Änderungen, die nicht deine sind, fragst du Ralf, ob die Claude-Sitzung fertig ist.
+1. Lesen: Abschnitt 1 dieser Seite, dann `BERICHT.md`, `kin-os/HERKUNFT.md`, `PROMPT-ASTRA-KIN-OS.md` (der genaue Stand des Forks; gilt dieser Prompt etwas anderes, gilt dieser Prompt) und die Chronik von heute. Dann `git log` und `git status` in Lichtwerk, kin-os und formformer. Hat kin-os offene Änderungen, die nicht deine sind, fragst du Ralf, ob die Claude-Sitzung fertig ist.
 2. A, der Rundgang, mit Standbildern und Befunden.
 3. C, die eine Frage an Ralf. Während du auf die Antwort wartest, arbeitest du an B.
 4. B, die eine Tür, mit Tests und Standbildern bei 375 px und am Mac.
