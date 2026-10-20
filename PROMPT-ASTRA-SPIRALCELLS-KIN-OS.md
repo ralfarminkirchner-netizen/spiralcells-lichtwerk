@@ -70,7 +70,7 @@ Diese Entscheidungen fragst du nicht neu ab.
   - 8411 ist erledigt: Er läuft seit 23:22 mit dem getesteten Servercode (Commit 68ecd12, `--leseeingang 8420 --behalten`), von Claude gemessen.
   - Der ehrliche Herkunftssatz des KiNFORMER gilt erst nach einem Neustart von 9062, und den gibt es nur mit Ralfs Ja.
 - **Der 409-Weg ist nur aufgeschrieben, und die Reihenfolge zählt.** Nach dem Neustart von 9062 liefert der KiNFORMER für denselben Stoff eine neue Seite. Die Kennung, unter der Zentrale und Fork die Form in KiN ablegen, hängt aber nur an Werk, Richtung und Text. KiN antwortet dann mit 409, und Weiterformen bricht. Deshalb kommt erst die Zeile, dann der Neustart. Die Zeile nimmt die Seite in die Kennung auf, `+ form["html"]` in der Klammer von `hashlib.sha256((werk + richtung + text …`:
-  - im Fork `kin-os/aios_formen.py` Z. 663 (`kinos-form-`), gebaut von dir oder der Fork-Sitzung, mit Test,
+  - im Fork ist sie schon gebaut (`kin-os/aios_formen.py`, `kinos-form-`, Commit 1b7cf21, mit Test; 8895 läuft damit),
   - in `wirktragwerk/aios_formen.py` (`kinformer-`) nur nach Ralfs Ja; dort zuerst den unveränderten Stand allein einchecken, dann die Zeile (`KINFORMER-EHRLICH-ZENTRALE.md` §3).
   Danach `formformer` gegen eine eigene Instanz auf einem freien Port prüfen, nie gegen 9062.
 - **KiN kennt KiN OS nicht.** „Wählen“ ruht im Fork, weil KiN den Ursprung 8895 nicht zulässt. „Ausprobieren“ öffnet eine Werkadresse mit Kennung. Beides lässt sich nur in KiN beheben, mit Ralfs Ja und über `betrieb.py`.
