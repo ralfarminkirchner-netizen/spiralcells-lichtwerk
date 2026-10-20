@@ -1,0 +1,7 @@
+# Kopien des echten SPiRALCELLS-Bestands, Sicherungen und Laufprotokolle bleiben außerhalb von Git.
+sicherung/
+testdaten/
+protokolle/
+__pycache__/
+*.py[cod]
+.DS_Store

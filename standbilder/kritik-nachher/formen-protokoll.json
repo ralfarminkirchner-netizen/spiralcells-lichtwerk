@@ -1,0 +1,149 @@
+{
+ "adresse": "http://127.0.0.1:8419",
+ "schritte": [
+  {
+   "bild": "formen-lese",
+   "kennung_sichtbar": false,
+   "adresse_mit_kennung": false,
+   "quer": false
+  },
+  {
+   "bild": "formen-faecher",
+   "kennung_sichtbar": false,
+   "adresse_mit_kennung": false,
+   "quer": false
+  },
+  {
+   "satz": "11 Karten, jeder Satz eine.",
+   "richtung": "karten"
+  },
+  {
+   "bild": "formen-karten",
+   "kennung_sichtbar": false,
+   "adresse_mit_kennung": false,
+   "quer": false
+  },
+  {
+   "satz": "Jeder Absatz ein Zweig, seine weiteren Sätze als Blätter. Längeres ist gekürzt und mit „…“ markiert.",
+   "richtung": "schaubild"
+  },
+  {
+   "bild": "formen-schaubild",
+   "kennung_sichtbar": false,
+   "adresse_mit_kennung": false,
+   "quer": false
+  },
+  {
+   "bild": "formen-original",
+   "kennung_sichtbar": false,
+   "adresse_mit_kennung": false,
+   "quer": false
+  },
+  {
+   "abbruch_nach": 0.5,
+   "satz": "11 Karten, jeder Satz eine."
+  },
+  {
+   "bild": "formen-ralf-eintrag",
+   "kennung_sichtbar": false,
+   "adresse_mit_kennung": false,
+   "quer": false
+  },
+  {
+   "behalten": true,
+   "zeile": "Behalten. Ein neues Korn in deinem Zweig, mit einem Faden zum Original."
+  },
+  {
+   "bild": "formen-behalten",
+   "kennung_sichtbar": false,
+   "adresse_mit_kennung": false,
+   "quer": false
+  },
+  {
+   "bild": "formen-korn",
+   "kennung_sichtbar": false,
+   "adresse_mit_kennung": false,
+   "quer": false
+  },
+  {
+   "breite": 1440,
+   "reduziert": "no-preference",
+   "konsolenfehler": []
+  },
+  {
+   "bild": "formen-lese-375",
+   "kennung_sichtbar": false,
+   "adresse_mit_kennung": false,
+   "quer": false
+  },
+  {
+   "bild": "formen-faecher-375",
+   "kennung_sichtbar": false,
+   "adresse_mit_kennung": false,
+   "quer": false
+  },
+  {
+   "satz": "11 Karten, jeder Satz eine. Diese Form liegt schon in deinem Zweig.",
+   "richtung": "karten"
+  },
+  {
+   "bild": "formen-karten-375",
+   "kennung_sichtbar": false,
+   "adresse_mit_kennung": false,
+   "quer": false
+  },
+  {
+   "satz": "Jeder Absatz ein Zweig, seine weiteren Sätze als Blätter. Längeres ist gekürzt und mit „…“ markiert.",
+   "richtung": "schaubild"
+  },
+  {
+   "bild": "formen-schaubild-375",
+   "kennung_sichtbar": false,
+   "adresse_mit_kennung": false,
+   "quer": false
+  },
+  {
+   "bild": "formen-original-375",
+   "kennung_sichtbar": false,
+   "adresse_mit_kennung": false,
+   "quer": false
+  },
+  {
+   "satz": "11 Karten zum Umdrehen und Ordnen.",
+   "leise": "Am Handy zum Ansehen: die Zahlen sind für den Daumen zu klein.",
+   "richtung": "spiel"
+  },
+  {
+   "bild": "formen-spiel-375",
+   "kennung_sichtbar": false,
+   "adresse_mit_kennung": false,
+   "quer": false
+  },
+  {
+   "breite": 375,
+   "reduziert": "no-preference",
+   "konsolenfehler": []
+  },
+  {
+   "bild": "formen-lese-ruhig",
+   "kennung_sichtbar": false,
+   "adresse_mit_kennung": false,
+   "quer": false
+  },
+  {
+   "satz": "Die ersten drei von 11 Sätzen, groß gesetzt.",
+   "richtung": "plakat"
+  },
+  {
+   "bild": "formen-plakat-ruhig",
+   "kennung_sichtbar": false,
+   "adresse_mit_kennung": false,
+   "quer": false
+  },
+  {
+   "breite": 1440,
+   "reduziert": "reduce",
+   "konsolenfehler": []
+  }
+ ]
+}

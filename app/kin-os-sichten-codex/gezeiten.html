@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#111d29">
+  <title>Gezeiten · KiN OS Sichten</title>
+  <link rel="stylesheet" href="gezeiten.css">
+  <script src="data.js" defer></script>
+  <script src="gezeiten.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#inhalt">Zum Zeitblick</a>
+  <header class="masthead">
+    <a class="wordmark" href="index.html"><span class="wordmark-dot" aria-hidden="true"></span>KiN OS <span>Sichten</span></a>
+    <nav aria-label="Entwürfe">
+      <a href="sternwerft.html">Sternwerft</a>
+      <a href="inselkarte.html">Inselkarte</a>
+      <a href="gezeiten.html" aria-current="page">Gezeiten</a>
+    </nav>
+    <a class="old-view" href="http://127.0.0.1:8894/">Bisherige Galaxie <span aria-hidden="true">↗</span></a>
+  </header>
+
+  <main id="inhalt">
+    <section class="intro" aria-labelledby="page-title">
+      <div>
+        <p class="eyebrow">Dritte Sicht · Entwurf von Codex</p>
+        <h1 id="page-title">Gezeiten<span aria-hidden="true">.</span></h1>
+        <p class="deck">Ein Ufer für datierte Fassungen. Von einem Tag zur Fassung und von dort zurück zu ihrer Quelle.</p>
+      </div>
+      <div class="source-note"><span class="live-dot" aria-hidden="true"></span><p id="connection-note" role="status">SPiRALCELLS wird gelesen …</p></div>
+    </section>
+
+    <section class="time-space" aria-labelledby="time-title">
+      <div class="time-toolbar">
+        <div><p class="eyebrow">Der Gezeitensaum</p><h2 id="time-title">Wann Fassungen datiert sind</h2></div>
+        <div class="periods" role="group" aria-label="Zeitraum">
+          <button type="button" data-period="7" aria-pressed="true">7 Tage</button>
+          <button type="button" data-period="30" aria-pressed="false">30 Tage</button>
+          <button type="button" data-period="all" aria-pressed="false">Alles</button>
+        </div>
+      </div>
+      <div class="tide-landscape" id="tide-landscape">
+        <svg id="tide-chart" viewBox="0 0 1000 210" preserveAspectRatio="none" role="img" aria-labelledby="chart-title chart-description"><title id="chart-title">Zeitverlauf gespeicherter Fassungen</title><desc id="chart-description">Der Zeitverlauf wird geladen.</desc></svg>
+        <div class="tide-horizon" aria-hidden="true"></div>
+        <p class="landscape-label" id="window-summary">Noch keine Daten gelesen</p>
+      </div>
+      <div class="chart-legend"><p>Höhe = gespeicherte Fassungen pro Tag. Keine Wertung, kein Prüfzeichen.</p><p id="date-span">Zeitangaben nach Berliner Ortszeit</p></div>
+      <div class="day-navigation">
+        <button type="button" id="previous-day" class="arrow-button" aria-label="Vorheriger Tag mit Fassungen" disabled>←</button>
+        <div id="day-rail" class="day-rail" role="group" aria-label="Tag mit Fassungen auswählen"></div>
+        <button type="button" id="next-day" class="arrow-button" aria-label="Nächster Tag mit Fassungen" disabled>→</button>
+      </div>
+    </section>
+
+    <div class="reading-layout">
+      <section class="arrivals" aria-labelledby="arrivals-title">
+        <div class="section-top"><div><p class="eyebrow">Fassungsdatum an diesem Tag</p><h2 id="arrivals-title" tabindex="-1">Fassungen</h2></div><span id="day-total" class="day-total"></span></div>
+        <p class="small-note">Ein Fassungsdatum ist kein Nachweis eines neuen lokalen Eingangs, neuer Erkenntnis oder einer Traumphase.</p>
+        <div id="arrival-list" class="arrival-list"><p class="empty-note">Der Zeitblick wird vorbereitet.</p></div>
+      </section>
+
+      <aside class="reading-desk" aria-labelledby="reading-title">
+        <div class="desk-kicker"><span class="desk-ring" aria-hidden="true"></span>Auf dem Lesetisch</div>
+        <div id="reading-empty"><h2 id="reading-title">Eine Fassung näher ansehen</h2><p>Wähle am Ufer einen Tag und dann eine Fassung. Hier bleiben Werk, Beitrag und Quellenweg zusammen.</p></div>
+        <div id="reading-content" hidden>
+          <p id="reading-work" class="reading-work"></p>
+          <h2 id="variant-title"></h2>
+          <p id="variant-date" class="variant-date"></p>
+          <p class="variant-date">Aus den gespeicherten Fassungsnotizen</p>
+          <p id="variant-note" class="variant-note"></p>
+          <dl class="proof-list">
+            <div><dt>Modellbeitrag</dt><dd id="model-proof">Nicht gesondert belegt</dd></div>
+            <div><dt>Technische Prüfung</dt><dd>Nicht gesondert belegt</dd></div>
+            <div><dt>Ralfs Freigabe</dt><dd>Nicht gesondert belegt</dd></div>
+          </dl>
+          <p class="proof-footnote">Der übernommene Fassungsstatus ersetzt keinen dieser Nachweise.</p>
+          <div class="source-actions"><a id="open-material" class="primary-link" href="http://127.0.0.1:8401/">Fassung in SPiRALCELLS öffnen <span aria-hidden="true">↗</span></a><button type="button" id="read-source" class="text-button">Quelltext hier lesen <span aria-hidden="true">↓</span></button></div>
+          <div class="source-path"><span>Zur Herkunft</span><p id="source-route"></p><a id="open-root" href="http://127.0.0.1:8401/">Zur Quellfassung <span aria-hidden="true">↗</span></a></div>
+          <section id="source-reader" class="source-reader" aria-labelledby="source-reader-title" hidden><div><h3 id="source-reader-title">Unveränderter Quelltext</h3><button type="button" id="close-source" class="text-button">Schließen ↑</button></div><p>Bewusst geöffnete Originalquelle. Angaben darin stammen aus der gespeicherten Fassung.</p><pre id="source-text" tabindex="0"></pre><button type="button" id="back-to-desk" class="text-button">↑ Zur Fassung zurück</button></section>
+        </div>
+      </aside>
+    </div>
+
+    <section class="meaning-note" aria-labelledby="meaning-title"><p class="eyebrow">Was diese Sicht vorschlägt</p><h2 id="meaning-title">Neuigkeiten haben einen Rückweg.</h2><p>Dieser Entwurf ordnet tatsächlich gespeicherte Fassungen nach Zeit. Ein späterer Traumphasen-Eingang müsste seine wirklichen Läufe und Belege mitbringen. Hier wird kein Lauf erfunden und keine Handlung ausgelöst.</p></section>
+  </main>
+  <footer><a href="index.html">← Alle Entwürfe</a><p>Entwurf von Codex · Lesender Zeitblick · Keine Freigabe durch Ralf</p><a href="http://127.0.0.1:8411/">SPiRALCELLS Lichtwerk ↗</a></footer>
+</body>
+</html>

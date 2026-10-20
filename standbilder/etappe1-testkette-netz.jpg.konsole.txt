@@ -1,0 +1,2 @@
+waagerechtes Rollen: nein
+Adresse am Ende: http://127.0.0.1:8419/

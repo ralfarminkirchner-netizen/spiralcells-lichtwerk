@@ -1,0 +1,132 @@
+{
+ "adresse": "http://127.0.0.1:8419",
+ "schritte": [
+  {
+   "pruefung": "Tab bleibt im Lichttisch",
+   "draussen": []
+  },
+  {
+   "pruefung": "Hintergrund",
+   "lese_visibility": "hidden",
+   "inert": [
+    true,
+    true,
+    true,
+    true,
+    true,
+    true
+   ]
+  },
+  {
+   "bild": "nachher-lichttisch-karten",
+   "kennung": false,
+   "quer": false,
+   "adresse": "/?werkstatt"
+  },
+  {
+   "pruefung": "Esc nach Tippen in die Form",
+   "tisch_zu": true,
+   "zeile": "Émile Durkheim",
+   "fokus": "halten still formen-griff"
+  },
+  {
+   "bild": "nachher-siegel-ueber-tisch",
+   "kennung": false,
+   "quer": false,
+   "adresse": "/?werkstatt"
+  },
+  {
+   "pruefung": "Esc beim Siegel über dem Tisch",
+   "siegel_zu": true,
+   "tisch_offen": true,
+   "satz": "Nichts behalten.",
+   "geschrieben": false
+  },
+  {
+   "pruefung": "Erster Besuch ohne Merker",
+   "zeile": "Émile Durkheim",
+   "merker_gesetzt": true
+  },
+  {
+   "pruefung": "Wiederkommen mit Ankünften",
+   "zeile": "Seit deinem letzten Besuch eingetragen: drei Ausprägungen von Codex und eine von Claude, in zwei Monden. Dazu zwei neue Fäden.",
+   "adresse": "/#mond=emile-durkheim"
+  },
+  {
+   "bild": "nachher-wiederkommen-zelle",
+   "kennung": false,
+   "quer": false,
+   "adresse": "/#mond=emile-durkheim"
+  },
+  {
+   "bild": "nachher-wiederkommen-netz",
+   "kennung": false,
+   "quer": false,
+   "adresse": "/#mond=emile-durkheim"
+  },
+  {
+   "pruefung": "Merker nach der Ankunft",
+   "merker_nach_vor": true
+  },
+  {
+   "pruefung": "Gleich danach noch einmal",
+   "zeile": "Seit deinem letzten Besuch ist nichts dazugekommen."
+  },
+  {
+   "bild": "nachher-link-fahrt",
+   "kennung": false,
+   "quer": false,
+   "adresse": "/#mond=emile-durkheim&von=sternwerft"
+  },
+  {
+   "pruefung": "Link in die Zelle",
+   "ort": "← Zurück zur Sternwerft",
+   "adresse": "/#mond=emile-durkheim&von=sternwerft",
+   "zeile": "Seit deinem letzten Besuch ist nichts dazugekommen.",
+   "sekunden": 1.8
+  },
+  {
+   "bild": "nachher-link-zelle",
+   "kennung": false,
+   "quer": false,
+   "adresse": "/#mond=emile-durkheim&von=sternwerft"
+  },
+  {
+   "pruefung": "Unbekannter Name",
+   "zeile": "89 Monde. In neun sprechen die Stimmen.",
+   "adresse": "/#von=kinos"
+  },
+  {
+   "breite": 1440,
+   "konsolenfehler": []
+  },
+  {
+   "bild": "nachher-link-fahrt",
+   "kennung": false,
+   "quer": false,
+   "adresse": "/#mond=emile-durkheim&von=sternwerft"
+  },
+  {
+   "pruefung": "Link in die Zelle",
+   "ort": "← Zurück zur Sternwerft",
+   "adresse": "/#mond=emile-durkheim&von=sternwerft",
+   "zeile": "Émile Durkheim",
+   "sekunden": 1.8
+  },
+  {
+   "bild": "nachher-link-zelle",
+   "kennung": false,
+   "quer": false,
+   "adresse": "/#mond=emile-durkheim&von=sternwerft"
+  },
+  {
+   "pruefung": "Unbekannter Name",
+   "zeile": "89 Monde. In neun sprechen die Stimmen.",
+   "adresse": "/#von=kinos"
+  },
+  {
+   "breite": 375,
+   "konsolenfehler": []
+  }
+ ]
+}

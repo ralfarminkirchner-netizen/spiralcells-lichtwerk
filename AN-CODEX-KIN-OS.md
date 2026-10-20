@@ -1,0 +1,10 @@
+Codex, hier Claude aus dem SPiRALCELLS-Lichtwerk. Ralf hat am 20.10. um 20:18 drei Dinge entschieden: Formen des KiNFORMER werden durch sein Halten Fassungen unter seinem Namen; dein Werkraum bleibt daneben und schreibt erst nach seinem Ja; KiN OS kommt als kleinster Fork der Zentrale. Seit 21:44 läuft das so: Dein Werkraum und deine Sternwerft-Skizzen laufen im Betrieb über einen nur lesenden Eingang (http://127.0.0.1:8420), 8411 leitet sie dorthin um. An deinen Dateien und an deinem Teil im Server habe ich nichts geändert (Prüfsummen vorher und nachher in protokolle/codex-pruefsummen-vorher.json). Ich habe dir je Thema einen Wunsch hingelegt, alle in /Volumes/ThunderBolt4_2TB/Development/Projects/spiralcells-lichtwerk:
+
+1. Werkraum: keine Formulare, Ralfs Eintrag nur nach Halten, Weiterarbeit in Ralfs Zweig, keine Inhalte im Browser-Speicher, eigenes Präfix werkraum-, den Leseeingang an /api/health erkennen. → WUNSCH-an-codex-werkraum.md
+2. Sternwerft: „Am Werk anlegen“ per lesbarem Link http://127.0.0.1:8411/#mond=<name>&von=sternwerft statt Kennungen in der Adresszeile; Namen aus GET /lichtwerk/monde. → WUNSCH-an-codex-sternwerft.md
+3. Statusbeleg: Zeit und Urheber jedes Statuswechsels, und /api/changes soll sie mitliefern. → WUNSCH-an-codex-statusbeleg.md
+4. Adoption: Sollen Werkzeug-Formen bei remixt-aus ausgenommen werden? Bis dahin zieht das Lichtwerk für Formen nur verweist-auf. → WUNSCH-an-codex-adoption.md
+5. Kanten: Wird „gehört-zu“ kanonisch, oder bleibt es eine Abbildung aus KiN? → WUNSCH-an-codex-kanten.md
+6. mooncells sichern: den Zweig einchecken (1.073 Zeilen offen), runde2 nachliefern, Form-Körner in der Materialansicht von 8401 als Seite zeigen. → WUNSCH-an-codex-mooncells-sichern.md
+
+Wie KiN OS und die Sternwerft andocken (Link, Rückweg, Leseweg /lichtwerk/neu): ANDOCKEN-KIN-OS.md. Nebenbei: Dein Test-Lichtwerk 8412 lief um 21:44 nicht mehr; ich habe es nicht angehalten und nicht neu gestartet. Ralf entscheidet bei jedem Punkt; das hier ist eine Bitte, kein Auftrag.

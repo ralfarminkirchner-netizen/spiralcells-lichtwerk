@@ -1,0 +1,256 @@
+/* Ein einziger randloser Lichtraum. Worte erscheinen wie Bildzeilen einer Projektion unten mittig.
+   Erste Ebene: Bild und ein Satz. Jede Berührung entfaltet eine Stufe: Marke am Licht, dann die Lesefläche. */
+:root{
+  --void:#04030a;
+  --whitegold:#fff6e0;
+  --ink:rgba(255,246,224,.82);
+  --ink-soft:rgba(255,246,224,.50);
+  --ink-faint:rgba(255,246,224,.22);
+  --gold:#f2c46d;
+  --glass:rgba(8,6,16,.72);
+  --f-line:"Jost","Futura","Avenir Next","Century Gothic",system-ui,sans-serif;
+  --f-read:"Iowan Old Style","Palatino","Georgia",serif;
+  --f-measure:"SF Mono","IBM Plex Mono",ui-monospace,Menlo,monospace;
+  color-scheme:dark;
+}
+[hidden]{display:none!important}
+html,body{height:100%;margin:0;background:var(--void);color:var(--ink);overflow:hidden}
+body{font-family:var(--f-line);-webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none}
+#gl{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none;cursor:default;outline:none}
+#gl.zeigt{cursor:pointer}
+#gl:focus-visible{box-shadow:inset 0 0 0 1px var(--ink-faint)}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);clip-path:inset(50%);white-space:nowrap}
+button{font:inherit;color:inherit}
+
+.mark{position:fixed;top:calc(20px + env(safe-area-inset-top,0px));left:max(22px,env(safe-area-inset-left,0px));
+  margin:0;font-weight:400;font-size:11px;letter-spacing:.44em;text-transform:none;color:var(--ink-soft);pointer-events:none;transition:opacity 1.6s ease}
+.mark span{display:block;margin-top:7px;font-weight:300;font-size:10px;letter-spacing:.3em;color:var(--ink-faint)}
+.dim .mark{opacity:.35}
+.ort{position:fixed;top:calc(64px + env(safe-area-inset-top,0px));left:max(12px,env(safe-area-inset-left,0px));
+  background:none;border:0;padding:10px 10px;min-height:44px;color:var(--ink-soft);font-size:12px;letter-spacing:.16em;cursor:pointer;border-radius:999px;
+  transition:color .4s ease,opacity 1.2s ease;max-width:min(70vw,420px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:left}
+.ort:hover,.ort:focus-visible{color:var(--ink)}
+.ort:focus-visible{outline:1px solid var(--ink-soft);outline-offset:2px}
+.dim .ort{opacity:.45}
+
+#line{position:fixed;left:0;right:0;bottom:calc(9vh + env(safe-area-inset-bottom,0px));margin:0;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
+  text-align:center;font-weight:300;font-size:clamp(15px,.9vw + 10px,21px);letter-spacing:.14em;line-height:1.5;
+  color:var(--ink);opacity:0;filter:blur(7px);transform:translateY(4px);
+  transition:opacity 1.2s ease,filter 1s ease,transform 1.4s ease;pointer-events:none;text-wrap:balance;
+  text-shadow:0 0 22px rgba(4,3,10,.95),0 0 3px rgba(4,3,10,.8)}
+#line.on{opacity:1;filter:blur(0);transform:none}
+.lesend #line{right:min(46vw,620px)}
+
+#angle{position:fixed;left:0;top:0;margin:0;font-family:var(--f-measure);font-weight:300;font-size:11px;letter-spacing:.06em;
+  color:var(--ink-soft);opacity:0;pointer-events:none;white-space:nowrap;font-variant-numeric:tabular-nums;transition:opacity .8s ease,color .6s ease;will-change:transform}
+#angle.gold{color:var(--gold)}
+#hint{position:fixed;left:0;right:0;bottom:calc(9vh + env(safe-area-inset-bottom,0px) - 30px);margin:0;text-align:center;
+  font-weight:300;font-size:12px;letter-spacing:.22em;color:var(--ink-soft);opacity:0;transition:opacity 1.2s ease;pointer-events:none;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));text-wrap:balance}
+#hint.on{opacity:1}
+
+/* Stufe 1: eine Marke am Licht */
+.marke{position:fixed;left:0;top:0;margin:0;pointer-events:auto;cursor:pointer;min-height:44px;padding:4px 0;max-width:min(360px,72vw);will-change:transform;
+  transition:opacity .5s ease;text-shadow:0 0 18px rgba(4,3,10,.98),0 0 3px rgba(4,3,10,.9)}
+.marke p{margin:0}
+.marke-titel{font-weight:400;font-size:14px;letter-spacing:.06em;line-height:1.35;color:var(--whitegold)}
+.marke-satz{margin-top:4px!important;font-weight:300;font-size:11px;letter-spacing:.16em;color:var(--ink-soft)}
+.marke.links{text-align:right}
+
+#tage,#namen,#tuernamen{position:fixed;inset:0;pointer-events:none}
+#tuernamen span{position:absolute;left:0;top:0;font-size:10px;letter-spacing:.24em;color:var(--ink-soft);white-space:nowrap;will-change:transform;transition:opacity .8s ease}
+.ruht #seite,.ruht #netzknopf{display:none}
+#namen span{position:absolute;left:0;top:0;font-size:11px;letter-spacing:.2em;white-space:nowrap;will-change:transform;transition:opacity .6s ease;text-shadow:0 0 12px rgba(4,3,10,.95)}
+#tage span{position:absolute;left:0;top:0;font-family:var(--f-measure);font-size:10px;letter-spacing:.08em;color:var(--ink-faint);white-space:nowrap;will-change:transform}
+
+/* Stufe 2: Lesefläche, rechts; auf dem Handy von unten */
+.lese{position:fixed;top:0;right:0;bottom:0;width:min(44vw,600px);box-sizing:border-box;overflow-y:auto;overscroll-behavior:contain;
+  padding:calc(28px + env(safe-area-inset-top,0px)) max(30px,env(safe-area-inset-right,0px)) calc(40px + env(safe-area-inset-bottom,0px)) 34px;
+  background:linear-gradient(90deg,rgba(4,3,10,0) 0,rgba(6,5,12,.86) 46px,rgba(6,5,12,.93) 100%);
+  user-select:text;-webkit-user-select:text;animation:lese-in .7s ease both}
+@keyframes lese-in{from{opacity:0;transform:translateX(18px)}to{opacity:1;transform:none}}
+.lese-zu{position:sticky;top:0;float:right;margin:-6px -10px 0 8px;width:44px;height:44px;border:0;background:none;color:var(--ink-soft);cursor:pointer;border-radius:999px}
+.lese-zu svg{width:16px;height:16px;stroke:currentColor;stroke-width:1.2;fill:none}
+.lese-zu:hover,.lese-zu:focus-visible{color:var(--ink)}
+.lese-zu:focus-visible{outline:1px solid var(--ink-soft)}
+.lese-kopf{margin:0;font-size:11px;letter-spacing:.2em;color:var(--ink-soft);display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.lese-punkt{width:9px;height:9px;border-radius:50%;box-shadow:0 0 10px currentColor;background:currentColor}
+.lese-wann::before{content:"·";margin-right:10px;color:var(--ink-faint)}
+.lese-titel{margin:14px 0 6px;font-weight:400;font-size:clamp(19px,1.2vw + 10px,25px);line-height:1.3;letter-spacing:.02em;color:var(--whitegold);text-wrap:balance}
+.lese-art{margin:0 0 18px;font-size:12px;letter-spacing:.14em;color:var(--ink-soft)}
+.lese-art .gold{color:var(--gold)}
+.lese-faeden{list-style:none;margin:0 0 22px;padding:0;display:grid;gap:2px}
+.lese-faeden li button{display:block;width:100%;text-align:left;background:none;border:0;padding:7px 0;min-height:36px;cursor:pointer;color:var(--ink);font-size:13px;line-height:1.45;letter-spacing:.02em;border-radius:6px}
+.lese-faeden li button:hover,.lese-faeden li button:focus-visible{color:var(--whitegold)}
+.lese-faeden li button:focus-visible{outline:1px solid var(--ink-faint)}
+.lese-faeden .art{color:var(--ink-soft);margin-right:6px}
+.lese-faeden .beleg{display:block;font-size:11px;letter-spacing:.12em;color:var(--ink-soft);margin-top:2px}
+.lese-faeden .beleg.fest{color:var(--gold)}
+.lese-text{font-family:var(--f-read);font-size:16px;line-height:1.62;color:rgba(255,246,224,.86);letter-spacing:.005em;max-width:62ch}
+.lese-text h3{font-family:var(--f-line);font-weight:400;font-size:14px;letter-spacing:.12em;color:var(--whitegold);margin:26px 0 8px}
+.lese-text p{margin:0 0 12px}
+.lese-text strong{font-weight:600;color:var(--whitegold)}
+.lese-text .zitat{border-left:1px solid var(--ink-faint);padding-left:14px;color:var(--ink-soft)}
+.lese-tun{position:sticky;bottom:calc(-40px - env(safe-area-inset-bottom,0px));display:flex;flex-wrap:wrap;gap:6px 8px;margin:22px -8px 18px;padding:10px 8px calc(12px + env(safe-area-inset-bottom,0px));
+  background:rgb(6,5,12)}
+.lese-tun::before{content:"";position:absolute;left:0;right:0;top:-28px;height:28px;background:linear-gradient(180deg,rgba(6,5,12,0),rgb(6,5,12));pointer-events:none}
+.lese-weitere{display:flex;flex-wrap:wrap;gap:6px 8px;width:100%}
+.lese-faeden .mehr{color:var(--ink-soft);font-size:12px;letter-spacing:.14em}
+.lese:focus{outline:none}
+.lese-griff{display:none}
+
+/* Halten bestätigt: ein Ring füllt sich */
+.halten{position:relative;display:inline-flex;align-items:center;gap:10px;min-height:44px;padding:6px 16px 6px 8px;border:0;border-radius:999px;cursor:pointer;
+  background:rgba(255,246,224,.05);color:var(--ink);font-size:12px;letter-spacing:.16em;transition:background .3s ease,color .3s ease;text-align:left}
+.halten:hover{background:rgba(255,246,224,.08)}
+.halten:focus-visible{outline:1px solid var(--ink-soft);outline-offset:2px}
+/* Der Ring zeigt sich erst beim Halten: kein Formular-Auswahlkreis */
+.halten{touch-action:pan-y}
+.halten svg{width:30px;height:30px;flex:none;transform:rotate(-90deg);margin-left:-30px;opacity:0;transition:opacity .2s ease,margin .2s ease}
+.halten.drueckt svg{opacity:1;margin-left:0}
+.halten span{padding-left:6px}
+.halten .bahn{fill:none;stroke:var(--ink-faint);stroke-width:1.2}
+.halten .fuell{fill:none;stroke:var(--whitegold);stroke-width:1.6;stroke-linecap:round;stroke-dasharray:81.7;stroke-dashoffset:calc(81.7 * (1 - var(--k,0)))}
+.halten.gold{color:var(--gold);background:rgba(242,196,109,.08)}
+.halten.punkte{letter-spacing:.3em;color:var(--ink-soft)}
+.halten.gold .fuell{stroke:var(--gold)}
+.halten.still{background:none;color:var(--ink-soft)}
+.halten small{display:block;font-size:10px;letter-spacing:.14em;color:var(--ink-soft);margin-top:1px}
+
+.siegel{position:fixed;left:50%;bottom:calc(14vh + env(safe-area-inset-bottom,0px));transform:translateX(-50%);width:min(560px,calc(100vw - 32px));box-sizing:border-box;
+  padding:20px 22px 16px;border-radius:18px;background:var(--glass);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+  box-shadow:0 0 0 1px rgba(255,246,224,.08),0 20px 60px rgba(0,0,0,.55);text-align:center;animation:siegel-in .5s ease both}
+@keyframes siegel-in{from{opacity:0;transform:translate(-50%,8px)}to{opacity:1;transform:translate(-50%,0)}}
+.lesend .siegel{left:calc((100vw - min(44vw,600px)) / 2)}
+.siegel-satz{margin:0 0 8px;font-size:15px;letter-spacing:.06em;line-height:1.45;color:var(--whitegold);text-wrap:balance}
+.siegel-vorschau{margin:0 0 14px;font-family:var(--f-read);font-size:14px;line-height:1.5;color:var(--ink-soft);max-height:4.6em;overflow:hidden;text-wrap:pretty}
+.siegel-vorschau:empty{display:none}
+.siegel-wahl{display:flex;justify-content:center;flex-wrap:wrap;gap:8px}
+.siegel-lassen{margin-top:10px;background:rgba(255,246,224,.05);border:0;min-height:44px;padding:6px 22px;color:var(--ink);font-size:12px;letter-spacing:.2em;cursor:pointer;border-radius:999px}
+.siegel-lassen:hover,.siegel-lassen:focus-visible{color:var(--ink)}
+.siegel-lassen:focus-visible{outline:1px solid var(--ink-faint)}
+
+.corner{position:fixed;bottom:calc(14px + env(safe-area-inset-bottom,0px));display:flex;align-items:center;justify-content:center;gap:10px;
+  min-width:44px;min-height:44px;box-sizing:border-box;background:none;border:0;padding:8px;margin:0;color:var(--ink-soft);cursor:pointer;border-radius:999px;
+  transition:opacity 1.2s ease,color .4s ease}
+.corner:focus-visible{outline:1px solid var(--ink-soft);outline-offset:2px}
+.corner:hover{color:var(--ink)}
+#snd{left:max(10px,env(safe-area-inset-left,0px));font-size:10px;letter-spacing:.3em;text-transform:uppercase;font-weight:400}
+#snd svg{width:18px;height:18px;display:block}
+#snd .wave{opacity:.25;transition:opacity .4s ease}
+#snd[aria-pressed="true"] .wave{opacity:1}
+#snd[aria-pressed="true"]{color:var(--ink)}
+#seite{right:max(10px,env(safe-area-inset-right,0px))}
+#netzknopf{right:calc(max(10px,env(safe-area-inset-right,0px)) + 52px)}
+#seite svg,#netzknopf svg{width:22px;height:22px;display:block}
+#seite .oben{display:none}
+#seite[aria-pressed="true"] .oben{display:block}
+#seite[aria-pressed="true"] .kelch{display:none}
+#seite,#netzknopf,#snd{opacity:.35}
+.active #seite,.active #netzknopf,.active #snd,.corner:focus-visible{opacity:1}
+.lesend #seite,.lesend #netzknopf{opacity:0;pointer-events:none}
+
+.ruhe{position:fixed;inset:0;display:grid;place-items:center;margin:0;padding:0 24px;text-align:center;font-weight:300;letter-spacing:.12em;color:var(--ink)}
+
+/* Formen: der Handgriff in der Lesefläche und der Lichttisch des KiNFORMER.
+   Farbwelt des Raums Formen: Papier auf graublauem Grund, Bernstein für das Original, Lime für das Gewählte. */
+:root{--f-papier:#f7f5f0;--f-tinte:#1d2329;--f-leise:#55606b;--f-tisch:#c3ccd3;--f-lime:#dfefa0;--f-lime-tinte:#1a2008;--f-bernstein:#e9b96e;--f-bernstein-tief:#b9803a}
+.lese-leise{width:100%;margin:2px 8px;font-size:11px;letter-spacing:.12em;line-height:1.5;color:var(--ink-soft)}
+.faecher{display:flex;flex-wrap:wrap;gap:6px;width:100%;padding:4px 0 2px}
+.faecher[hidden]{display:none}
+.faecher-knopf{display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:2px;min-height:48px;min-width:44px;padding:6px 14px;border:1px solid rgba(223,239,160,.22);border-radius:14px;
+  background:rgba(223,239,160,.04);color:var(--f-lime);font:inherit;font-size:12px;letter-spacing:.14em;text-align:left;cursor:pointer;transition:background .25s ease,border-color .25s ease}
+.faecher-knopf small{font-size:10px;letter-spacing:.08em;color:var(--ink-soft);text-transform:none}
+.faecher-knopf:hover,.faecher-knopf:focus-visible{background:rgba(223,239,160,.1);border-color:var(--f-lime)}
+.faecher-knopf:focus-visible{outline:1px solid var(--f-lime);outline-offset:2px}
+.faecher-leise{width:100%;margin:4px 2px 0;font-size:11px;letter-spacing:.12em;color:var(--ink-soft)}
+
+#gl{transition:filter .7s ease}
+.formend #gl{filter:brightness(.3) saturate(.7)}
+.formend #line,.formend #hint,.formend .marke,.formend #namen,.formend #tuernamen,.formend .corner,.formend #zurueck,.formend .mark,.formend #angle,.formend #tage{opacity:0!important;pointer-events:none}
+.formend .lese{animation:none;visibility:hidden}
+.formend .siegel{left:50%}
+.formen{position:fixed;inset:0;z-index:30;display:grid;grid-template-rows:auto 1fr auto auto;grid-template-columns:1fr;
+  padding:max(8px,env(safe-area-inset-top,0px)) max(12px,env(safe-area-inset-right,0px)) max(6px,env(safe-area-inset-bottom,0px)) max(12px,env(safe-area-inset-left,0px));
+  box-sizing:border-box;background:radial-gradient(ellipse at 50% 46%,rgba(4,3,10,.15),rgba(4,3,10,.7));outline:none}
+.formen[hidden]{display:none}
+.formen>*{grid-column:1;min-width:0}
+.formen-kopf{grid-row:1;display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center;gap:12px;min-height:48px}
+.formen-zurueck{grid-column:1;justify-self:start;position:static;max-width:100%}
+.dim .formen-zurueck{opacity:1}
+.formen-satz{grid-column:2;margin:0;max-width:62ch;padding:0 8px;text-align:center;font-size:13px;letter-spacing:.1em;line-height:1.45;color:var(--whitegold);text-wrap:balance}
+.formen-rand{grid-row:2;position:relative;display:grid;place-items:center;padding:1.5vh 7vw;min-height:0;touch-action:pan-y}
+.formen-flaeche{position:relative;width:min(1080px,100%);height:100%;border-radius:14px;overflow:hidden;background:var(--f-tisch);
+  box-shadow:0 0 0 1px rgba(255,246,224,.08),0 30px 90px rgba(0,0,0,.6)}
+.formen.auf .formen-flaeche{animation:blatt-auf .75s cubic-bezier(.16,1,.3,1) both}
+.formen.auf.still .formen-flaeche{animation:blatt-still .3s ease both}
+@keyframes blatt-auf{from{opacity:0;transform:scale(.04);border-radius:50%}60%{opacity:1}to{opacity:1;transform:none;border-radius:14px}}
+@keyframes blatt-still{from{opacity:0}to{opacity:1}}
+.formen-blatt{display:block;width:100%;height:100%;border:0;background:var(--f-tisch)}
+.formen-blatt[hidden]{display:none}
+.formen-original{position:absolute;inset:0;overflow:auto;overscroll-behavior:contain;background:var(--f-tisch);padding:44px 20px;box-sizing:border-box;user-select:text;-webkit-user-select:text}
+.formen-original[hidden]{display:none}
+.formen-original .papier{max-width:720px;margin:0 auto;background:var(--f-papier);color:var(--f-tinte);padding:48px 56px;box-shadow:0 30px 70px rgba(29,35,41,.25);
+  font-family:var(--f-read);font-size:19px;line-height:1.6;box-sizing:border-box;border-top:3px solid var(--f-bernstein)}
+.formen-original .papier h1{font-weight:500;font-size:26px;line-height:1.3;margin:0 0 22px;text-wrap:balance}
+.formen-original .papier h3{font-family:var(--f-line);font-weight:500;font-size:14px;letter-spacing:.12em;margin:24px 0 8px}
+.formen-original .papier p{margin:0 0 .8em}
+.formen-original .papier .zitat{border-left:2px solid var(--f-bernstein);padding-left:14px;color:var(--f-leise)}
+.formen-original:focus-visible{outline:2px solid var(--f-bernstein);outline-offset:-2px}
+.formen-leise{grid-row:3;margin:0;min-height:0;text-align:center;font-size:11px;letter-spacing:.12em;color:var(--ink-soft)}
+.formen-leise:empty{display:none}
+.formen-faden{grid-row:4;display:flex;justify-content:safe center;overflow-x:auto;scrollbar-width:none;padding:20px 8px 4px}
+.formen-faden::-webkit-scrollbar{display:none}
+.formen-faden .strang{display:flex;align-items:flex-start;min-width:min-content}
+.formen-faden .perle{position:relative;display:flex;flex-direction:column;align-items:center;gap:6px;min-width:56px;min-height:52px;padding:8px 4px 4px;border:0;background:none;
+  color:var(--ink-soft);font:inherit;font-size:10px;letter-spacing:.14em;cursor:pointer;border-radius:12px}
+.formen-faden .perle i{display:block;width:14px;height:14px;border-radius:50%;background:rgba(255,246,224,.35);box-shadow:0 0 0 1px rgba(255,246,224,.25);transition:transform .3s ease,box-shadow .3s ease}
+.formen-faden .perle.original i{width:18px;height:18px;margin-top:-2px;background:radial-gradient(circle at 40% 35%,#fff6e3,var(--f-bernstein) 45%,var(--f-bernstein-tief))}
+.formen-faden .perle.gewaehlt{color:var(--f-lime)}
+.formen-faden .perle.gewaehlt i{background:var(--f-lime);box-shadow:0 0 0 2px var(--f-lime-tinte),0 0 0 3px var(--f-lime),0 0 18px rgba(223,239,160,.33);transform:scale(1.25)}
+.formen-faden .perle.original.gewaehlt i{background:radial-gradient(circle at 40% 35%,#fff6e3,var(--f-bernstein) 45%,var(--f-bernstein-tief));box-shadow:0 0 0 2px var(--f-lime-tinte),0 0 0 3px var(--f-lime)}
+.formen-faden .perle.behalten i{box-shadow:0 0 0 2px var(--void),0 0 0 3.5px #e6ecff,0 0 12px rgba(230,236,255,.45)}
+.formen-faden .perle:hover i,.formen-faden .perle:focus-visible i{transform:scale(1.3)}
+.formen-faden .perle:focus-visible{outline:1px solid var(--f-lime);outline-offset:2px}
+.formen-faden .glied{width:22px;height:2px;margin-top:15px;background:rgba(255,246,224,.22);flex:none}
+.formen-tun{position:absolute;right:max(14px,env(safe-area-inset-right,0px));bottom:max(14px,env(safe-area-inset-bottom,0px));z-index:2;display:flex;gap:8px}
+.formen-tun:empty{display:none}
+.formen-tun .halten.gold{background:rgba(20,16,8,.85);box-shadow:0 0 0 1px rgba(242,196,109,.35)}
+.formen ~ .siegel,.formend .siegel{z-index:40}
+@media (max-width:760px){
+  .formen{grid-template-rows:auto 1fr auto auto auto;padding-left:max(6px,env(safe-area-inset-left,0px));padding-right:max(6px,env(safe-area-inset-right,0px))}
+  .formen-kopf{grid-template-columns:minmax(0,1fr);gap:0}
+  .formen-satz{grid-column:1;max-width:none;padding:0 10px 6px;font-size:12px}
+  .formen-rand{grid-row:2;padding:4px 18px}
+  .formen-leise{grid-row:3;padding-top:6px}
+  .formen-faden{grid-row:4;justify-content:safe center;padding:16px 2px 2px}
+  .formen-faden .perle{min-width:46px;letter-spacing:.06em}
+  .formen-faden .glied{width:6px}
+  .formen-original{padding:16px 8px}
+  .formen-original .papier{padding:26px 20px;font-size:17px}
+  .formen-tun{position:static;grid-row:5;justify-self:center;padding:4px 0 2px}
+}
+@media (prefers-reduced-motion: reduce){
+  #gl{transition:none}
+  .formen.auf .formen-flaeche{animation:blatt-still .3s ease both}
+}
+
+@media (max-width:760px){
+  .mark{letter-spacing:.34em}
+  #snd span{display:none}
+  .lese{top:auto;left:0;width:auto;max-height:62vh;border-radius:20px 20px 0 0;padding:8px 20px calc(30px + env(safe-area-inset-bottom,0px));
+    background:rgb(6,5,12);box-shadow:0 -10px 40px rgba(0,0,0,.6);animation-name:lese-hoch;transition:transform .2s ease}
+  .lese-griff{display:block;position:sticky;top:-8px;height:28px;margin:-8px -20px 0;touch-action:none;cursor:grab;z-index:2;background:rgb(6,5,12)}
+  .lese-griff::after{content:"";position:absolute;left:50%;top:12px;width:40px;height:4px;margin-left:-20px;border-radius:2px;background:var(--ink-faint)}
+  @keyframes lese-hoch{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:none}}
+  .lesend #line{right:0;bottom:calc(63vh + 10px)}
+  .lese-text{font-size:15.5px}
+  .lesend .siegel{left:50%;bottom:calc(63vh + 12px)}
+  .lesend #snd{opacity:0;pointer-events:none}
+  .lesend .mark{opacity:0}
+}
+@media (prefers-reduced-motion: reduce){
+  #line{transition:opacity .6s ease;filter:none;transform:none}
+  .lese,.siegel{animation:none}
+}

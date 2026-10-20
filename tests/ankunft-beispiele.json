@@ -1,0 +1,10 @@
+[
+ {"zahlen": {"stimmen": [], "uebernahmen": 0, "faeden": 0, "befunde": 0, "monde": 0}, "satz": "Seit deinem letzten Besuch ist nichts dazugekommen."},
+ {"zahlen": {"stimmen": [["Codex", 2]], "uebernahmen": 0, "faeden": 0, "befunde": 0, "monde": 1}, "satz": "Seit deinem letzten Besuch eingetragen: zwei Ausprägungen von Codex."},
+ {"zahlen": {"stimmen": [["Codex", 2], ["Hermes", 1]], "uebernahmen": 0, "faeden": 0, "befunde": 0, "monde": 2}, "satz": "Seit deinem letzten Besuch eingetragen: zwei Ausprägungen von Codex und eine von Hermes, in zwei Monden."},
+ {"zahlen": {"stimmen": [["Claude", 1]], "uebernahmen": 0, "faeden": 1, "befunde": 0, "monde": 1}, "satz": "Seit deinem letzten Besuch eingetragen: eine Ausprägung von Claude. Dazu ein neuer Faden."},
+ {"zahlen": {"stimmen": [], "uebernahmen": 40, "faeden": 0, "befunde": 0, "monde": 1}, "satz": "Seit deinem letzten Besuch eingetragen: 40 Ausprägungen aus einer technischen Übernahme."},
+ {"zahlen": {"stimmen": [["Codex", 1]], "uebernahmen": 3, "faeden": 0, "befunde": 0, "monde": 1}, "satz": "Seit deinem letzten Besuch eingetragen: eine Ausprägung von Codex und drei aus Quellen."},
+ {"zahlen": {"stimmen": [], "uebernahmen": 0, "faeden": 2, "befunde": 1, "monde": 0}, "satz": "Seit deinem letzten Besuch eingetragen: zwei neue Fäden und ein Befund."},
+ {"zahlen": {"stimmen": [["Kimi", 13]], "uebernahmen": 1, "faeden": 0, "befunde": 2, "monde": 3}, "satz": "Seit deinem letzten Besuch eingetragen: 13 Ausprägungen von Kimi und eine aus Quellen, in drei Monden. Dazu zwei Befunde."}
+]

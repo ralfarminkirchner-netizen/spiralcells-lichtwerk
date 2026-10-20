@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#080d16">
+  <title>SPiRALCELLS · Werkraum</title>
+  <link rel="stylesheet" href="/werkraum.css">
+  <link rel="stylesheet" href="/materialraum.css">
+</head>
+<body>
+  <div id="room">
+    <canvas id="field" aria-label="Räumliches Netz der Werke"></canvas>
+    <div id="spatial-labels"></div>
+    <header class="room-header">
+      <a class="wordmark" href="/werkraum.html">SPiRAL<span>CELLS</span><small>WERKE IN ENTWICKLUNG</small></a>
+      <nav aria-label="Werkraum">
+        <button id="return" hidden>↶ Zurück zur Lesestelle</button>
+        <button id="network" class="active">Netz</button>
+        <button id="catalog-toggle" aria-expanded="false">Werke finden</button>
+        <button id="guide-toggle" aria-expanded="false" aria-controls="guide">Leseschlüssel</button>
+      </nav>
+    </header>
+    <aside id="catalog" hidden>
+      <div class="aside-top"><h2>Ein Werk finden</h2><button id="catalog-close" aria-label="Werksuche schließen">×</button></div>
+      <label class="search-label" for="work-search">Titel oder Stimme</label>
+      <input id="work-search" type="search" placeholder="Im Bestand suchen …" autocomplete="off">
+      <p id="work-count"></p>
+      <div id="work-list"></div>
+    </aside>
+    <aside id="guide" hidden>
+      <div class="aside-top"><h2>Das Netz lesen</h2><button id="guide-close" aria-label="Leseschlüssel schließen">×</button></div>
+      <p>Ein Körper, ein Werk. Seine Membran umfasst seine gespeicherten Fassungen. Umfang und Gewebedichte nehmen mit ihrer Anzahl zu; die Silhouette dient dem Wiedererkennen.</p>
+      <p>Fäden zwischen Zellen stehen für dokumentierte Werkbeziehungen. Ihre räumliche Nähe dient der Orientierung und ist kein Maß für inhaltliche Ähnlichkeit.</p>
+      <p><b>Spirale:</b> von innen nach außen, in Speicherreihenfolge. <b>Kelch:</b> dieselbe Reihenfolge von unten nach oben. Gleich große Schritte bedeuten keine gleichen Zeitabstände.</p>
+      <p>Helle Verzweigungen verbinden die belegte Ausgangsfassung mit ihrer Bearbeitung. Farbe bezeichnet die hinterlegte Urheberschaft. Ein heller Ring bedeutet Auswahl.</p>
+      <p>Datumsangaben sind Speicherzeitpunkte; bei Importen können sie vom Entstehungsdatum abweichen. Form, Glanz und Farbe vergeben keine Bewertung.</p>
+      <label class="motion-option"><input id="reduced-motion" type="checkbox"> Bewegungen reduzieren</label>
+      <a href="/">Frühere Lichtwerk-Variante öffnen ↗</a>
+    </aside>
+    <section id="focus-heading" hidden></section>
+    <aside id="history" hidden></aside>
+    <div class="field-controls" aria-label="Ansicht einstellen">
+      <button id="zoom-out" aria-label="Ansicht verkleinern">−</button>
+      <button id="zoom-in" aria-label="Ansicht vergrößern">+</button>
+      <button id="reset-view">Ansicht zentrieren</button>
+    </div>
+    <footer class="room-footer">
+      <div id="field-caption"><span class="eyebrow">DAS VERBUNDENE WERK</span><p>Jede Zelle bewahrt ihr Werden.</p><small>Ein Werk berühren, seine Entwicklung öffnen.</small></div>
+      <div id="environment"></div>
+    </footer>
+  </div>
+  <main id="material" hidden></main>
+  <div id="notice" role="status" aria-live="polite"></div>
+  <div id="load-error" hidden><h1>Der Werkraum wartet auf seinen Bestand.</h1><p></p><button onclick="location.reload()">Erneut laden</button></div>
+  <script type="module" src="/js/werkraum.js"></script>
+</body>
+</html>

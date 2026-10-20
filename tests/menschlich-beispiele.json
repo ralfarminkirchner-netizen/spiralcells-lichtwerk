@@ -1,0 +1,107 @@
+[
+ {
+  "eingabe": "Ganz normaler Satz ohne Kennung.",
+  "menschlich": "Ganz normaler Satz ohne Kennung.",
+  "kurz40": "Ganz normaler Satz ohne Kennung."
+ },
+ {
+  "eingabe": "Siehe [den Auftrag](https://example.org/a/b?c=d) und [Notiz](./notiz.md).",
+  "menschlich": "Siehe den Auftrag und Notiz.",
+  "kurz40": "Siehe den Auftrag und Notiz."
+ },
+ {
+  "eingabe": "Ausprägung 3f2a9c1e-7b4d-4e2a-9f10-1a2b3c4d5e6f wurde gelesen.",
+  "menschlich": "Ausprägung [technische Kennung] wurde gelesen.",
+  "kurz40": "Ausprägung [technische Kennung] wurde g…"
+ },
+ {
+  "eingabe": "GROSS: 3F2A9C1E-7B4D-4E2A-9F10-1A2B3C4D5E6F.",
+  "menschlich": "GROSS: [technische Kennung].",
+  "kurz40": "GROSS: [technische Kennung]."
+ },
+ {
+  "eingabe": "Prüfsumme 28c5ab8de0fee3024d856e869e4fbf12478d59f209d00e23d1689c0d2a10b8f9 stimmt.",
+  "menschlich": "Prüfsumme [Prüfsumme] stimmt.",
+  "kurz40": "Prüfsumme [Prüfsumme] stimmt."
+ },
+ {
+  "eingabe": "Commit a1b2c3d und Commit 0f9e8d7c6b5a liegen vor.",
+  "menschlich": "Commit [Prüfsumme] und Commit [Prüfsumme] liegen vor.",
+  "kurz40": "Commit [Prüfsumme] und Commit [Prüfsumm…"
+ },
+ {
+  "eingabe": "Wörter wie deadbeef, facade und 1234567 bleiben.",
+  "menschlich": "Wörter wie deadbeef, facade und 1234567 bleiben.",
+  "kurz40": "Wörter wie deadbeef, facade und 1234567…"
+ },
+ {
+  "eingabe": "Datei /Users/ralfkirchner/Projekte/spiral/BERICHT.md und Ordner /Volumes/ThunderBolt4_2TB/Development/Projects/ hier.",
+  "menschlich": "Datei BERICHT.md und Ordner Projects hier.",
+  "kurz40": "Datei BERICHT.md und Ordner Projects hi…"
+ },
+ {
+  "eingabe": "Ein sehr langer Name /tmp/x/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.txt am Ende.",
+  "menschlich": "Ein sehr langer Name [lokaler Speicherort] am Ende.",
+  "kurz40": "Ein sehr langer Name [lokaler Speichero…"
+ },
+ {
+  "eingabe": "Mit file:///private/var/folders/abc/datei.json im Text.",
+  "menschlich": "Mit datei.json im Text.",
+  "kurz40": "Mit datei.json im Text."
+ },
+ {
+  "eingabe": "Grenze äabcdef1234 und _abcdef1234 und Café3fa9b2c1.",
+  "menschlich": "Grenze ä[Prüfsumme] und _abcdef1234 und Café[Prüfsumme].",
+  "kurz40": "Grenze ä[Prüfsumme] und _abcdef1234 und…"
+ },
+ {
+  "eingabe": "(/opt/homebrew/bin/node) in Klammern, ]/home/nutzer/x] dahinter.",
+  "menschlich": "(node) in Klammern, ]x] dahinter.",
+  "kurz40": "(node) in Klammern, ]x] dahinter."
+ },
+ {
+  "eingabe": "Zeile eins\nZeile zwei mit  doppeltem   Raum\n\nAbsatz.",
+  "menschlich": "Zeile eins\nZeile zwei mit  doppeltem   Raum\n\nAbsatz.",
+  "kurz40": "Zeile eins Zeile zwei mit doppeltem Rau…"
+ },
+ {
+  "eingabe": "",
+  "menschlich": "",
+  "kurz40": ""
+ },
+ {
+  "eingabe": "Siehe ~/.claude/projects/-Users-ralfkirchner-Documents-Claude-Projects-ADHS-OS/memory/notiz.md dazu.",
+  "menschlich": "Siehe notiz.md dazu.",
+  "kurz40": "Siehe notiz.md dazu."
+ },
+ {
+  "eingabe": "Ordner -Users-ralfkirchner-Documents-Claude ohne Schrägstrich, aber nicht Wort-Users-x.",
+  "menschlich": "Ordner [lokaler Speicherort] ohne Schrägstrich, aber nicht Wort-Users-x.",
+  "kurz40": "Ordner [lokaler Speicherort] ohne Schrä…"
+ },
+ {
+  "eingabe": "Mit $HOME/Library/Application Support im Satz.",
+  "menschlich": "Mit Application Support im Satz.",
+  "kurz40": "Mit Application Support im Satz."
+ },
+ {
+  "eingabe": "😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀",
+  "menschlich": "😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀",
+  "kurz40": "😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀"
+ },
+ {
+  "eingabe": "Emoji 😀😀 [Verweis 😀](https://example.org/x) und /Users/x/😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀.md weiter.",
+  "menschlich": "Emoji 😀😀 Verweis 😀 und [lokaler Speicherort] weiter.",
+  "kurz40": "Emoji 😀😀 Verweis 😀 und [lokaler Speiche…"
+ },
+ {
+  "eingabe": "Leer zeichen und﻿BOM ZeileSteuer\u001cTrenner",
+  "menschlich": "Leer zeichen und﻿BOM ZeileSteuer\u001cTrenner",
+  "kurz40": "Leer zeichen und BOM ZeileSteuer\u001cTrenn…"
+ },
+ {
+  "eingabe": " ﻿  vorn und hinten 　 ",
+  "menschlich": " ﻿  vorn und hinten 　 ",
+  "kurz40": "vorn und hinten"
+ }
+]

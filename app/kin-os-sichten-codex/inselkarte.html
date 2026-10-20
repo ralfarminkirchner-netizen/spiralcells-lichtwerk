@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#efe7d5">
+  <title>Inselkarte · KiN OS Sichten</title>
+  <link rel="stylesheet" href="inselkarte.css">
+</head>
+<body>
+  <header class="masthead">
+    <nav aria-label="Entwürfe"><a href="index.html">Alle Entwürfe</a><a href="sternwerft.html">Sternwerft</a><a href="gezeiten.html">Gezeiten</a><a href="http://127.0.0.1:8894/">Bisherige Galaxie</a></nav>
+    <div class="heading"><div><p class="byline">Entwurf von Codex</p><h1>Die Inselkarte</h1></div><p class="intro">Ein Werk ist ein Hafen.<br>Die Reise beginnt mit einer Berührung.</p></div>
+    <div class="map-tools"><div class="lenses" role="group" aria-label="Karte ordnen"><button type="button" class="active" id="by-theme" aria-pressed="true">Themen</button><button type="button" id="by-state" aria-pressed="false">Arbeitsstand</button></div><p id="basis">Lage: UI-Vorschlag nach Werkbezeichnungen.</p><span id="source-state" role="status">SPiRALCELLS wird gelesen …</span></div>
+  </header>
+  <main>
+    <section class="chart" aria-label="Bereisbare Werkinseln">
+      <div class="map-scroll" id="map-scroll" tabindex="0" aria-label="Seekarte. Mit Trackpad oder Scrollbalken verschieben; Werkinseln mit Tab und Enter besuchen."><div id="map-space" class="map-space"><div id="map-world" class="map-world"><svg id="voyage-lines" class="voyage-lines" aria-hidden="true"></svg><div id="islands"></div></div></div><p id="empty" class="empty">Die Seekarte wartet auf den vorhandenen Materialbestand.</p></div>
+      <div class="compass" aria-hidden="true"><span>N</span><i>✧</i><small>W &nbsp; O</small></div>
+      <div class="chart-controls" aria-label="Kartensteuerung"><button type="button" id="zoom-out" aria-label="Karte verkleinern">−</button><button type="button" id="zoom-in" aria-label="Karte vergrößern">+</button><button type="button" id="overview">Überblick</button><button type="button" id="next-island">Nächster Hafen</button></div>
+      <p class="sea-note">Nur vorhandene Werke werden zu Inseln.<br>Freies Meer behauptet keinen verborgenen Bestand.</p>
+    </section>
+    <section class="reader" aria-labelledby="harbour-title">
+      <div class="reader-heading"><p id="voyage-state" class="byline">Noch keine Reise</p><h2 id="harbour-title">Wähle einen Hafen.</h2></div>
+      <div class="reader-body"><p id="harbour-copy">Reise zwischen echten Werken. Themen ordnen nach Namen; Arbeitsstand nach dem vorhandenen Fassungsumfang. Beide Ordnungen sind Vorschläge für die Navigation.</p><p id="travel-rule">Die Linie zeigt deinen gewählten Weg, keine nachgewiesene Beziehung.</p><div class="reader-actions"><button type="button" id="back" disabled>Zurück zum vorigen Hafen</button><a id="original" hidden>Quellenstand in SPiRALCELLS öffnen ↗</a></div></div>
+    </section>
+  </main>
+  <script src="data.js"></script>
+  <script src="inselkarte.js"></script>
+</body>
+</html>
