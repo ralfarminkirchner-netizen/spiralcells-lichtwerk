@@ -68,11 +68,11 @@ Diese Entscheidungen fragst du nicht neu ab.
 - **Zu viele Türen.** 8411, 8420, 8895, 8894, der Werkraum, die Sternwerft und drei Sichten-Skizzen: Für Ralfs Tag ist das ein Labyrinth. Es gibt keine eine Tür, keinen einen Startknopf und kein ruhiges Bild davon, was gerade läuft.
 - **Gebaut, aber nicht live:**
   - 8411 ist erledigt: Er läuft seit 23:22 mit dem getesteten Servercode (Commit 68ecd12, `--leseeingang 8420 --behalten`), von Claude gemessen.
-  - Der ehrliche Herkunftssatz des KiNFORMER gilt erst nach einem Neustart von 9062, und den gibt es nur mit Ralfs Ja.
-- **Der 409-Weg ist nur aufgeschrieben, und die Reihenfolge zählt.** Nach dem Neustart von 9062 liefert der KiNFORMER für denselben Stoff eine neue Seite. Die Kennung, unter der Zentrale und Fork die Form in KiN ablegen, hängt aber nur an Werk, Richtung und Text. KiN antwortet dann mit 409, und Weiterformen bricht. Deshalb kommt erst die Zeile, dann der Neustart. Die Zeile nimmt die Seite in die Kennung auf, `+ form["html"]` in der Klammer von `hashlib.sha256((werk + richtung + text …`:
+  - Der ehrliche Herkunftssatz ist live: Auf Ralfs Ja hat Claude 9062 um 23:43 neu gestartet. Er sagt jetzt etwa „Die ersten drei von 4 Sätzen, groß gesetzt.“ (gemessen).
+- **Der 409-Weg ist gebaut, aber nicht im Betrieb erprobt.** Der KiNFORMER liefert seit dem Neustart für denselben Stoff eine neue Seite. Darum hängt die Kennung, unter der Zentrale und Fork eine Form in KiN ablegen, jetzt auch an der Seite (`+ form["html"]`):
   - im Fork ist sie schon gebaut (`kin-os/aios_formen.py`, `kinos-form-`, Commit 1b7cf21, mit Test; 8895 läuft damit),
-  - in `wirktragwerk/aios_formen.py` (`kinformer-`) nur nach Ralfs Ja; dort zuerst den unveränderten Stand allein einchecken, dann die Zeile (`KINFORMER-EHRLICH-ZENTRALE.md` §3).
-  Danach `formformer` gegen eine eigene Instanz auf einem freien Port prüfen, nie gegen 9062.
+  - in `wirktragwerk/aios_formen.py` (`kinformer-`) auf Ralfs Ja: Commit ab670ca ist der unveränderte Stand, cd2e564 die Zeile mit Test. 8894 läuft seit 23:43 damit. Rot im Gesamtlauf: nur der schon vorher rote CSP-Test in `test_aios_http.py` und ein wechselhafter Vault-Test, beide fremd.
+  Nicht erprobt: ein echtes Weiterformen gegen KiN, weil es dort schreibt. Das macht Ralf beim ersten Gang, und du prüfst danach, dass keine 409 kam.
 - **KiN kennt KiN OS nicht.** „Wählen“ ruht im Fork, weil KiN den Ursprung 8895 nicht zulässt. „Ausprobieren“ öffnet eine Werkadresse mit Kennung. Beides lässt sich nur in KiN beheben, mit Ralfs Ja und über `betrieb.py`.
 - **Nicht geprüft:**
   - ein echtes iPhone,
@@ -95,7 +95,7 @@ Du kannst etwas, das die Bauer vor dir nicht konnten: Du siehst den Bildschirm w
 AiHDS OS bleibt daneben unverändert und umschaltbar. Die Sichten-Skizzen sind Vorschläge, kein Bestand. Übernimm, was trägt, und nenn den Autor.
 
 **C · Die offenen Schalter.** Sammle alles, was Ralfs Ja braucht, in **einer** Frage mit kurzen Punkten. Sonst fragst du bei jedem einzeln. Vermutlich gehören dazu:
-- der 409-Weg in `wirktragwerk` und, danach, der Neustart von 9062 für den ehrlichen Satz (zusammen als ein Punkt, nie in umgekehrter Reihenfolge),
+- (erledigt, nicht mehr fragen: 409-Weg in `wirktragwerk` und Neustart von 9062 und 8894, Ralfs Ja um 23:40)
 - KiN lässt KiN OS zu (Wählen) und zeigt lesbare Werkadressen,
 - ob Codex den Statusbeleg baut (Brief liegt bereit).
 8411 neu starten musst du nur, wenn du den Servercode änderst. Das darfst du ohne Frage, sobald der Schutz frei ist und die Tests grün sind: erst `state.json` sichern, dann mit `--leseeingang 8420 --behalten` wie in der Startdatei, Prozesse nur per PID.
