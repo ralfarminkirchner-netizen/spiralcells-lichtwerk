@@ -173,11 +173,11 @@ function passage(a, rand){
   nr.setAttribute('aria-label', `Passage ${a.index + 1} als Lesestelle merken und kopieren`);
   sec.append(nr);
   const koerper = el('div', 'koerper');
-  if(a.heading && a.role) koerper.append(el('h3', null, menschlich(a.heading)));
+  if(a.heading && a.role) koerper.append(el('h3', null, zeige(a.heading)));
   const h = !a.structured && String(a.text).match(/^\s{0,3}#{1,6}\s+(.*)$/);
-  if(h && a.text.split('\n').length === 1) koerper.append(el('h3', null, menschlich(h[1])));
-  else if(a.structured) koerper.append(el('pre', null, menschlich(a.text)));   // ohne Kennungen; der unveränderte Wortlaut bleibt in den Technischen Details
-  else { const p = el('p'); p.append(gesetzt(menschlich(a.text).replace(/^\s{0,3}#{1,6}\s+/, '').replace(/^\s*>\s?/gm, ''))); if(/^\s*>/.test(a.text)) p.className = 'zitat'; koerper.append(p); }
+  if(h && a.text.split('\n').length === 1) koerper.append(el('h3', null, zeige(h[1])));
+  else if(a.structured) koerper.append(el('pre', null, zeige(a.text)));   // ohne Kennungen; der unveränderte Wortlaut bleibt in den Technischen Details
+  else { const p = el('p'); p.append(gesetzt(zeige(a.text).replace(/^\s{0,3}#{1,6}\s+/, '').replace(/^\s*>\s?/gm, ''))); if(/^\s*>/.test(a.text)) p.className = 'zitat'; koerper.append(p); }
   sec.append(koerper);
   if(rand && rand.length){ const r = el('aside', 'rand'); for(const x of rand) r.append(x); sec.append(r); sec.classList.add('mit-rand'); }
   return sec;
@@ -257,7 +257,7 @@ function baueVergleich(text){
       gleichLauf.n++; gleichLauf.sum.textContent = `${gleichLauf.n} ${gleichLauf.n === 1 ? 'Passage' : 'Passagen'} unverändert`; gleichLauf.el.append(passage(p.a)); continue; }
     gleichLauf = null;
     const zeile = el('section', 'paar'); zeile.dataset.i = p.a ? String(p.a.index) : '';
-    const wv = p.a && p.b ? wortVergleich(menschlich(p.a.text), menschlich(p.b.text)) : null;
+    const wv = p.a && p.b ? wortVergleich(zeige(p.a.text), zeige(p.b.text)) : null;
     for(const [teil, seite] of [[p.a, 'hier'], [p.b, 'dort']]){
       const zelle = el('div', 'zelle ' + seite);
       if(!teil){ zelle.append(el('p', 'stoff-leise', seite === 'hier' ? 'hier ohne Gegenstück' : 'dort ohne Gegenstück')); zeile.append(zelle); continue; }
@@ -265,7 +265,7 @@ function baueVergleich(text){
       const t = el(teil.structured ? 'pre' : 'p');
       if(wv) markiert(t, seite === 'hier' ? wv.A : wv.Bt, seite === 'hier' ? wv.ka : wv.kb, seite === 'hier' ? 'del' : 'ins');
       if(wv && wv.grob && seite === 'hier') zelle.append(el('span', 'grob', wv.grob === 'zeilen' ? 'zu lang für den Wortabgleich: Zeile für Zeile verglichen' : 'zu lang für einen Abgleich: unmarkiert'));
-      else t.append(el(seite === 'hier' ? 'del' : 'ins', null, menschlich(teil.text)));
+      else t.append(el(seite === 'hier' ? 'del' : 'ins', null, zeige(teil.text)));
       zelle.append(t); zeile.append(zelle); }
     text.append(zeile); abw.push(zeile);
   }
