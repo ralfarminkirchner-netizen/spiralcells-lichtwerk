@@ -43,7 +43,7 @@ export class Netz {
       return (0.45 + 1.0 * Math.sqrt(k / 140)) * (m.stimmen.length ? 1.25 : 1); });
     // Lesematerial ist kein Werk: es wird ein kleines Korn
     for(const i of this.baum.material.keys()) this.rM[i] = 0.32;
-    this.L = lage(this.baum, this.rM.map(r => r * 1.25), {gapWerk: 0.5, gapBereich: 1.1, gapDach: 2.6});
+    this.L = lage(this.baum, this.rM.map(r => r * 1.15), {gapWerk: 0.3, gapBereich: 0.7, gapDach: 2.0});
     this.pos = this.L.pos.map((p, i) => [p[0], (hash(i * 3.7) - 0.5) * 0.25, p[2]]);
     this.mini = B.monde.map((m, i) => this.baum.material.has(i) ? {pts: new Float32Array(0), stiel: new Float32Array(0)} : miniWuchs(m, this.rM[i]));
     this.R2 = this.L.R; this.H2 = 0; this.mitte = [0, 0, 0]; this.Rm2 = this.L.R * 1.08;
@@ -72,11 +72,14 @@ const TMP = [0, 0, 0, 0];
 export function bigHead(N, i, t, o){ const Rm = N.L.mitte.R, th = t * TAU / 16 + 0.6 + i * 0.4, bp = t * TAU * 0.3 + i * TAU / 5, rho = Rm * (0.62 + 0.03 * Math.cos(bp));
   o[0] = rho * Math.cos(th); o[1] = Rm * (0.32 + 0.05 * Math.sin(bp) - 0.03 * i); o[2] = rho * Math.sin(th); return o; }
 
+/* Ein Ring am Boden, auf Wunsch gestrichelt (luecke: jeder n-te Punkt fehlt) */
+function ring(c, R, col, a, sz, luecke){ const n = Math.max(60, Math.round(R * 22));
+  for(let s = 0; s < n; s++){ if(luecke > 1 && s % (luecke + 1) === 0) continue; const t = s / n * TAU; P(c[0] + Math.cos(t) * R, c[1], c[2] + Math.sin(t) * R, sz, col[0], col[1], col[2], a); } }
 function huelle(c, R, yS, col, a, pts, cx, cyy, cz){
   for(let k = 0; k < pts.length / 3; k++){ const ux = pts[k * 3], uy = pts[k * 3 + 1], uz = pts[k * 3 + 2];
     const x = c[0] + ux * R, y = c[1] + uy * R * yS, z = c[2] + uz * R;
     const vx = cx - x, vy = cyy - y, vz = cz - z, vl = Math.hypot(vx, vy, vz) || 1, fres = Math.pow(1 - Math.abs((ux * vx + uy * vy * yS + uz * vz) / vl), 3.0);
-    P(x, y, z, R * 0.006, col[0], col[1], col[2], (0.006 + fres) * a); }
+    P(x, y, z, R * 0.011, col[0], col[1], col[2], (0.004 + fres) * a * 0.8); }
 }
 
 export function baueNetz(N, U, wall, vis, aktiv, aktivDetail){
@@ -86,18 +89,22 @@ export function baueNetz(N, U, wall, vis, aktiv, aktivDetail){
   const hovD = U.hover && U.hover.art === 'dach' ? U.hover.i : -1, selD = U.sel && U.sel.art === 'dach' ? U.sel.i : -1;
   // Mitte: die Zentrale, ein warmer Keim mit eigener Hülle
   const Lm = N.L.mitte, puls = U.RM ? 0.85 : 0.75 + 0.25 * Math.sin(wall * 0.9), hovM = U.hover && U.hover.art === 'mitte', selM = U.sel && U.sel.art === 'mitte';
-  P(0, 0, 0, Lm.R * 0.16, KEIMC[0], KEIMC[1], KEIMC[2], 0.9 * vis * puls * (hovM || selM ? 1.5 : 1));
-  P(0, 0, 0, Lm.R * 0.6, GOLDC[0], GOLDC[1], GOLDC[2], 0.05 * vis);
+  P(0, 0, 0, Lm.R * 0.12, KEIMC[0], KEIMC[1], KEIMC[2], 0.8 * vis * puls * (hovM || selM ? 1.5 : 1));
+  P(0, 0, 0, Lm.R * 1.6, KEIMC[0], KEIMC[1], KEIMC[2], 0.05 * vis);
+  ring([0, -0.05, 0], Lm.R, KEIMC, (hovM || selM ? 0.9 : 0.55) * vis * (imDach >= 0 ? 0.4 : 1), 0.09, 1);
   huelle([0, 0, 0], Lm.R, 0.42, WG, (hovM || selM ? 0.9 : 0.5) * vis * (imDach >= 0 ? 0.4 : 1), MEMD, cx, cyy, cz);
   U.mitteSchirm = toScreen(0, Lm.R * 0.42, 0);
   // Dächer: je eine Hülle, Bereiche als leise Ringe am Boden
   for(let j = 0; j < N.daecher.length; j++){ const d = N.daecher[j], hell = j === imDach ? 1.35 : imDach >= 0 ? 0.35 : 1, an = j === hovD || j === selD;
     const c = an ? mixc(WG, SILVER, 0.4) : WG;
+    // Ein Dach ist eine eigene Zelle: leuchtender Rand am Boden, Innenglühen, Hülle darüber
+    P(d.mitte[0], 0, d.mitte[2], d.R * 1.7, c[0], c[1], c[2], 0.03 * vis * hell * (an ? 1.6 : 1));
+    ring([d.mitte[0], -0.05, d.mitte[2]], d.R, c, (an ? 0.75 : 0.42) * vis * hell, 0.11, 1);
     huelle(d.mitte, d.R, 0.38, c, (an ? 0.95 : 0.55) * vis * hell, MEMD, cx, cyy, cz);
-    for(const b of d.bereiche){ const n = Math.max(40, Math.round(b.R * 30)); for(let s = 0; s < n; s++){ const t = s / n * TAU; P(b.mitte[0] + Math.cos(t) * b.R, -0.05, b.mitte[2] + Math.sin(t) * b.R, 0.035, WG[0], WG[1], WG[2], 0.07 * vis * hell); } }
+    for(const b of d.bereiche) ring([b.mitte[0], -0.05, b.mitte[2]], b.R, WG, 0.16 * vis * hell, 0.06, 2);
     U.daecherSchirm[j] = toScreen(d.mitte[0], d.R * 0.42, d.mitte[2]); }
   U.daecherSchirm.length = N.daecher.length;
-  if(N.L.ohne){ const o = N.L.ohne; const n = Math.max(60, Math.round(o.R * 24)); for(let s = 0; s < n; s += 2){ const t = s / n * TAU; P(o.mitte[0] + Math.cos(t) * o.R, -0.05, o.mitte[2] + Math.sin(t) * o.R, 0.03, DUSTC[0], DUSTC[1], DUSTC[2], 0.05 * vis); }
+  if(N.L.ohne){ const o = N.L.ohne; ring([o.mitte[0], -0.05, o.mitte[2]], o.R, DUSTC, 0.2 * vis, 0.07, 3);
     U.ohneSchirm = toScreen(o.mitte[0], o.R * 0.3, o.mitte[2]); } else U.ohneSchirm = null;
   // Werke
   for(let n = 0; n < N.N; n++){
@@ -109,12 +116,12 @@ export function baueNetz(N, U, wall, vis, aktiv, aktivDetail){
     if(soloAny) a *= m.stimmen.includes(U.solo) ? 1.3 : 0.18;
     if(material){ P(o[0], o[1], o[2], 0.16, DUSTC[0], DUSTC[1], DUSTC[2], a * 0.9); P(o[0], o[1], o[2], 0.5, DUSTC[0], DUSTC[1], DUSTC[2], a * 0.05);
       if(hov === n || self) screenRing(o, 0.35, WG, 0.4 * vis); U.monde[n] = toScreen(o[0], o[1], o[2]); continue; }
-    const lit = (m.traumfeld ? 0.7 : 2.0) * (hov === n ? 1.7 : 1) * (self ? 1.4 : 1);
-    if(k){ let r = 0, g = 0, b = 0; for(let p = 0; p < k; p++){ r += pts[p * 6 + 3]; g += pts[p * 6 + 4]; b += pts[p * 6 + 5]; } P(o[0], o[1] + N.rM[n] * 0.15, o[2], N.rM[n] * 2.0, r / k, g / k, b / k, a * (m.traumfeld ? 0.06 : 0.16)); }
-    const sz = 0.075 * Math.max(0.7, N.rM[n]);
+    const lit = (m.traumfeld ? 1.4 : 2.2) * (hov === n ? 1.7 : 1) * (self ? 1.4 : 1);
+    if(k){ let r = 0, g = 0, b = 0; for(let p = 0; p < k; p++){ r += pts[p * 6 + 3]; g += pts[p * 6 + 4]; b += pts[p * 6 + 5]; } P(o[0], o[1] + N.rM[n] * 0.15, o[2], N.rM[n] * 2.0, r / k, g / k, b / k, a * (m.traumfeld ? 0.12 : 0.2)); }
+    const sz = 0.17 * Math.max(0.7, N.rM[n]);
     for(let p = 0; p < k; p++) P(o[0] + pts[p * 6], o[1] + pts[p * 6 + 1], o[2] + pts[p * 6 + 2], sz, pts[p * 6 + 3], pts[p * 6 + 4], pts[p * 6 + 5], a * lit * (U.RM ? 0.9 : 0.8 + 0.2 * Math.sin(wall * 0.7 + p * 0.37 + n)));
     const st = N.mini[n].stiel; for(let p = 0; p < st.length / 6; p++) P(o[0] + st[p * 6], o[1] + st[p * 6 + 1], o[2] + st[p * 6 + 2], sz * 0.45, st[p * 6 + 3], st[p * 6 + 4], st[p * 6 + 5], a * 0.35);
-    P(o[0], o[1], o[2], 0.09, KEIMC[0], KEIMC[1], KEIMC[2], a * (m.keimKristall ? 1.5 : 0.8));
+    P(o[0], o[1], o[2], 0.2, KEIMC[0], KEIMC[1], KEIMC[2], a * (m.keimKristall ? 1.5 : 0.8));
     const rc = m.reife === 'kanonisch' ? GOLDC : WG;
     if(!m.traumfeld || hov === n) screenRing([o[0], o[1] + N.rM[n] * 0.2, o[2]], N.rM[n] * 1.3, rc, 0.28 * a, Math.max(0.06, m.phase));
     if(self || hov === n){ const pu = U.RM ? 0.5 : 0.5 + 0.5 * Math.sin(wall * 2.4); screenRing([o[0], o[1] + N.rM[n] * 0.2, o[2]], N.rM[n] * (1.6 + 0.12 * pu), SILVER, (self ? 0.5 : 0.35) * vis); }

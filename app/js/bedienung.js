@@ -46,8 +46,11 @@ export function mondSatz(m){
 }
 export function stummeStimmen(m){ if(!m || m.stimmen.length < 2 || m.kopplung === 0) return null; const lesen = new Set(m.paare.map(p => p[0])); const s = m.stimmen.filter(i => !lesen.has(i)); return s.length ? s : null; }
 export function netzSatz(B){
+  const N = W.N, d = N && N.baum ? N.baum.daecher.length : 0;
+  if(d){ const ohne = N.baum.ohne.length;
+    return `Die Zentrale in der Mitte, ${zahlwort(d)} ${d === 1 ? 'Dach' : 'Dächer'} darum` + (ohne ? `, ${zahlwort(ohne)} Werke noch ohne Dach.` : '.') + (N.baum.bestaetigt ? '' : ' Diese Ordnung ist ein Vorschlag, noch nicht von dir bestätigt.'); }
   const mit = B.monde.filter(m => m.stimmen.length).length;
-  return `${B.monde.length} Monde. In ${zahlwort(mit)} sprechen die Stimmen.`;
+  return `${B.monde.length} Werke, noch ohne Ordnung. In ${zahlwort(mit)} sprechen die Stimmen.`;
 }
 
 /* ---------------------------------------------------------------- Marke */

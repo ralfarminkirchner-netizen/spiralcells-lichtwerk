@@ -18,7 +18,7 @@ export function regie(U, Z, N, RM){
     const d = U.dach != null && N.daecher && N.daecher[U.dach] ? N.daecher[U.dach] : null;
     if(d) U.dachZiel = d; const dz = U.dachZiel, dk = dz ? (RM ? Math.round(U.dachK) : eio(U.dachK)) : 0;
     const nMitte = dz ? [mix(N.mitte[0], dz.mitte[0], dk), mix(N.mitte[1], dz.mitte[1], dk), mix(N.mitte[2], dz.mitte[2], dk)] : N.mitte;
-    const nS = Math.exp(mix(Math.log(N.Rm2 * 1.18), Math.log(dz ? dz.R * 1.45 : N.Rm2 * 1.18), dk)), inward = U.netDir < 0;
+    const nS = Math.exp(mix(Math.log(N.Rm2 * 0.9), Math.log(dz ? dz.R * 1.35 : N.Rm2 * 0.9), dk)), inward = U.netDir < 0;
     const tk = inward ? sstep(0.0, 0.7, nk) : sstep(0.3, 1.0, nk);
     Sv = Math.exp(mix(Math.log(Math.max(0.05, Sv)), Math.log(nS), nk));
     tg = [mix(tg[0], nMitte[0], tk), mix(tg[1], nMitte[1], tk), mix(tg[2], nMitte[2], tk)];
