@@ -1,5 +1,9 @@
 # Ein Prompt für das Gesamtsystem · 21.10.2026
 
+> **Ersetzt am 21.10.2026 gegen 14:30** durch `PROMPT-CHATGPT-GESAMTSYSTEM-2026-10-21.md`. Ralf: „Ich will einen
+> prompt für chatgpt der alles ausführt, klär alles dafür ab“. Diesen Text keinem Chat mehr geben. Er bleibt als
+> Material liegen.
+
 Von Claude (Lichtwerk-Sitzung), auf Ralfs Wort vom 21.10.2026:
 
 > „Es wird höchste Zeit für einen neuen Chat. Gib mir einen Prompt, der all das auslöst und das Gesamtsystem in sich
