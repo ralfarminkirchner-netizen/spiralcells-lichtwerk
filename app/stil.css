@@ -58,7 +58,11 @@ button{font:inherit;color:inherit}
 .marke-satz{margin-top:4px!important;font-weight:300;font-size:11px;letter-spacing:.16em;color:var(--ink-soft)}
 .marke.links{text-align:right}
 
-#tage,#namen,#tuernamen,#dachnamen{position:fixed;inset:0;pointer-events:none}
+#tage,#namen,#tuernamen,#dachnamen,#werknamen{position:fixed;inset:0;pointer-events:none}
+#werknamen span{position:absolute;left:0;top:0;font-size:11px;letter-spacing:.08em;color:var(--ink);white-space:nowrap;will-change:transform;transition:opacity .6s ease;text-shadow:0 0 12px rgba(4,3,10,.98),0 0 3px rgba(4,3,10,.9)}
+#werknamen .bereich{font-size:10px;letter-spacing:.26em;color:var(--ink-soft)}
+#werknamen .material{font-size:10px;font-style:italic;color:var(--ink-soft)}
+.im-stoff #werknamen{opacity:0!important}
 #dachnamen span{position:absolute;left:0;top:0;font-size:12px;letter-spacing:.3em;color:var(--ink);white-space:nowrap;will-change:transform;transition:opacity .8s ease;text-shadow:0 0 16px rgba(4,3,10,.98),0 0 3px rgba(4,3,10,.9)}
 #dachnamen .mitte{font-size:13px;letter-spacing:.42em;color:var(--whitegold)}
 #dachnamen .ohne{font-size:10px;letter-spacing:.24em;color:var(--ink-soft)}

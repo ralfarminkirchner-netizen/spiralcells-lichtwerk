@@ -1,6 +1,6 @@
 {
-  "bestaetigt": false,
-  "stand": "Vorschlag vom 21.10.2026, belegt aus Projektraum (catalog.json), Mac-Katalog, FASKA-Ordnern und den Werkinhalten. Von Ralf zu bestätigen.",
+  "bestaetigt": true,
+  "stand": "Von Ralf bestätigt am 21.10.2026: „Die Ordnung passt so. Mach weiter.“ Belegt aus Projektraum (catalog.json), Mac-Katalog, FASKA-Ordnern und den Werkinhalten.",
   "mitte": {
     "name": "Zentrale",
     "satz": "AiHDS OS · KREATiVTRAGWERK: die Mitte, ihre Werkzeuge und die gemeinsame Arbeit der Stimmen",
@@ -19,79 +19,236 @@
       "name": "FASKA",
       "satz": "Freie Aktive Schule Karlsruhe · dein Arbeitgeber",
       "bereiche": [
-        {"name": "Schuldokumentation", "werke": ["FASKA Eigenraum", "FASKA Lernpfade", "FASKA Lernpfad · Codex-Linie", "faska invaria 2", "FASKA Lernlandschaft", "FASKA GOLD", "FASKA Varianten · Vergleich", "FASKA Varianten · Jahreskreise (Netz) · Vergleich"]},
-        {"name": "FLOW · Lernspiele", "werke": ["faska flow", "montessori flow"]},
-        {"name": "MUSiC · Klangwelten", "werke": ["FASKA MUSiC", "Let the Music Play", "Let the Music Play · Jugend", "Klangspiele"]}
+        {
+          "name": "Schuldokumentation",
+          "werke": [
+            "FASKA Eigenraum",
+            "FASKA Lernpfade",
+            "FASKA Lernpfad · Codex-Linie",
+            "faska invaria 2",
+            "FASKA Lernlandschaft",
+            "FASKA GOLD",
+            "FASKA Varianten · Vergleich",
+            "FASKA Varianten · Jahreskreise (Netz) · Vergleich"
+          ]
+        },
+        {
+          "name": "FLOW · Lernspiele",
+          "werke": [
+            "faska flow",
+            "montessori flow"
+          ]
+        },
+        {
+          "name": "MUSiC · Klangwelten",
+          "werke": [
+            "FASKA MUSiC",
+            "Let the Music Play",
+            "Let the Music Play · Jugend",
+            "Klangspiele"
+          ]
+        }
       ]
     },
     {
       "name": "Phänomenatlas",
       "satz": "Phänomene, Neurodivergenz und Trauma als begehbarer Atlas",
       "bereiche": [
-        {"name": "Atlas", "werke": ["PARALLAX — ADHS Phänomenatlas", "PHÄNOMENATLAS · Das Originalnetz formen", "phaenomenatlas codex membran", "my app"]},
-        {"name": "Spiel", "werke": ["Phaenomenatlas Spiel"]},
-        {"name": "Neuroatlas", "werke": ["Neuro Atlas"]},
-        {"name": "TRAUMAATLAS", "werke": ["Phänomen-Atlas — TRAUMAATLAS gemeinsam weiterentwickeln"]}
+        {
+          "name": "Atlas",
+          "werke": [
+            "PARALLAX — ADHS Phänomenatlas",
+            "PHÄNOMENATLAS · Das Originalnetz formen",
+            "phaenomenatlas codex membran",
+            "my app"
+          ]
+        },
+        {
+          "name": "Spiel",
+          "werke": [
+            "Phaenomenatlas Spiel"
+          ]
+        },
+        {
+          "name": "Neuroatlas",
+          "werke": [
+            "Neuro Atlas"
+          ]
+        },
+        {
+          "name": "TRAUMAATLAS",
+          "werke": [
+            "Phänomen-Atlas — TRAUMAATLAS gemeinsam weiterentwickeln"
+          ]
+        }
       ]
     },
     {
       "name": "KiNTEGRiTY",
       "satz": "das Gedächtnis: Kapitel, Denkräume und ihre Apps",
       "bereiche": [
-        {"name": "Kapitel und Denkräume", "werke": ["Bewusstsein vor dem Denken", "Was eine Antwort weglässt", "Das bin ich nicht", "Wetter ist kein Lebenslauf", "Bewusstsein und Wahrnehmung", "Eigene Stimme und Ausdruck", "Ich und Selbstbeobachtung", "Ethik und Widerspruch", "Sprache und Wirklichkeit", "Bewusstsein und Quelle", "Philosophie und Herkunft", "Herkunft und Autorschaft", "KI und Erkenntniskritik", "Bewusstsein und Nondualität", "Körper, Grenzen und Erleben"]},
-        {"name": "Gesprächskapitel", "werke": ["Das A in der ersten Silbe", "Die Wörter bleiben. Der Vortrag wird gesucht."]},
-        {"name": "Apps", "werke": ["KiNTEGRiTY · Entstehungsatlas", "KiNTEGRiTY · Gemeinsamer Variantenraum", "frontend"]}
+        {
+          "name": "Kapitel und Denkräume",
+          "werke": [
+            "Bewusstsein vor dem Denken",
+            "Was eine Antwort weglässt",
+            "Das bin ich nicht",
+            "Wetter ist kein Lebenslauf",
+            "Bewusstsein und Wahrnehmung",
+            "Eigene Stimme und Ausdruck",
+            "Ich und Selbstbeobachtung",
+            "Ethik und Widerspruch",
+            "Sprache und Wirklichkeit",
+            "Bewusstsein und Quelle",
+            "Philosophie und Herkunft",
+            "Herkunft und Autorschaft",
+            "KI und Erkenntniskritik",
+            "Bewusstsein und Nondualität",
+            "Körper, Grenzen und Erleben"
+          ]
+        },
+        {
+          "name": "Gesprächskapitel",
+          "werke": [
+            "Das A in der ersten Silbe",
+            "Die Wörter bleiben. Der Vortrag wird gesucht."
+          ]
+        },
+        {
+          "name": "Apps",
+          "werke": [
+            "KiNTEGRiTY · Entstehungsatlas",
+            "KiNTEGRiTY · Gemeinsamer Variantenraum",
+            "frontend"
+          ]
+        }
       ]
     },
     {
       "name": "MiNDLAXY",
       "satz": "Denkräume, Spiralen und Systematlas",
       "bereiche": [
-        {"name": "Atlas und Steuerung", "werke": ["MiNDLAXY — Atlas der Gegenwart", "SPiRALMiNDS"]},
-        {"name": "Spiralen und Schreiben", "werke": ["gedankenspirale", "spiral mind writer frontend", "BRaiNSTORM HUNTER"]}
+        {
+          "name": "Atlas und Steuerung",
+          "werke": [
+            "MiNDLAXY — Atlas der Gegenwart",
+            "SPiRALMiNDS"
+          ]
+        },
+        {
+          "name": "Spiralen und Schreiben",
+          "werke": [
+            "gedankenspirale",
+            "spiral mind writer frontend",
+            "BRaiNSTORM HUNTER"
+          ]
+        }
       ]
     },
     {
       "name": "SEiN",
       "satz": "EiN SEiN · DEiN SEiN Astra",
       "bereiche": [
-        {"name": "EiN SEiN", "werke": ["einsein", "einsein", "Einsein"]},
-        {"name": "DEiN SEiN Astra", "werke": ["MOONFiNGERS", "such dich frontend", "ibv frontend"]}
+        {
+          "name": "EiN SEiN",
+          "werke": [
+            "einsein",
+            "einsein",
+            "Einsein"
+          ]
+        },
+        {
+          "name": "DEiN SEiN Astra",
+          "werke": [
+            "MOONFiNGERS",
+            "such dich frontend",
+            "ibv frontend"
+          ]
+        }
       ]
     },
     {
       "name": "Spiele und Welten",
       "satz": "Rennspiele, Hörni, Märchen und Einhorn",
       "bereiche": [
-        {"name": "Rennspiele", "werke": ["anti ridge racer", "antiracer", "TaxiPan 3D", "TAXiTAXi 3D", "TAXiTAXi / PSYCHODRiVER Godot Fork", "Taxi Rush Pro", "Webstor Racing"]},
-        {"name": "RAiNBOW LiGHT und Hörni", "werke": ["RAiNBOW LiGHT 3D", "RAiNBOW LiGHT 3D", "hoerni 2026"]},
-        {"name": "Märchen und Einhorn", "werke": ["spiel maerchendorf", "Einhorn 64"]}
+        {
+          "name": "Rennspiele",
+          "werke": [
+            "anti ridge racer",
+            "antiracer",
+            "TaxiPan 3D",
+            "TAXiTAXi 3D",
+            "TAXiTAXi / PSYCHODRiVER Godot Fork",
+            "Taxi Rush Pro",
+            "Webstor Racing"
+          ]
+        },
+        {
+          "name": "RAiNBOW LiGHT und Hörni",
+          "werke": [
+            "RAiNBOW LiGHT 3D",
+            "RAiNBOW LiGHT 3D",
+            "hoerni 2026"
+          ]
+        },
+        {
+          "name": "Märchen und Einhorn",
+          "werke": [
+            "spiel maerchendorf",
+            "Einhorn 64"
+          ]
+        }
       ]
     },
     {
       "name": "KlebensFroh",
       "satz": "Basteln, Material und Welten",
       "bereiche": [
-        {"name": "KlebensFroh", "werke": ["Klebensfroh", "KlebensFroh Bastelwelt", "KlebensFroh Material- und MacGyver-Autorenwerkstatt"]}
+        {
+          "name": "KlebensFroh",
+          "werke": [
+            "Klebensfroh",
+            "KlebensFroh Bastelwelt",
+            "KlebensFroh Material- und MacGyver-Autorenwerkstatt"
+          ]
+        }
       ]
     },
     {
       "name": "Text und Reim",
       "satz": "Reim, Sprache und Textatlas",
       "bereiche": [
-        {"name": "Text und Reim", "werke": ["REiMWERK", "RAKi · Textatlas", "phonetic engine ts"]}
+        {
+          "name": "Text und Reim",
+          "werke": [
+            "REiMWERK",
+            "RAKi · Textatlas",
+            "phonetic engine ts"
+          ]
+        }
       ]
     },
     {
       "name": "ADHS OS",
       "satz": "eigenes Dach, nicht FASKA",
       "bereiche": [
-        {"name": "ADHS OS", "werke": ["FUGE + MiNDCEL Codex"]}
+        {
+          "name": "ADHS OS",
+          "werke": [
+            "FUGE + MiNDCEL Codex"
+          ]
+        }
       ]
     }
   ],
   "material": [
-    {"werk": "Émile Durkheim", "an": "Mooncells"},
-    {"werk": "Alfred Radcliffe-Brown", "an": "Mooncells"}
+    {
+      "werk": "Émile Durkheim",
+      "an": "Mooncells"
+    },
+    {
+      "werk": "Alfred Radcliffe-Brown",
+      "an": "Mooncells"
+    }
   ]
 }

@@ -101,7 +101,7 @@ export function baueNetz(N, U, wall, vis, aktiv, aktivDetail){
   P(0, 0, 0, Lm.R * 1.6, KEIMC[0], KEIMC[1], KEIMC[2], 0.05 * vis);
   ring([0, -0.05, 0], Lm.R, KEIMC, (hovM || selM ? 0.9 : 0.55) * vis * (imDach === 'mitte' ? 1.3 : imDach != null ? 0.4 : 1), 0.09, 1);
   huelle([0, 0, 0], Lm.R, 0.42, WG, (hovM || selM ? 0.9 : 0.5) * vis * (imDach === 'mitte' ? 1.3 : imDach != null ? 0.4 : 1), MEMD, cx, cyy, cz);
-  U.mitteSchirm = toScreen(0, 0, Lm.R * 0.95);   // vorn am Rand der Mitte, nicht über den Türen
+  U.mitteSchirm = imDach === 'mitte' ? toScreen(0, 0, -Lm.R * 1.04) : toScreen(0, 0, Lm.R * 0.95);   // vorn am Rand der Mitte, nicht über den Türen; in der Mitte am oberen Rand
   // Dächer: je eine Hülle, Bereiche als leise Ringe am Boden
   for(let j = 0; j < N.daecher.length; j++){ const d = N.daecher[j], hell = j === imDach ? 1.35 : imDach != null ? 0.35 : 1, an = j === hovD || j === selD;
     const c = an ? mixc(WG, SILVER, 0.4) : WG;
@@ -110,7 +110,8 @@ export function baueNetz(N, U, wall, vis, aktiv, aktivDetail){
     ring([d.mitte[0], -0.05, d.mitte[2]], d.R, c, (an ? 0.75 : 0.42) * vis * hell, 0.11, 1);
     huelle(d.mitte, d.R, 0.38, c, (an ? 0.95 : 0.55) * vis * hell, MEMD, cx, cyy, cz);
     for(const b of d.bereiche) ring([b.mitte[0], -0.05, b.mitte[2]], b.R, WG, 0.16 * vis * hell, 0.06, 2);
-    U.daecherSchirm[j] = toScreen(d.mitte[0], d.R * 0.42, d.mitte[2]); }
+    if(j === imDach) U.bereicheSchirm = d.bereiche.map(b => toScreen(b.mitte[0], 0, b.mitte[2] - b.R));
+    U.daecherSchirm[j] = j === imDach ? toScreen(d.mitte[0], 0, d.mitte[2] - d.R * 1.04) : toScreen(d.mitte[0], d.R * 0.42, d.mitte[2]); }   // im Dach: sein Name am oberen Rand
   U.daecherSchirm.length = N.daecher.length;
   if(N.L.ohne){ const o = N.L.ohne, hO = U.hover && U.hover.art === 'ohne' || U.sel && U.sel.art === 'ohne'; ring([o.mitte[0], -0.05, o.mitte[2]], o.R, DUSTC, (hO ? 0.45 : 0.2) * vis * (imDach === 'ohne' ? 1.6 : imDach != null ? 0.5 : 1), 0.07, 3);
     U.ohneSchirm = toScreen(o.mitte[0], o.R * 0.3, o.mitte[2]); } else U.ohneSchirm = null;

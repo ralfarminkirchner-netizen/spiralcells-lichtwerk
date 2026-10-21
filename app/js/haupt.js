@@ -23,7 +23,25 @@ if(!M){ document.getElementById('nogl').hidden = false; canvas.hidden = true; th
 addEventListener('resize', () => M.resize());
 const angEl = document.getElementById('angle'), tageEl = document.getElementById('tage'), ortEl = document.getElementById('zurueck'), namenEl = document.getElementById('namen');
 for(let i = 0; i < 5; i++){ const s = document.createElement('span'); s.textContent = STIMMEN[i].name; s.style.color = STIMMEN[i].hex; s.style.opacity = '0'; namenEl.append(s); }
-const tuerEl = document.getElementById('tuernamen'), dachEl = document.getElementById('dachnamen');
+const tuerEl = document.getElementById('tuernamen'), dachEl = document.getElementById('dachnamen'), werkEl = document.getElementById('werknamen');
+/* Im Bezirk: die Namen seiner Werke unter ihren Zellen, die Namen der Bereiche an ihren Ringen; was sich überdeckt, schweigt */
+let werkBezirk = undefined;
+function werkNamen(){
+  if(!werkEl || !W.N) return; const zeig = U.netK > 0.6 && U.dach != null && !W.ruht;
+  if(!zeig){ if(werkEl.childElementCount){ werkEl.innerHTML = ''; werkBezirk = undefined; } return; }
+  if(werkBezirk !== U.dach){ werkBezirk = U.dach; werkEl.innerHTML = '';
+    const bz = typeof U.dach === 'number' ? W.N.daecher[U.dach].bereiche : [];
+    for(const b of bz){ const s = document.createElement('span'); s.className = 'bereich'; s.textContent = b.name; werkEl.append(s); }
+    for(const i of W.N.werkeIn(U.dach)){ const s = document.createElement('span'), mat = W.N.baum.material.has(i); s.className = mat ? 'material' : 'werk'; s.dataset.i = i;
+      s.textContent = kurz(W.B.monde[i].titel, 30) + (mat ? ' · Lesematerial' : ''); s.style.opacity = '0'; werkEl.append(s); } }
+  const belegt = [], frei = r => !belegt.some(q => r.x < q.x + q.w + 6 && q.x < r.x + r.w + 6 && r.y < q.y + q.h + 2 && q.y < r.y + r.h + 2);
+  const zeige = (el, p, dy) => { if(!p || p[2] <= 0){ el.style.opacity = '0'; return; } const w = el.offsetWidth || 80, h = 14, x = clamp(p[0] - w / 2, 8, CAM.cssW - w - 8), y = p[1] + dy;
+    const r = {x, y, w, h}; if(!frei(r) || y < 56 || y > CAM.cssH - 70){ el.style.opacity = '0'; return; } belegt.push(r);
+    el.style.transform = `translate(${Math.round(x)}px,${Math.round(y)}px)`; el.style.opacity = String((clamp((U.netK - 0.6) * 2.5, 0, 1) * clamp(U.dachK * 1.5, 0, 1) * (el.className === 'werk' ? 0.9 : 0.7)).toFixed(2)); };
+  let k = 0; const bs = U.bereicheSchirm || [];
+  for(const el of werkEl.children){ if(el.className === 'bereich'){ zeige(el, bs[k++], -18); continue; }
+    const i = Number(el.dataset.i), p = U.monde[i]; zeige(el, p, 10 + Math.min(40, W.N.rM[i] / Math.max(0.01, CAM.S) * CAM.cssH * 0.35)); }
+}
 /* Die Namen der Dächer und der Mitte stehen im Netz leise am Bild: sie sind die Orientierung */
 function dachNamen(){ if(!dachEl || !W.N) return; dachEl.innerHTML = '';
   const neu = (t, k) => { const s = document.createElement('span'); s.textContent = t; s.className = k; s.style.opacity = '0'; dachEl.append(s); };
@@ -423,6 +441,7 @@ function ui(cam){
       if(!zeig || !p || p[2] <= 0){ if(el.style.opacity !== '0') el.style.opacity = '0'; continue; }
       const bw = el.offsetWidth || 80, px = clamp(p[0], 12 + bw / 2, CAM.cssW - 12 - bw / 2);   // Namen bleiben im Bild
       el.style.transform = `translate(${Math.round(px)}px,${Math.round(p[1] - 14)}px) translate(-50%,-100%)`; el.style.opacity = String((clamp((U.netK - 0.55) * 2.5, 0, 0.85) * leise).toFixed(2)); } }
+  werkNamen();
   // Türen im Netz tragen leise ihren Namen
   const zeigTueren = W.N && U.netK > 0.6;
   for(let j = 0; j < tuerEl.children.length; j++){ const el = tuerEl.children[j], p = U.tueren[j];
