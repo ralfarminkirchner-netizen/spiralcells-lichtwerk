@@ -76,7 +76,9 @@ export class Zelle {
     this.gSeed = new Int32Array(G); this.gRank = new Int32Array(G); this.gRho = new Float32Array(G);
     this.gY = new Float32Array(G); this.gCol = new Float32Array(G * 3); this.gBorn = new Float32Array(G).fill(-1); this.gFrom = new Float32Array(G * 3);
     this.gPhiLock = new Float32Array(G); this.gR = new Float32Array(G); this.gTh = new Float32Array(G); this.gU = new Float32Array(G); this.gJ = new Float32Array(G);
-    this.gDr = new Float32Array(G); this.gDt = new Float32Array(G);   // Lage im Blütenstand der eigenen Ausprägung (radial, quer)
+    this.gDr = new Float32Array(G); this.gDt = new Float32Array(G);   // Lage im Blütenstand der eigenen Ausprägung (radial, quer als Winkel)
+    this.gRzeit = new Float32Array(G); this.sRzeit = new Float32Array(n);   // Radius nach Zeitrang: von der Seite steht die Zelle als Kelch
+    this.seedDicht = new Float32Array(n); this.seedDichtK = new Float32Array(n);   // wie viel dichter ein Blatt liegt als die gleichmäßige Scheibe (ab dem Doppelten), von oben und im Kelch
     this.sR = new Float32Array(n); this.sTh = new Float32Array(n); this.sU = new Float32Array(n); this.sRc = new Float32Array(n);
     this.kelchK = 0; this.curl = this.traum ? CURL_TRAUM : 0;
     this.seedFirst = new Int32Array(n); this.seedCount = new Int32Array(n); this.seedCore = new Int32Array(n);
@@ -104,33 +106,46 @@ export class Zelle {
       this.seedCore[i] = this.seedFirst[i] + (c >> 1);
     }
     // Radius nach Rang des Wegs: gleiche Fläche je Korn, die Abstammung läuft von innen nach außen.
-    // Jede Ausprägung wird ein Blatt an ihrer Ranke: so lang wie ihr Stück der Abstammung, so breit wie ihr Anteil am Licht,
-    // an den Enden schmal. Ranken, Gabeln und Fächer bleiben lesbar, das Licht bleibt körnig.
+    // Jede Ausprägung wird ein Blatt an ihrer Ranke: so lang wie ihr Stück der Abstammung und flächentreu so breit,
+    // wie ihre Körner in der gleichmäßigen Scheibe Platz hätten, höchstens bis zum halben Bogen ihres Fächers; an den Enden schmal.
+    // So füllen die Ranken ihre Keile wie Blütenblätter, Ranken, Gabeln und Fächer bleiben lesbar, das Licht bleibt körnig.
     this.Rfinal = RC * Math.sqrt(G / NMAX);
-    const rr = rangRadien(weg);
+    const rr = rangRadien(weg), a0 = Math.PI * this.Rfinal * this.Rfinal / Math.max(1, G);
+    // Von der Seite zählt die Zeit: Die Körner liegen schon in der Folge ihres Entstehens, ihr Rang darin gibt den Radius im Kelch.
+    for(let k = 0; k < G; k++) this.gRzeit[k] = this.Rfinal * Math.sqrt((k + 0.5) / Math.max(1, G));
     for(let i = 0; i < n; i++){
       const f = this.seedFirst[i], c = this.seedCount[i]; let lo = 1, hi = 0, mitte = 0;
       for(let k = f; k < f + c; k++){ lo = Math.min(lo, rr[k]); hi = Math.max(hi, rr[k]); mitte += rr[k]; } mitte /= c;
-      const breit = Math.min(this.Rfinal * Math.sqrt(c / Math.max(1, G)) * (this.traum ? 0.35 : 0.27), this.Rfinal * 0.11, Math.max(0.012, this.Rfinal * (hi - lo) * 0.45));
-      this.sR[i] = this.Rfinal * mitte; this.sU[i] = mitte; this.sTh[i] = biege(W.th0[i], W.th1[i], 0.5); this.sRc[i] = breit;
+      const R = this.Rfinal * mitte, flaeche = c * a0 / (2 * this.Rfinal * Math.max(hi - lo, 1e-3)), bogen = 0.5 * W.spann[i] * R;
+      const breit = Math.max(0.006, Math.min(flaeche, bogen)), quer = Math.min(Math.PI / 2, breit / Math.max(R, 1e-3));   // halbe Breite, als Länge und als Winkel
+      this.sR[i] = R; this.sU[i] = mitte; this.sTh[i] = biege(W.th0[i], W.th1[i], 0.5); this.sRc[i] = breit; this.sRzeit[i] = this.gRzeit[this.seedCore[i]];
+      this.seedDicht[i] = clamp(c * a0 / (2 * breit * Math.max(this.Rfinal * (hi - lo), 0.0125)) / 2, 1, 32);   // ein Blatt ist mindestens ein Korn dick
+      const hoch = (i + 1 < n ? this.seedY[i + 1] : this.seedY[i] + 0.02) - this.seedY[i];   // im Kelch: der Bogen des Blatts auf seinem Zeitradius, so hoch wie sein Stück Geschichte
+      this.seedDichtK[i] = clamp(c * a0 / (Math.max(2 * quer * this.sRzeit[i], 0.0125) * Math.max(hoch, 0.0125)) / 2, 1, 32);
       for(let j = 0, k = f; j < c; j++, k++){
         const u = hi > lo ? (rr[k] - lo) / (hi - lo) : 0.5, huelle = Math.pow(Math.sin(Math.PI * clamp(u * 0.92 + 0.04, 0, 1)), 0.7);
-        const q = ((j * 0.6180339887 + i * 0.37) % 1) * 2 - 1;
-        this.gU[k] = rr[k]; this.gR[k] = this.Rfinal * rr[k]; this.gDt[k] = breit * huelle * q; this.gDr[k] = 0; }
+        // Querlage aus der goldenen Folge, um etwa einen halben Kornabstand verwackelt, damit kein Raster entsteht
+        const q = clamp(((j * 0.6180339887 + i * 0.37) % 1) * 2 - 1 + (hash(k * 3.71 + 0.9) - 0.5) * 1.4 / Math.sqrt(c), -1, 1);
+        // auch radial um etwa einen Kornabstand verwackelt: sonst stehen die Körner in sichtbaren Reihen wie im Rasterdruck
+        const ru = clamp(rr[k] + (hash(k * 5.13 + 2.7) - 0.5) * 2.2 * (hi - lo) / Math.max(1, c), lo, hi);
+        this.gU[k] = ru; this.gR[k] = this.Rfinal * ru; this.gDt[k] = quer * huelle * q; this.gDr[k] = 0; }
     }
     // Einrasten: dieselbe Folge, nun als goldene Phyllotaxis; jede Ausprägung hat ihre Lücke
     const order = Array.from({length: G}, (_, i) => i).sort((a, b) => weg[a] - weg[b] || a - b);
     this.byRank = new Int32Array(G);
     order.forEach((gi, r) => { this.gRank[gi] = r; this.byRank[r] = gi; this.gRho[gi] = RC * Math.sqrt((r + 0.5) / NMAX); this.gPhiLock[gi] = r * GOLD; });
     this.statusFarben();
-    // Tagesmarken für den Kelch
+    // Tagesmarken für den Kelch: der erste Tag, jeder neue Tag dazwischen und immer auch der letzte.
+    // Eine Marke steht an der ersten Ausprägung ihres Tages und trägt deren Datum; ein Tag ohne Einträge bekommt keine eigene.
     this.tage = [];
     if(n > 1 && t1 - t0 > 3600e3){
+      const marke = i => { if(i < 0 || (this.tage.length && this.tage[this.tage.length - 1].i >= i)) return; this.tage.push({y: this.seedY[i], t: sam[i].zeit, i}); };
+      marke(0);
       const d = new Date(t0); d.setHours(24, 0, 0, 0);
       for(; d.getTime() < t1 && this.tage.length < 12; d.setDate(d.getDate() + 1)){
-        const t = d.getTime(); let i = sam.findIndex(s => s.zeit >= t); if(i < 0) break;
-        this.tage.push({y: this.seedY[i], t});
-      }
+        const t = d.getTime(), i = sam.findIndex(s => s.zeit >= t); if(i < 0) break; marke(i); }
+      const letzt = new Date(sam[n - 1].zeit); letzt.setHours(0, 0, 0, 0);
+      marke(sam.findIndex(s => s.zeit >= letzt.getTime()));
     }
     this.huelle = new Float32Array(HB).fill(1); this.huelleN = new Float32Array(HB); this.gP = new Float32Array(G * 3); this.gSicht = new Uint8Array(G);
     this.wahl = {i: -2, pfad: null, nach: null};
@@ -170,13 +185,13 @@ export class Zelle {
   memR(){ const S = this.S; return Math.max(this.orbitR() * 1.2, 1.12 * Math.sqrt(S.Rs * S.Rs + S.yRim * S.yRim * 0.25)); }
   center(){ return [this.origin[0], this.origin[1] + this.S.yRim * 0.5, this.origin[2]]; }
 
-  /* Lage eines Korns (Weltkoordinaten): im Blatt seiner Ausprägung an der Ranke, die Ranke gekrümmt nach Kopplung, beim Einrasten golden */
+  /* Lage eines Korns (Weltkoordinaten): im Blatt seiner Ausprägung an der Ranke, die Ranke gekrümmt nach Kopplung, beim Einrasten golden.
+     Von der Seite rückt das Korn weich auf den Radius seiner Zeit; der Winkel bleibt die Abstammung. */
   kornPos(g, o){
     const S = this.S, O = this.origin;
-    let th = this.gTh[g] + this.curl * this.gU[g] * TURN + S.rot, R = this.gR[g];
+    let th = this.gTh[g] + this.gDt[g] + this.curl * this.gU[g] * TURN + S.rot, R = this.kelchK > 0 ? mix(this.gR[g], this.gRzeit[g], this.kelchK) : this.gR[g];
     if(this.traum){ const j = this.gJ[g]; th += 0.05 * Math.sin(S.clock * 0.07 + j * 40); R *= 1 + 0.04 * Math.sin(S.clock * 0.05 + j * 23); }   // Traumfeld: lose, still treibend
-    const ct = Math.cos(th), st = Math.sin(th), dt = this.gDt[g];
-    let x = R * ct - dt * st, z = R * st + dt * ct;
+    let x = R * Math.cos(th), z = R * Math.sin(th);
     if(S.lk > 0.001 || S.frozen){ const rr = this.gRho[g] / Math.max(0.05, this.Rfinal);
       const b = S.frozen && S.clock - S.lockT > 4 ? 1 : sstep(0, 1, (S.clock - S.lockT - 0.55 - rr * 1.1) / 0.9);
       if(b > 0){ const pg = this.gPhiLock[g] + S.rot, rg = this.gRho[g];
@@ -187,7 +202,7 @@ export class Zelle {
   }
   /* Mitte eines Blatts: daran hängen Stiele, Fäden und Marken */
   mittePos(i, o){
-    const S = this.S, O = this.origin, th = this.sTh[i] + this.curl * this.sU[i] * TURN + S.rot, R = this.sR[i];
+    const S = this.S, O = this.origin, th = this.sTh[i] + this.curl * this.sU[i] * TURN + S.rot, R = this.kelchK > 0 ? mix(this.sR[i], this.sRzeit[i], this.kelchK) : this.sR[i];
     if(S.lk > 0.001 || S.frozen){ return this.kornPos(this.seedCore[i], o); }
     o[0] = O[0] + R * Math.cos(th); o[1] = O[1] + this.seedY[i]; o[2] = O[2] + R * Math.sin(th); return o;
   }
@@ -335,11 +350,11 @@ export function baueZelle(Z, U, wall, rdt, vis){
   const tilt = U.kelchK;   // 0 oben, 1 Seite
   const tiltDim = mix(1, 0.35, tilt);
 
-  // Schwebestaub
+  // Schwebestaub: warmweiß, nicht golden; Gold bleibt Ralfs Kristallisieren
   const dR = Z.memR() * 0.92, dcy = O[1] + S.yRim * 0.5;
   for(let i = 0; i < DN; i++){ const u = DS[i * 3] / 3, v = (DS[i * 3 + 1] - 0.6) / 2, w = DS[i * 3 + 2] / 3, l = Math.hypot(u, v, w); if(l > 1) continue;
     const x = O[0] + u * dR + Math.sin(wall * 0.11 + i) * 0.02, y = dcy + v * dR + Math.sin(wall * 0.13 + i * 1.7) * 0.02, z = O[2] + w * dR + Math.cos(wall * 0.09 + i * 0.3) * 0.02;
-    P(x, y, z, 0.004 + 0.005 * S.Rs, GOLDC[0], GOLDC[1], GOLDC[2], 0.07 * vis * (0.4 + 0.6 * hash(i))); }
+    P(x, y, z, 0.004 + 0.005 * S.Rs, WG[0], WG[1], WG[2], 0.07 * vis * (0.4 + 0.6 * hash(i))); }
 
   // Keim: Ausgangsfrage. Kristallisierter Keim leuchtet weißgold, offener warm und atmend.
   const kb = Z.RM ? 0.85 : (0.65 + 0.35 * Math.sin(TAU * 0.8 * wall));
@@ -402,8 +417,10 @@ export function baueZelle(Z, U, wall, rdt, vis){
     let x = TMP[0], y = TMP[1], z = TMP[2], sz = s.stimme === MENSCH && !s.form ? 0.017 : 0.0125;
     if(age < 0.6){ const f = age / 0.6, e = 1 - (1 - f) ** 3; x = mix(Z.gFrom[g * 3], x, e); y = mix(Z.gFrom[g * 3 + 1], y, e) + Math.sin(Math.PI * f) * 0.02; z = mix(Z.gFrom[g * 3 + 2], z, e); sz *= 1.5; }
     const rho = Z.gRho[g];
-    let bri = 0.8 * (Z.RM ? 0.93 : 0.86 + 0.14 * Math.sin(TAU * 0.42 * cl - rho * 7)) * Z.seedLuz[si] * (s.form ? 0.7 : Z.traum ? 1 - 0.75 * sstep(0.55, 1.02, rho / Math.max(0.05, Z.Rfinal)) : mix(0.55, 1.35, Z.seedJung[si]));
-    if(Z.seedJung[si] === 1 && !s.form) sz *= 1.3;   // die jüngste Ausprägung jeder Stimme: ihre Wachstumsspitze; eine Form hat keine
+    let bri = 0.8 * (Z.RM ? 0.93 : 0.86 + 0.14 * Math.sin(TAU * 0.42 * cl - rho * 7)) * Z.seedLuz[si] * (s.form ? 0.7 : Z.traum ? 1 - 0.75 * sstep(0.55, 1.02, rho / Math.max(0.05, Z.Rfinal)) : mix(0.8, 1.15, Z.seedJung[si]));
+    if(Z.seedJung[si] === 1 && !s.form) sz *= g === Z.seedCore[si] ? 1.3 : 1.08;   // die jüngste Ausprägung jeder Stimme: ihre Wachstumsspitze, nur das Kernkorn deutlich; eine Form hat keine
+    // Was trotz flächentreuer Breite dicht liegt (ein Blatt am Rand eines schmalen Fächers), wird feiner und leiser, statt auszubrennen
+    const dk = mix(Z.seedDicht[si], Z.seedDichtK[si], Z.kelchK); if(dk > 1){ sz *= Math.pow(dk, -0.2); bri *= Math.pow(dk, -0.35); }
     let cr = Z.gCol[g * 3], cg = Z.gCol[g * 3 + 1], cb = Z.gCol[g * 3 + 2];
     if(wavOn && S.lockedOnce){ const dw = (rho - wavR) / 0.05, gw = Math.exp(-dw * dw); bri *= 1 + 2.6 * gw; cr = mix(cr, GOLDC[0], 0.5 * gw); cg = mix(cg, GOLDC[1], 0.5 * gw); cb = mix(cb, GOLDC[2], 0.5 * gw); }
     for(const wv of S.waves){ const dn = (rho - wv.r * Math.max(0.1, S.Rs)) / 0.04; bri *= 1 + 1.2 * Math.exp(-dn * dn); }
@@ -449,21 +466,25 @@ export function baueZelle(Z, U, wall, rdt, vis){
   for(const k of m.kristall){ const i = m.samen.indexOf(k); if(i < 0) continue; const y = O[1] + Z.seedY[i], R = Z.gRho[Z.seedFirst[i] + Z.seedCount[i] - 1] * 1.04;
     const a = 0.22 * vis * (0.3 + 0.7 * tilt) * (S.locked ? 1 : 0.3);
     for(let j = 0; j < 140; j++){ const an = j / 140 * TAU; P(O[0] + Math.cos(an) * R, y, O[2] + Math.sin(an) * R, 0.005, GOLDC[0], GOLDC[1], GOLDC[2], a); } }
+  // Tagesringe: neutrale Schichten auf der Höhe der Tagesmarken, nur von der Seite; unten das Älteste, oben das Jüngste
+  if(tilt > 0.01) for(const t of Z.tage){ const R = Z.gRzeit[Z.seedFirst[t.i]] * 1.06 + 0.01; if(R < 0.03) continue;
+    const y = O[1] + t.y, k = Math.round(clamp(R * 320, 24, 140)), a = 0.06 * vis * tilt * fog(O[0], y, O[2]);
+    for(let j = 0; j < k; j++){ const an = j / k * TAU; P(O[0] + Math.cos(an) * R, y, O[2] + Math.sin(an) * R, 0.004, SILVER[0], SILVER[1], SILVER[2], a); } }
 
   // Fäden: Kanten mit Verwendung; Lichtqualität aus dem Befund
   baueFaeden(Z, U, vis, fog, selSeed);
 
-  // Stimmen: Köpfe und Spuren mit eigener Bewegungsschrift
-  const lens = [1.2, 1.0, 0.65, 1.6, 1.8];
+  // Stimmen: Köpfe und Spuren mit eigener Bewegungsschrift; von der Seite treten sie zurück, damit die Geschichte vorn steht
+  const lens = [1.2, 1.0, 0.65, 1.6, 1.8], kopfK = 1 - 0.7 * tilt;
   for(const i of Z.voices){
     Z.headPos(i, TMP); const e = TMP[3]; if(e <= 0){ U.heads[i][2] = -1; continue; }
-    const sa = U.soloA[i] * vis * e, col = VOICES[i].c, w = VOICES[i].w;
+    const sa = U.soloA[i] * vis * e * kopfK, col = VOICES[i].c, w = VOICES[i].w;
     const cc = mixc(col, WG, 0.25 * Lk);
     const hs = toScreen(TMP[0], TMP[1], TMP[2]); U.heads[i][0] = hs[0]; U.heads[i][1] = hs[1]; U.heads[i][2] = hs[2] * (vis > 0.3 ? 1 : -1);
     const bt = U.betont && U.betont.includes(i) ? (Z.RM ? 1.6 : 1 + 0.9 * (0.5 + 0.5 * Math.sin(wall * 4))) : 1;   // genannte Stimme leuchtet auf
     P(TMP[0], TMP[1], TMP[2], 0.05 * Math.max(0.5, Z.orbitR()) * (bt > 1 ? 1.3 : 1), cc[0], cc[1], cc[2], 2.6 * sa * w * bt);
     P(TMP[0], TMP[1], TMP[2], 0.014 * Math.max(1, Z.orbitR() * 2), 1, 0.97, 0.9, 3.0 * sa);
-    const len = Math.min(S.trN - 1, Math.round(mix(lens[i], 0.8, Lk) * 120)), b = Z.TR[i];
+    const len = Math.min(S.trN - 1, Math.round(mix(lens[i], 0.8, Lk) * 120 * kopfK)), b = Z.TR[i];
     const stac = i === 1 && C < 0.6, smoke = i === 3, thick = i === 0 ? 1.5 : i === 4 ? 1.15 : 1;
     for(let k = 0; k < len; k++){
       const ia = ((S.trH - 1 - k) % TRC + TRC) % TRC, ib = ((S.trH - 2 - k) % TRC + TRC) % TRC;
@@ -507,7 +528,7 @@ function huelleGlaetten(Z, rdt){
 const STIELC = lin('#cfc6b4');
 function baueWuchs(Z, U, vis, fog, selSeed, wall){
   const m = Z.m, W = Z.W, gP = Z.gP, sicht = Z.gSicht, O = Z.origin, n = m.samen.length; if(!n || vis < 0.01) return;
-  const pfad = Z.wahl.pfad, tilt = U.kelchK, lockDim = 1 - 0.8 * Z.S.lk, soloAny = U.solo >= 0;
+  const pfad = Z.wahl.pfad, tilt = U.kelchK, lockDim = 1 - 0.8 * Z.S.lk, soloAny = U.solo >= 0, stielK = 1 - 0.8 * tilt;   // von der Seite treten die Stiele zurück
   const A = [0, 0, 0], Bq = [0, 0, 0];
   const strich = (a, b, sz, c, al, punkte, lift) => { const d = Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2]), k = Math.max(2, Math.min(punkte, Math.round(d * 160)));
     for(let s = 1; s < k; s++){ const t = s / k, x = mix(a[0], b[0], t), y = mix(a[1], b[1], t) + (lift ? Math.sin(Math.PI * t) * lift : 0), z = mix(a[2], b[2], t); P(x, y, z, sz, c[0], c[1], c[2], al * fog(x, y, z)); } };
@@ -526,11 +547,11 @@ function baueWuchs(Z, U, vis, fog, selSeed, wall){
     mitte(i, Bq);
     // Abstammung als Stiel; eine Übernahmereihe nur als zarte Punktfolge (Reihenfolge, keine Entwicklung)
     const basis = art === 'reihe' ? 0.045 : art === 'gabel' || art === 'form' ? 0.2 : 0.13;
-    let al = (auf ? 0.55 : basis) * vis * lockDim * (soloAny ? (typeof st === 'number' && st === U.solo ? 1.5 : 0.25) : 1) * (selSeed >= 0 && !auf ? 0.45 : 1);
+    let al = (auf ? 0.55 : basis) * vis * lockDim * (auf ? 1 : stielK) * (soloAny ? (typeof st === 'number' && st === U.solo ? 1.5 : 0.25) : 1) * (selSeed >= 0 && !auf ? 0.45 : 1);
     if(al < 0.004) continue;
-    strich(A, Bq, auf ? 0.0048 : art === 'reihe' ? 0.0028 : 0.0036, auf ? SILVER : farbe, al, art === 'reihe' ? 8 : Math.max(6, Math.min(40, Math.floor(6000 / n))), 0);
+    strich(A, Bq, auf ? 0.0075 : art === 'reihe' ? 0.0028 : 0.0036, auf ? SILVER : farbe, al, art === 'reihe' ? 8 : Math.max(6, Math.min(40, Math.floor(6000 / n))), 0);
     // Gabel: ein kleiner Knoten, wo ein Zweig aus einer fremden Fassung fortgesetzt wurde
-    if(art === 'gabel' && p >= 0) P(A[0], A[1], A[2], 0.012, farbe[0], farbe[1], farbe[2], 0.6 * vis * lockDim * (selSeed >= 0 && !auf ? 0.5 : 1));
+    if(art === 'gabel' && p >= 0) P(A[0], A[1], A[2], 0.012, farbe[0], farbe[1], farbe[2], 0.6 * vis * lockDim * stielK * (selSeed >= 0 && !auf ? 0.5 : 1));
   }
   // Gegenlese: gesehene Fassungen anderer Zweige, als feines Gewebe über der Scheibe
   for(const [i, j] of W.lese){
@@ -545,8 +566,8 @@ function baueWuchs(Z, U, vis, fog, selSeed, wall){
   }
 }
 
-/* Fäden zwischen Ausprägungen */
-const URTEILFARBE = {'tragfähig': GOLDC, 'teilweise': WG, 'nicht-tragfähig': ASCHE};
+/* Fäden zwischen Ausprägungen. Ein Befund einer Stimme färbt nie golden: „tragfähig“ ist hell silbern, die Stärke unterscheidet. */
+const URTEILFARBE = {'tragfähig': SILVER, 'teilweise': WG, 'nicht-tragfähig': ASCHE};
 function baueFaeden(Z, U, vis, fog, selSeed){
   const m = Z.m, A = [0, 0, 0, 0], B = [0, 0, 0, 0];
   if(!Z.fadenIndex){ const idx = new Map(m.samen.map((s, i) => [s.id, i])); const keim = new Set(m.keim.map(v => v.id));

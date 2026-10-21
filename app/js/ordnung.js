@@ -55,7 +55,7 @@ export function ordne(B, O){
 
 /* ------------------------------------------------------------- Lage im Raum
    Kreise packen: erst die Werke eines Bereichs (Phyllotaxis, ältestes innen), dann die Bereiche
-   eines Dachs, dann die Dächer um die Mitte. Radien in Weltmaß; groß heißt: viel darin. */
+   eines Dachs, dann die Dächer und „ohne Dach“ um die Mitte. Radien in Weltmaß; groß heißt: viel darin. */
 function phyllo(radien, gap){
   // Kreise nach goldenem Winkel nach außen legen, ohne Überlappung (gierig, dann sanft entspannen)
   const n = radien.length, pos = [];
@@ -73,25 +73,29 @@ export function lage(baum, rWerk, opt = {}){
   const gapW = opt.gapWerk ?? 0.35, gapB = opt.gapBereich ?? 0.8, gapD = opt.gapDach ?? 2.2;
   const pos = new Array(rWerk.length).fill(null);
   const bereichsKreis = werke => { const ord = werke.slice(); const r = ord.map(i => rWerk[i]); const p = phyllo(r, gapW); return {werke: ord, rel: p.pos, R: Math.max(p.R, 0.8)}; };
-  // Mitte
-  const mk = bereichsKreis(baum.mitte.werke), Rm = Math.max(3.2, mk.R * 1.25);
-  // Dächer: Bereiche als Kreise im Dach
-  const dk = baum.daecher.map(d => { const bs = d.bereiche.map(b => bereichsKreis(b.werke)); const p = phyllo(bs.map(b => b.R), gapB); return {bs, rel: p.pos, R: p.R + 0.6}; });
+  // Dächer: Bereiche als Kreise im Dach, der Rand eng um sie
+  const dk = baum.daecher.map(d => { const bs = d.bereiche.map(b => bereichsKreis(b.werke)); const p = phyllo(bs.map(b => b.R), gapB); return {bs, rel: p.pos, R: p.R + 0.3}; });
+  // Die Mitte ist so groß wie ein großes Dach: sie trägt das Ganze und muss als Kern lesbar sein
+  const mk = bereichsKreis(baum.mitte.werke), Rm = Math.max(3.2, mk.R * 1.25, 0.7 * Math.max(0, ...dk.map(x => x.R)));
+  // „Ohne Dach“ ist ein Bezirk wie die Dächer, als letzter im Kranz: abgesetzt durch seine Gestalt, nicht durch Ferne
+  const ohneK = bereichsKreis(baum.ohne);
+  const kreise = dk.map(x => x.R); if(baum.ohne.length) kreise.push(ohneK.R);
   // Dächer um die Mitte: größtes zuerst, dann im goldenen Winkel nach außen
-  const ordnungD = dk.map((_, j) => j).sort((a, b) => dk[b].R - dk[a].R), D = [], gesetzt = [];
+  const ordnungD = dk.map((_, j) => j).sort((a, b) => dk[b].R - dk[a].R); if(baum.ohne.length) ordnungD.push(dk.length);
+  const D = [], gesetzt = [];
   for(const j of ordnungD){
-    const k = gesetzt.length, a = k * GOLD + 0.4; let d = Rm + dk[j].R + gapD;
+    const k = gesetzt.length, a = k * GOLD + 0.4; let d = Rm + kreise[j] + gapD;
     for(let t = 0; t < 600; t++){ const x = Math.cos(a) * d, z = Math.sin(a) * d;
-      if(gesetzt.every(q => Math.hypot(D[q][0] - x, D[q][1] - z) >= dk[q].R + dk[j].R + gapD)){ D[j] = [x, z]; break; }
+      if(gesetzt.every(q => Math.hypot(D[q][0] - x, D[q][1] - z) >= kreise[q] + kreise[j] + gapD)){ D[j] = [x, z]; break; }
       d += 0.25; if(t === 599) D[j] = [x, z]; }
     gesetzt.push(j);
   }
-  // Ohne Dach: ein loser Kranz außen, ehrlich abgesetzt
-  let Rall = Rm; dk.forEach((x, j) => { Rall = Math.max(Rall, Math.hypot(D[j][0], D[j][1]) + x.R); });
-  const ohneK = bereichsKreis(baum.ohne);
-  const ohneMitte = [0, 0]; if(baum.ohne.length){ const a = -Math.PI / 2; ohneMitte[0] = Math.cos(a) * (Rall + ohneK.R + gapD); ohneMitte[1] = Math.sin(a) * (Rall + ohneK.R + gapD); Rall = Math.hypot(...ohneMitte) + ohneK.R; }
+  let Rall = Rm; kreise.forEach((r, j) => { Rall = Math.max(Rall, Math.hypot(D[j][0], D[j][1]) + r); });
+  const ohneMitte = baum.ohne.length ? D[dk.length] : [0, 0];
   const y = opt.hoehe ?? 0;
-  mk.werke.forEach((i, k) => { pos[i] = [mk.rel[k][0], y, mk.rel[k][1]]; });
+  // Die Werke der Mitte füllen ihre Fläche, statt in ihrem Kern zu klumpen
+  const weit = Math.max(1, Rm * 0.62 / Math.max(0.01, mk.R));
+  mk.werke.forEach((i, k) => { pos[i] = [mk.rel[k][0] * weit, y, mk.rel[k][1] * weit]; });
   const daecher = dk.map((x, j) => { const c = D[j];
     const bereiche = x.bs.map((b, bi) => { const bc = [c[0] + x.rel[bi][0], c[1] + x.rel[bi][1]]; b.werke.forEach((i, k) => { pos[i] = [bc[0] + b.rel[k][0], y, bc[1] + b.rel[k][1]]; }); return {mitte: [bc[0], y, bc[1]], R: b.R}; });
     return {mitte: [c[0], y, c[1]], R: x.R, bereiche}; });

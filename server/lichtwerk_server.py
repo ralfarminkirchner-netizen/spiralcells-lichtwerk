@@ -1042,6 +1042,20 @@ class Leseeingang(Lichtwerk):
     do_PUT = do_DELETE = do_PATCH = do_POST
 
 
+
+def dienst(adresse, handler):
+    """Der Browser lädt rund zwanzig Module auf einmal. Mit der üblichen Warteschlange von fünf setzt das System
+    Verbindungen zurück, und das Lichtwerk startet nicht; darum eine längere, gesetzt vor dem Öffnen des Ports."""
+    srv = ThreadingHTTPServer(adresse, handler, bind_and_activate=False)
+    srv.request_queue_size = 64
+    try:
+        srv.server_bind()
+        srv.server_activate()
+    except BaseException:
+        srv.server_close()
+        raise
+    return srv
+
 def main(argv=None):
     p = argparse.ArgumentParser(description="SPiRALCELLS-Lichtwerk")
     p.add_argument("--port", type=int, default=8411)
@@ -1064,11 +1078,11 @@ def main(argv=None):
     Lichtwerk.leseeingang = a.leseeingang
     Lichtwerk.kinformer = a.kinformer.rstrip("/")
     Lichtwerk.behalten = a.behalten
-    srv = ThreadingHTTPServer(("127.0.0.1", a.port), Lichtwerk)
+    srv = dienst(("127.0.0.1", a.port), Lichtwerk)
     srv.daemon_threads = True
     if a.leseeingang is not None:
         Leseeingang.port, Leseeingang.schreibport = a.leseeingang, a.port
-        lese = ThreadingHTTPServer(("127.0.0.1", a.leseeingang), Leseeingang)
+        lese = dienst(("127.0.0.1", a.leseeingang), Leseeingang)
         lese.daemon_threads = True
         threading.Thread(target=lese.serve_forever, name="leseeingang", daemon=True).start()
     print("SPiRALCELLS-Lichtwerk auf http://127.0.0.1:%d  ·  SPiRALCELLS: %s%s%s"

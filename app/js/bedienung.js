@@ -80,13 +80,22 @@ export function markeFuer(sel){
   if(sel.art === 'tuer'){ const t = W.N.tueren[sel.i]; return [t.satz, t.wach ? 'wach · noch einmal tippen öffnet' : 'ruht gerade']; }
   if(sel.art === 'mitte'){ const b = W.N.baum, n = W.N.werkeIn('mitte').length; return [b.mitte.name || 'Zentrale', [`die Mitte · ${n} ${n === 1 ? 'Werk' : 'Werke'} · ${b.daecher.length} ${b.daecher.length === 1 ? 'Dach' : 'Dächer'} darum`, gleich(U.sel, sel) ? 'tippen fährt hinein' : ''].filter(Boolean).join(' · ')]; }
   if(sel.art === 'ohne'){ const n = W.N.werkeIn('ohne').length; return ['ohne Dach', [`${n} ${n === 1 ? 'Werk' : 'Werke'}, noch keinem Dach belegt zugeordnet`, gleich(U.sel, sel) ? 'tippen fährt hinein' : ''].filter(Boolean).join(' · ')]; }
-  if(sel.art === 'dach'){ const d = W.N.daecher[sel.i], n = d.bereiche.reduce((a, x) => a + x.werke.length, 0);
-    return [d.name, [d.satz, `${n} ${n === 1 ? 'Werk' : 'Werke'} in ${d.bereiche.length} ${d.bereiche.length === 1 ? 'Bereich' : 'Bereichen'}`, gleich(U.sel, sel) ? 'tippen fährt hinein' : ''].filter(Boolean).join(' · ')]; }
+  if(sel.art === 'dach'){ const d = W.N.daecher[sel.i], n = d.bereiche.reduce((a, x) => a + x.werke.length, 0), kn = W.N.knospenIn(sel.i), fi = W.N.innen.get(sel.i) || 0;
+    const werke = `${n} ${n === 1 ? 'Werk' : 'Werke'} in ${d.bereiche.length} ${d.bereiche.length === 1 ? 'Bereich' : 'Bereichen'}` + (kn ? `, ${kn} davon nur mit ihrer Ausgangsfassung` : '');
+    return [d.name, [d.satz, werke, fi ? `${fi} ${fi === 1 ? 'Verbindung' : 'Verbindungen'} darin` : '', gleich(U.sel, sel) ? 'tippen fährt hinein' : ''].filter(Boolean).join(' · ')]; }
   if(sel.art === 'faden'){ const f = W.N.faeden[sel.i], A = W.B.monde[f.von], Bm = W.B.monde[f.nach];
     const satz = {'remixt-aus': `„${kurz(Bm.titel, 40)}“ übernimmt Material aus „${kurz(A.titel, 40)}“`, 'erweitert': `„${kurz(Bm.titel, 40)}“ erweitert „${kurz(A.titel, 40)}“`}[f.typ]
       || `„${kurz(A.titel, 40)}“ ${({'verweist-auf': 'verweist auf', 'testet': 'prüft', 'widerspricht': 'widerspricht', 'gehört-zu': 'gehört zu'})[f.typ] || 'hängt zusammen mit'} „${kurz(Bm.titel, 40)}“`;
-    const teile = [`${f.kanten.length} ${f.kanten.length === 1 ? 'Verbindung' : 'Verbindungen'}`]; if(f.verwendung) teile.push(`${f.verwendung} mit beschriebener Verwendung`);
-    if(gleich(U.sel, sel)) teile.push('tippen folgt'); return [satz, teile.join(' · ')]; }
+    // Die gewählte Verbindung des Bündels: welcher Teil wohin geht, wozu, unter welchen Grenzen
+    const k = gleich(U.sel, sel) ? Math.min(U.fadenK || 0, f.kanten.length - 1) : 0, e = f.kanten[k], u = e.usage, teile = [];
+    if(f.kanten.length > 1) teile.push(`Verbindung ${k + 1} von ${f.kanten.length}` + (gleich(U.sel, sel) ? ' · ←/→ wählt' : ''));
+    if(u){ const q = t => `„${kurz(menschlich(t), 50)}“`; if(u.from_part || u.to_part) teile.push([u.from_part && q(u.from_part), u.to_part && q(u.to_part)].filter(Boolean).join(' → ')); if(u.purpose) teile.push(kurz(menschlich(u.purpose), 80)); }
+    else if(f.verwendung) teile.push(`${f.verwendung} mit beschriebener Verwendung`);
+    if(gleich(U.sel, sel)) teile.push(u && u.to_part ? 'tippen liest die Stelle' : 'tippen folgt'); return [satz, teile.join(' · ')]; }
+  if(sel.art === 'buendel'){ const x = W.N.buendel[sel.i], name = b => b === 'mitte' ? W.N.baum.mitte.name : b === 'ohne' ? 'ohne Dach' : W.N.daecher[b].name;
+    const teile = [`${x.faeden.length} ${x.faeden.length === 1 ? 'Faden' : 'Fäden'}`, `${x.kanten} ${x.kanten === 1 ? 'Verbindung' : 'Verbindungen'}`]; if(x.verwendung) teile.push(`${x.verwendung} mit beschriebener Verwendung`);
+    if(gleich(U.sel, sel)) teile.push(`tippen fährt in ${name(x.von)}`);
+    return [`${name(x.von)} → ${name(x.nach)}`, teile.join(' · ')]; }
   return ['', ''];
 }
 
@@ -101,7 +110,10 @@ export function herkunftSatz(sel){
   // Fortsetzungen sind nur belegte Abstammung; eine Übernahmereihe und behaltene Formen heißen, was sie sind
   const ks = W2.kinder[i], fort = ks.filter(k => W2.art[k] === 'kette' || W2.art[k] === 'gabel').length, reihe = ks.filter(k => W2.art[k] === 'reihe').length, formen = ks.filter(k => W2.art[k] === 'form').length;
   const ab = [fort > 1 ? `${fort} Fortsetzungen` : '', reihe > 1 ? `${reihe} übernommene Fassungen` : '', formen ? `${formen} ${formen === 1 ? 'Form' : 'Formen'}` : ''].filter(Boolean).join(' · ');
-  return [satz, stelle, ab].filter(Boolean).join(' · ');
+  // In einem großen Übernahmefächer: die Familie (Namensanfang) und die Stelle darin, zur Orientierung unter vielen Fassungen
+  const fam = W2.familie && W2.familie[i], glieder = fam && p >= 0 ? W2.kinder[p].filter(k => W2.familie[k] === fam) : [];
+  const familie = glieder.length > 1 ? `${fam} · ${glieder.indexOf(i) + 1} von ${glieder.length}` : '';
+  return [satz, familie, stelle, ab].filter(Boolean).join(' · ');
 }
 
 /* ----------------------------------------------------------- Lesefläche */
@@ -264,6 +276,7 @@ export function schliesseSiegel(){ stoppeHalten(siegelEl); const innen = siegelE
 
 /* ------------------------------------------------------------ Auswahl */
 export function waehle(sel, stufe){
+  if(!(sel && sel.art === 'faden' && U.sel && U.sel.art === 'faden' && U.sel.i === sel.i)) U.fadenK = 0;   // ein anderer Faden beginnt bei seiner ersten Verbindung
   U.sel = sel; U.stufe = sel ? (stufe || 1) : 0;
   U.linkedSeeds = null;
   if(sel && sel.art === 'same'){ const m = sel.mond, id = m.samen[sel.i].id, idx = new Map(m.samen.map((s, i) => [s.id, i])), set = new Set();
@@ -282,7 +295,12 @@ function kornWelt(sel){ const Z = W.Z; if(!sel || !Z || sel.mond !== Z.m) return
 function kornAufSchirm(sel){ const p = kornWelt(sel); if(!p) return null; const s = toScreen(p[0], p[1], p[2]); return s[2] > 0 ? s : null; }
 export function trefferSame(sx, sy, maxPx = 16){
   const Z = W.Z; if(!Z || U.netK > 0.4) return -1;
-  let best = -1, bd = maxPx * maxPx; const step = Z.G > 1600 ? 1 : 1;
+  // Bei vielen Fassungen überlappen die Blätter: dann rastet die Wahl auf die Mitte eines Blatts ein, nicht auf ein zufälliges Einzelkorn
+  if(Z.m.samen.length > 60){ let best = -1, bd = (maxPx * 1.6) ** 2;
+    for(let i = 0; i < Z.m.samen.length; i++){ Z.mittePos(i, TMP); const s = toScreen(TMP[0], TMP[1], TMP[2]); if(s[2] <= 0) continue;
+      const d = (s[0] - sx) ** 2 + (s[1] - sy) ** 2; if(d < bd){ bd = d; best = i; } }
+    return best; }
+  let best = -1, bd = maxPx * maxPx; const step = 1;
   for(let g = 0; g < Z.G; g += step){ if(Z.gBorn[g] === -1) continue; Z.kornPos(g, TMP); const s = toScreen(TMP[0], TMP[1], TMP[2]); if(s[2] <= 0) continue;
     const d = (s[0] - sx) ** 2 + (s[1] - sy) ** 2; if(d < bd){ bd = d; best = Z.gSeed[g]; } }
   return best;
@@ -309,6 +327,7 @@ export function treffer(sx, sy){
     U.tueren.forEach((h, i) => nimm(h, 30, {art: 'tuer', i}));
     U.monde.forEach((h, i) => nimm(h, 30, {art: 'mond', i, mond: W.B.monde[i]}));
     U.knoten.forEach((h, i) => nimm(h, 26, {art: 'faden', i}));
+    if(U.dach == null) U.buendelKnoten.forEach((h, i) => nimm(h, 28, {art: 'buendel', i}));
     if(U.dach == null){ U.daecherSchirm.forEach((h, i) => nimm(h, 46, {art: 'dach', i})); nimm(U.mitteSchirm, 46, {art: 'mitte'}); nimm(U.ohneSchirm, 46, {art: 'ohne'}); }
     const k = trefferKopf(sx, sy); if(k >= 0) kand.push([0.6, {art: 'kopf', i: k}]);
     kand.sort((a, b) => a[0] - b[0]); return kand.length ? kand[0][1] : null; }
@@ -342,12 +361,16 @@ function tippen(sx, sy){
   if(t.art === 'mond'){ if(gleich(U.sel, t)){ api.oeffneMond(t.i, {}); return; } waehle(t, 1); return; }
   if(t.art === 'dach'){ if(gleich(U.sel, t)){ api.insDach(t.i); return; } waehle(t, 1); return; }
   if(t.art === 'mitte' || t.art === 'ohne'){ if(gleich(U.sel, t)){ api.insDach(t.art); return; } waehle(t, 1); return; }
-  if(t.art === 'faden'){ if(gleich(U.sel, t)){ const f = W.N.faeden[t.i], e = f.kanten[0], m = W.B.mondVon.get(W.B.werkVon(e.from_variant_id)); waehle(null); api.oeffneMond(W.B.monde.indexOf(m), {waehle: e.from_variant_id, stufe: 2}); return; } waehle(t, 1); return; }
+  if(t.art === 'faden'){ if(gleich(U.sel, t)){ const k = U.fadenK || 0; waehle(null); api.folgeFaden(t.i, k); return; } waehle(t, 1); return; }
+  if(t.art === 'buendel'){ if(gleich(U.sel, t)){ buendelHinein(t.i); return; } waehle(t, 1); return; }
   // Same oder Keim: erste Berührung Marke, zweite Lesefläche
   if(gleich(U.sel, t)){ if(U.stufe < 2){ waehle(t, 2); } return; }
   waehle(t, U.lese ? 2 : 1);
 }
 
+/* Ein Bündel führt in den Bezirk, aus dem es kommt; dort ist sein erster Faden gewählt */
+function buendelHinein(bi){ const x = W.N && W.N.buendel[bi]; if(!x) return; api.insDach(x.von);
+  waehle({art: 'faden', i: x.faeden[0]}, 1); const [t, s] = markeFuer(U.sel); ansage(t + '. ' + s + (x.faeden.length > 1 ? ` F zeigt die anderen ${x.faeden.length - 1}.` : '')); }
 /* Eine Tür in den Verbund; der Werkraum bekommt nur den lesbaren Namen des Monds mit, nie Inhalt */
 function tuerOeffnen(tu){
   if(!tu || !tu.wach || !tu.adresse){ zeile(tu ? `${tu.name} ruht gerade.` : ''); return; }
@@ -418,13 +441,16 @@ export function installiere(a){
     else if(k === 's' || k === 'S'){ seite(); }
     else if(k === 'n' || k === 'N'){ api.zumNetz(); }
     else if(k === 'w' || k === 'W'){ const tu = W.N && W.N.tueren.find(x => x.name === 'Werkraum'); if(tu) tuerOeffnen(tu); else zeile('Den Werkraum gibt es hier nicht.'); }
+    else if((k === 'ArrowRight' || k === 'ArrowLeft') && U.sel && U.sel.art === 'faden' && W.N && W.N.faeden[U.sel.i].kanten.length > 1){ e.preventDefault();   // durch die Verbindungen eines Bündels
+      const n = W.N.faeden[U.sel.i].kanten.length; U.fadenK = ((U.fadenK || 0) + (k === 'ArrowRight' ? 1 : -1) + n) % n; const [t, s] = markeFuer(U.sel); zeigeMarke(t, s); ansage(t + '. ' + s); }
     else if(k === 'ArrowRight' || k === 'ArrowLeft'){ e.preventDefault(); schritt(k === 'ArrowRight' ? 1 : -1); }
     else if(k === '?'){ U.hintUntil = W.wall + 8; hintEl.textContent = 'S Seite · N Netz · W Werkraum · 1–5 eine Stimme · ⌘V legt ab · Halten verbindet · Esc zurück'; }
     else if(k === 'Enter' && U.waehlen && U.sel && (U.sel.art === 'same' || U.sel.art === 'keim')){ const w = U.waehlen, nach = U.sel.art === 'same' ? U.sel.mond.samen[U.sel.i].id : U.sel.mond.keim[U.sel.mond.keim.length - 1].id;
       U.waehlen = null; if(nach !== w.von && U.sel.mond.id === w.mondId) api.kanteFragen(w.von, nach); else zeile('Nichts verbunden.'); }
     else if(k === 'Enter'){ if(U.sel){ const s = U.sel;
       if(s.art === 'mond') api.oeffneMond(s.i, {}); else if(s.art === 'dach') api.insDach(s.i); else if(s.art === 'mitte' || s.art === 'ohne') api.insDach(s.art);
-      else if(s.art === 'faden'){ const f = W.N.faeden[s.i], e = f.kanten[0], m = W.B.mondVon.get(W.B.werkVon(e.from_variant_id)); waehle(null); api.oeffneMond(W.B.monde.indexOf(m), {waehle: e.from_variant_id, stufe: 2}); }
+      else if(s.art === 'faden'){ const k = U.fadenK || 0; waehle(null); api.folgeFaden(s.i, k); }
+      else if(s.art === 'buendel') buendelHinein(s.i);
       else if(s.art === 'tuer') tuerOeffnen(W.N.tueren[s.i]); else waehle(s, 2); } }
     else if((k === 'f' || k === 'F') && U.netK > 0.5 && W.N && W.N.faeden.length){   // Fäden zwischen Werken, einer nach dem anderen
       const n = W.N.faeden.length; let i = U.sel && U.sel.art === 'faden' ? U.sel.i + (e.shiftKey ? -1 : 1) : 0; i = (i + n) % n;
@@ -504,7 +530,7 @@ function schritt(d){
 let hoverT = 0;
 function hoverPruefen(sx, sy){ const now = performance.now(); if(now - hoverT < 60) return; hoverT = now;
   const t = treffer(sx, sy); U.hover = t; canvas.classList.toggle('zeigt', !!t);
-  if(!U.sel && !U.namenAn && !U.siegel && t && (t.art === 'mond' || t.art === 'tuer' || t.art === 'same' || t.art === 'keim' || t.art === 'kopf' || t.art === 'dach' || t.art === 'mitte' || t.art === 'ohne' || t.art === 'faden')){ const [a, b] = markeFuer(t); zeigeMarke(a, b); U.hoverMarke = true; }
+  if(!U.sel && !U.namenAn && !U.siegel && t && (t.art === 'mond' || t.art === 'tuer' || t.art === 'same' || t.art === 'keim' || t.art === 'kopf' || t.art === 'dach' || t.art === 'mitte' || t.art === 'ohne' || t.art === 'faden' || t.art === 'buendel')){ const [a, b] = markeFuer(t); zeigeMarke(a, b); U.hoverMarke = true; }
   else if(!U.sel && U.hoverMarke){ verbirgMarke(); U.hoverMarke = false; } }
 
 /* Lage der Marke und der leisen Anzeigen, jedes Bild */
@@ -519,6 +545,7 @@ export function uiFrame(){
     else if(sel.art === 'mitte'){ p = U.mitteSchirm; }
     else if(sel.art === 'ohne'){ p = U.ohneSchirm; }
     else if(sel.art === 'faden'){ p = U.knoten[sel.i]; }
+    else if(sel.art === 'buendel'){ p = U.buendelKnoten[sel.i]; }
     else if(sel.art === 'kopf'){ p = (U.netK > 0.6 ? U.bigHeads : U.heads)[sel.i]; }
     if(p && p[2] > 0) setzeMarke(p[0], p[1]); }
   hintEl.classList.toggle('on', W.wall < U.hintUntil && !U.lese && !U.siegel);
