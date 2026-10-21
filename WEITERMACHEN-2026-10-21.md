@@ -1,34 +1,37 @@
 # Weitermachen: SPiRALCELLS-Lichtwerk, Zweig `gewebe`
 
-Stand 21.10.2026, vormittags. Ralf musste den Rechner herunterfahren.
+Stand 21.10.2026, später Vormittag.
 
 ## Wo die Arbeit liegt
 
 - **Arbeitskopie:** `/Volumes/ThunderBolt4_2TB/Development/Projects/spiralcells-lichtwerk-gewebe`, Git-Zweig `gewebe`.
 - **Ralfs `app/` in `spiralcells-lichtwerk` ist unverändert.** Nichts ist live.
-- **Keine Server gestartet.** 8401, 8411, 8418, 8419 und 8420 laufen nicht.
-- **Testkopie:** frische Kopie des echten Bestands in `spiralcells-lichtwerk/testdaten/kette-gewebe/state.json`, noch unbenutzt.
+- **Testkette:** SPiRALCELLS 8419 auf `spiralcells-lichtwerk/testdaten/kette-gewebe/state.json`, das Lichtwerk aus der Arbeitskopie auf 8418 mit `--werkstatt`. PIDs stehen in `protokolle/kette-84xx.pid`. Anhalten nur per PID.
+- **Echter Bestand:** unverändert (Stand 20.10., 21:39). Ein Schreibtest lief nur in der Testkopie.
 
-## Ralfs Kritik, die alles bestimmt
+## Was gebaut ist
 
-FASKA ist Ralfs Arbeitgeber und einer der größten Überordner. SPiRALCELLS kennt aber nur 89 flache, gleichrangige Werke. Darunter stehen 13 FASKA-Apps einzeln. Durkheim ist nur ein Leseauszug aus der Moonfingers-Quellenübernahme.
+- **Zellgestalt aus der Abstammung** (`wuchs.js`, `zelle.js`): Jede Ausprägung ist ein körniges Blatt an ihrer Ranke.
+  - Herkunftsarten: Kette, Gabel, Keim, Form, frei, Reihe (die Reihenfolge einer Übernahme, keine Entwicklung).
+  - Eine Gabel gilt nur, wenn SPiRALCELLS die Kante beim Abzweigen zugleich angelegt hat (gleicher Urheber, gleicher Augenblick).
+  - Gegenlese ist Gewebe. Die Hülle folgt dem Wuchs.
+- **Leseraum** (`stoff.js`): Passagen und Verwendungen am Rand, aber nur bei wörtlichem Fund; „ungefähr hier“, wenn der Fund nicht eindeutig ist.
+  - Vergleich Wort für Wort, Zeile für Zeile oder ehrlich gar nicht.
+  - Perlenfaden des Zweigs, Rückweg über Fäden, Kameraflug.
+  - Lesbare Stelle im Link: `#mond=…&fassung=N&lesen=1&stelle=K`, für die Ausgangsfrage `&frage=1`.
+  - ⌘V wird Weiterarbeit mit den gelesenen Fassungen, erst nach Halten.
+- **Ordnung** (`ordnung.js`, `ordnung.json`, `netz.js`): die Zentrale als Mitte, Dächer als eigene Zellen, „ohne Dach“ außen.
+  - Mitte, Dächer und „ohne Dach“ sind betretbar (Tippen zweimal oder Eingabe); F schaltet durch die Fäden.
+  - `ordnung.json` ist ein **unbestätigter Vorschlag** und wartet auf Ralfs Antwort zu fünf Fragen (Musik, FLOW, Phänomenatlas, KiNTEGRiTY/MiNDLAXY, neun Werke ohne Dach).
+- **Kritische Prüfung** (43 Prüfer, jeder Befund gegengeprüft): 38 bestätigte Befunde, alle eingearbeitet. Bericht: `protokolle/pruefung-gewebe-2026-10-21.json`.
+- **Tests:** 39 im Browser-Code und 53 Server-Tests, alle bestanden.
 
-Ralf will sein System hierarchisch korrekt: **die Zentrale als Mitte**, darum Dächer, darin Bereiche und Werke. Lesematerial hängt an seinem Werk. Nichts darf vermischt werden; das gilt besonders für den Phänomenatlas.
+## Was die FASKA-Erhebung belegt hat
 
-Der Mac-Katalog `/Volumes/ThunderBolt4_2TB/00-START-HIER-MAC-ORDNUNG/KATALOG.tsv` (177 Projekte, Juli, von einem Agenten angelegt) vermischt selbst. Seine Familie „ADHS-OS-FASKA“ enthält den ADHS-OS-Vault und FASKA zusammen. Viele spätere FASKA-Ordner fehlen darin, einen Phänomenatlas-Bereich gibt es nicht.
-
-## Was gebaut ist (nur in `gewebe`, ungeprüft im Browser)
-
-- `app/js/wuchs.js`: Abstammung je Werk als Raum. Ketten, Gabeln (erweitert/remixt-aus), Fächer und Keim kommen aus dem Rundenbriefing. „Reihe“ ist die Reihenfolge einer Übernahme und keine Entwicklung. Gegenlese ist Gewebe.
-- `app/js/zelle.js`: Ranken statt einer Bahn, Stiele, Gabelknoten, Gegenlese-Fäden, eine Hülle nach innerer Gestalt und Krümmung nach dem Kopplungswinkel.
-- `app/js/ordnung.js`: Mitte, Dächer, Bereiche, Werke und Lesematerial, mit Lage im Raum. Die Daten kommen aus `ordnung.json`, die es **noch nicht gibt**. Ohne sie steht alles „ohne Dach“.
-- `app/js/netz.js`: das Netz als Zelle aus Zellen. Die Zentrale ist die Mitte, die Dächer haben Hüllen und Namen, und man kann in ein Dach hineinfahren. Die Fäden sind gerichtet und typisiert, mit Knoten für Verwendungen.
-- Dazu Änderungen an `regie.js`, `welt.js`, `haupt.js`, `bedienung.js`, `index.html` und `stil.css`. Der Server hat einen Leseweg `/lichtwerk/ordnung`.
-- Test: `tests/wuchs.test.mjs` hat 7 Tests, alle bestanden. Die Node-Probe lief mit allen 89 Werken.
+FASKA ist die Freie Aktive Schule Karlsruhe, Ralfs Arbeitgeber. Darunter liegen Schuldokumentation (lebende App `faska-app-bau`, Varianten, GOLD, Lernpfade, Lernlandschaft, Invaria), FASKA Plan, FASKA FLOW (Lernspiele, 20 Godot-Module), FASKA MUSiC (mit Let the Music Play und Klangspielen) und FASKA STUDiO. ADHS OS ist ein eigenes Dach. Die Juli-Familie „ADHS-OS-FASKA“ ist falsch gemischt.
 
 ## Nächste Schritte
 
-1. Ergebnis der Erhebung „ralfs-systemordnung“ holen. Lief sie beim Herunterfahren nicht zu Ende, neu starten. Skript unter `~/.claude/projects/-Volumes-ThunderBolt4-2TB-Development-Projects-spiralcells-lichtwerk/1d7844bd-f2fa-430c-bed6-f193d9870ad0/workflows/scripts/`.
-2. Aus belegten Quellen einen Vorschlag für `ordnung.json` machen. Ralf zeigen und bestätigen lassen. **Nicht aus Namen raten.**
-3. Die Testkette 8419 → 8418 auf `kette-gewebe` starten und im Browser prüfen.
-4. Danach kommen der Materialraum (Lesen, Vergleich, Passagen, Rückkehr) und die Kritikrunde.
+1. Ralfs Antwort zur Ordnung einarbeiten, `bestaetigt` erst nach seinem Ja auf `true` setzen.
+2. Im Dach die Werknamen leise zeigen (Orientierung beim Hineinfahren).
+3. Danach: Kritikrunde am Bild (Erstblick, Bildkraft), dann mit Ralf entscheiden, ob `gewebe` nach `main` geht. `app/` geht dann sofort live.
