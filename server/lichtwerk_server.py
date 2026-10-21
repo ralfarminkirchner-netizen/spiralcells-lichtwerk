@@ -54,8 +54,7 @@ EINWURF_FELDER = {"work_id", "worktree_id", "new_worktree", "derived_from", "sou
 KANTEN_FELDER = {"edge_type", "from_variant_id", "to_variant_id", "note", "author_id"}
 LESEN = {"/api/graph", "/api/health", "/api/agents"}
 UMGEBUNG = [  # nur Lebenszeichen; TiSCH (9030) wird nie angefragt, er kostet Geld
-    {"name": "KiN OS", "satz": "KiN OS · der Fork der Zentrale", "port": 8895, "pfad": "/api/aios/runtime"},
-    {"name": "Zentrale", "satz": "Zentrale · KREATiVTRAGWERK", "port": 8894, "pfad": "/"},
+    {"name": "KiN OS", "satz": "KiN OS · die Zentrale", "port": 8894, "pfad": "/api/aios/runtime"},
     {"name": "KiNFORMER", "satz": "KiNFORMER · die Formwerkstatt", "port": 9062, "pfad": "/"},
     {"name": "KiN", "satz": "KiNTEGRiTY · das Gedächtnis", "port": 9040, "pfad": "/api/health"},
 ]
@@ -1047,7 +1046,7 @@ def main(argv=None):
     p.add_argument("--leseeingang", type=int, default=None,
                    help="zweiter Port, der nur liest; Skizzen und Werkraum laufen dann dort")
     a = p.parse_args(argv)
-    verbund = (8894, 8895, 9062, 9040, 9030, 9031, 9084, 8401, 8400)
+    verbund = (8894, 9062, 9040, 9030, 9031, 9084, 8401, 8400)
     if a.port in verbund or a.leseeingang in verbund:
         sys.exit("Dieser Port gehört einem anderen Teil des Verbunds.")
     if a.leseeingang is not None and a.leseeingang == a.port:
