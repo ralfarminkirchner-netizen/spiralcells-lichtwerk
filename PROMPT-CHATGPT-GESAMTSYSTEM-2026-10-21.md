@@ -16,6 +16,18 @@ Von Claude (Lichtwerk-Sitzung), auf Ralfs Wort vom 21.10.2026, gegen 14:15:
 
 Beide bleiben als Material liegen. Ein Claude-Chat baut nach diesem Prompt nicht mehr am System.
 
+**Nachtrag 21.10.2026, 19:25 (Claude, Sitzung Lebensspirale), auf Ralfs Wort: Die Lebensspirale ist an Codex
+zurückgegeben.** Ralf um 15:25: „Gib Codex einen Prompt mit der aktualisierten Lebensspirale also dem Spirals
+Cells-Ansatz zurück …“. Um 19:23 bestätigt: „Ja: Vermerke im ChatGPT-Gesamtprompt, dass die Lebensspirale an Codex
+zurückgegeben ist, mit Verweis auf den Codex-Prompt.“ Codex' Auftrag dafür steht in
+`/Volumes/ThunderBolt4_2TB/Development/Projects/lebenserschliessung/PROMPT-CODEX-LEBENSSPIRALE-SPIRALCELLS-2026-10-21.md`.
+
+Wo dieser Prompt dir unten die Lebensspirale zuweist, gilt für sie der Codex-Prompt: bei „Das gehört dir“, bei den
+Teilen, bei der Frage zur Automation in Schritt 4 und bei den sechs Kriterien in Schritt 6. Du baust die Lebensspirale
+nicht selbst. Du darfst sie lesen und mit dem Lichtwerk vergleichen. Eine gemeinsame Umschaltung zwischen Lichtwerk und
+Lebensspirale verabredest du mit Codex; Codex' Dateien in `lebenserschliessung` änderst du nicht. Alles Übrige in diesem
+Prompt bleibt unverändert.
+
 ---
 
 BEGINN
@@ -26,7 +38,8 @@ Vor dir haben viele Sitzungen nebeneinander gebaut: Claude-Sitzungen, Codex-Sitz
 einen Teil gut gemacht, aber zusammen passen die Teile noch nicht. Deine Aufgabe ist, sie zu einem stimmigen Ganzen zu
 verbinden. Dabei vermischst du nichts, verdoppelst nichts und verhandelst Ralfs Entscheidungen nicht neu.
 
-Das gehört dir: KiN OS, das Lichtwerk, SPiRALCELLS, die Atlanten, die Lebensspirale und Capacities. Was du nicht
+Das gehört dir: KiN OS, das Lichtwerk, SPiRALCELLS, die Atlanten, die Lebensspirale (seit 21.10. abends wieder bei
+Codex, siehe Nachtrag oben) und Capacities. Was du nicht
 selbst gebaut hast, übernimmst du mit Respekt vor dem, was dort schon gilt.
 
 ## Was Ralf will (wörtlich, nicht neu abfragen)
@@ -200,6 +213,7 @@ Alle Projekte liegen unter `/Volumes/ThunderBolt4_2TB/Development/Projects/`, au
   `neuroatlas-denkraum-20261006`.
 - **Lebensspirale / Lebenserschließung:** `lebenserschliessung`, Leser auf 53450. Er startet nur nach dem Verfahren in
   `CONTINUE.md`. Dort arbeitet die Automation (siehe oben).
+  Seit 21.10. abends gehört die Lebensspirale wieder Codex (Nachtrag oben); du liest sie nur.
 - **Kugelmatrix:** `kugelmatrix-buero` (Bürovariante) und die MOONFiNGERS-Projekte (`moonfingers-*`). Sie sind das
   Vorbild für zwei umschaltbare Ansichten.
 - **Capacities:** Es gibt keinen lokalen Ordner. Das Material ist PR #1, Schritt 7 in `PROMPT-KIN-OS-EINS.md`.
@@ -389,6 +403,7 @@ Empfehlung zuerst. Wahrscheinlich sind es diese:
 - Legt Ralf einen Capacities-Test-Space und ein Token selbst an?
 - Wie teilst du die Lebensspirale mit der Automation? Ruht sie, während du Licht und Papier baust, oder arbeitet ihr
   abwechselnd unter ihrer Writer-Sperre?
+  (Entfällt für dich: Die Lebensspirale ist an Codex zurückgegeben. Diese Frage klärt Codex mit Ralf.)
 - Wandert die Ordnung aus dem Lichtwerk in die Zentrale?
 
 Außerdem fragst du einmal, getrennt davon, nach dem Ja zum Neustart von 8411.
@@ -419,7 +434,8 @@ Die offenen Punkte aus der KiN-OS-Übergabe gehören dir:
 
 1. **Licht und Papier als Systemprinzip:**
    - Im Lichtwerk wird der Leseraum zur Papieransicht über denselben Werken.
-   - In der Lebensspirale gelten Codex' sechs Kriterien:
+   - In der Lebensspirale gelten Codex' sechs Kriterien. Umsetzen wird sie Codex (Nachtrag oben); du richtest das
+     Lichtwerk danach aus:
      - ein Werk mit zwei Darstellungen,
      - Umschalten ohne Kontextverlust, auch nach dem Neuladen,
      - eigene Interaktionen: Themenfasern im Licht, greifbare Tageszettel und ausrollbare Papierrollen im Papier,
