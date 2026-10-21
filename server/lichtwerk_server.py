@@ -44,6 +44,7 @@ HIER = os.path.dirname(os.path.abspath(__file__))
 WURZEL = os.path.dirname(HIER)
 APP = os.path.join(WURZEL, "app")
 STANDBILDER = os.path.join(WURZEL, "standbilder")
+ORDNUNG = os.path.join(WURZEL, "ordnung.json")   # Mitte, Dächer, Bereiche: belegt aus Ralfs Quellen, von ihm zu bestätigen
 SKIZZEN = os.path.join(os.path.dirname(WURZEL), "kin-os-sichten-codex")   # Codex' echter Ordner, nicht die Hardlinks
 SKIZZEN_WEG = "/kin-os-sichten-codex/"
 
@@ -610,6 +611,12 @@ class Lichtwerk(BaseHTTPRequestHandler):
                 self._json(200, {"richtungen": self._richtungen()})
             elif pfad == "/lichtwerk/monde":
                 self._json(200, self._monde())
+            elif pfad == "/lichtwerk/ordnung":   # nur lesen; fehlt die Datei, ist alles „ohne Dach“
+                try:
+                    with open(ORDNUNG, "rb") as f:
+                        self._senden(200, f.read())
+                except FileNotFoundError:
+                    self._json(200, {"daecher": [], "bestaetigt": False})
             elif pfad == "/lichtwerk/neu":
                 self._neu(parse_qs(teile.query).get("seit", [""])[0])
             elif pfad in ("/", "/index.html"):
@@ -980,7 +987,7 @@ class Leseeingang(Lichtwerk):
     autorenprofile = False
     behalten = False
     leseeingang = None
-    DURCH = {"/api/graph", "/api/agents", "/lichtwerk/graph", "/lichtwerk/stand", "/lichtwerk/monde", "/lichtwerk/neu"}
+    DURCH = {"/api/graph", "/api/agents", "/lichtwerk/graph", "/lichtwerk/stand", "/lichtwerk/monde", "/lichtwerk/neu", "/lichtwerk/ordnung"}
     SATZ = "Hier wird nur gelesen. Schreiben geht im Lichtwerk selbst, mit Halten."
 
     def do_GET(self):

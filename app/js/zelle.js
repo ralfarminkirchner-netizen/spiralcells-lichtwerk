@@ -8,6 +8,7 @@
 import {TAU, DEG, clamp, mix, sstep, eio, lin, hash, mixc, desat, P, CAM, toScreen, screenRing,
         WG, KEIMC, GOLDC, SILVER, DUSTC, ASCHE} from './licht.js';
 import {STIMMEN, MENSCH, QUELLE} from './daten.js';
+import {wuchs, rangRadien, biege, ahnen, nachkommen, KEIM} from './wuchs.js';
 
 export const RC = 1.0, HC = 1.3, NMAX = 2584, DT = 1 / 120;
 export const GOLD = 137.50776 * DEG, SPOKE = 144 * DEG;
@@ -16,6 +17,7 @@ const SEEDC = VOICES.map(v => desat(v.c, 0.3));
 const OM0 = VOICES.map(v => TAU / v.T), OMC = TAU / 2.4, OM0_RM = OM0.map(w => w * 0.15), OMC_RM = OMC * 0.15;
 const INC = [0.55, 1.0, 0.75, 0.9, 0.65], NODE = [0.3, 1.7, 3.1, 4.4, 5.6], RHOK = [0.0, -0.12, 0.08, -0.05, 0.22];
 const TRC = 480;
+const TURN = 1.75, CURL_TRAUM = 0.42, HB = 48;   // volle Krümmung eines Arms vom Keim bis zum Rand (rad); Traumfeld sanft; Fächer der Hülle
 
 /* Fibonacci-Hüllen, leicht verwackelt gegen Moiré */
 export function fibSphere(M){ const a = new Float32Array(M * 3), j = 0.5 / Math.sqrt(M);
@@ -68,11 +70,13 @@ export class Zelle {
     }
     const G = counts ? counts.reduce((a, b) => a + b, 0) : 0;
     this.G = G;
-    this.gSeed = new Int32Array(G); this.gK = new Int32Array(G); this.gRank = new Int32Array(G); this.gRho = new Float32Array(G);
+    // Der Wuchs: jede Ausprägung an ihrer belegten Herkunft, Masse in Körnern
+    const W = this.W = wuchs(m, {masse: counts || []});
+    this.gSeed = new Int32Array(G); this.gRank = new Int32Array(G); this.gRho = new Float32Array(G);
     this.gY = new Float32Array(G); this.gCol = new Float32Array(G * 3); this.gBorn = new Float32Array(G).fill(-1); this.gFrom = new Float32Array(G * 3);
-    this.gPhi = new Float32Array(G); this.gPhiLock = new Float32Array(G); this.gRhoT = new Float32Array(G); this.kelchK = 0; this.gPhiT = new Float32Array(G);
+    this.gPhiLock = new Float32Array(G); this.gR = new Float32Array(G); this.gTh = new Float32Array(G); this.gU = new Float32Array(G); this.gJ = new Float32Array(G);
+    this.kelchK = 0; this.curl = this.traum ? CURL_TRAUM : 0;
     this.seedFirst = new Int32Array(n); this.seedCount = new Int32Array(n); this.seedCore = new Int32Array(n);
-    const lane = [0, 0, 0, 0, 0];
     const t0 = m.zeitspanne[0], t1 = m.zeitspanne[1], span = Math.max(1, t1 - t0);
     const yOf = i => { if(n <= 0) return 0; const f = 0.7 * (n > 1 ? i / (n - 1) : 1) + 0.3 * clamp((sam[i].zeit - t0) / span, 0, 1);
       return HC * (f < 0.3 ? 0.62 * f / 0.3 : 0.62 + 0.38 * (f - 0.3) / 0.7); };
@@ -80,31 +84,30 @@ export class Zelle {
     // Jugend je Stimme: 0 die älteste, 1 die jüngste Ausprägung dieser Stimme
     this.seedJung = new Float32Array(n); { const proS = new Map(); sam.forEach((s, i) => { const k = s.form ? 'form' : String(s.stimme); if(!proS.has(k)) proS.set(k, []); proS.get(k).push(i); });
       for(const arr of proS.values()) arr.forEach((i, j) => { this.seedJung[i] = arr.length > 1 ? j / (arr.length - 1) : 1; }); }
+    const weg = new Float64Array(G);
     let g = 0;
     for(let i = 0; i < n; i++){
       const s = sam[i], c = counts[i], y0 = this.seedY[i], y1 = i + 1 < n ? this.seedY[i + 1] : y0 + 0.02;
       this.seedFirst[i] = g; this.seedCount[i] = c;
       const col = s.form ? PAPIERC : farbeVon(s.stimme);
-      // eine Form bleibt auf einer Bahn: der ihres Originals, sonst der kürzesten
-      let formL = -1; if(s.form){ const o = sam.find(x => x.id === s.original); formL = o && typeof o.stimme === 'number' ? o.stimme : 0;
-        if(formL === 0 && !(o && o.stimme === 0)) for(let q = 1; q < 5; q++) if(lane[q] < lane[formL]) formL = q; }
       for(let j = 0; j < c; j++, g++){
-        let L;
-        if(formL >= 0) L = formL;
-        else if(typeof s.stimme === 'number') L = s.stimme;
-        else { L = 0; for(let q = 1; q < 5; q++) if(lane[q] < lane[L]) L = q; }   // Material füllt die kürzeste Bahn
-        this.gK[g] = 5 * lane[L] + L; lane[L]++;
         this.gSeed[g] = i; this.gY[g] = mix(y0, y1, j / c) + (hash(g * 2.7) - 0.5) * 0.004;
+        weg[g] = W.s0[i] + j + 0.5;                                   // Weg vom Keim, in Körnern
+        this.gTh[g] = biege(W.th0[i], W.th1[i], (j + 1) / c);         // aus der Richtung der Eltern in die eigene
+        this.gJ[g] = hash(g * 7.77 + 0.3);
         const v = 0.92 + 0.16 * hash(g * 1.3);
         this.gCol[g * 3] = col[0] * v; this.gCol[g * 3 + 1] = col[1] * v; this.gCol[g * 3 + 2] = col[2] * v;
       }
       this.seedCore[i] = this.seedFirst[i] + (c >> 1);
     }
-    const order = Array.from({length: G}, (_, i) => i).sort((a, b) => this.gK[a] - this.gK[b]);
+    // Radius nach Rang des Wegs: gleiche Fläche je Korn, die Abstammung läuft von innen nach außen
+    this.Rfinal = RC * Math.sqrt(G / NMAX);
+    const rr = rangRadien(weg);
+    for(let k = 0; k < G; k++){ this.gU[k] = rr[k]; this.gR[k] = this.Rfinal * rr[k]; }
+    // Einrasten: dieselbe Folge, nun als goldene Phyllotaxis; jede Ausprägung hat ihre Lücke
+    const order = Array.from({length: G}, (_, i) => i).sort((a, b) => weg[a] - weg[b] || a - b);
     this.byRank = new Int32Array(G);
     order.forEach((gi, r) => { this.gRank[gi] = r; this.byRank[r] = gi; this.gRho[gi] = RC * Math.sqrt((r + 0.5) / NMAX); this.gPhiLock[gi] = r * GOLD; });
-    for(let g2 = 0; g2 < G; g2++){ this.gRhoT[g2] = RC * Math.sqrt((g2 + 0.5) / NMAX); this.gPhiT[g2] = hash(g2 * 7.77 + 0.3) * TAU; }   // von der Seite: Radius nach Entstehungsfolge
-    this.Rfinal = RC * Math.sqrt(G / NMAX);
     this.statusFarben();
     // Tagesmarken für den Kelch
     this.tage = [];
@@ -115,6 +118,8 @@ export class Zelle {
         this.tage.push({y: this.seedY[i], t});
       }
     }
+    this.huelle = new Float32Array(HB).fill(1); this.huelleN = new Float32Array(HB); this.gP = new Float32Array(G * 3); this.gSicht = new Uint8Array(G);
+    this.wahl = {i: -2, pfad: null, nach: null};
   }
 
   /* Status färbt nach: Grundformation weißgold, geprüft heller, verworfen Asche */
@@ -132,17 +137,18 @@ export class Zelle {
     const S = this.S = {clock: 0, still: 0, locked: false, relock: false, frozen: false, lockT: -99, lk: 0, lockedOnce: false,
       theta: [0, 1.2566, 2.5133, 3.7699, 5.0265], kv: [0, 0, 0, 0, 0], kickT: -99, kickAmt: 0, r: 0, rb: 0, psi: 0, C: 0,
       alpha: this.traum ? GOLD : SPOKE, aV: 0, hold: 0, holdT: 0, holdP: null, Rs: 0.03, yRim: 0, Sc: 0.317, qI: -1, qTh: 0, hopP: -1, hopTm: 0,
-      trH: 0, trN: 0, waves: [], flights: [], pairs: null, pairsT: -99, phiHead: 0, kTop: -1, nBorn: 0, yTop: 0, rhoTop: 0.03, arrive: 0, rot: 0,
+      trH: 0, trN: 0, waves: [], flights: [], pairs: null, pairsT: -99, nBorn: 0, yTop: 0, rhoTop: 0.03, arrive: 0, rot: 0,
       aufzug: !sofort && this.m.samen.length > 0, rt: 0, D: clamp(3.5 + 0.55 * this.m.samen.length, 6, 13), nextSeed: 0, cNow: 0, phase: 0.04, endT: -1};
     this.TR = VOICES.map(() => new Float32Array(TRC * 3));
     this.gBorn.fill(-1);
-    if(!S.aufzug){ this.alleGeboren(); S.arrive = 1; S.cNow = this.m.kopplung; S.alpha = this.zielWinkel(); S.phase = this.m.phase;
+    if(!S.aufzug){ this.alleGeboren(); S.arrive = 1; S.cNow = this.m.kopplung; S.alpha = this.zielWinkel(); this.curl = this.kruemmung(); S.phase = this.m.phase;
       S.Rs = Math.max(0.03, this.Rfinal); S.yRim = this.G ? this.gY[this.G - 1] : 0; S.Sc = this.memR() * 1.32; S.rb = this.m.kopplung > 0.5 ? 0.95 : 0.4;
       if(this.m.kristall.length){ S.locked = true; S.lockedOnce = true; S.lk = 1; S.lockT = -10; this.freeze(); } }
   }
   alleGeboren(){ for(let g = 0; g < this.G; g++){ this.gBorn[g] = -10; this.einKorn(g); } this.S.nextSeed = this.m.samen.length; }
-  einKorn(g){ const S = this.S, k = this.gK[g];
-    if(k > S.kTop){ S.phiHead += (k - S.kTop) * S.alpha; S.kTop = k; } S.nBorn++; S.yTop = Math.max(S.yTop, this.gY[g]); S.rhoTop = Math.max(S.rhoTop, this.gRho[g], this.gRhoT[g] * this.kelchK); }
+  einKorn(g){ const S = this.S; S.nBorn++; S.yTop = Math.max(S.yTop, this.gY[g]); S.rhoTop = Math.max(S.rhoTop, this.gR[g]); }
+  /* Die Ranken krümmen sich mit dem Teilungswinkel: 144° gerade Speichen (Silos), zum goldenen Winkel hin Spiralarme */
+  kruemmung(){ return this.traum ? CURL_TRAUM : clamp((SPOKE - this.S.alpha) / (SPOKE - GOLD), 0, 1.1); }
   zielWinkel(){ const S = this.S; if(this.traum) return GOLD; if(S.locked || S.frozen) return GOLD; const tw = Math.max(S.cNow, S.hold * Math.min(1, S.C * 1.2)); return mix(SPOKE, GOLD, 0.84 * tw); }
   freeze(){ const S = this.S; S.frozen = true; }
 
@@ -150,15 +156,14 @@ export class Zelle {
   memR(){ const S = this.S; return Math.max(this.orbitR() * 1.2, 1.12 * Math.sqrt(S.Rs * S.Rs + S.yRim * S.yRim * 0.25)); }
   center(){ return [this.origin[0], this.origin[1] + this.S.yRim * 0.5, this.origin[2]]; }
 
-  /* Lage eines Korns (Weltkoordinaten) */
+  /* Lage eines Korns (Weltkoordinaten): Richtung aus dem Wuchs, gekrümmt nach Kopplung, beim Einrasten golden */
   kornPos(g, o){
     const S = this.S, O = this.origin;
-    // Traumfeld: lose verstreut und still treibend, ohne Gitter
-    let phi = this.traum ? this.gPhiT[g] + S.rot * 0.6 : S.phiHead - (S.kTop - this.gK[g]) * S.alpha;
+    let phi = this.gTh[g] + this.curl * this.gU[g] * TURN + S.rot, rho = this.gR[g];
+    if(this.traum){ const j = this.gJ[g]; phi += 0.06 * Math.sin(S.clock * 0.07 + j * 40); rho *= 1 + 0.05 * Math.sin(S.clock * 0.05 + j * 23); }   // Traumfeld: lose, still treibend
     if(S.lk > 0.001 || S.frozen){ const rr = this.gRho[g] / Math.max(0.05, this.Rfinal);
       const b = S.frozen && S.clock - S.lockT > 4 ? 1 : sstep(0, 1, (S.clock - S.lockT - 0.55 - rr * 1.1) / 0.9);
-      if(b > 0){ let d = (this.gPhiLock[g] + S.rot) - phi; d = Math.atan2(Math.sin(d), Math.cos(d)); phi += d * b; } }
-    const rho = this.kelchK > 0.001 ? mix(this.gRho[g], this.gRhoT[g], 0.65 * this.kelchK) : this.gRho[g];
+      if(b > 0){ let d = (this.gPhiLock[g] + S.rot) - phi; d = Math.atan2(Math.sin(d), Math.cos(d)); phi += d * b; rho = mix(rho, this.gRho[g], b); } }
     o[0] = O[0] + rho * Math.cos(phi); o[1] = O[1] + this.gY[g]; o[2] = O[2] + rho * Math.sin(phi); return o;
   }
   seedPos(i, o){ return this.kornPos(this.seedCore[i], o); }
@@ -250,16 +255,15 @@ export class Zelle {
     if(S.locked && S.rb < 0.8 && !m.kristall.length){ S.locked = false; S.relock = true; }
     // Teilungswinkel als Feder
     const aT = this.zielWinkel(), ks = 260, ds = 2 * Math.sqrt(ks) * 0.5;
-    S.aV += (ks * (aT - S.alpha) - ds * S.aV) * dt; S.alpha += S.aV * dt;
+    S.aV += (ks * (aT - S.alpha) - ds * S.aV) * dt; S.alpha += S.aV * dt; this.curl = this.kruemmung();
     if(!S.frozen && S.locked && S.clock - S.lockT > 0.5) this.freeze();
     if(S.pairs === null && S.locked && S.clock >= S.pairsT) this.computePairs();
     if(!S.frozen) S.rot += dt * (this.RM ? 0.004 : 0.012);
-    S.phiHead += dt * (S.frozen ? 0 : (this.RM ? 0.004 : 0.012));
     const q = Math.floor(S.clock * 12); if(q !== S.qI){ S.qI = q; S.qTh = th[1]; }
     if(S.hopP >= 0){ S.hopP += dt / 0.7; if(S.hopP >= 1){ S.hopP = -1; S.hopTm = 0; } }
     else { S.hopTm += dt * (1 - S.C); if(S.hopTm > 1.9 && S.arrive >= 1 && this.has[2] && !this.RM) S.hopP = 0; }
     const kS = 1 - Math.exp(-dt / 0.8);
-    S.Rs += (Math.max(0.03, S.rhoTop, RC * Math.sqrt(S.nBorn / NMAX) * this.kelchK) - S.Rs) * kS;
+    S.Rs += (Math.max(0.03, S.rhoTop) - S.Rs) * kS;
     S.yRim += (S.yTop - S.yRim) * kS;
     S.Sc += (this.memR() * 1.32 - S.Sc) * (1 - Math.exp(-dt / 1.2));
     S.phase += ((S.locked ? 1 : S.aufzug ? Math.min(m.phase, 0.06 + 0.9 * S.cNow) : m.phase) - S.phase) * (1 - Math.exp(-dt / 1.4));
@@ -330,8 +334,12 @@ export function baueZelle(Z, U, wall, rdt, vis){
     const tint = (1 - Lk) * (Z.traum ? 0 : 1);
     let pw = null; if(wall - U.pwT < 2.5 && !U.reading) pw = U.pointerWorldAt(CAM.target);
     const psz = 0.0065 * Math.max(0.6, Rm);
+    // Die Hülle schmiegt sich an den Wuchs: wo Ranken weit hinausreichen, wölbt sie sich; eingerastet wird sie rund
+    const formK = (Z.traum ? 0.35 : 0.6) * (1 - 0.85 * Lk), H = Z.huelle;
     for(let k = 0; k < MEM.length / 3; k++){
-      const ux = MEM[k * 3], uy = MEM[k * 3 + 1], uz = MEM[k * 3 + 2];
+      const ux0 = MEM[k * 3], uy = MEM[k * 3 + 1], uz0 = MEM[k * 3 + 2];
+      const hb = ((Math.atan2(uz0, ux0) / TAU + 1) * HB) % HB, h0 = Math.floor(hb), hf = hb - h0, hv = mix(H[h0], H[(h0 + 1) % HB], hf);
+      const sf = mix(1, 0.66 + 0.4 * hv, formK), ux = ux0 * sf, uz = uz0 * sf;
       let R = Rm;
       if(pw){ const px = O[0] + ux * Rm - pw[0], py = mcy + uy * Rm - pw[1], pz = O[2] + uz * Rm - pw[2]; R *= 1 + 0.045 * Math.exp(-(px * px + py * py + pz * pz) / (0.25 * Rm * Rm)); }
       const x = O[0] + ux * R, y = mcy + uy * R, z = O[2] + uz * R;
@@ -354,10 +362,14 @@ export function baueZelle(Z, U, wall, rdt, vis){
   const selFirst = selSeed >= 0 ? Z.seedFirst[selSeed] : -1, selEnd = selSeed >= 0 ? selFirst + Z.seedCount[selSeed] : -1;
   const hov = U.hover && U.hover.zelle === Z && U.hover.art === 'same' ? U.hover.i : -1;
   const linked = U.linkedSeeds;
+  if(Z.wahl.i !== selSeed){ Z.wahl = {i: selSeed, pfad: selSeed >= 0 ? new Set(ahnen(Z.W, selSeed)) : null, nach: selSeed >= 0 ? new Set(nachkommen(Z.W, selSeed)) : null}; }
+  const pfad = Z.wahl.pfad, nach = Z.wahl.nach, HN = Z.huelleN; HN.fill(0);
   for(let g = 0; g < Z.G; g++){
+    Z.gSicht[g] = 0;
     const born = Z.gBorn[g]; if(born === -1) continue;
     const age = born <= -5 ? 99 : cl - born; if(age < 0) continue;
     Z.kornPos(g, TMP);
+    { const dx = TMP[0] - O[0], dz = TMP[2] - O[2], b = Math.floor(((Math.atan2(dz, dx) / TAU + 1) * HB)) % HB, r = Math.hypot(dx, dz); if(r > HN[b]) HN[b] = r; }
     const si = Z.gSeed[g], s = m.samen[si];
     let x = TMP[0], y = TMP[1], z = TMP[2], sz = s.stimme === MENSCH && !s.form ? 0.017 : 0.0125;
     if(age < 0.6){ const f = age / 0.6, e = 1 - (1 - f) ** 3; x = mix(Z.gFrom[g * 3], x, e); y = mix(Z.gFrom[g * 3 + 1], y, e) + Math.sin(Math.PI * f) * 0.02; z = mix(Z.gFrom[g * 3 + 2], z, e); sz *= 1.5; }
@@ -371,12 +383,16 @@ export function baueZelle(Z, U, wall, rdt, vis){
     if(typeof v === 'number'){ bri *= U.soloA[v]; if(focus === v){ const c = VOICES[v].c; cr = mix(cr, c[0], 0.6); cg = mix(cg, c[1], 0.6); cb = mix(cb, c[2], 0.6); } }
     else bri *= soloAny ? 0.3 : 1;
     if(selSeed >= 0){ if(g >= selFirst && g < selEnd){ bri *= 2.1; const c = stimmFarbe(v); cr = mix(cr, c[0], 0.5); cg = mix(cg, c[1], 0.5); cb = mix(cb, c[2], 0.5); sz *= 1.25; }
-      else if(linked && linked.has(si)) bri *= 1.25; else bri *= 0.55; }
+      else if(pfad && pfad.has(si)) bri *= 1.45; else if(nach && nach.has(si)) bri *= 1.1; else if(linked && linked.has(si)) bri *= 1.25; else bri *= 0.5; }
     else if(hov === si) bri *= 1.7;
     bri *= fog(x, y, z) * vis;
     P(x, y, z, sz, cr, cg, cb, bri);
+    Z.gP[g * 3] = x; Z.gP[g * 3 + 1] = y; Z.gP[g * 3 + 2] = z; Z.gSicht[g] = 1;
     if(run && age < 0.6 && age + rdt >= 0.6 && age > 0.55) spark(x, y, z, 0, 0.02, 0, 0.35, [cr, cg, cb], 0.03);
   }
+
+  huelleGlaetten(Z, rdt);
+  baueWuchs(Z, U, vis, fog, selSeed, wall);
 
   // Form-Körner tragen einen silbernen Rand
   if(Z.formKoerner === undefined) Z.formKoerner = m.samen.map((s, i) => s.form ? i : -1).filter(i => i >= 0);
@@ -388,7 +404,7 @@ export function baueZelle(Z, U, wall, rdt, vis){
   // Silo-Mond: die Speichen der Stimmen, die hier nichts beigetragen haben, als Hauch (die Lücke ist ehrlich)
   if(!Z.traum && Z.voices.length && Z.voices.length < 5 && Math.abs(S.alpha - SPOKE) < 0.6 * DEG && !S.lockedOnce){
     const R = Math.max(0.05, S.Rs);
-    for(let L = 0; L < 5; L++){ if(Z.has[L]) continue; const phi = S.phiHead - (S.kTop - L) * S.alpha, c = VOICES[L].c;
+    for(let L = 0; L < 5; L++){ if(Z.has[L]) continue; const phi = L * SPOKE + S.rot, c = VOICES[L].c;
       for(let s2 = 1; s2 <= 24; s2++){ const f = s2 / 24; P(O[0] + Math.cos(phi) * R * f, O[1] + S.yRim * f, O[2] + Math.sin(phi) * R * f, 0.006, c[0], c[1], c[2], 0.05 * vis * (1 - tilt)); } } }
   // Parastichien: zwei Spiralscharen beim Einrasten
   if(S.pairs){
@@ -449,6 +465,54 @@ export function baueZelle(Z, U, wall, rdt, vis){
 }
 
 function screenRingWorld(c, rad, col, a){ screenRing(c, rad, col, a); }
+
+/* Hülle: der äußerste Wuchs je Richtung, weich über die Nachbarn und über die Zeit */
+function huelleGlaetten(Z, rdt){
+  const HN = Z.huelleN, H = Z.huelle; let mx = 0; for(let b = 0; b < HB; b++) mx = Math.max(mx, HN[b]); if(mx <= 0) return;
+  const k = 1 - Math.exp(-(rdt || 0.016) / 0.6);
+  for(let b = 0; b < HB; b++){ let s = 0, w = 0; for(let d = -4; d <= 4; d++){ const ww = Math.exp(-d * d / 6); s += HN[(b + d + HB) % HB] * ww; w += ww; }
+    const ziel = Math.max(s / w, HN[b] * 0.9) / mx; H[b] += (ziel - H[b]) * k; }
+}
+
+/* Der Wuchs als Licht: Stiele entlang der Ranken, Gelenke an Gabeln, Fächer, und die Gegenlese als Gewebe.
+   Abstammung (Stiel), Urheberschaft (Farbe), Werkbeziehung (Fäden) und Entscheidung (Gold) bleiben getrennte Zeichen. */
+const STIELC = lin('#cfc6b4');
+function baueWuchs(Z, U, vis, fog, selSeed, wall){
+  const m = Z.m, W = Z.W, gP = Z.gP, sicht = Z.gSicht, O = Z.origin, n = m.samen.length; if(!n || vis < 0.01) return;
+  const pfad = Z.wahl.pfad, tilt = U.kelchK, lockDim = 1 - 0.8 * Z.S.lk, soloAny = U.solo >= 0;
+  const A = [0, 0, 0], Bq = [0, 0, 0];
+  const strich = (a, b, sz, c, al, punkte, lift) => { const d = Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2]), k = Math.max(2, Math.min(punkte, Math.round(d * 160)));
+    for(let s = 1; s < k; s++){ const t = s / k, x = mix(a[0], b[0], t), y = mix(a[1], b[1], t) + (lift ? Math.sin(Math.PI * t) * lift : 0), z = mix(a[2], b[2], t); P(x, y, z, sz, c[0], c[1], c[2], al * fog(x, y, z)); } };
+  const lage = (g, o) => { o[0] = gP[g * 3]; o[1] = gP[g * 3 + 1]; o[2] = gP[g * 3 + 2]; return o; };
+  for(let i = 0; i < n; i++){
+    const f = Z.seedFirst[i], c = Z.seedCount[i], l = f + c - 1; if(!sicht[f] || !sicht[l]) continue;
+    const s = m.samen[i], st = s.stimme, auf = pfad && pfad.has(i), farbe = s.form ? SILVER : typeof st === 'number' ? mixc(VOICES[st].c, STIELC, 0.55) : STIELC;
+    let al = (auf ? 0.5 : 0.07) * vis * lockDim * (soloAny ? (typeof st === 'number' && st === U.solo ? 1.4 : 0.25) : 1) * (selSeed >= 0 && !auf ? 0.6 : 1);
+    const sc = auf ? SILVER : farbe, sz = auf ? 0.0042 : 0.003;
+    // Stiel entlang der eigenen Körner
+    if(al > 0.004) for(let g = f; g < l; g++){ if(!sicht[g + 1]) break; lage(g, A); lage(g + 1, Bq); strich(A, Bq, sz, sc, al, 3, 0); }
+    // Gelenk zur Herkunft
+    const p = W.eltern[i], art = W.art[i];
+    if(art === 'frei') continue;
+    if(p >= 0){ const pl = Z.seedFirst[p] + Z.seedCount[p] - 1; if(!sicht[pl]) continue; lage(pl, A); } else { A[0] = O[0]; A[1] = O[1]; A[2] = O[2]; }
+    lage(f, Bq);
+    const ga = (art === 'gabel' || art === 'form') ? 1 : 0;
+    strich(A, Bq, auf ? 0.0045 : 0.0034, auf ? SILVER : farbe, Math.max(al, (ga ? 0.16 : 0.09) * vis * lockDim * (selSeed >= 0 && !auf ? 0.5 : 1)), 26, 0);
+    // Gabel: ein kleiner Knoten, wo ein Zweig aus einer fremden Fassung fortgesetzt wurde
+    if(art === 'gabel' && p >= 0) P(A[0], A[1], A[2], 0.011, farbe[0], farbe[1], farbe[2], 0.55 * vis * lockDim * (selSeed >= 0 && !auf ? 0.5 : 1));
+  }
+  // Gegenlese: gesehene Fassungen anderer Zweige, als feines Gewebe über der Scheibe
+  for(const [i, j] of W.lese){
+    const gi = Z.seedCore[i], gj = Z.seedCore[j]; if(!sicht[gi] || !sicht[gj]) continue;
+    const an = selSeed >= 0 && (i === selSeed || j === selSeed), st = m.samen[i].stimme;
+    let al = (an ? 0.3 : 0.035) * vis * lockDim * (selSeed >= 0 && !an ? 0.4 : 1);
+    if(soloAny) al *= typeof st === 'number' && st === U.solo ? 2.2 : 0.2;
+    if(al < 0.004) continue;
+    const c = typeof st === 'number' ? mixc(VOICES[st].c, WG, 0.45) : WG;
+    lage(gi, A); lage(gj, Bq); const d = Math.hypot(A[0] - Bq[0], A[2] - Bq[2]);
+    strich(A, Bq, 0.0028, c, al, 36, d * mix(0.32, 0.12, tilt));
+  }
+}
 
 /* Fäden zwischen Ausprägungen */
 const URTEILFARBE = {'tragfähig': GOLDC, 'teilweise': WG, 'nicht-tragfähig': ASCHE};

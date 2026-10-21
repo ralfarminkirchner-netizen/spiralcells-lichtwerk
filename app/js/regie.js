@@ -14,10 +14,14 @@ export function regie(U, Z, N, RM){
   if(Z && U.lese && !portrait) tg = [tg[0], tg[1], tg[2]];
   // Netz
   if(N){
-    const nS = N.Rm2 * 1.18, inward = U.netDir < 0;
+    // Im Netz: das Ganze, oder ein Dach nah (U.dachK blendet weich hinüber)
+    const d = U.dach != null && N.daecher && N.daecher[U.dach] ? N.daecher[U.dach] : null;
+    if(d) U.dachZiel = d; const dz = U.dachZiel, dk = dz ? (RM ? Math.round(U.dachK) : eio(U.dachK)) : 0;
+    const nMitte = dz ? [mix(N.mitte[0], dz.mitte[0], dk), mix(N.mitte[1], dz.mitte[1], dk), mix(N.mitte[2], dz.mitte[2], dk)] : N.mitte;
+    const nS = Math.exp(mix(Math.log(N.Rm2 * 1.18), Math.log(dz ? dz.R * 1.45 : N.Rm2 * 1.18), dk)), inward = U.netDir < 0;
     const tk = inward ? sstep(0.0, 0.7, nk) : sstep(0.3, 1.0, nk);
     Sv = Math.exp(mix(Math.log(Math.max(0.05, Sv)), Math.log(nS), nk));
-    tg = [mix(tg[0], N.mitte[0], tk), mix(tg[1], N.mitte[1], tk), mix(tg[2], N.mitte[2], tk)];
+    tg = [mix(tg[0], nMitte[0], tk), mix(tg[1], nMitte[1], tk), mix(tg[2], nMitte[2], tk)];
     elev = mix(elev, 50 * DEG, sstep(0, 0.8, nk)); fov = mix(fov, 40 * DEG, sstep(0, 0.6, nk)); yaw = mix(yaw, 0.35 + (RM ? 0 : 0.012) * U.netZeit, sstep(0.2, 1, nk));
   }
   const par = RM ? 0 : 1;

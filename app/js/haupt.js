@@ -23,7 +23,11 @@ if(!M){ document.getElementById('nogl').hidden = false; canvas.hidden = true; th
 addEventListener('resize', () => M.resize());
 const angEl = document.getElementById('angle'), tageEl = document.getElementById('tage'), ortEl = document.getElementById('zurueck'), namenEl = document.getElementById('namen');
 for(let i = 0; i < 5; i++){ const s = document.createElement('span'); s.textContent = STIMMEN[i].name; s.style.color = STIMMEN[i].hex; s.style.opacity = '0'; namenEl.append(s); }
-const tuerEl = document.getElementById('tuernamen');
+const tuerEl = document.getElementById('tuernamen'), dachEl = document.getElementById('dachnamen');
+/* Die Namen der Dächer und der Mitte stehen im Netz leise am Bild: sie sind die Orientierung */
+function dachNamen(){ if(!dachEl || !W.N) return; dachEl.innerHTML = '';
+  const neu = (t, k) => { const s = document.createElement('span'); s.textContent = t; s.className = k; s.style.opacity = '0'; dachEl.append(s); };
+  neu(W.N.baum.mitte.name || 'Zentrale', 'mitte'); for(const d of W.N.daecher) neu(d.name, 'dach'); if(W.N.L.ohne) neu('ohne Dach', 'ohne'); }
 function tuerNamen(){ tuerEl.innerHTML = ''; for(const t of (W.N ? W.N.tueren : [])){ const s = document.createElement('span'); s.textContent = t.wach ? t.name : t.name + ' ruht'; s.style.opacity = '0'; tuerEl.append(s); } }
 const WERKSTATT = /[?&]werkstatt/.test(location.search);
 const MERK = 'spiralcells-lichtwerk-mond';
@@ -33,8 +37,8 @@ const RUHEMOND = {id: '', titel: 'SPiRALCELLS ruht', samen: [], keim: [], stimme
   faeden: [], aussen: [], befunde: [], zeitspanne: [0, 0], traumfeld: true, winkel: null, keimKristall: false, keimSatz: '', zweige: []};
 
 async function laden(){
-  const [{daten, stand}, umg] = await Promise.all([schreib.lesenMitStand('/lichtwerk/graph'), schreib.lesen('/lichtwerk/umgebung').catch(() => [])]);
-  W.B = bestand(daten); W.N = new Netz(W.B); W.umgebung = umg; W.N.tueren = umg.filter(u => u.adresse); W.stand = stand;
+  const [{daten, stand}, umg, ord] = await Promise.all([schreib.lesenMitStand('/lichtwerk/graph'), schreib.lesen('/lichtwerk/umgebung').catch(() => []), schreib.lesen('/lichtwerk/ordnung').catch(() => null)]);
+  W.ordnung = ord; W.B = bestand(daten); W.N = new Netz(W.B, W.ordnung); W.umgebung = umg; W.N.tueren = umg.filter(u => u.adresse); W.stand = stand; dachNamen();
   W.namen = link.namen(W.B.monde); W.geladen = Date.now(); W.N.neu = W.neuMonde || null; zuletztMerken();
   W.ruht = false; document.body.classList.remove('ruht'); tuerNamen();
 }
@@ -63,16 +67,21 @@ function oeffneMond(i, opt = {}){
   if(W.namen && W.namen[i] && !WERKSTATT) try{ history.replaceState(null, '', link.bau(W.namen[i], W.von)); }catch(e){}
   ortAktualisieren();
 }
+/* In ein Dach hinein und wieder hinaus: die Kamera fährt, die anderen Dächer treten zurück */
+function insDach(j){ if(!W.N || !W.N.daecher[j]) return; U.dach = j; B.waehle(null); const d = W.N.daecher[j];
+  const n = d.bereiche.reduce((a, b) => a + b.werke.length, 0); B.zeile(`${d.name}: ${n} ${n === 1 ? 'Werk' : 'Werke'} in ${d.bereiche.length} ${d.bereiche.length === 1 ? 'Bereich' : 'Bereichen'}.`); }
+function ausDach(){ if(U.dach == null) return false; const j = U.dach; U.dach = null; B.waehle({art: 'dach', i: j}, 1); B.zeile(B.netzSatz(W.B)); return true; }
 function zumNetz(){
   if(!W.B || W.ruht) return;
   B.waehle(null); U.netDir = 1; U.netT = 1; U.kelchT = 0; U.zoom = 1; U.elevOff = 0; U.yawOff = 0; U.waehlen = null;
+  const dj = W.aktiv >= 0 && W.N ? W.N.dachVon(W.aktiv) : -1; U.dach = dj >= 0 ? dj : null;   // zurück in das Dach, aus dem du kamst
   if(W.aktiv >= 0) B.waehle({art: 'mond', i: W.aktiv, mond: W.B.monde[W.aktiv]}, 1);   // Rückweg: der Mond, aus dem du kamst, bleibt markiert
   B.zeile(B.netzSatz(W.B)); W.titelBis = -1; ortAktualisieren();
 }
 function zurZelle(){ if(!W.Z || W.ruht) return; U.netDir = -1; U.netT = 0; B.waehle(null); B.zeile(B.mondSatz(W.Z.m)); ortAktualisieren(); }
 /* Rückweg: zuerst den gemerkten Weg zurück (auch innerhalb des Monds), sonst ins Netz */
 function zurueck(){
-  if(U.netT > 0.5){ if(W.Z && W.aktiv >= 0) zurZelle(); return; }
+  if(U.netT > 0.5){ if(ausDach()) return; if(W.Z && W.aktiv >= 0) zurZelle(); return; }
   if(U.weg.length){ const w = U.weg.pop(); const i = mondNachId(w.mond);
     if(i >= 0){ if(i === W.aktiv && W.Z){ const Z = W.Z;
         if(w.same){ const si = Z.m.samen.findIndex(s => s.id === w.same); if(si >= 0){ B.waehle({art: 'same', i: si, mond: Z.m, zelle: Z}, 2); return; } }
@@ -132,7 +141,7 @@ async function erneuernJetzt(von, opt){
   W.neuesWartet = false;
   const alt = W.Z, altId = alt && alt.m.id, altSel = U.sel, altSelId = altSel && altSel.art === 'same' ? alt.m.samen[altSel.i]?.id : null, stufe = U.stufe;
   const altB = W.B; W.B = bestand(daten); W.stand = stand;
-  const tueren = W.N ? W.N.tueren : []; W.N = new Netz(W.B); W.N.tueren = tueren; W.N.neu = W.neuMonde || null; W.namen = link.namen(W.B.monde);
+  const tueren = W.N ? W.N.tueren : []; W.N = new Netz(W.B, W.ordnung); W.N.tueren = tueren; W.N.neu = W.neuMonde || null; W.namen = link.namen(W.B.monde); dachNamen();
   zuletztMerken();
   if(!alt || !altId){ return; }
   const i = mondNachId(altId); if(i < 0) return;
@@ -152,7 +161,7 @@ async function erneuernJetzt(von, opt){
   // gleiche Drehlage wie vorher
   const ref = m.samen.findIndex(s => alt.m.samen.some(a => a.id === s.id));
   if(ref >= 0 && !Z.S.frozen){ const ai = alt.m.samen.findIndex(a => a.id === m.samen[ref].id), A = [0, 0, 0], Bp = [0, 0, 0];
-    alt.seedPos(ai, A); Z.seedPos(ref, Bp); const d = Math.atan2(A[2] - alt.origin[2], A[0] - alt.origin[0]) - Math.atan2(Bp[2] - Z.origin[2], Bp[0] - Z.origin[0]); Z.S.phiHead += d; }
+    alt.seedPos(ai, A); Z.seedPos(ref, Bp); const d = Math.atan2(A[2] - alt.origin[2], A[0] - alt.origin[0]) - Math.atan2(Bp[2] - Z.origin[2], Bp[0] - Z.origin[0]); Z.S.rot += d; }
   // neue Ausprägungen fliegen herein: vom Einwurf aus oder vom Kopf ihrer Stimme
   const altIds = new Set(alt.m.samen.map(s => s.id)), HP = [0, 0, 0, 0];
   m.samen.forEach((s, si) => { if(altIds.has(s.id)) return;
@@ -266,6 +275,7 @@ function advance(rdt){
   U.netK += (U.netT - U.netK) * (1 - Math.exp(-rdt / (U.fahrt ? 0.28 : W.RM ? 0.12 : 1.5)));
   if(U.fahrt && (performance.now() > U.fahrt.bis || Math.abs(U.netT - U.netK) < 0.003)){ U.netK = U.netT; U.fahrt = null; }
   U.kelchK += (U.kelchT - U.kelchK) * (1 - Math.exp(-rdt / (W.RM ? 0.12 : 1.1)));
+  U.dachK += ((U.dach != null ? 1 : 0) - U.dachK) * (1 - Math.exp(-rdt / (W.RM ? 0.1 : 0.7)));
   U.leseK += ((U.lese ? 1 : 0) - U.leseK) * k;
   U.kelchZeit += U.kelchK > 0.5 ? rdt : 0; U.netZeit += rdt;
   if(W.Z) W.Z.RM = W.RM;
@@ -329,6 +339,12 @@ function ui(cam){
     const x = clamp(mitte[0] + ca * R - links, 14, CAM.cssW - 14 - w), y = clamp(mitte[1] + Math.sin(a) * R, 70, CAM.cssH - 60);
     el.style.transform = `translate(${Math.round(x)}px,${Math.round(y)}px) translate(0,-50%)`; el.style.opacity = (namenK * 0.85).toFixed(2); }
   U.namenAn = namenK > 0.01;
+  // Dächer und Mitte tragen im Netz ihren Namen
+  if(dachEl && W.N){ const zeig = U.netK > 0.55 && !W.ruht, kids = dachEl.children, nd = W.N.daecher.length;
+    for(let j = 0; j < kids.length; j++){ const el = kids[j], p = j === 0 ? U.mitteSchirm : j <= nd ? U.daecherSchirm[j - 1] : U.ohneSchirm;
+      const leise = U.dach != null && j - 1 !== U.dach ? 0.25 : 1;
+      if(!zeig || !p || p[2] <= 0){ if(el.style.opacity !== '0') el.style.opacity = '0'; continue; }
+      el.style.transform = `translate(${Math.round(p[0])}px,${Math.round(p[1] - 14)}px) translate(-50%,-100%)`; el.style.opacity = String((clamp((U.netK - 0.55) * 2.5, 0, 0.85) * leise).toFixed(2)); } }
   // Türen im Netz tragen leise ihren Namen
   const zeigTueren = W.N && U.netK > 0.6;
   for(let j = 0; j < tuerEl.children.length; j++){ const el = tuerEl.children[j], p = U.tueren[j];
@@ -352,7 +368,7 @@ function frame(now){
 }
 
 /* ------------------------------------------------------------- Start */
-B.installiere({oeffneMond, zumNetz, zurZelle, zurueck, ortZurueck, folge, einwurf, status, kanteFragen, formBehalten});
+B.installiere({oeffneMond, zumNetz, zurZelle, zurueck, ortZurueck, folge, einwurf, status, kanteFragen, formBehalten, insDach, ausDach});
 /* Ein lesbarer Link: im Netz beginnen und in die Zelle fahren (höchstens 1,5 s; Berührung oder Esc schneidet ab) */
 function linkFahrt(ziel){
   W.von = ziel.von || W.von || null;
