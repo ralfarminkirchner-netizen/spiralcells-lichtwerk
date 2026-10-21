@@ -8,6 +8,41 @@ Das Lichtwerk „Spiral Cells“ ist jetzt die Arbeitsfläche über deinem echte
 
 Geprüft habe ich das mit Standbildern, 13 Server- und 9 Datenmodell-Tests und dem ganzen Schreibweg in der Oberfläche, aber nur gegen eine Testkopie. **In deinen echten Bestand habe ich nichts geschrieben:** Das Lichtwerk-Protokoll zeigt keinen einzigen Schreibaufruf an SPiRALCELLS. `state.json` hat sich trotzdem verändert, denn Codex hat um 17:36 bis 17:38 Uhr über die API einen neuen Mond „KiN OS · Sichten“ angelegt (1 Mond, 2 Zweige, 3 Ausprägungen, 2 Kanten). Das Lichtwerk hat ihn von selbst übernommen und zeigt jetzt 89 Monde. Die Sicherung von vor meinem Start liegt in `sicherung/` (16:41 Uhr).
 
+## Stand 21.10.2026: dein System als Zelle aus Zellen, Wuchs und Leseraum
+
+Gebaut nach Codex' Übergabe vom Morgen, auf dem Zweig `gewebe`. Geprüft an einer Testkopie deines Bestands, nicht an deinem echten.
+
+- **Deine Ordnung.** Das Netz zeigt dein System so, wie du es bestätigt hast.
+  - In der Mitte steht die Zentrale mit den Stimmen und den Türen. Darum liegen neun Dächer als eigene Zellen: FASKA, Phänomenatlas, KiNTEGRiTY, MiNDLAXY, SEiN, Spiele und Welten, KlebensFroh, Text und Reim, ADHS OS.
+  - Außen liegen die neun Werke, die noch ohne Dach sind. Durkheim und Radcliffe-Brown sind Lesematerial und hängen an SPiRALCELLS.
+  - Zweimal tippen (oder Eingabe) fährt in ein Dach hinein. Dort stehen die Namen der Bereiche und Werke, Escape führt hinaus.
+  - Die Ordnung steht in `ordnung.json`, im Lichtwerk und nicht in SPiRALCELLS. Ein Werk ohne Zuordnung bleibt sichtbar „ohne Dach“ und wird nie in ein geratenes Dach gesteckt.
+- **Die eigene Entwicklung in jeder Zelle.** Jede Ausprägung hängt dort, wo sie herkommt:
+  - an ihrer Vorgängerin im Zweig,
+  - an der fremden Fassung, aus der ihr Zweig fortgesetzt wurde (eine Gabel mit kleinem Knoten),
+  - an der Ausgangsfrage, oder frei, wenn keine Herkunft belegt ist.
+  - Jede Ausprägung ist ein körniges Blatt, so lang wie ihr Stück der Abstammung und so breit, wie sie Text trägt. Die Ranken krümmen sich mit der Kopplung, eingerastet wird es golden wie bisher.
+  - Gegenlese ist feines Gewebe über der Scheibe. Was eine Übernahme nur aneinandergereiht hat (etwa die 98 Fassungen in „FASKA Varianten“), bleibt eine leise Punktfolge und heißt nie Entwicklung.
+  - Eine Verbindung, die erst später gezogen wurde, auch von dir, bleibt ein Faden und wird nie zur Herkunft.
+- **Orientierung.** Die Marke sagt etwa „fortgesetzt aus „…“ (Claude) · 3. von 13 im Zweig“. Bei einer Auswahl leuchtet der Weg zur Ausgangsfrage silbern, nicht golden.
+- **Fäden zwischen Werken** zeigen Typ und Richtung:
+  - Übernommenes Material fließt als wandernde Lichter zur neuen Fassung, ein Verweis zeigt, Zugehörigkeit steht still, ein Widerspruch ist unterbrochen.
+  - Ein Knoten in der Mitte ist anfassbar. Ist er heller, hat die Verbindung eine beschriebene Verwendung. F schaltet durch die Fäden.
+- **Ins Material.** In der Lesefläche öffnet „Ganz lesen“ den Leseraum im selben Licht. Er zeigt den ganzen Text in Passagen.
+  - Am Rand stehen die belegten Verwendungen genau dort, wo ihr Textanker wörtlich steht. Steht er nicht im Wortlaut, sagt der Leseraum das.
+  - Ein Tipp auf eine Verwendung fliegt in die andere Fassung, an ihre Stelle, und „zurück zu …“ führt an deine Lesestelle zurück.
+  - „Vergleichen“ legt zwei Fassungen nebeneinander. Das ist ein Textabgleich, kein Urteil.
+  - Fassung und Stelle stehen lesbar in der Adresszeile, etwa `#mond=emile-durkheim&fassung=6&lesen=1&stelle=4`. Sie überstehen ein Neuladen.
+  - ⌘V im Leseraum wird nach deinem Halten eine Weiterarbeit in deinem Zweig, mit den gelesenen Fassungen als „gesehen“.
+
+**Geprüft:**
+- **Tests:** 39 im Browser-Code und 53 am Server, alle bestanden.
+- **Kritische Codeprüfung:** 43 Prüfer, jeder Befund gegengeprüft. 38 echte Fehler wurden gefunden und behoben, darunter Tastatur im Netz, Fokus, reduzierte Bewegung, Gold, Ehrlichkeit des Vergleichs und Formfehler in der Ordnungsdatei.
+- **Im Browser an der Testkette:** Netz, Dach, Zellen, Auswahl, Kelch, Leseraum, Vergleich, Folgen und Rückweg, Neuladen, Handy 375 px. Der Schreibweg lief nur in der Testkopie.
+- **Bilder:** Standbilder liegen in `standbilder/gewebe-*.jpg`.
+
+**Nicht geprüft:** ein echtes iPhone, die echte Systemeinstellung für reduzierte Bewegung, ein Bildschirmleser, dein eigenes erstes Halten im echten Bestand.
+
 ## Stand 20.10.2026, 22:00 Uhr: SPiRALCELLS als Teil von KiN OS (Etappen 1 bis 5)
 
 Gebaut nach `PROMPT-SPIRALCELLS-IN-KIN-OS.md` mit `BAUPLAN-SPIRALCELLS-IN-KIN-OS.md`, auf dein Ja von 20:18 Uhr. Live auf 8411 seit 21:52 Uhr.
