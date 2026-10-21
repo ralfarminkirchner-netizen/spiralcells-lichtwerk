@@ -3,22 +3,22 @@
 Nur gelesen, nichts geändert. Jeder Befund wurde von einem eigenen Gegenprüfer zu widerlegen versucht.
 Bestätigt heißt: der Gegenprüfer hielt ihn für echt. Eingearbeitet ist davon noch **nichts**.
 
-**Noch ohne Gegenprüfung beim Schreiben dieser Datei:** gegen:bruch:7, gegen:bruch:8
+Die Prüfskripte liegen in `pruefbelege/2026-10-21/` (nur Skripte und Texte; die Rohbilder blieben im flüchtigen Arbeitsordner der Sitzung und fehlen hier). Sie lesen `testdaten/kette-gewebe` und schreiben nichts in den Bestand.
 
-## Bestätigt (44)
+## Bestätigt (46)
 
 ### bild-netz 1 · Kurze Bündel zwischen Nachbarbezirken brennen als weiße Haken aus und überstrahlen die Mitte
 - **datei:** app/js/netz.js
 - **zeile:** 211
 - **schwere:** schwer
 - **befund:** Im Überblick sind die hellsten Dinge weder die Mitte noch die Werke. Am hellsten sind drei weiße, ausgebrannte Haken oder Sicheln zwischen benachbarten Bezirken: FASKA→SEiN, Text und Reim→KiNTEGRiTY und Mitte→KiNTEGRiTY. Sie sehen aus wie zusätzliche Monde, liegen zwischen zwei Dächern und gehören sichtbar zu keinem. Das stört Ruhe und Rangordnung. Ursache: Die Punktzahl eines Bündels wird aus dem Abstand der Bezirksmitten berechnet (n = clamp(d·3, 20, 120)). Gezeichnet wird aber nur das Stück von Rand zu Rand. Bei Nachbarn ist dieses Stück etwa 2 Welteinheiten lang und bekommt trotzdem 69 bis 116 additive Punkte der Größe 0,38 bis 0,49. Damit ist Befund 18 (Fäden unsichtbar) überkorrigiert. Befund 11 ist nur teilweise behoben: Der Behälternebel ist weg, aber das Licht kommt jetzt von den Fäden statt von den Werken.
-- **beleg:** gewebe2-01: Haken bei (430,480) zwischen FASKA und SEiN, max 255, 7 px ≥240. Bei (480,175) zwischen Text und Reim und KiNTEGRiTY max 253. Bei (465,262) zwischen Mitte und KiNTEGRiTY ein Haken mit Ring. Zum Vergleich: Kern der Mitte (380–420, 280–310) max 230, Werke in SEiN (310–360, 500–530) max 110, in Spiele und Welten max 126. gewebe2-12 (Handy): weiße Flecken bei (280,352) und (243,538), max 255, 13 bzw. 16 px ≥240. Rechnung (Node, kette-gewebe, Kamera S=58 wie bei 800x600): FASKA→SEiN hat 2,0 Einheiten von Rand zu Rand, 116 Punkte im Abstand 0,03 bei Punktgröße 0,42, also 15-fache Überdeckung und summiertes Alpha um 6. Text und Reim→KiNTEGRiTY 10,7-fach, Mitte→KiNTEGRiTY 12,2-fach. Die langen Bündel liegen bei 1,1- bis 3-fach. Skript: /private/tmp/claude-501/-Volumes-ThunderBolt4-2TB-Development-Projects-spiralcells-lichtwerk/1d7844bd-f2fa-430c-bed6-f193d9870ad0/scratchpad/pruefung2/dichte.mjs
+- **beleg:** gewebe2-01: Haken bei (430,480) zwischen FASKA und SEiN, max 255, 7 px ≥240. Bei (480,175) zwischen Text und Reim und KiNTEGRiTY max 253. Bei (465,262) zwischen Mitte und KiNTEGRiTY ein Haken mit Ring. Zum Vergleich: Kern der Mitte (380–420, 280–310) max 230, Werke in SEiN (310–360, 500–530) max 110, in Spiele und Welten max 126. gewebe2-12 (Handy): weiße Flecken bei (280,352) und (243,538), max 255, 13 bzw. 16 px ≥240. Rechnung (Node, kette-gewebe, Kamera S=58 wie bei 800x600): FASKA→SEiN hat 2,0 Einheiten von Rand zu Rand, 116 Punkte im Abstand 0,03 bei Punktgröße 0,42, also 15-fache Überdeckung und summiertes Alpha um 6. Text und Reim→KiNTEGRiTY 10,7-fach, Mitte→KiNTEGRiTY 12,2-fach. Die langen Bündel liegen bei 1,1- bis 3-fach. Skript: pruefbelege/2026-10-21/dichte.mjs
 - **vorschlag:** In netz.js Z. 211 die Punktzahl aus der Bogenlänge von Rand zu Rand bestimmen, etwa n = clamp(Bogenlänge / (0,7·dicke), 6, 120). Das Alpha je Punkt mit Punktabstand/dicke normieren, damit ein Bündel als Linie nie heller als etwa 0,5 wird. Bündel zwischen Nachbarn (unter etwa 4 Einheiten von Rand zu Rand) als kleinen, stillen Knoten am gemeinsamen Rand zeigen statt als Bogen. Als Regel festhalten: Der Kern der Mitte bleibt das Hellste im Überblick.
 - **Gegenprüfung:** echt, Schwere mittel: Ich konnte den Befund nicht widerlegen. Der Fehler ist im Code klar zu sehen und die Rechnung passt genau zu den Bildern. Nur „überstrahlen die Mitte“ ist zu stark gesagt, darum stufe ich ihn von schwer auf mittel herunter.
 
 Code: Der Bündelteil in app/js/netz.js ist neu in 35c59bc (Z. 206–216 und bogen() Z. 249–253). In Z. 210 wird die Punktzahl n = clamp(d·3, 20, 120) aus dem Abstand der Bezirksmitten d berechnet. bogen() zeichnet aber nur das Stück von Rand zu Rand. Weil gapDach 2.0 ist, liegen Nachbarbezirke immer etwa 2 Einheiten auseinander. Dort fallen 69 bis 116 Punkte auf einen Bogen von etwa 2,8 Welteinheiten. Gemischt wird additiv (licht.js Z. 210, blendFunc ONE, ONE). Dazu kommt: STIL.a ist von 0,07 auf 0,3 bis 0,5 gestiegen.
 
-Rechnung: Skript /private/tmp/claude-501/-Volumes-ThunderBolt4-2TB-Development-Projects-spiralcells-lichtwerk/1d7844bd-f2fa-430c-bed6-f193d9870ad0/scratchpad/pruefung2/widerlegung-haken/haken.mjs, mit bogen() wörtlich nachgebaut. Die Kamera ist wie in regie.js eingestellt (S 58, yaw 0,35, Neigung 50°, Blickwinkel 40°), die Punktgröße in Pixeln wie im Shader.
+Rechnung: Skript pruefbelege/2026-10-21/widerlegung-haken/haken.mjs, mit bogen() wörtlich nachgebaut. Die Kamera ist wie in regie.js eingestellt (S 58, yaw 0,35, Neigung 50°, Blickwinkel 40°), die Punktgröße in Pixeln wie im Shader.
 - 800x600: FASKA→SEiN 116 Punkte auf 14 px Bogen, Punktabstand 0,12 px bei 2,6 px Punktgröße, also etwa 21-fache Überdeckung und summiertes Alpha um 8,4. Mitte→KiNTEGRiTY 20,5-fach, etwa 7,4. Text und Reim→KiNTEGRiTY 17,9-fach, etwa 8,3. Die langen Bündel liegen bei 1,3- bis 4,3-fach (Alpha 0,5 bis 1,5).
 - Handy 375x812: die drei kurzen Bündel 49- bis 55-fach, Alpha 19 bis 23.
 - kette-claude ergibt dieselben Werte.
@@ -40,11 +40,11 @@ Warum nur mittel: Die Mitte bleibt als großer warmer Schein klar die Mitte. Ihr
 - **zeile:** 29
 - **schwere:** mittel
 - **befund:** Befunde 9 und 25 sind nur teilweise behoben. Der Anschnitt rechts ist weg, aber das Netz ist am Handy kleiner geworden. Es füllt nur noch etwa ein Viertel der Höhe, vorher war es gut ein Drittel. Drei Viertel des Schirms bleiben leer. Zugleich hängen die Größen von Bündeln, Knoten und Ringen an CAM.S, der halben Bildhöhe. Die Werkpunkte bleiben in Weltmaß und fallen unter die Mindestpunktgröße, dadurch werden sie gedimmt. Im Hochformat werden Fäden und Ringe so im Verhältnis zu den Werken rund dreimal so dick wie am Mac. Die Mitte liest sich am Handy wieder als Knäuel aus weißen Ringen und Linien, und die Werke sind blasser als die Fäden. Befunde 12 und 19 sind damit am Handy nicht behoben.
-- **beleg:** gewebe2-12: Inhalt nur zwischen y=340 und 576 von 974 (24 %), gewebe-10 vorher 251 bis 607 (37 %). An der Mitte (130–270, 375–445) liegen fünf weiße Knotenringe und sechs Linien. Faden links max 236, Haken unten max 249, Werke links (60–130, 410–445) max 111. Rechnung (Node, netzMass wie regie.js Z. 49–53, Neigung 50°, kette-gewebe): Bei 375x812 ist S 137 bis 154, die Füllung beträgt 33–35 % der Höhe und 91 % der Breite. Ein Bündelpunkt misst dort 0,82 bis 0,93 Welteinheiten, ein Werkpunkt 0,32 (Verhältnis 2,8 bis 3,2). Bei 800x600 ist S 49 bis 58 und das Verhältnis 1,0 bis 1,2. Code: netz.js Z. 186 (fz = CAM.S·0,004), Z. 207 (bz = CAM.S·0,006), licht.js Z. 72 (Ringpunkt 0,0035·CAM.S), licht.js Z. 86 (uMin dimmt kleine Punkte). Skript: /private/tmp/claude-501/-Volumes-ThunderBolt4-2TB-Development-Projects-spiralcells-lichtwerk/1d7844bd-f2fa-430c-bed6-f193d9870ad0/scratchpad/pruefung2/kamera.mjs
+- **beleg:** gewebe2-12: Inhalt nur zwischen y=340 und 576 von 974 (24 %), gewebe-10 vorher 251 bis 607 (37 %). An der Mitte (130–270, 375–445) liegen fünf weiße Knotenringe und sechs Linien. Faden links max 236, Haken unten max 249, Werke links (60–130, 410–445) max 111. Rechnung (Node, netzMass wie regie.js Z. 49–53, Neigung 50°, kette-gewebe): Bei 375x812 ist S 137 bis 154, die Füllung beträgt 33–35 % der Höhe und 91 % der Breite. Ein Bündelpunkt misst dort 0,82 bis 0,93 Welteinheiten, ein Werkpunkt 0,32 (Verhältnis 2,8 bis 3,2). Bei 800x600 ist S 49 bis 58 und das Verhältnis 1,0 bis 1,2. Code: netz.js Z. 186 (fz = CAM.S·0,004), Z. 207 (bz = CAM.S·0,006), licht.js Z. 72 (Ringpunkt 0,0035·CAM.S), licht.js Z. 86 (uMin dimmt kleine Punkte). Skript: pruefbelege/2026-10-21/kamera.mjs
 - **vorschlag:** regie.js Z. 29: Im Hochformat steiler auf das Netz blicken (etwa 75 bis 85° statt 50°), damit die Scheibe nicht auf etwa 0,77 verkürzt wird, und netzMass in Z. 23 mit demselben Winkel rechnen. In netz.js die Größen von Fäden, Knoten und Ringen an die kürzere Bildhälfte koppeln (CAM.S·min(1, asp)) statt an die Höhe. Knotenringe im Überblick am Handy weglassen und nur als Punkte zeigen.
 - **Gegenprüfung:** echt, Schwere mittel: Der Befund hält im Kern, aber nur mit seinem zweiten Teil: Am Handy kippen die Größenverhältnisse. Der erste Teil, das Netz fülle nur ein Viertel der Höhe, trägt nicht als eigener Fehler.
 
-**Nachgerechnet** mit dem echten Code, ohne WebGL: regie() → setCamera() → baueNetz() auf kette-gewebe. Danach habe ich jeden Punkt aus PD projiziert und die Punktgröße wie im Shader bestimmt (px = s·uPx/w, Dimmung e = (px/uMin)² mit uMin = 1,6·DPR). kette-claude liefert dieselben Werte. Skripte: /private/tmp/claude-501/-Volumes-ThunderBolt4-2TB-Development-Projects-spiralcells-lichtwerk/1d7844bd-f2fa-430c-bed6-f193d9870ad0/scratchpad/pruefung2/widerlegung-handy/sim.mjs und …/widerlegung-handy/ausdehnung.mjs (alt gegen neu, alter Stand aus git archive 26356a7).
+**Nachgerechnet** mit dem echten Code, ohne WebGL: regie() → setCamera() → baueNetz() auf kette-gewebe. Danach habe ich jeden Punkt aus PD projiziert und die Punktgröße wie im Shader bestimmt (px = s·uPx/w, Dimmung e = (px/uMin)² mit uMin = 1,6·DPR). kette-claude liefert dieselben Werte. Skripte: pruefbelege/2026-10-21/widerlegung-handy/sim.mjs und …/widerlegung-handy/ausdehnung.mjs (alt gegen neu, alter Stand aus git archive 26356a7).
 
 **1) Größen am Handy: bestätigt und folgenreich.**
 - Die Kopplung an CAM.S ist neu in 35c59bc. Die alte Fassung zeichnete Fäden mit fester Größe 0,035.
@@ -93,13 +93,13 @@ Warum nur mittel: Die Mitte bleibt als großer warmer Schein klar die Mitte. Ihr
 - Keiner der 27 Bildkritik-Befunde verlangt diese Verlegung. Befund 25 beschreibt die Außenlage nur als Ursache der Schieflage am Handy. Sein Verdikt warnt sogar davor, die bestätigte Bildidee anzutasten.
 
 **Rechnung: Lage der Bezirke**
-Skript: /private/tmp/claude-501/-Volumes-ThunderBolt4-2TB-Development-Projects-spiralcells-lichtwerk/1d7844bd-f2fa-430c-bed6-f193d9870ad0/scratchpad/pruefung2/widerlegung-ohnedach/lage-vergleich.mjs, gerechnet auf kette-gewebe; kette-claude gibt dieselben Werte.
+Skript: pruefbelege/2026-10-21/widerlegung-ohnedach/lage-vergleich.mjs, gerechnet auf kette-gewebe; kette-claude gibt dieselben Werte.
 - Neu liegt „ohne Dach“ bei 53,61 vom Ursprung. Damit liegt es näher an der Mitte als ADHS OS (54,87) und Phänomenatlas (56,27).
 - Die Lücke zu Spiele und Welten ist 2,15. Die kleinste Lücke zwischen zwei Dächern ist 2,02.
 - Alt lag es bei 61,04, ganz außen. Bis zum nächsten Dach waren es mindestens 16,4 (Text und Reim).
 
 **Rechnung: Wie hell ist der eigene Ring?**
-Skript: /private/tmp/claude-501/-Volumes-ThunderBolt4-2TB-Development-Projects-spiralcells-lichtwerk/1d7844bd-f2fa-430c-bed6-f193d9870ad0/scratchpad/pruefung2/widerlegung-ohnedach/ring-licht.mjs
+Skript: pruefbelege/2026-10-21/widerlegung-ohnedach/ring-licht.mjs
 - Laut Kommentar soll „ohne Dach“ sich durch seine Gestalt absetzen. Diese Gestalt ist der Ring aus netz.js Z. 152.
 - Bei 800×600 und der Drehlage von gewebe2-01 trifft auf eine Welteinheit 4,76 px. Ein Ringpunkt (0,07) ist dann 0,33 px groß.
 - licht.js Z. 86 hebt ihn auf 1,6 px und dämpft ihn dabei mit (px/s)². Die wirksame Helligkeit ist 0,0095.
@@ -108,7 +108,7 @@ Skript: /private/tmp/claude-501/-Volumes-ThunderBolt4-2TB-Development-Projects-s
 - Die Dächer haben im Überblick keinen Bodenring mehr (Z. 145 nur bei an/drin). Ihre Hülle leuchtet nur noch am Saum, ohne Grundlicht. Ein Dach und „ohne Dach“ unterscheidet am Bild also nur noch das Wort.
 
 **Konkretes Fehlbild**
-Skript: /private/tmp/claude-501/-Volumes-ThunderBolt4-2TB-Development-Projects-spiralcells-lichtwerk/1d7844bd-f2fa-430c-bed6-f193d9870ad0/scratchpad/pruefung2/widerlegung-ohnedach/namen-drehung.mjs. Es rechnet die Namen nach haupt.js Z. 487–500 und trifft gewebe2-01 auf insgesamt 31 px genau.
+Skript: pruefbelege/2026-10-21/widerlegung-ohnedach/namen-drehung.mjs. Es rechnet die Namen nach haupt.js Z. 487–500 und trifft gewebe2-01 auf insgesamt 31 px genau.
 - Der Name „ohne Dach“ kommt in der Reihenfolge zuletzt. Bei 375×812 schweigt er in 195 von 720 Drehlagen, 175-mal verdrängt vom Namen „Spiele und Welten“.
 - Dann liegen die neun Werke ohne Namen und ohne sichtbaren Ring 2,15 Einheiten vor dem Rand von Spiele und Welten. Sie lesen sich als Teil dieses Dachs.
 - Das widerspricht dem Grundsatz in ordnung.js Z. 7–8 („bleibt sichtbar ‚ohne Dach‘, nie in einem geratenen“).
@@ -141,7 +141,7 @@ Code (app/js/netz.js, Stand 35c59bc = HEAD, nicht behoben):
 - Vorher (26356a7, Z. 153) war der Weg eine Gerade. Umgesetzt ist also nur der wörtliche Vorschlag aus Befund 18 („Stützpunkte auf beiden Dachringen“). Dessen Ziel („nicht gerade durch fremde Hüllen“) ist nicht erreicht.
 - tests/netz.test.mjs prüft das nicht.
 
-Rechnung: bogen() und fadenWeg() habe ich nachgebaut und mit der echten Netz-Klasse lesend gerechnet. Die Skripte liegen in /private/tmp/claude-501/-Volumes-ThunderBolt4-2TB-Development-Projects-spiralcells-lichtwerk/1d7844bd-f2fa-430c-bed6-f193d9870ad0/scratchpad/pruefung2/widerlegung-quer/quer.mjs und flow.mjs. Mit kette-gewebe und kette-claude kommt dasselbe heraus.
+Rechnung: bogen() und fadenWeg() habe ich nachgebaut und mit der echten Netz-Klasse lesend gerechnet. Die Skripte liegen in pruefbelege/2026-10-21/widerlegung-quer/quer.mjs und flow.mjs. Mit kette-gewebe und kette-claude kommt dasselbe heraus.
 - Bündel Zentrale→ohne Dach: Es dringt 1,87 tief in „Spiele und Welten“ ein (R 17,7), 63 % seiner Stützstellen liegen im Kreis. Die übrigen fünf Bündel bleiben frei. Die Zahl des Prüfers stimmt also. Die genannte buendel.mjs im Prüfordner rechnet allerdings etwas anderes.
 - Faden FASKA Eigenraum→MOONFiNGERS: 18,6 % seiner Länge liegen im Bereich FLOW · Lernspiele (1,67 tief bei R 4,96). Im Zieldach SEiN läuft er 3,42 tief durch den Bereich EiN SEiN (R 4,89) und am Boden 0,29 an „Einsein“ vorbei (rM 1,27).
 - Ein Inhalt→Genealogical Spiral: 5,28 tief durch „Spiele und Welten“ und 0,32 an „spiel maerchendorf“ vorbei.
@@ -175,15 +175,15 @@ Code:
 - Die Türen stehen also 0,3·Rm = 4,30 Einheiten vor dem Mitte-Rand, die Dächer beginnen schon 2,00 danach.
 - Das drittgrößte Dach liegt im goldenen Winkel immer bei 2·GOLD + 0,4 ≈ −62°, also direkt neben dem Türbogen bei −90°. In der Testkette ist das KiNTEGRiTY (Mittelpunkt (15,5; −29,2), R 16,8). Es berührt die Mitte mit genau 2,00 Abstand.
 
-Rechnung (/private/tmp/claude-501/-Volumes-ThunderBolt4-2TB-Development-Projects-spiralcells-lichtwerk/1d7844bd-f2fa-430c-bed6-f193d9870ad0/scratchpad/pruefung2/widerlegung-tuer/tuer-ketten.mjs):
+Rechnung (pruefbelege/2026-10-21/widerlegung-tuer/tuer-ketten.mjs):
 - kette-gewebe, kette-claude und testdaten/state.json liefern dasselbe Ergebnis: Rm = 14,35.
 - Bei vier Türen steht „KiN“ bei (5,5; −17,8), 1,57 tief in KiNTEGRiTY und nur 0,18 neben dem Werk „Die Wörter bleiben. Der Vortrag wird gesucht.“.
 - Bei fünf Türen stehen zwei Türen darin: „KiN“ 0,65 tief und „Werkraum“ 2,14 tief.
 - Die fünfte Tür gibt es wirklich. Der Server hängt den Werkraum an, sobald der Leseeingang läuft (server/lichtwerk_server.py Z. 605–608), und laut Bericht läuft er auf 8420.
 
 Bild:
-- Mein Kameranachbau (/private/tmp/claude-501/-Volumes-ThunderBolt4-2TB-Development-Projects-spiralcells-lichtwerk/1d7844bd-f2fa-430c-bed6-f193d9870ad0/scratchpad/pruefung2/widerlegung-tuer/tuer-im-dach.mjs) setzt „KiN“ bei 800×600 in der Mitte auf (656,106). Im Bild gewebe2-03 steht sie bei (655,105), das passt genau.
-- Im vergrößerten Ausschnitt (/private/tmp/claude-501/-Volumes-ThunderBolt4-2TB-Development-Projects-spiralcells-lichtwerk/1d7844bd-f2fa-430c-bed6-f193d9870ad0/scratchpad/pruefung2/widerlegung-tuer/g03-oben-rechts.png) steht der Türring „KiN“ zwischen den beiden blauen KiNTEGRiTY-Lichtern. Der Faden nach KiNTEGRiTY streift den Ring.
+- Mein Kameranachbau (pruefbelege/2026-10-21/widerlegung-tuer/tuer-im-dach.mjs) setzt „KiN“ bei 800×600 in der Mitte auf (656,106). Im Bild gewebe2-03 steht sie bei (655,105), das passt genau.
+- Im vergrößerten Ausschnitt (pruefbelege/2026-10-21/widerlegung-tuer/g03-oben-rechts.png) steht der Türring „KiN“ zwischen den beiden blauen KiNTEGRiTY-Lichtern. Der Faden nach KiNTEGRiTY streift den Ring.
 
 Folge für die Bedienung, über den Befund hinaus:
 - treffer() in app/js/bedienung.js Z. 324–330 nimmt das Nächstliegende, Türen und Werke mit je 30 px.
@@ -251,17 +251,17 @@ Echt und folgenreich sind zwei Dinge, und beide hat erst die Umsetzung von Befun
 Beides trifft Dach → Bereich → Werk im FASKA-Dach. Die Bedienung bricht nicht, darum bleibt die Schwere mittel.
 
 Die Skripte liegen hier:
-- /private/tmp/claude-501/-Volumes-ThunderBolt4-2TB-Development-Projects-spiralcells-lichtwerk/1d7844bd-f2fa-430c-bed6-f193d9870ad0/scratchpad/pruefung2/widerlegung-namenseite/namen.mjs
-- /private/tmp/claude-501/-Volumes-ThunderBolt4-2TB-Development-Projects-spiralcells-lichtwerk/1d7844bd-f2fa-430c-bed6-f193d9870ad0/scratchpad/pruefung2/widerlegung-namenseite/regel.mjs
-- /private/tmp/claude-501/-Volumes-ThunderBolt4-2TB-Development-Projects-spiralcells-lichtwerk/1d7844bd-f2fa-430c-bed6-f193d9870ad0/scratchpad/pruefung2/widerlegung-namenseite/bereich-deckt.mjs
-- /private/tmp/claude-501/-Volumes-ThunderBolt4-2TB-Development-Projects-spiralcells-lichtwerk/1d7844bd-f2fa-430c-bed6-f193d9870ad0/scratchpad/pruefung2/widerlegung-namenseite/umlauf.mjs
+- pruefbelege/2026-10-21/widerlegung-namenseite/namen.mjs
+- pruefbelege/2026-10-21/widerlegung-namenseite/regel.mjs
+- pruefbelege/2026-10-21/widerlegung-namenseite/bereich-deckt.mjs
+- pruefbelege/2026-10-21/widerlegung-namenseite/umlauf.mjs
 
 ### bild-stoff 1 · Faden-Marke verspricht eine Stelle, die es nicht gibt
 - **datei:** app/js/bedienung.js
 - **zeile:** 94
 - **schwere:** mittel
 - **befund:** Die Marke sagt „tippen liest die Stelle“, sobald die Verwendung ein to_part hat. Ob verorte() den Teil im Wortlaut findet, prüft sie nicht. Genau der Faden in gewebe2-11 (Émile Durkheim → Alfred Radcliffe-Brown) hat für beide Verwendungen keinen Fund. Tippen öffnet den Leseraum dann oben am Textanfang. Die erklärende Verwendung liegt zugeklappt ganz am Ende unter „ohne Fundstelle im Wortlaut“. Der ehrliche Satz „Den genannten Teil gibt es so nicht im Wortlaut.“ (haupt.js:211) ist im offenen Leseraum unsichtbar, siehe den Befund zur Bildzeile. Bild 2-10 zeigt einen anderen Faden (Genealogical Spiral), den einzigen der Testkette, der eindeutig landet. Die Folge 2-11 → 2-10 legt also einen Weg nahe, den der gezeigte Faden nicht hat. Befund 20 der ersten Kritik ist damit nur teilweise behoben: Leseraum, Teilnennung und Rückweg sind da, aber das Versprechen stimmt nicht.
-- **beleg:** Bild gewebe2-11, Marke: „Verbindung 1 von 3 · ←/→ wählt · „Arbeitsteilung: …“ → „Strukturfunktionalismus: Institutionen und Stabil…“ … tippen liest die Stelle“. Rechnung /private/tmp/claude-501/-Volumes-ThunderBolt4-2TB-Development-Projects-spiralcells-lichtwerk/1d7844bd-f2fa-430c-bed6-f193d9870ad0/scratchpad/pruefung2/leseraum/faeden-ziel.mjs gegen testdaten/kette-gewebe/state.json, 5 werkübergreifende Fäden mit Verwendung, jeweils erste Kante: Durkheim→Radcliffe-Brown NICHT im Wortlaut (Kante 2 ebenso), Ein Inhalt→Durkheim (prüft) NICHT im Wortlaut, →KiNTEGRiTY „Grundfassung“ ×2 und →gedankenspirale ×4 (beide nur „ungefähr hier“), nur →Genealogical Spiral eindeutig. Im Quelltext von Radcliffe-Brown kommt „Institutionen und Stabilität“ nicht vor. Code: bedienung.js:94 `u && u.to_part ? 'tippen liest die Stelle' : 'tippen folgt'`, verortet wird erst beim Folgen in haupt.js:207–211.
+- **beleg:** Bild gewebe2-11, Marke: „Verbindung 1 von 3 · ←/→ wählt · „Arbeitsteilung: …“ → „Strukturfunktionalismus: Institutionen und Stabil…“ … tippen liest die Stelle“. Rechnung pruefbelege/2026-10-21/leseraum/faeden-ziel.mjs gegen testdaten/kette-gewebe/state.json, 5 werkübergreifende Fäden mit Verwendung, jeweils erste Kante: Durkheim→Radcliffe-Brown NICHT im Wortlaut (Kante 2 ebenso), Ein Inhalt→Durkheim (prüft) NICHT im Wortlaut, →KiNTEGRiTY „Grundfassung“ ×2 und →gedankenspirale ×4 (beide nur „ungefähr hier“), nur →Genealogical Spiral eindeutig. Im Quelltext von Radcliffe-Brown kommt „Institutionen und Stabilität“ nicht vor. Code: bedienung.js:94 `u && u.to_part ? 'tippen liest die Stelle' : 'tippen folgt'`, verortet wird erst beim Folgen in haupt.js:207–211.
 - **vorschlag:** In markeFuer verorte(u.to_part, materialParagraphs(ziel.content)) einmal je Kante zwischenspeichern und den Fund ehrlich benennen. „tippen liest die Stelle“ nur bei eindeutigem Fund, „tippen liest ungefähr dort“ bei mehrfachem Fund oder nur Abschnitt, sonst „der Teil steht so nicht im Wortlaut · tippen öffnet die Fassung“. In netz.js:75 die Kanten eines Bündels nach Fundgüte sortieren (eindeutig > ungefähr > ohne Fund > ohne Verwendung). Bei Ankunft ohne Fund die zugehörige Verwendung oben im Leseraum als leise Zeile zeigen. 2-10 und 2-11 mit demselben Faden neu aufnehmen.
 - **Gegenprüfung:** echt, Schwere mittel: Ich konnte den Befund nicht widerlegen. Code, Rechnung und Bild stimmen überein.
 
@@ -280,7 +280,7 @@ Rechnung: verorte() habe ich mit der echten Fassung aus stoff.js:49 nachgerechne
 - Bei „Ein Inhalt → Durkheim (prüft)“ haben beide Kanten keinen Fund.
 - Nur „→ Genealogical Spiral“ landet eindeutig (Passage 1, ×1).
 - „KiNTEGRiTY“ (×2) und „gedankenspirale“ (×4) landen nur „ungefähr hier“. Dort benennt die Ankunft die Unschärfe immerhin über `.passage.ungefaehr .nr::after`.
-- Skript: /private/tmp/claude-501/-Volumes-ThunderBolt4-2TB-Development-Projects-spiralcells-lichtwerk/1d7844bd-f2fa-430c-bed6-f193d9870ad0/scratchpad/pruefung2/widerlegung-fadenmarke/ziel.mjs
+- Skript: pruefbelege/2026-10-21/widerlegung-fadenmarke/ziel.mjs
 
 Bild:
 - gewebe2-11 zeigt genau diesen Faden: „Verbindung 1 von 3“, „Arbeitsteilung: mechanische und organische Solida…“ → „Strukturfunktionalismus: Institutionen und Stabil…“ und am Ende „tippen liest die Stelle“.
@@ -315,7 +315,7 @@ Code-Beleg
 - Bei W.RM laufen beide Timeouts mit 0 ms, und zwar in der Reihenfolge, in der sie geplant wurden: lesen öffnet den Leseraum zuerst, der Satz wird danach ins verborgene #line geschrieben. Er ist nie zu sehen.
 - Die Bedingung `U.netT > 0.5` blockiert das nicht, weil oeffneMond in haupt.js:115 `U.netT = 0` setzt. Danach überschreibt nichts die Zeile: titelBis greift bei `U.lese` nicht (haupt.js:460).
 
-Rechnung (Skripte in /private/tmp/claude-501/-Volumes-ThunderBolt4-2TB-Development-Projects-spiralcells-lichtwerk/1d7844bd-f2fa-430c-bed6-f193d9870ad0/scratchpad/pruefung2/kanten-liste.mjs und /private/tmp/claude-501/-Volumes-ThunderBolt4-2TB-Development-Projects-spiralcells-lichtwerk/1d7844bd-f2fa-430c-bed6-f193d9870ad0/scratchpad/pruefung2/faeden-ohne-fund.mjs)
+Rechnung (Skripte in pruefbelege/2026-10-21/kanten-liste.mjs und pruefbelege/2026-10-21/faeden-ohne-fund.mjs)
 - testdaten/kette-gewebe hat 7 werkübergreifende Faden-Kanten mit to_part. Bei 4 davon findet verorte() den genannten Teil nicht.
 - Darunter ist genau der Faden aus gewebe2-11: Émile Durkheim → Alfred Radcliffe-Brown, „Strukturfunktionalismus: Institutionen und Stabilität“.
 - Die Marke dort verspricht „tippen liest die Stelle“ (bedienung.js:93; das gilt für jede Kante mit to_part, ob der Teil gefunden wird oder nicht). Tatsächlich öffnet der Leseraum oben ohne Lesestelle, und die einzige Erklärung bleibt unsichtbar.
@@ -350,7 +350,7 @@ Code (Arbeitskopie spiralcells-lichtwerk-gewebe, Stand 35c59bc):
   - stoff.js importiert activity nicht. Der scroll-Handler beimRollen (stoff.js:438) merkt sich nur die Lesestelle. Die Knöpfe im Leseraum hören nur auf click, ohne activity.
 - Hover und Fokus ändern nur die Farbe (`.ort:hover,.ort:focus-visible{color:var(--ink)}`), die Deckung bleibt bei .45. Auch mit Hover kommt der Rückweg also nur auf etwa 3 : 1.
 
-Rechnung (/private/tmp/claude-501/-Volumes-ThunderBolt4-2TB-Development-Projects-spiralcells-lichtwerk/1d7844bd-f2fa-430c-bed6-f193d9870ad0/scratchpad/pruefung2/kontrast-rueckweg.mjs):
+Rechnung (pruefbelege/2026-10-21/kontrast-rueckweg.mjs):
 - Die Farbe ist ink-soft, rgba(255,246,224,.5).
 - Auf #050409 bzw. --void #04030a ergibt das ohne Dimmen 5,0 : 1.
 - Mit dem Faktor .45 sind es 1,81 bis 1,82 : 1. Auf etwas hellerem Grund (12,10,18) sind es 1,90 : 1.
@@ -385,7 +385,7 @@ Behebung:
 
 2. Am Handy gibt es keinen Weg zu den Verbindungen 2 bis n. U.fadenK wird nur an zwei Stellen gesetzt: im keydown-Zweig bei bedienung.js:444–445 hochgezählt und in waehle() bei Z. 279 auf 0 gesetzt. Jeder Faden hat genau ein Trefferziel (bedienung.js:329, ein Knoten je Faden). Das Tippen bei Z. 364 folgt deshalb immer mit k = 0. Ein Klick auf die Marke (Z. 485) landet für einen Faden im else-Zweig `waehle(s, 2)`. waehle() öffnet für einen Faden keinen Leseraum (Z. 288 gilt nur für same/keim), der Klick wählt also nur erneut und folgt nicht. Dabei ist die Marke mit cursor:pointer als anklickbar gestaltet (stil.css:54).
 
-Nachgerechnet mit /private/tmp/claude-501/-Volumes-ThunderBolt4-2TB-Development-Projects-spiralcells-lichtwerk/1d7844bd-f2fa-430c-bed6-f193d9870ad0/scratchpad/pruefung2/buendel-kanten.mjs, das die Bündelung aus netz.js:69–75 nachbaut. Kette-gewebe und kette-claude ergeben dasselbe: Von 30 Fäden haben 6 mehr als eine Kante, zusammen 13 Kanten. 7 davon erreicht man vom Netz aus nur mit der Tastatur. Zwei Fälle wiegen schwerer, weil dort eine Verwendung mit Fundstelle verloren geht: „Émile Durkheim → Alfred Radcliffe-Brown“ (3 Kanten, 2 mit usage) und „Ein Inhalt, viele Verwendungen → Émile Durkheim“ (testet, 2 Kanten, beide mit usage). Die jeweils zweite Passage ist am Handy vom Faden aus nicht erreichbar. Damit gilt Befund 20 („bis in die Passage, mehrere Kanten wählbar“) am Touchgerät nur für die erste Kante.
+Nachgerechnet mit pruefbelege/2026-10-21/buendel-kanten.mjs, das die Bündelung aus netz.js:69–75 nachbaut. Kette-gewebe und kette-claude ergeben dasselbe: Von 30 Fäden haben 6 mehr als eine Kante, zusammen 13 Kanten. 7 davon erreicht man vom Netz aus nur mit der Tastatur. Zwei Fälle wiegen schwerer, weil dort eine Verwendung mit Fundstelle verloren geht: „Émile Durkheim → Alfred Radcliffe-Brown“ (3 Kanten, 2 mit usage) und „Ein Inhalt, viele Verwendungen → Émile Durkheim“ (testet, 2 Kanten, beide mit usage). Die jeweils zweite Passage ist am Handy vom Faden aus nicht erreichbar. Damit gilt Befund 20 („bis in die Passage, mehrere Kanten wählbar“) am Touchgerät nur für die erste Kante.
 
 3. Der Rückweg merkt sich die gewählte Verbindung nicht. Das Objekt `dahin` in haupt.js:204 speichert kein k. Beim Zurückgehen ruft zurueck() bei haupt.js:146 zuerst zumNetz() auf, und das wählt den Mond (Z. 138). Danach wählt Z. 147 den Faden. In waehle() ist U.sel dann kein Faden, deshalb setzt Z. 279 U.fadenK auf 0, und die Marke zeigt wieder „Verbindung 1“. Das ist richtig beobachtet, wiegt aber leicht, weil es auch an der Tastatur nur einen erneuten Tastendruck kostet.
 
@@ -430,14 +430,14 @@ Zwei Korrekturen:
 
 Schwere: mittel. Der Fehler trifft systematisch die meisten Fassungen mit Rand. An der Wurzel des Werks verdrängt er den Text um mehr als zwei Bildschirme.
 
-Der Vorschlag des Prüfers ist sinnvoll. Unter 900 px sollten die Notizen einer Passage als leise, zugeklappte Zeile stehen. Steht sie an einer Titelzeile, gehört sie hinter die erste Textpassage. Ich habe keine Datei im Projekt geändert. Die beiden Rechenskripte liegen unter /private/tmp/claude-501/-Volumes-ThunderBolt4-2TB-Development-Projects-spiralcells-lichtwerk/1d7844bd-f2fa-430c-bed6-f193d9870ad0/scratchpad/pruefung2/widerlegung-handyrand/.
+Der Vorschlag des Prüfers ist sinnvoll. Unter 900 px sollten die Notizen einer Passage als leise, zugeklappte Zeile stehen. Steht sie an einer Titelzeile, gehört sie hinter die erste Textpassage. Ich habe keine Datei im Projekt geändert. Die beiden Rechenskripte liegen unter pruefbelege/2026-10-21/widerlegung-handyrand/.
 
 ### bild-zelle 1 · FASKA Varianten bleibt eine Sichel mit Kettenstrahl und Klumpen (Befund 16 nur teilweise behoben)
 - **datei:** app/js/wuchs.js
 - **zeile:** 109
 - **schwere:** mittel
 - **befund:** Der Ausbrenner ist behoben: Der Klumpen oben rechts ist jetzt körnig (höchstens 151/255, vorher 212). Die Gestalt ist aber dieselbe wie in gewebe-06: ein Bogen von etwa 270°, oben rechts abgesetzt ein dichter Klumpen auf einem Punktstrahl vom Keim und unter dem Keim ein heller Strich. Die Ursache aus dem Verdikt zu 16 ist unverändert. Alle 96 Glieder der Kette „Hauptarbeitsraum“ stehen auf genau einem Winkel (254,1°) und tragen 1209 von 2546 Körnern, also 47 %. Geöffnet wurde nur der Netzkopie-Fächer: MAXF = 360° (wuchs.js:109) und reihenLage greifen dort, die Kette erbt aber weiter th1 = c. Von 36 Zehn-Grad-Fächern tragen 20 weniger als 1 % der Körner. Der neue Test „füllt das Feld statt einer Sichel“ (tests/wuchs.test.mjs:58–62) misst nur die th1-Spanne dieses Fächers, nicht die Körner, und ist deshalb grün, obwohl das Bild eine Sichel zeigt. Der helle Strich unter dem Keim (238/255) entsteht aus den 98 übereinanderliegenden Reihen-Stielen zur gemeinsamen freien Wurzel. Die Bildzeile „Material ohne Stimmen. Ein ruhiges Feld.“ widerspricht dem Bild weiterhin.
-- **beleg:** gewebe2-07: Klumpen bei (465,170) mit Punktstrahl vom Keim, Lücke zwischen 12 und 2 Uhr, heller Strich bei (386,343) mit 238/255; gewebe-06 zeigt dieselbe Form, runde2-traumfeld eine volle Scheibe. Rechnung: /private/tmp/claude-501/-Volumes-ThunderBolt4-2TB-Development-Projects-spiralcells-lichtwerk/1d7844bd-f2fa-430c-bed6-f193d9870ad0/scratchpad/pruefung2/faska.mjs und faska2.mjs (gleicher Ordner) gegen testdaten/kette-gewebe: 10°-Fächer 270° = 1148 Kettenkörner, 300–360° fast leer. Das Nachbild faska-vergleich.png im selben Ordner deckt sich mit dem Standbild.
+- **beleg:** gewebe2-07: Klumpen bei (465,170) mit Punktstrahl vom Keim, Lücke zwischen 12 und 2 Uhr, heller Strich bei (386,343) mit 238/255; gewebe-06 zeigt dieselbe Form, runde2-traumfeld eine volle Scheibe. Rechnung: pruefbelege/2026-10-21/faska.mjs und faska2.mjs (gleicher Ordner) gegen testdaten/kette-gewebe: 10°-Fächer 270° = 1148 Kettenkörner, 300–360° fast leer. Das Nachbild faska-vergleich.png im selben Ordner deckt sich mit dem Standbild.
 - **vorschlag:** Wie im Verdikt zu 16 vorgeschlagen: Für stimmlose Werke Rangradius mit Hash-Winkel wie in runde2 statt der Baumwinkel aus wuchs(), oder wenigstens eine Reihe-Kette über die Fläche verteilen, statt jedes Glied auf th1 = c der Eltern festzulegen. Den Test auf die Körnerverteilung umstellen, etwa: kein 10°-Fächer trägt mehr als 15 % der Körner.
 - **Gegenprüfung:** echt, Schwere mittel: Ich habe versucht, den Befund zu widerlegen. Es ist nicht gelungen: Er ist belegt und hat Folgen.
 
@@ -466,7 +466,7 @@ Folgen:
 
 Schwere mittel: Der Ausbrenner ist weg, die Sichel mit Klumpen bleibt, und ein irreführend grüner Test verdeckt das.
 
-Skript: /private/tmp/claude-501/-Volumes-ThunderBolt4-2TB-Development-Projects-spiralcells-lichtwerk/1d7844bd-f2fa-430c-bed6-f193d9870ad0/scratchpad/pruefung2/widerlegung-faska/traumfelder.mjs
+Skript: pruefbelege/2026-10-21/widerlegung-faska/traumfelder.mjs
 
 ### bild-zelle 2 · Familiennamen stehen weit weg und benennen den falschen Bogen (Befund 21 teilweise)
 - **datei:** app/js/haupt.js
@@ -480,7 +480,7 @@ Skript: /private/tmp/claude-501/-Volumes-ThunderBolt4-2TB-Development-Projects-s
 - „FASKA Lernpfade“ und „Google Anti-Gravity“ werden wegen Überdeckung verschwiegen.
 - Die Kette „Hauptarbeitsraum“ (der Klumpen, fast die Hälfte des Lichts) bekommt gar keinen Namen.
 Die Orientierung, die Befund 21 verlangt hat, ist damit teilweise falsch.
-- **beleg:** gewebe2-07: „Sonnenjahr“ bei (190,287) neben dem linken Bogen bei x≈280; „Invaria 2“ bei (530,443), die nächsten Körner liegen um (465,330); „FASKA-EINE-APP“ bei (443,472) unterhalb des Feldes; nur 4 der 6 Familien sind benannt. Rechnung: /private/tmp/claude-501/-Volumes-ThunderBolt4-2TB-Development-Projects-spiralcells-lichtwerk/1d7844bd-f2fa-430c-bed6-f193d9870ad0/scratchpad/pruefung2/faska2.mjs (Körner je 30° nach Familie) und faska3.mjs (Familien nach Ordner).
+- **beleg:** gewebe2-07: „Sonnenjahr“ bei (190,287) neben dem linken Bogen bei x≈280; „Invaria 2“ bei (530,443), die nächsten Körner liegen um (465,330); „FASKA-EINE-APP“ bei (443,472) unterhalb des Feldes; nur 4 der 6 Familien sind benannt. Rechnung: pruefbelege/2026-10-21/faska2.mjs (Körner je 30° nach Familie) und faska3.mjs (Familien nach Ordner).
 - **vorschlag:** Den Namen an die eigene Familie setzen: Radius aus dem äußersten Glied der Familie plus Abstand, nicht aus dem ganzen Feld. familieVon zusätzlich aus dem Ordner in Klammern ableiten (fastka-lernpfade, faska-app-bau), damit der Hauptbogen einen Namen trägt. Den Zweig „Hauptarbeitsraum“ und die Netzkopie benennen. Familien mit sehr kleinem Anteil nicht vor großen namenlosen Bögen nennen.
 - **Gegenprüfung:** echt, Schwere mittel: Ich konnte den Befund nicht widerlegen. Der Kern stimmt im Code, in der Nachrechnung und im Bild. Die Familiennamen täuschen im einzigen Fall, für den Befund 21 sie verlangt hat, eine falsche Zuordnung vor.
 
@@ -494,7 +494,7 @@ NACHRECHNUNG mit den Modulen von 35c59bc gegen testdaten/kette-gewebe/state.json
 - Von den 98 Fächerkindern haben 47 keine Familie. familieVon (wuchs.js:105) nimmt nur den Text vor „ · “ oder „ (“. Damit wird jede „X (fastka-lernpfade)“- und „X (faska-app-bau)“-Fassung eine Einzelfassung und bleibt ohne Namen.
 - Die Kette „Hauptarbeitsraum“ hat 1206 von 2546 Körnern (47 %) und keinen Namen. familienNamen benennt nur Blöcke aus W.familie, und die setzt allein reihenLage im Fächer.
 - Befund 21 hatte ausdrücklich verlangt, die beiden Zweige zu benennen. Das ist nicht umgesetzt.
-- Rechnung: /private/tmp/claude-501/-Volumes-ThunderBolt4-2TB-Development-Projects-spiralcells-lichtwerk/1d7844bd-f2fa-430c-bed6-f193d9870ad0/scratchpad/pruefung2/widerlegung-fam/lage.mjs und strahl.mjs.
+- Rechnung: pruefbelege/2026-10-21/widerlegung-fam/lage.mjs und strahl.mjs.
 
 BILD gewebe2-07:
 - „Sonnenjahr“ steht bei x 163–220, y 287 links neben dem großen linken Bogen (x ≈ 280). Dieser Bogen besteht der Rechnung nach fast ganz aus Fassungen ohne Familie.
@@ -522,7 +522,7 @@ Bleibt: Der Winkel ist weiter die Abstammung (Z. 192). Darum belegt jede Höhens
 - Die Bänder 0 bis 5 decken je 20° bis 100° ab, Band 7 nur 190° und Band 8 (761 Körner, fast nur Codex) nur 70°. Nur Band 6 deckt 290° ab.
 - Von der Seite steht deshalb keine Schale. Man sieht einen Stiel aus zwei dünnen Strängen und darauf flache, einseitige Platten, die nach rechts bis x≈530 reichen und nach links nur bis x≈313.
 runde2-kelch zeigt dagegen geschlossene Ringe in jeder Schicht. Die Silhouette dreht sich mit dem Kameraschwenk, die Einseitigkeit bleibt.
-- **beleg:** gewebe2-06: Keim bei (400,393); Platten blau bei (437–527, 225–250) und (397–493, 255–270), grün bei (313–447, 270–290); links davon nur die Köpfe. Zum Vergleich runde2-kelch. Rechnung: /private/tmp/claude-501/-Volumes-ThunderBolt4-2TB-Development-Projects-spiralcells-lichtwerk/1d7844bd-f2fa-430c-bed6-f193d9870ad0/scratchpad/pruefung2/kelch.mjs (Winkelbedeckung je Höhenband, Nachbild kelch-vergleich.png) und hoehe.mjs.
+- **beleg:** gewebe2-06: Keim bei (400,393); Platten blau bei (437–527, 225–250) und (397–493, 255–270), grün bei (313–447, 270–290); links davon nur die Köpfe. Zum Vergleich runde2-kelch. Rechnung: pruefbelege/2026-10-21/kelch.mjs (Winkelbedeckung je Höhenband, Nachbild kelch-vergleich.png) und hoehe.mjs.
 - **vorschlag:** Im Kelch auch den Winkel weich mischen: th = mix(Abstammungswinkel, Hash-Winkel nach Zeitrang, k·kelchK) mit k um 0,5 bis 0,65, wie die Radiusmischung im Original. Dann liegt jede Schicht ringsum, und die Stimmfarbe bleibt grob nach Richtung erkennbar. Am Standbild prüfen.
 - **Gegenprüfung:** echt, Schwere mittel: Ich konnte den Befund nicht widerlegen. Er stimmt im Code, in der Rechnung und am Bild. Mit eigener Nachrechnung reicht er weiter als gemeldet: Er gilt nicht nur für „Ein Inhalt“, sondern für jedes Werk der Testkette.
 
@@ -534,7 +534,7 @@ runde2-kelch zeigt dagegen geschlossene Ringe in jeder Schicht. Die Silhouette d
 - 69 von 71 Ausprägungen stammen vom 18. Okt.
 - Band 8 ist fast nur Codex (Stimme 1).
 
-**Eigene Prüfung (scratchpad/pruefung2/widerlegung-kelch/orig.mjs und alle.mjs).** Das unveränderte Original-Lichtwerk, nur gelesen, schließt bei derselben Testkette und demselben Werk jede Schicht. Die Bänder decken dort 280 bis 360° ab, im Mittel 358°, Exzentrizität 0,00. Über alle 16 Werke der kette-gewebe:
+**Eigene Prüfung (pruefbelege/2026-10-21/widerlegung-kelch/orig.mjs und alle.mjs).** Das unveränderte Original-Lichtwerk, nur gelesen, schließt bei derselben Testkette und demselben Werk jede Schicht. Die Bänder decken dort 280 bis 360° ab, im Mittel 358°, Exzentrizität 0,00. Über alle 16 Werke der kette-gewebe:
 - **Neu:** Im Kelch liegt die mittlere Bedeckung nur zwischen 62 und 212°. Zentrale (5 Stimmen) 148°, FASKA Vergleich 107°, KiN OS Sichten 92° bei Exzentrizität 0,89.
 - **Original:** Bei 13 der 16 Werke liegt sie zwischen 317 und 358°.
 
@@ -555,7 +555,7 @@ Die Einseitigkeit ist also systematisch und kein Sonderfall eines einstimmigen V
 - **zeile:** 90
 - **schwere:** mittel
 - **befund:** Die Türen sitzen jetzt auf einem Bogen bei 1,3·Rm außerhalb der Mitte (netz.js:90–91, vorher 0,82·Rm). lage() legt die Dächer aber schon ab Rm + gapDach = Rm + 2,0 (ordnung.js:87, netz.js:53). Die Mitte ist jetzt groß: Rm = 14,35, weil Rm ≥ 0,7 · größtes Dach (ordnung.js:79). Damit liegt der Türbogen bei 18,7, also 2,3 Einheiten tief im Kranz der Dächer. Mit der bestätigten Ordnung liegt KiNTEGRiTY oben. Die Tür „KiN“ steht dadurch im Kreis von KiNTEGRiTY, 0,2 Einheiten neben dem Werk „Die Wörter bleiben. Der Vortrag wird gesucht.“. Fehlbild: Im Überblick liegen Türpunkt und Werk wenige Pixel auseinander, und beide haben einen Trefferradius von 30 px. Ein Tippen trifft zufällig Tür oder Werk; das zweite Tippen auf die Tür öffnet ein neues Fenster. In der Mitte stehen Ring und Name „KiN“ auf den blauen KiNTEGRiTY-Werken, sodass die Tür wie ein Teil dieses Dachs wirkt statt wie ein Organ der Zentrale.
-- **beleg:** Rechnung …/pruefung2/tueren4.mjs und tuer-schirm.mjs (4 Türen wie im Bild). Tür KiN bei (5,5; −17,8): Abstand zur Mitte von KiNTEGRiTY 15,2 < R 16,8. Abstand auf dem Schirm zum Werk: 6 px (1200×800, Überblick), 3 px (375×812), 23 px (in der Mitte). Bild standbilder/gewebe2-03-mitte-innen.jpg oben rechts: „KiN“ mit Ring bei etwa (653,103) direkt unter den blauen KiNTEGRiTY-Lichtern bei (655,80) und (720,75).
+- **beleg:** Rechnung pruefbelege/2026-10-21/tueren4.mjs und tuer-schirm.mjs (4 Türen wie im Bild). Tür KiN bei (5,5; −17,8): Abstand zur Mitte von KiNTEGRiTY 15,2 < R 16,8. Abstand auf dem Schirm zum Werk: 6 px (1200×800, Überblick), 3 px (375×812), 23 px (in der Mitte). Bild standbilder/gewebe2-03-mitte-innen.jpg oben rechts: „KiN“ mit Ring bei etwa (653,103) direkt unter den blauen KiNTEGRiTY-Lichtern bei (655,80) und (720,75).
 - **vorschlag:** Die Türen innerhalb der Mitte lassen (etwa 0,9·Rm) oder in lage() einen Ring für sie freihalten. Dafür müssen die Dächer erst bei ≥ 1,3·Rm + Abstand beginnen, also gapDach von Rm abhängig machen.
 - **Gegenprüfung:** echt, Schwere mittel: Ich konnte den Befund nicht widerlegen. Er ist belegt, und er kommt erst mit Commit 35c59bc.
 
@@ -563,13 +563,13 @@ Die Einseitigkeit ist also systematisch und kein Sonderfall eines einstimmigen V
    - Das hängt nicht an den Testdaten. Das drittgrößte Dach liegt immer beim Winkel 0,4 + 2·137,5° ≈ −62°. Das sind nur 28° neben der Mitte des Bogens bei −90°.
    - Der Kommentar verspricht „an ihrem Rand“. BERICHT.md:16 sagt: „In der Mitte steht die Zentrale mit den Stimmen und den Türen.“ Beides widerspricht der neuen Lage.
 
-2. Nachgerechnet mit eigenem Skript (/private/tmp/claude-501/-Volumes-ThunderBolt4-2TB-Development-Projects-spiralcells-lichtwerk/1d7844bd-f2fa-430c-bed6-f193d9870ad0/scratchpad/pruefung2/widerlegung-kintuer/kintuer.mjs), mit kette-gewebe und kette-claude (beide gleiche Lage):
+2. Nachgerechnet mit eigenem Skript (pruefbelege/2026-10-21/widerlegung-kintuer/kintuer.mjs), mit kette-gewebe und kette-claude (beide gleiche Lage):
    - Rm = 14,35, Türbogen bei 18,65, Dächer ab 16,35.
    - KiNTEGRiTY liegt bei (15,5; −29,2) mit R = 16,8.
    - Bei 4 Türen steht „KiN“ bei (5,5; −17,8), 15,2 von der Mitte von KiNTEGRiTY entfernt, also innerhalb von R = 16,8. Sie steht 1,85 Welteinheiten neben „Die Wörter bleiben. Der Vortrag wird gesucht.“
    - Bei 5 Türen liegen „KiN“ und „Werkraum“ beide im Kreis von KiNTEGRiTY. Fünf Türen gibt es, wenn der Server einen Leseeingang kennt, wie bei Ralfs Lichtwerk (8420).
 
-3. Bild. standbilder/gewebe2-03-mitte-innen.jpg zeigt es oben rechts, vergrößert in /private/tmp/claude-501/-Volumes-ThunderBolt4-2TB-Development-Projects-spiralcells-lichtwerk/1d7844bd-f2fa-430c-bed6-f193d9870ad0/scratchpad/pruefung2/widerlegung-kintuer/mitte-oben-rechts.png. Ring und Name „KiN“ sitzen direkt unter den blauen Lichtern von KiNTEGRiTY, außerhalb des Rings der Mitte. Die Mitte ist genau die Ansicht, in der Ringe und Namen der Türen erscheinen sollen.
+3. Bild. standbilder/gewebe2-03-mitte-innen.jpg zeigt es oben rechts, vergrößert in pruefbelege/2026-10-21/widerlegung-kintuer/mitte-oben-rechts.png. Ring und Name „KiN“ sitzen direkt unter den blauen Lichtern von KiNTEGRiTY, außerhalb des Rings der Mitte. Die Mitte ist genau die Ansicht, in der Ringe und Namen der Türen erscheinen sollen.
 
 4. Tippen. treffer() in bedienung.js:323–332 wählt das Nächste; Tür und Werk haben beide 30 px. Im Überblick liegt die Tür neben dem Werk:
 
@@ -593,13 +593,13 @@ Folgenreich ist es trotzdem. Die Lage widerspricht Ralfs bestätigter Ordnung, n
 - **zeile:** 498
 - **schwere:** leicht
 - **befund:** setze() verwirft jetzt jeden Namen mit y0 < 60 („nie unter dem Titel“). Im Bezirk steht dessen Name über dem oberen Ringpunkt (netz.js:150, Maßstab dz.R·1,08). Dieser Punkt liegt bei jeder Fensterhöhe bei etwa 12 % der Höhe. Unterhalb von etwa 745 px Höhe verschwindet deshalb der eigene Name in jedem der 11 Bezirke (Dächer, Mitte, „ohne Dach“). Das betrifft z. B. 1280×720, 1366×700, das iPad quer und das Handy quer. Genau diese Orientierung soll das Dach geben. Der Name steht waagerecht in der Mitte und kollidiert dort gar nicht mit dem Titel oben links. Der alte Stand prüfte nur die Überdeckung.
-- **beleg:** Rechnung …/pruefung2/eigenname.mjs: y0 = 55 bei 1280×700, 57 bei 1280×720, 43 bei 800×600, 16 bei 812×375, jeweils für alle 11 Bezirke. Bei 1440×790 und 1200×800 steht der Name. Code: haupt.js:497–498 mit der Grenze y0 < 60; netz.js:150 amRing(d.mitte, d.R·1,04) als oberster Ringpunkt.
+- **beleg:** Rechnung pruefbelege/2026-10-21/eigenname.mjs: y0 = 55 bei 1280×700, 57 bei 1280×720, 43 bei 800×600, 16 bei 812×375, jeweils für alle 11 Bezirke. Bei 1440×790 und 1200×800 steht der Name. Code: haupt.js:497–498 mit der Grenze y0 < 60; netz.js:150 amRing(d.mitte, d.R·1,04) als oberster Ringpunkt.
 - **vorschlag:** Den eigenen Bezirksnamen nur gegen das tatsächliche Rechteck des Titels (.mark) prüfen. Oder ihn innen unter den oberen Rand setzen, wie die Bereichsnamen, statt ihn zu verschweigen.
 - **Gegenprüfung:** echt, Schwere mittel: Der Befund stimmt. Ich konnte ihn nicht widerlegen.
 
 Code: In haupt.js:497–498 verwirft setze() jeden Namen mit y0 < 60. Im Bezirk ist y0 = p[1] − 30. Dabei ist p der oberste Ringpunkt aus amRing(…, R·1,04, false, 0). So steht es in netz.js:140 für die Mitte, in netz.js:150 für die Dächer und in netz.js:153 für „ohne Dach“. Die Kamera rahmt im Bezirk mit dz.R·1,08 (regie.js:23). Der Ring ist mit R·1,04 an dasselbe R gebunden. Deshalb liegt der Punkt maßstabsunabhängig immer bei 12,1 % der Höhe, in jedem Bezirk gleich.
 
-Eigene Rechnung: /private/tmp/claude-501/-Volumes-ThunderBolt4-2TB-Development-Projects-spiralcells-lichtwerk/1d7844bd-f2fa-430c-bed6-f193d9870ad0/scratchpad/pruefung2/widerlegung-eigenname/schwelle.mjs, gegen kette-gewebe und kette-claude mit identischem Ergebnis.
+Eigene Rechnung: pruefbelege/2026-10-21/widerlegung-eigenname/schwelle.mjs, gegen kette-gewebe und kette-claude mit identischem Ergebnis.
 - Grenze: Bei 1280×745 ist y0 = 60, der Name steht. Bei 1280×740 schweigt er.
 - Ebenfalls stumm sind 1024×700 (y0 = 55), 1366×650 (49) und 812×375 (16), jeweils in allen 11 Bezirken.
 - Hochkant ist alles in Ordnung: 375×812 ergibt y0 = 172, 768×1024 ergibt 161. Bei fit = 2 liegt der Ring tiefer.
@@ -621,13 +621,13 @@ Abhilfe wie vorgeschlagen: Den Namen gegen das echte Rechteck von .mark prüfen,
 - **zeile:** 49
 - **schwere:** leicht
 - **befund:** netzMass rechnet orthografisch ((|cv|+R)·sin(elev) + h·cos(elev)). Die Kamera hat aber 40° Öffnung, der nahe (untere) Teil wird also größer abgebildet. Im Überblick am Mac ragt deshalb, je nach Drehung, der vorderste Bezirk 23–82 px aus dem Bild. Sein Name fällt dann an der Untergrenze (cssH − 64) weg, und der vordere Rand liegt im Band der Bildzeile. Am Handy (hochkant) passt das Netz.
-- **beleg:** Rechnung …/pruefung2/rand-pruefen.mjs mit kette-gewebe und ordnung.json. Bei 1200×800: netZeit 0 s SEiN 53 px unter dem Rand; 37 s FASKA 23, SEiN 47, ADHS OS 37 px; 130 s Phänomenatlas 73 px. Bei 1440×900 bis 82 px. namen-handy.mjs: bei 1200×800 schweigt „ADHS OS“ (y0 = 745 > 736). Bild gewebe2-01-netz-ueberblick.jpg: die Hülle von SEiN läuft unten aus dem Bild, „ADHS OS“ (≈500,541) liegt auf der Bildzeile.
+- **beleg:** Rechnung pruefbelege/2026-10-21/rand-pruefen.mjs mit kette-gewebe und ordnung.json. Bei 1200×800: netZeit 0 s SEiN 53 px unter dem Rand; 37 s FASKA 23, SEiN 47, ADHS OS 37 px; 130 s Phänomenatlas 73 px. Bei 1440×900 bis 82 px. namen-handy.mjs: bei 1200×800 schweigt „ADHS OS“ (y0 = 745 > 736). Bild gewebe2-01-netz-ueberblick.jpg: die Hülle von SEiN läuft unten aus dem Bild, „ADHS OS“ (≈500,541) liegt auf der Bildzeile.
 - **vorschlag:** Die Kreise der Bezirke mit der echten Projektion messen (Probe-setCamera plus toScreen), oder die nahe Hälfte mit dem Perspektivfaktor dist/(dist − Tiefe) vergrößern. Alternativ das Ziel leicht nach vorn schieben.
 - **Gegenprüfung:** echt, Schwere mittel: Der Befund lässt sich nicht widerlegen. Die Wirkung ist sogar größer als gemeldet, und am Mac ist es ein Rückschritt gegenüber 26356a7.
 
 Code: app/js/regie.js:49-54 (netzMass) rechnet die Höhe orthografisch: (|cv|+R)·sin(elev) + h·cos(elev), dazu nur 10 % Zugabe. Die Kamera ist aber perspektivisch. Bei fov 40° gilt d = S/tan 20° = 2,75·S. Ein vorderer Rand bei rund 1,19·S Bodenabstand liegt bei 50° Neigung 0,76·S näher an der Kamera. Er wird also um den Faktor 2,75/(2,75−0,76) ≈ 1,38 größer abgebildet und landet bei etwa 1,26 der halben Bildhöhe, also außerhalb. Der hintere Teil schrumpft entsprechend (Faktor ≈ 0,78). Das Bild wird dadurch unsymmetrisch: oben bleibt Luft, unten läuft es über. Die Skripte des Prüfers spiegeln die echte Logik richtig. Sie nutzen setCamera/toScreen aus licht.js, die Bodenringe wie ring() in netz.js:111, die Namensposition toScreen(d.mitte, d.R·0,42) aus netz.js:150 und die Grenze y0 > cssH−64 aus haupt.js:497. Nachgerechnet sind die Zahlen genau so: 1200×800 bei 0 s SEiN 53 px, bei 37 s FASKA 23 / SEiN 47 / ADHS OS 37 px, bei 130 s Phänomenatlas 73 px, bei 1440×900 bis 82 px. „ADHS OS“ schweigt bei 1200×800 (y0 = 745).
 
-Eigene Prüfung über einen ganzen Umlauf (0,012 rad/s, also 524 s), Skript /private/tmp/claude-501/-Volumes-ThunderBolt4-2TB-Development-Projects-spiralcells-lichtwerk/1d7844bd-f2fa-430c-bed6-f193d9870ad0/scratchpad/pruefung2/widerlegung-perspektive/umlauf.mjs:
+Eigene Prüfung über einen ganzen Umlauf (0,012 rad/s, also 524 s), Skript pruefbelege/2026-10-21/widerlegung-perspektive/umlauf.mjs:
 - Bei 1200×800 ragt in 66 % des Umlaufs eine Hülle aus dem Bild, höchstens 73 px. Unten reichen die Hüllen bis y = 873, oben bleibt der Abstand bei mindestens 125 px. Das ist die Unsymmetrie der Perspektive.
 - Nicht nur Säume: In 102 von 262 Schritten liegt auch der Mittelpunkt eines Werks unter dem Bildrand, bis 35 px (bei 1920×1080 bis 48 px).
 - Dachnamen fallen unter die Namensgrenze in 66 von 262 Schritten.
@@ -645,7 +645,7 @@ Die Schwere hebe ich von leicht auf mittel. Grund: Im Überblick, der Hauptansic
 - **zeile:** 372
 - **schwere:** schwer
 - **befund:** buendelHinein() fährt in den Herkunftsbezirk (insDach(x.von)) und wählt dessen ersten Faden. Die Kamera rahmt im Dach nur den Bezirkskreis (regie.js:24, dz.R*1.08). Der Fadenknoten liegt aber bei pt(0.5) des Bezirk-zu-Bezirk-Wegs (netz.js:240-248, 203-205), also meist im Zwischenraum außerhalb des Bilds. setzeMarke klemmt die Marke dann an den Bildrand (bedienung.js:550, 63). Dort steht „tippen folgt“ bzw. „tippen liest die Stelle“, doch auf dem Schirm gibt es nichts, was man ein zweites Mal antippen könnte. Dasselbe Bild entsteht auf dem Rückweg „zurück zum Faden im Netz“ (haupt.js:146-147: U.dach = w.dach, Faden gewählt).
-- **beleg:** Node (/private/tmp/claude-501/-Volumes-ThunderBolt4-2TB-Development-Projects-spiralcells-lichtwerk/1d7844bd-f2fa-430c-bed6-f193d9870ad0/scratchpad/pruefung2/drehung.mjs, wege2.mjs) gegen testdaten/kette-gewebe bei 800x600, über alle Drehlagen des Netzes: Bündel Text und Reim→KiNTEGRiTY 36/36 außerhalb, Zentrale→ohne Dach 36/36, SEiN→Zentrale 34/36, Zentrale→MiNDLAXY 31/36. Im Dach „Text und Reim“ liegen alle 4 Fadenknoten außerhalb. Bei 375x812 ist Zentrale→ohne Dach in 31/36 Drehlagen außerhalb. Beispiel bei Drehlage 0: Faden 4 (REiMWERK→„Die Wörter bleiben…“) hat seinen Knoten bei 702,832, die Marke wird auf y=460 geklemmt.
+- **beleg:** Node (pruefbelege/2026-10-21/drehung.mjs, wege2.mjs) gegen testdaten/kette-gewebe bei 800x600, über alle Drehlagen des Netzes: Bündel Text und Reim→KiNTEGRiTY 36/36 außerhalb, Zentrale→ohne Dach 36/36, SEiN→Zentrale 34/36, Zentrale→MiNDLAXY 31/36. Im Dach „Text und Reim“ liegen alle 4 Fadenknoten außerhalb. Bei 375x812 ist Zentrale→ohne Dach in 31/36 Drehlagen außerhalb. Beispiel bei Drehlage 0: Faden 4 (REiMWERK→„Die Wörter bleiben…“) hat seinen Knoten bei 702,832, die Marke wird auf y=460 geklemmt.
 - **vorschlag:** Nach buendelHinein und beim Rückweg an den Faden die Kamera so rahmen, dass der Knoten im Bild liegt: Ziel und Maßstab zwischen Dachmitte und Knoten mitteln oder den Knoten als Bildziel nehmen. Ersatzweise den Knoten im Dach auf den eigenen Bezirksrand legen (P1) statt auf pt(0.5).
 - **Gegenprüfung:** echt, Schwere mittel: Der Befund lässt sich nicht widerlegen. Code und Rechnung bestätigen ihn, und es kommt noch eine Verschärfung hinzu. Die Schwere setze ich auf mittel, weil es Auswege gibt und keine harte Regel verletzt ist.
 
@@ -658,7 +658,7 @@ Code:
 
 Verschärfung: Auch die sichtbare Marke hilft nicht weiter. Ihr Klick-Handler (bedienung.js:483-485) kennt keinen Fall 'faden' und landet bei waehle(s, 2). Damit wird nur die Marke neu gezeigt; folgeFaden wird nicht aufgerufen. Wer am Handy die Marke mit „tippen folgt“ antippt, erlebt also, dass nichts geschieht.
 
-Unabhängige Nachrechnung: Skript /private/tmp/claude-501/-Volumes-ThunderBolt4-2TB-Development-Projects-spiralcells-lichtwerk/1d7844bd-f2fa-430c-bed6-f193d9870ad0/scratchpad/pruefung2/widerlegung/knoten-abstand.mjs. Es baut den Knoten selbst nach und stimmt mit baueNetz überein. Abstand des Knotens von der Dachmitte, in Dachradien:
+Unabhängige Nachrechnung: Skript pruefbelege/2026-10-21/widerlegung/knoten-abstand.mjs. Es baut den Knoten selbst nach und stimmt mit baueNetz überein. Abstand des Knotens von der Dachmitte, in Dachradien:
 - FASKA→SEiN 1,09
 - Zentrale→KiNTEGRiTY 1,18
 - Zentrale→MiNDLAXY 1,42
@@ -691,7 +691,7 @@ Die Standbilder zeigen diesen Zustand nicht. gewebe2-11 ist der Überblick mit s
 
 2. Der Commit hat zwei der drei Wege nachgezogen, den dritten nicht. In tippen() (Z. 363-365) und bei Enter (Diff Z. ~452/453) führen faden zu folgeFaden und buendel zu buendelHinein. Der Marken-Klick blieb unverändert. Neu ist, dass das Bündel jetzt eine Hover-Marke hat (Z. 533) und eine eigene Marke mit „tippen fährt in …“. Für mitte, ohne und faden fehlte der Zweig schon vorher, sie stehen aber im selben geänderten Ablauf.
 
-3. Warum es am Handy schwerer wiegt: Ich habe setzeMarke() (Z. 60-65) nachgerechnet, mit dem Skript /private/tmp/claude-501/-Volumes-ThunderBolt4-2TB-Development-Projects-spiralcells-lichtwerk/1d7844bd-f2fa-430c-bed6-f193d9870ad0/scratchpad/pruefung2/marke-deckt.mjs. Bei 375 px und voller Markenbreite (72vw = 270 px) liegt die Marke in 43 von 68 waagerechten Lagen über ihrem eigenen Knoten, auch in der Bildmitte (sx = 185), wo die Zentrale sitzt. Bei 220 px Breite sind es 23 von 68. Grund: Ab sx > 65 springt die Marke nach links und wird auf x = 12 geklemmt. Sie reicht dann von 12 bis 282 px und beginnt 16 px über dem Knoten. Faden-, Bündel- und Mitte-Texte brechen um und erreichen die volle Breite. Ein zweites Tippen auf den Knoten, wie die Marke es verlangt, trifft also oft die Marke statt die Leinwand. Am Handy gibt es kein Enter. Zentrale, „ohne Dach“, Bündel und Faden sind dann nur noch über einen Rand des Trefferkreises erreichbar, der nicht unter der Marke liegt. Am Mac (800x600) deckt die Marke den Knoten nie; dort bleibt es der gemeldete stumme Klick auf die Marke.
+3. Warum es am Handy schwerer wiegt: Ich habe setzeMarke() (Z. 60-65) nachgerechnet, mit dem Skript pruefbelege/2026-10-21/marke-deckt.mjs. Bei 375 px und voller Markenbreite (72vw = 270 px) liegt die Marke in 43 von 68 waagerechten Lagen über ihrem eigenen Knoten, auch in der Bildmitte (sx = 185), wo die Zentrale sitzt. Bei 220 px Breite sind es 23 von 68. Grund: Ab sx > 65 springt die Marke nach links und wird auf x = 12 geklemmt. Sie reicht dann von 12 bis 282 px und beginnt 16 px über dem Knoten. Faden-, Bündel- und Mitte-Texte brechen um und erreichen die volle Breite. Ein zweites Tippen auf den Knoten, wie die Marke es verlangt, trifft also oft die Marke statt die Leinwand. Am Handy gibt es kein Enter. Zentrale, „ohne Dach“, Bündel und Faden sind dann nur noch über einen Rand des Trefferkreises erreichbar, der nicht unter der Marke liegt. Am Mac (800x600) deckt die Marke den Knoten nie; dort bleibt es der gemeldete stumme Klick auf die Marke.
 
 4. Bild: standbilder/gewebe2-11-faden-marke.jpg zeigt eine Faden-Marke von etwa 280x100 px direkt neben dem Knoten, mit „tippen liest die Stelle“. Das ist eine große Fläche, die Tippen abfängt.
 
@@ -702,7 +702,7 @@ Zur Schwere: mittel, nicht schwer. Ein Tipp auf den Knoten selbst und Enter funk
 - **zeile:** 299
 - **schwere:** mittel
 - **befund:** Der neue Zweig von trefferSame für mehr als 60 Fassungen rastet nur auf Blattmitten ein, im Radius 25,6 px (beim Halten 22,4 px). Lange Übernahmeblätter („reihe“) reichen aber bis über 200 px von ihrer Mitte weg. Ein Tipp auf ihre Körner gilt dann als Tipp ins Leere: Er schließt eine offene Lesefläche bzw. hebt die Auswahl auf (tippen, Z. 352-355). Ein Halten darauf setzt pressSeed = -1, wird also bloßes Halten statt Verbinden (Z. 396, haupt.js:423-425). Beim Ziehen findet U.bind dort kein Ziel, das Ergebnis ist „Nichts verbunden“.
-- **beleg:** Node (/private/tmp/claude-501/-Volumes-ThunderBolt4-2TB-Development-Projects-spiralcells-lichtwerk/1d7844bd-f2fa-430c-bed6-f193d9870ad0/scratchpad/pruefung2/zelle60.mjs, zelle60b.mjs). Kamera am Standbild geprüft: Für „FASKA Varianten · Vergleich“ liegen die Körner bei x 272–488 und y 142–425, das deckt sich mit gewebe2-07. Ein Tipp genau auf ein sichtbares Korn trifft in „FASKA Varianten · Jahreskreise (Netz) · Vergleich“ bei 1755 von 2580 Körnern nichts (68 %, am Handy 56 %). Das Blatt „Zusammenhänge im Raum (neu, drei Spalten)“ hat 48 Körner, 39 davon liegen über 25,6 px von seiner Mitte, das fernste 217 px. Der alte Korn-für-Korn-Weg traf jedes Korn.
+- **beleg:** Node (pruefbelege/2026-10-21/zelle60.mjs, zelle60b.mjs). Kamera am Standbild geprüft: Für „FASKA Varianten · Vergleich“ liegen die Körner bei x 272–488 und y 142–425, das deckt sich mit gewebe2-07. Ein Tipp genau auf ein sichtbares Korn trifft in „FASKA Varianten · Jahreskreise (Netz) · Vergleich“ bei 1755 von 2580 Körnern nichts (68 %, am Handy 56 %). Das Blatt „Zusammenhänge im Raum (neu, drei Spalten)“ hat 48 Körner, 39 davon liegen über 25,6 px von seiner Mitte, das fernste 217 px. Der alte Korn-für-Korn-Weg traf jedes Korn.
 - **vorschlag:** Für die Wahl Korn und Blattmitte verbinden: zuerst das nächste geborene Korn (wie bisher), und nur wenn mehrere Blätter in Reichweite liegen, auf die nächste Blattmitte dieser Kandidaten einrasten. Sonst den Radius je Blatt aus seiner Ausdehnung (sRc/Länge) ableiten.
 - **Gegenprüfung:** echt, Schwere mittel: Den Befund konnte ich nicht widerlegen. Der Mechanismus stimmt, und er kam mit diesem Commit neu hinein. Nur die Überschrift ist zu breit.
 
@@ -748,7 +748,7 @@ Dazu kommt ein Widerspruch für den Screenreader. stoff.js:86 sagt bei jedem Öf
 
 Auch „jeder spätere Leseraum in diesem Werk“ stimmt. U.weg wird nur in Z. 107, 205 und 250 beschrieben. Wählt Ralf ein anderes Korn, bleibt dahin oben liegen.
 
-Nachgerechnet mit /private/tmp/claude-501/-Volumes-ThunderBolt4-2TB-Development-Projects-spiralcells-lichtwerk/1d7844bd-f2fa-430c-bed6-f193d9870ad0/scratchpad/pruefung2/faeden.mjs gegen kette-claude und kette-gewebe:
+Nachgerechnet mit pruefbelege/2026-10-21/faeden.mjs gegen kette-claude und kette-gewebe:
 - 30 Fäden mit 37 Kanten, davon nur 7 mit to_part. Bei 25 von 30 Fäden hat die erste Kante keinen Teil. Das ist also der häufigste Faden-Weg.
 - Faden 3 ist MOONFiNGERS nach Mooncells, ohne Verwendung, so wie der Befund es beschreibt.
 
@@ -761,7 +761,7 @@ Der Vorschlag `ausStoff: mitTeil` passt zu folge und folgeStoff. ortAktualisiere
 - **zeile:** 427
 - **schwere:** mittel
 - **befund:** Am Mac ist „zweimal tippen“ ein Doppelklick. Der zweite Klick fährt per tippen() ins Dach (buendelHinein bzw. insDach) und setzt U.dach. Gleich danach prüft das dblclick-Ereignis treffer() noch einmal. Mit gesetztem U.dach sind Bündel und Dächer dort keine Ziele mehr (Z. 330-331). Liegt ein Werk innerhalb von 30 px, öffnet oeffneMond es, und der eben betretene Bezirk ist verlassen. Für Dächer bestand das schon vorher (gleiche Trefferpunkte), für die neuen Bündel ist es neu.
-- **beleg:** Node (/private/tmp/claude-501/-Volumes-ThunderBolt4-2TB-Development-Projects-spiralcells-lichtwerk/1d7844bd-f2fa-430c-bed6-f193d9870ad0/scratchpad/pruefung2/doppel.mjs), 800x600, 12 Drehlagen. Doppelklick auf den Bündelknoten Zentrale→ohne Dach öffnet in 9/12 Drehlagen z. B. „spiral mind writer frontend“. Text und Reim→KiNTEGRiTY öffnet in 8/12 REiMWERK oder RAKi. FASKA→SEiN öffnet in 8/12 „montessori flow“. Doppelklick auf den Dachkörper öffnet in 12/12 ein Werk des Dachs (FASKA: „FASKA Lernpfad · Codex-Linie“ u. a.).
+- **beleg:** Node (pruefbelege/2026-10-21/doppel.mjs), 800x600, 12 Drehlagen. Doppelklick auf den Bündelknoten Zentrale→ohne Dach öffnet in 9/12 Drehlagen z. B. „spiral mind writer frontend“. Text und Reim→KiNTEGRiTY öffnet in 8/12 REiMWERK oder RAKi. FASKA→SEiN öffnet in 8/12 „montessori flow“. Doppelklick auf den Dachkörper öffnet in 12/12 ein Werk des Dachs (FASKA: „FASKA Lernpfad · Codex-Linie“ u. a.).
 - **vorschlag:** Im dblclick-Handler nur handeln, wenn der vorausgehende Klick nicht schon eine Fahrt ausgelöst hat (z. B. Zeitstempel in tippen setzen und dblclick binnen 400 ms danach ignorieren), oder dblclick nur auf eine Auswahl anwenden, die schon vor dem Doppelklick ein Mond war.
 - **Gegenprüfung:** echt, Schwere mittel: Ich konnte den Befund nicht widerlegen. Die Kette im Code stimmt.
 
@@ -779,7 +779,7 @@ Der Vorschlag `ausStoff: mitTeil` passt zu folge und folgeStoff. ortAktualisiere
 - WEITERMACHEN Z. 24 nennt „Tippen zweimal“ selbst als Weg hinein. Die dokumentierte Geste löst den Fehler also aus.
 
 **Nachrechnung**
-Skript: /private/tmp/claude-501/-Volumes-ThunderBolt4-2TB-Development-Projects-spiralcells-lichtwerk/1d7844bd-f2fa-430c-bed6-f193d9870ad0/scratchpad/pruefung2/widerlegung-doppel/doppel-flaeche.mjs
+Skript: pruefbelege/2026-10-21/widerlegung-doppel/doppel-flaeche.mjs
 
 Es baut treffer() einschließlich Türen, Köpfen (0,6) und einer Näherung der Namensfelder nach. Gezählt wird die Fläche, auf der der erste Klick das Ziel wählt, über 12 Drehlagen, Daten aus testdaten/kette-gewebe.
 
@@ -893,9 +893,9 @@ Auf dem Handy (gewebe2-13) brennt nichts aus, der Höchstwert ist 232.
 
 - Code: app/js/netz.js Z. 164–169 und miniWuchs Z. 23–36.
 - Skripte im Scratchpad:
-  - /private/tmp/claude-501/-Volumes-ThunderBolt4-2TB-Development-Projects-spiralcells-lichtwerk/1d7844bd-f2fa-430c-bed6-f193d9870ad0/scratchpad/pruefung2/widerlegung-sichelstrich/render.mjs
-  - /private/tmp/claude-501/-Volumes-ThunderBolt4-2TB-Development-Projects-spiralcells-lichtwerk/1d7844bd-f2fa-430c-bed6-f193d9870ad0/scratchpad/pruefung2/widerlegung-sichelstrich/strich.mjs
-  - /private/tmp/claude-501/-Volumes-ThunderBolt4-2TB-Development-Projects-spiralcells-lichtwerk/1d7844bd-f2fa-430c-bed6-f193d9870ad0/scratchpad/pruefung2/widerlegung-sichelstrich/hist.py
+  - pruefbelege/2026-10-21/widerlegung-sichelstrich/render.mjs
+  - pruefbelege/2026-10-21/widerlegung-sichelstrich/strich.mjs
+  - pruefbelege/2026-10-21/widerlegung-sichelstrich/hist.py
 
 ### bild-netz 12 · Namen stoßen an Titel und Bildzeile: „Spiele und Welten“ wird am Handy zur dritten Titelzeile, „ADHS OS“ liegt auf der Zeile
 - **datei:** app/js/haupt.js
@@ -987,7 +987,7 @@ Hinweis zum Vorschlag: Den Satz nur in zumNetz zu ersetzen genügt nicht. Z. 146
 - **vorschlag:** Im Vergleich so rollen, dass „hier“ und das Gegenüber beide sichtbar sind, etwa auf die Mitte zwischen beiden oder mit scrollIntoView({inline:'nearest'}) für das Gegenüber. An den Rändern einen leisen Verlauf als Zeichen für mehr zeigen. Den Kurztitel jeder Perle bei :hover und :focus-visible einblenden: den Span immer anlegen und sonst unsichtbar lassen.
 - **Gegenprüfung:** echt, Schwere leicht: Ich konnte den Befund nicht widerlegen. Alle drei Teile sind in Bild, Code und Daten belegt. Er bleibt aber leicht, denn verloren geht keine Information, es fehlt nur Orientierung in der Auswahl.
 
-1) Das Gegenüber liegt am Rand. Das Skript /private/tmp/claude-501/-Volumes-ThunderBolt4-2TB-Development-Projects-spiralcells-lichtwerk/1d7844bd-f2fa-430c-bed6-f193d9870ad0/scratchpad/pruefung2/widerlegung-perlen/zweig.mjs rechnet gegen kette-gewebe. Ergebnis: Mond „Ein Inhalt, viele Verwendungen“, keine Herkunft, Zweig mit 20 Fassungen. „Befund · Zeitspirale …“ ist Nr. 7, „Antwort · Claude auf Hermes' Gegenbefunde …“ ist Nr. 14. Im Ausschnitt rechts09.png (gewebe2-09, x 540–800, y 85–145) sitzt die Perle mit dem Gegenüber-Ring bei x≈796 und ist vom Bildrand halb abgeschnitten. Lesbar ist nur „Antwort ·“. Die Perlen 15 bis 20 liegen ganz außerhalb. Ursache ist stoff.js:249–251: Das requestAnimationFrame holt nur `.perle.hier` in die Mitte. Für das Gegenüber gibt es kein Rollen.
+1) Das Gegenüber liegt am Rand. Das Skript pruefbelege/2026-10-21/widerlegung-perlen/zweig.mjs rechnet gegen kette-gewebe. Ergebnis: Mond „Ein Inhalt, viele Verwendungen“, keine Herkunft, Zweig mit 20 Fassungen. „Befund · Zeitspirale …“ ist Nr. 7, „Antwort · Claude auf Hermes' Gegenbefunde …“ ist Nr. 14. Im Ausschnitt rechts09.png (gewebe2-09, x 540–800, y 85–145) sitzt die Perle mit dem Gegenüber-Ring bei x≈796 und ist vom Bildrand halb abgeschnitten. Lesbar ist nur „Antwort ·“. Die Perlen 15 bis 20 liegen ganz außerhalb. Ursache ist stoff.js:249–251: Das requestAnimationFrame holt nur `.perle.hier` in die Mitte. Für das Gegenüber gibt es kein Rollen.
 
 Dazu kommt ein schärferes Fehlbild, das der Prüfer nicht nennt. Ein Klick wählt im Vergleich ein fernes Gegenüber, etwa Nr. 19. Dann ruft waehle() (Z. 254) baue() auf, und baueFaden baut den Faden neu (innerHTML = '', scrollLeft fällt auf 0). Danach rückt der Faden wieder „hier“ in die Mitte. Das gerade Gewählte verschwindet so aus dem Blick. fokus(k) setzt den Tastaturfokus mit preventScroll:true (Z. 107) auf diese unsichtbare Perle. Bei 375 px sind nur „hier“ und je zwei Nachbarn zu sehen (gewebe2-14), dort trifft es fast jede Wahl.
 
@@ -1013,7 +1013,7 @@ Vor allem „ungefähr hier“, die Ehrlichkeitsmarke bei der Ankunft über 2 de
 
 1) „ungefähr hier“ (stil.css:423 bei 35c59bc) ist belegt.
 - Die Regel `.passage.ungefaehr .nr::after{content:" ungefähr hier";display:block;font-size:9px;letter-spacing:.06em;white-space:nowrap}` erbt die Schrift von .nr, also var(--f-measure) (stil.css:13, 319).
-- Ich habe die Breite mit CoreText nachgemessen (Skript: /private/tmp/claude-501/-Volumes-ThunderBolt4-2TB-Development-Projects-spiralcells-lichtwerk/1d7844bd-f2fa-430c-bed6-f193d9870ad0/scratchpad/pruefung2/widerlegung-kleinschrift/mess.swift). Für 13 Zeichen bei 9 px und 0,54 px Sperrung ergibt SFNSMono 79,3 px und Menlo 77,5 px. „SF Mono“ und „IBM Plex Mono“ sind auf dem Mac nicht als Familie installiert, deshalb gilt einer dieser beiden Werte. Die Schätzung „≈77 px“ stimmt also.
+- Ich habe die Breite mit CoreText nachgemessen (Skript: pruefbelege/2026-10-21/widerlegung-kleinschrift/mess.swift). Für 13 Zeichen bei 9 px und 0,54 px Sperrung ergibt SFNSMono 79,3 px und Menlo 77,5 px. „SF Mono“ und „IBM Plex Mono“ sind auf dem Mac nicht als Familie installiert, deshalb gilt einer dieser beiden Werte. Die Schätzung „≈77 px“ stimmt also.
 - Die Nummernspalte ist am Mac 44 px breit, die Lücke 22 px (stil.css:317). Der Knopf hat keinen eigenen Rand links und rechts, also gilt der Browser-Rand von 6 px; eine globale Rücksetzung gibt es nicht, nur `button{font:inherit;color:inherit}` in Z. 23.
 - Breite Zeilen laufen in LTR auch bei text-align:right nach rechts über. So machen es WebKit und Blink, und so steht es in CSS Text 3.
 - Rechnung Mac: Das Etikett reicht von x=6 bis ≈83–85. Der Text beginnt bei 66, das ergibt ≈17–19 px Überlappung.
@@ -1051,7 +1051,7 @@ Nachgerechnet über die Streuung der Nachbarabstände (Variationskoeffizient; ei
 - Kimi: vorher 0,38, jetzt 0,30. Hermes: vorher 0,43, jetzt 0,31. Beide sind also regelmäßiger geworden.
 - Antigravity: 39 % der Körner haben einen Nachbarn näher als 0,3 Kornabstände, daraus entstehen die Striche.
 Ursache: Der radiale Versatz 2,2·(hi−lo)/c (Z. 130) beträgt etwa einen Rangschritt. Er ist viel kleiner als der Reihenabstand des Goldschnitt-Gitters. Auch der Querversatz 1,4/√c (Z. 128) bleibt klein.
-- **beleg:** gewebe2-04: rosa Blatt bei (345–435, 160–270) als Gitter, violettes Blatt mit senkrechten Strichen bei (315–352, 395–415); gewebe2-05: oranger Fächer bei (400–480, 290–340) in Kammstrichen. Rechnung: /private/tmp/claude-501/-Volumes-ThunderBolt4-2TB-Development-Projects-spiralcells-lichtwerk/1d7844bd-f2fa-430c-bed6-f193d9870ad0/scratchpad/pruefung2/raster.mjs (alt gegen neu, Zentrale).
+- **beleg:** gewebe2-04: rosa Blatt bei (345–435, 160–270) als Gitter, violettes Blatt mit senkrechten Strichen bei (315–352, 395–415); gewebe2-05: oranger Fächer bei (400–480, 290–340) in Kammstrichen. Rechnung: pruefbelege/2026-10-21/raster.mjs (alt gegen neu, Zentrale).
 - **vorschlag:** Die Querlage nicht aus der Goldschnittfolge nehmen, sondern als Streuung mit Mindestabstand (Hash mit Abstoßung). Den radialen Versatz am Reihenabstand bemessen (etwa √c Rangschritte), nicht an einem Rangschritt.
 - **Gegenprüfung:** echt, Schwere leicht: Im Kern stimmt der Befund: Die Reihen sind nicht gebrochen, und die Ursache liegt in Z. 130. Mehrere Teilbehauptungen sind aber falsch und müssen gestrichen werden.
 
@@ -1071,14 +1071,14 @@ Ursache: Der radiale Versatz 2,2·(hi−lo)/c (Z. 130) beträgt etwa einen Rangs
 
 **Zum Vorschlag.** Den radialen Versatz am Reihenabstand bemessen ist richtig, also mehrere Rangschritte statt einem. Den Erfolg sollte man aber an der Bragg-Spitze und am Bild prüfen, nicht am Variationskoeffizienten.
 
-Rechnungen und Bilder liegen in /private/tmp/claude-501/-Volumes-ThunderBolt4-2TB-Development-Projects-spiralcells-lichtwerk/1d7844bd-f2fa-430c-bed6-f193d9870ad0/scratchpad/pruefung2/widerlegung-raster/: ordnung.mjs, fenster.mjs, draufsicht.mjs und die Bildausschnitte z04_*.jpg und z03alt_kimi.jpg.
+Rechnungen und Bilder liegen in pruefbelege/2026-10-21/widerlegung-raster/: ordnung.mjs, fenster.mjs, draufsicht.mjs und die Bildausschnitte z04_*.jpg und z03alt_kimi.jpg.
 
 ### bruch 1 · Tippen während des Aufzugs wählt noch unsichtbare Fassungen (Werke mit mehr als 60 Ausprägungen)
 - **datei:** app/js/bedienung.js
 - **zeile:** 299
 - **schwere:** mittel
 - **befund:** Der neue Zweig in trefferSame für Monde mit mehr als 60 Ausprägungen rastet auf die Blattmitte (mittePos) ein. Er prüft aber nicht, ob die Ausprägung schon geboren ist; der alte Kornzweig überspringt dagegen gBorn === -1 (Z. 304). Betroffen sind „Ein Inhalt, viele Verwendungen“ (71), „FASKA Varianten · Vergleich“ (196) und „… Jahreskreise (Netz) · Vergleich“ (98). Werden sie aus dem Netz geöffnet (api.oeffneMond(i, {})), läuft der Aufzug 13 s. Ein Tippen in die Scheibe gibt in dieser Zeit fast immer eine noch unsichtbare Fassung zurück. Dadurch erreicht tippen() den Zweig „!t → Z.sofort()“ nicht mehr (Z. 352–353), und Tippen kürzt den Aufzug nicht ab. Stattdessen erscheint die Marke einer Fassung an einer leeren Stelle, und ein zweites Tippen öffnet ihre Lesefläche. Ebenso greifen am Mac die Hover-Marke und beim Halten das Verbinden (pressSeed, Z. 396) auf ungeborene Fassungen.
-- **beleg:** Rechnung /private/tmp/claude-501/-Volumes-ThunderBolt4-2TB-Development-Projects-spiralcells-lichtwerk/1d7844bd-f2fa-430c-bed6-f193d9870ad0/scratchpad/pruefung2/aufzug-treffer.mjs (kette-gewebe, 1200×800, Zelle mit Aufzug, Tippraster 13 px im Feld ±260 px). „Ein Inhalt“: nach 1 s sind 0/71 geboren, und alle 34 Treffer sind ungeboren; nach 6 s sind 136 von 298 Treffern ungeboren. „FASKA Varianten · Vergleich“: nach 1 s sind alle 98 Treffer ungeboren, nach 6 s 210 von 291. Code: bedienung.js:299–302 ohne gBorn-Prüfung, im Gegensatz zu 304.
+- **beleg:** Rechnung pruefbelege/2026-10-21/aufzug-treffer.mjs (kette-gewebe, 1200×800, Zelle mit Aufzug, Tippraster 13 px im Feld ±260 px). „Ein Inhalt“: nach 1 s sind 0/71 geboren, und alle 34 Treffer sind ungeboren; nach 6 s sind 136 von 298 Treffern ungeboren. „FASKA Varianten · Vergleich“: nach 1 s sind alle 98 Treffer ungeboren, nach 6 s 210 von 291. Code: bedienung.js:299–302 ohne gBorn-Prüfung, im Gegensatz zu 304.
 - **vorschlag:** Im Zweig für mehr als 60 Ausprägungen nur geborene Fassungen zulassen, z. B. überspringen, wenn Z.gBorn[Z.seedCore[i]] === -1. Dann kürzt Tippen ins Leere den Aufzug wieder ab, und Hover und Verbinden zielen nur auf Sichtbares.
 - **Gegenprüfung:** echt, Schwere leicht: Der Kern des Befunds stimmt, er ist aber deutlich überzeichnet.
 
@@ -1102,7 +1102,7 @@ Folge: Etwa jedes zehnte, am Handy bis jedes vierte Tippen in die wachsende Zell
 
 Daher ist der Befund echt, aber leicht, nicht mittel. Der Vorschlag ist richtig und vollständig: im Zweig für mehr als 60 Ausprägungen `if(Z.gBorn[Z.seedCore[i]] === -1) continue;` ergänzen.
 
-Beleg: /private/tmp/claude-501/-Volumes-ThunderBolt4-2TB-Development-Projects-spiralcells-lichtwerk/1d7844bd-f2fa-430c-bed6-f193d9870ad0/scratchpad/pruefung2/widerlegung-aufzugtreffer/nach.mjs (Aufruf mit dem Argument 1200x800 bzw. 375x812).
+Beleg: pruefbelege/2026-10-21/widerlegung-aufzugtreffer/nach.mjs (Aufruf mit dem Argument 1200x800 bzw. 375x812).
 
 ### bruch 5 · Nach einem Faden springt Escape im selbst geöffneten Leseraum ins Netz statt zurück in die Lesefläche
 - **datei:** app/js/haupt.js
@@ -1134,7 +1134,7 @@ Beleg: /private/tmp/claude-501/-Volumes-ThunderBolt4-2TB-Development-Projects-sp
 - **zeile:** 91
 - **schwere:** leicht
 - **befund:** U.fadenK ändert sich nur über die Pfeiltasten (Z. 444–445). Am Touchgerät folgt das zweite Tippen auf einen Faden immer der ersten Verbindung (Z. 364). Ein Tippen auf die Marke wählt den Faden nur erneut aus (Z. 485, else-Zweig). Trotzdem zeigt die Marke auch am Handy „Verbindung 1 von 3 · ←/→ wählt“. Weitere Verbindungen, auch solche mit genannter Stelle, kann man so aus dem Netz am Handy nicht lesen.
-- **beleg:** Fundstellen von fadenK: nur bedienung.js:90, 279, 364, 445, 452. Rechnung …/pruefung2/faden-kanten.mjs: 6 von 30 Fäden haben mehrere Verbindungen. 7 Verbindungen sind nur per Pfeiltaste erreichbar, 2 davon mit Stelle (Durkheim → Radcliffe-Brown mit 3 Verbindungen, „Ein Inhalt“ → Durkheim mit 2). Bild gewebe2-11-faden-marke.jpg: Marke „Verbindung 1 von 3 · ←/→ wählt …“.
+- **beleg:** Fundstellen von fadenK: nur bedienung.js:90, 279, 364, 445, 452. Rechnung pruefbelege/2026-10-21/faden-kanten.mjs: 6 von 30 Fäden haben mehrere Verbindungen. 7 Verbindungen sind nur per Pfeiltaste erreichbar, 2 davon mit Stelle (Durkheim → Radcliffe-Brown mit 3 Verbindungen, „Ein Inhalt“ → Durkheim mit 2). Bild gewebe2-11-faden-marke.jpg: Marke „Verbindung 1 von 3 · ←/→ wählt …“.
 - **vorschlag:** Auf Touchgeräten (W.touch) „←/→ wählt“ weglassen und eine Geste anbieten. Zum Beispiel schaltet ein Tippen auf die Marke eines gewählten Fadens zur nächsten Verbindung, und ein Tippen auf den Knoten folgt.
 - **Gegenprüfung:** echt, Schwere leicht: Der Befund hält im Kern. Die Zahl der betroffenen Verbindungen mit Stelle ist aber zu hoch angesetzt: Es ist eine, nicht zwei.
 
@@ -1156,18 +1156,82 @@ Warum nur leicht: Gegenüber 26356a7 geht am Handy nichts verloren, denn vorher 
 
 Ein Nebenfund an derselben Stelle: Die Ansage in bedienung.js:373 („F zeigt die anderen …“) richtet sich ebenfalls nur an Tastaturnutzer. Sie ist aber nur für Screenreader hörbar, nicht sichtbar.
 
+### bruch 7 · Der Stimmenkranz im Netz kreist auch bei reduzierter Bewegung, jetzt über die ganze Mitte
+- **datei:** app/js/netz.js
+- **zeile:** 107
+- **schwere:** leicht
+- **befund:** bigHead übernimmt die Uhrzeit ungebremst: eine Runde in 16 s, mit Wobble und einem Schweif aus 30 Stellen. U.RM wird nicht beachtet, anders als in der Zelle, wo OM0_RM die Köpfe auf 15 % verlangsamt. Mit diesem Stand kreisen die Köpfe am Rand der vergrößerten Mitte (1,06·Rm statt 0,62·Rm). In der Mitte laufen sie also fast bildgroß, mit deutlich mehr Bewegung auf dem Schirm als vorher. Die Lücke ist älter, wird durch den neuen Radius aber deutlich sichtbarer.
+- **beleg:** netz.js:107–108 (th = t·TAU/16, ohne RM), 226–229 (Schweif und Kopf mit wall). Rechnung: in der Mitte bei 1200×800 hat der Ring etwa 374 px Radius (pruefbelege/2026-10-21/dach-rand.mjs: x 226…974), die Kopfbahn etwa 396 px. Das ergibt bei reduzierter Bewegung etwa 156 px/s.
+- **vorschlag:** Die Zeit in bigHead bei U.RM auf etwa 15 % setzen (wie OM0_RM) oder den Kranz bei U.RM stehen lassen, und den Schweif bei U.RM weglassen.
+- **Gegenprüfung:** echt, Schwere leicht: Ich konnte den Befund nicht widerlegen. Ein Teil ist überzeichnet, der Kern hält.
+
+Code (Stand 35c59bc):
+- netz.js:107: In bigHead gilt th = t·TAU/16, und t ist wall. Der Wert läuft in haupt.js:413 mit `W.wall += rdt` in Echtzeit weiter, ohne Bremse für reduzierte Bewegung.
+- netz.js:226–229: Der Schweif (30 Stellen) und der Kopf werden ohne Abfrage von U.RM gezeichnet. Die Leertaste („Angehalten.“, haupt.js:438) hält nur die Zelle und die Funken an. wall läuft weiter, der Kranz lässt sich also gar nicht anhalten.
+- Sonst ist bei reduzierter Bewegung alles still gestellt. Der Kernpuls (netz.js:133) steht, die Flussteilchen (200, 214) fehlen, die Kamera dreht nicht mit (regie.js: `(RM ? 0 : 0.012)·netZeit`), und die Körnung friert ein (licht.js:232: uT = 0 bei still). Den Türpuls hat dieser Commit selbst neu mit `(U.RM ? 0 : 1)` gesperrt (netz.js:232). Den Kranz direkt daneben hat er übersehen.
+- In der Zelle laufen dieselben Köpfe bei reduzierter Bewegung auf 15 % (zelle.js:17 und 286, OM0_RM). BERICHT.md:115 nennt das als erfüllt. Wer die Netzansicht öffnet, sieht die Köpfe dort also etwa 6,7-mal schneller als in der Zelle.
+
+Rechnung: Skript pruefbelege/2026-10-21/widerlegung-kranzrm/kranz.mjs. Es nutzt die echte regie() mit RM=true und rechnet alt (26356a7) gegen neu (35c59bc) auf kette-gewebe.
+
+| Ansicht | Bahn (Kopf 0) | mittleres Tempo | max. Tempo | Kopf | Schweif |
+|---|---|---|---|---|---|
+| Mitte, 1200×800, neu | x 199…1017, y 63…807 | 155 px/s | 188 px/s | – | – |
+| Mitte, 800×600, alt | x 215…601 | 73 px/s | – | 34 px | 119 px |
+| Mitte, 800×600, neu | x 99…713, y 47…606, also fast bildgroß | 116 px/s | – | 15 px | 63 px |
+| Überblick, 800×600 | – | 8 px/s alt, 28 px/s neu | – | – | – |
+
+Die 156 px/s des Prüfers stimmen damit. Im Bild gewebe2-03-mitte-innen.jpg ziehen die fünf Köpfe links außerhalb des Rings als Kometen mit Schweif.
+
+Überzeichnet ist zweierlei:
+1. „Deutlich mehr Bewegung als vorher“ trifft nur zum Teil zu. Das Tempo ist zwar um das 1,6-Fache (Mitte) bis 3,5-Fache (Überblick) gestiegen. Kopf und Schweif sind aber etwa halb so groß wie vorher (Schweif 0,54 s statt 1,62 s).
+2. Die Lücke ist älter als dieser Commit.
+
+Folgenreich bleibt es trotzdem. Die Regel des Projekts verlangt, reduzierte Bewegung zu respektieren. Gerade dann bleibt der Kranz die einzige Kreisbewegung, die nie aufhört, und er läuft über fast das ganze Bild. Die Köpfe sind außerdem Ziele zum Antippen (bedienung.js:309 trefferKopf), die sich dabei bewegen.
+
+Die Schwere bleibt „leicht“: Es geht um nicht wesentliche Zierbewegung, nichts geht kaputt, und die Behebung ist eine Zeile, etwa die Zeit bei U.RM auf 0,15 setzen oder den Kranz anhalten.
+
+### bruch 8 · Ein Vergleich mit einer Fassung aus einem anderen Werk übersteht kein Neuladen
+- **datei:** app/js/haupt.js
+- **zeile:** 221
+- **schwere:** leicht
+- **befund:** merkeOrt schreibt das Gegenüber nur als Nummer im eigenen Mond in die Adresszeile. Liegt es in einem anderen Werk, ergibt findIndex −1 + 1 = 0, also vergleich: null. Beim Neuladen gewinnt die Adresszeile (ausLink, Z. 229), vg wird null (Z. 239), und der Leseraum öffnet im Lesen statt im Vergleich. Der gemerkte Sitzungszustand mit dem Gegenüber wird dabei verworfen. Der neue vorschlag() bevorzugt Partner über Kanten, und darunter sind werkfremde.
+- **beleg:** haupt.js:221–222 (vi), 229 (ausLink), 239 (vg). Rechnung pruefbelege/2026-10-21/vorschlag-mond.mjs: 7 von 485 Vorschlägen liegen in einem anderen Werk, z. B. „FASKA Eigenraum / Hauptarbeitsraum → FASKA Varianten · Vergleich“ und „Mooncells / Hauptarbeitsraum → MOONFiNGERS“. Dazu kommt jede „fremd“-Perle im Faden des Vergleichs.
+- **vorschlag:** Für ein werkfremdes Gegenüber dessen lesbaren Mondnamen mit Fassungsnummer in den Link schreiben (ohne Kennung, etwa &gegen=moonfingers-3). Oder bei ausLink den gemerkten Vergleich der Sitzung übernehmen, wenn er zur selben Fassung gehört.
+- **Gegenprüfung:** echt, Schwere leicht: Ich konnte den Befund nicht widerlegen. Er ist belegt, wiegt aber wenig und ist zum größten Teil älter als der Commit.
+
+Ablauf im Code (gewebe = 35c59bc, Arbeitskopie sauber):
+- haupt.js:221 sucht das Gegenüber nur in Z.m.samen. Liegt es woanders, ergibt findIndex −1 + 1 = 0. link.bau schreibt dann zwar fassung=N&lesen=1, aber kein vergleich in die Adresszeile.
+- Nach dem Neuladen liest start() die Adresszeile mit link.lies. Weil fassung gesetzt ist, ist ausLink in Z. 229 wahr, und vg wird in Z. 239 null.
+- Der Leseraum öffnet deshalb im Lesen, an derselben Fassung und Stelle. Der gemerkte Vergleich in sessionStorage wird bewusst übergangen („beides wird nie vermischt“).
+- Neuladen passiert nicht nur von Hand: licht.js:158 lädt bei webglcontextrestored von selbst neu.
+
+Nachgerechnet:
+- Die Rechnung des Prüfers ergibt erneut 7 werkfremde von 485 Vorschlägen (kette-gewebe).
+- Mein Vergleich zwischen altem und neuem vorschlag() liegt in pruefbelege/2026-10-21/widerlegung-vergleichlink/vergleich-alt-neu.mjs.
+- Nicht in den Link schreibbar waren bei 26356a7 schon 10 von 485 Vorschlägen. Alle lagen im eigenen Werk, aber nicht unter den Samen, kamen also etwa über „gelesen“.
+- Bei 35c59bc sind es 18: 7 davon in einem anderen Werk (vorher 0), 11 im eigenen Werk. Für kette-claude gilt dasselbe (18 gegen 10 von 484).
+
+Warum nur leicht:
+- merkeOrt und ortWiederholen hat der Commit nicht verändert. Auch die werkfremden „fremd“-Perlen im Faden des Vergleichs gab es schon vorher.
+- Fassung und Stelle bleiben erhalten. Es geht nichts an Daten verloren, und kein Link zeigt auf eine falsche Fassung.
+- vorschlag() ist bei gleichen Daten immer gleich. Ein Tipp auf „Vergleichen“ (stoff.js:201) holt den vorgeschlagenen werkfremden Partner also sofort zurück.
+- Wirklich verloren geht nur ein Gegenüber, das Ralf selbst gewählt hat und das nicht unter den Samen des Mondes liegt. Das war schon vor dem Commit so.
+- BERICHT.md:35 verspricht für das Neuladen nur Fassung und Stelle, nicht den Vergleich.
+
+Folgenreich ist es trotzdem knapp: Der Link-Parameter vergleich ist eigens dafür da, dass ein Vergleich das Neuladen übersteht. Der neue vorschlag() macht den Fall häufiger, auch beim selbsttätigen Neuladen nach einem GPU-Verlust.
+
 ### ehrlich 1 · Faden-Marke verspricht „tippen liest die Stelle“, obwohl der Teil im Wortlaut gar nicht steht
 - **datei:** app/js/bedienung.js
 - **zeile:** 94
 - **schwere:** mittel
 - **befund:** Die Marke eines Fadens schreibt „tippen liest die Stelle“, sobald usage.to_part gesetzt ist. Ob dieser Teil in der Zielfassung überhaupt vorkommt, wird nicht geprüft (verorte wird erst in folgeFaden aufgerufen). In der Testkopie gilt das für alle 7 Kanten mit beschriebener Verwendung an Netz-Fäden. Nur eine davon (F28, Genealogical Spiral) trifft eine eindeutige wörtliche Stelle. Bei vieren liefert verorte gar nichts (F0 k0 und k1: Durkheim → Radcliffe-Brown; F29 k0 und k1: Prüfbefund → Durkheim), bei zweien nur „ungefähr“. Erst nach dem Tippen kommt die Zeile „Den genannten Teil gibt es so nicht im Wortlaut.“. Die Marke stellt also eine Fundstelle in Aussicht, die es in den Daten nicht gibt. Dazu kommt: from_part wird nie gesucht. Bei F29 stünde der Teil der Ausgangsseite („Tatsächlich ausgeführt und konkrete Grenze“) als Abschnitt in der Prüfbefund-Fassung, gesprungen wird aber auf die Seite, deren Teil fehlt.
-- **beleg:** Bild standbilder/gewebe2-11-faden-marke.jpg, Marke in der Bildmitte: „„Émile Durkheim“ verweist auf „Alfred Radcliffe-Brown“ · Verbindung 1 von 3 · „Arbeitsteilung …“ → „Strukturfunktionalismus: Institutionen und Stabil…“ · … · tippen liest die Stelle“. Nachgerechnet mit scratchpad/pruefung2/faeden.mjs auf testdaten/kette-gewebe: F0 k0 verortet(to)=null, F0 k1 verortet(to)=null, F29 k0/k1 verortet(to)=null (verortet(from)={index:2, art:'abschnitt'}), F26 {art:'wörtlich', mehrfach:2}, F27 {art:'wörtlich', mehrfach:4}, F28 {art:'wörtlich', mehrfach:1}.
+- **beleg:** Bild standbilder/gewebe2-11-faden-marke.jpg, Marke in der Bildmitte: „„Émile Durkheim“ verweist auf „Alfred Radcliffe-Brown“ · Verbindung 1 von 3 · „Arbeitsteilung …“ → „Strukturfunktionalismus: Institutionen und Stabil…“ · … · tippen liest die Stelle“. Nachgerechnet mit pruefbelege/2026-10-21/faeden.mjs auf testdaten/kette-gewebe: F0 k0 verortet(to)=null, F0 k1 verortet(to)=null, F29 k0/k1 verortet(to)=null (verortet(from)={index:2, art:'abschnitt'}), F26 {art:'wörtlich', mehrfach:2}, F27 {art:'wörtlich', mehrfach:4}, F28 {art:'wörtlich', mehrfach:1}.
 - **vorschlag:** In markeFuer für die gewählte Kante vorab verorte(u.to_part, materialParagraphs(Zielfassung)) rechnen. Nur bei einem eindeutigen wörtlichen Fund „tippen liest die Stelle“ schreiben, bei mehrfachem oder Abschnittsfund „tippen liest ungefähr dort“, sonst „tippen folgt · der genannte Teil steht nicht im Wortlaut“. In folgeFaden auf from_part und die from-Fassung ausweichen, wenn nur dieser Teil gefunden wird.
 - **Gegenprüfung:** echt, Schwere leicht: Ich konnte den Befund nicht widerlegen. Er ist belegt, aber die Folge ist kleiner als „mittel“.
 
 Code: Die Stelle app/js/bedienung.js:94 kam erst in diesem Commit dazu. Im Diff wird aus „tippen folgt“ jetzt `u && u.to_part ? 'tippen liest die Stelle' : 'tippen folgt'`. Die Marke prüft also nur, ob to_part gesetzt ist. verorte wird erst nach dem Tippen aufgerufen, in folgeFaden (app/js/haupt.js:207). Findet verorte nichts, schreibt haupt.js:211 „Den genannten Teil gibt es so nicht im Wortlaut.“, und der Leseraum öffnet mit stelle=null am Anfang.
 
-Nachgerechnet habe ich mit /private/tmp/claude-501/-Volumes-ThunderBolt4-2TB-Development-Projects-spiralcells-lichtwerk/1d7844bd-f2fa-430c-bed6-f193d9870ad0/scratchpad/pruefung2/widerlegung/faden-marke.mjs. Das Skript baut die Fäden genau wie netz.js:69–75 und nutzt dieselbe verorte-Logik wie stoff.js:49. Die Zahlen des Prüfers stimmen in kette-gewebe und in kette-claude:
+Nachgerechnet habe ich mit pruefbelege/2026-10-21/widerlegung/faden-marke.mjs. Das Skript baut die Fäden genau wie netz.js:69–75 und nutzt dieselbe verorte-Logik wie stoff.js:49. Die Zahlen des Prüfers stimmen in kette-gewebe und in kette-claude:
 - 7 Kanten an Netz-Fäden haben ein to_part.
 - Nur F28 („Genealogical Spiral“) trifft eine eindeutige wörtliche Stelle.
 - F26 (mehrfach 2) und F27 (mehrfach 4) treffen nur ungefähr.
@@ -1188,15 +1252,15 @@ Die Behebung ist billig: verorte schon in markeFuer für die gewählte Kante rec
 - **zeile:** 180
 - **schwere:** mittel
 - **befund:** Neu trägt im Überblick je Bezirk nur das „zuletzt bewegte“ Werk (N.juengst, gewählt nach zeitspanne[1]) seine Ringe. Davon hängt jetzt auch der Zuletzt-Ring ab, den Ralf ausdrücklich für die fünf jüngsten Einträge immer wollte. Liegen zwei der fünf Einträge im selben Bezirk, verliert das ältere Werk seinen Ring. In der Testkopie trifft das gerade „Zentrale · Material bekommt Form“, das Werk, das beim Öffnen zuerst gezeigt wird: Es hat einen der letzten fünf Einträge, ist aber nicht juengst der Mitte (das ist „KiN OS · Sichten“), und hat darum im Netz-Überblick keinen Ring. BERICHT.md behauptet weiter: „Die fünf jüngsten Einträge tragen einen leisen Ring, im Netz am Mond“. Dazu kommt: juengst rechnet mit zeitspanne[1], also auch mit Ralfs eigenen Einträgen und behaltenen Formen. ankunft.letzte schließt genau diese aus. Ein Behalten Ralfs kann den Ring also auf ein Werk ohne Zuletzt-Eintrag schieben. Mit derselben Bedingung (netz.js:173/177) verschwindet im Überblick auch der goldene Phasenring eines kristallisierten Werks, wenn es nicht das jüngste seines Bezirks ist.
-- **beleg:** netz.js:64–67 (juengst nach zeitspanne[1]), netz.js:173 `ringe = imDach != null ? bz === imDach : N.juengst.has(n)`, netz.js:180 Zuletzt-Ring nur bei `ringe || self || hov`. Rechnung scratchpad/pruefung2/netz.mjs (kette-gewebe): ZULETZT = 4× „KiN OS · Sichten“, 1× „Zentrale · Material bekommt Form“ (19.10., 20:54 UTC); „Zentrale · Material bekommt Form“ Bezirk Zentrale, juengst? false.
+- **beleg:** netz.js:64–67 (juengst nach zeitspanne[1]), netz.js:173 `ringe = imDach != null ? bz === imDach : N.juengst.has(n)`, netz.js:180 Zuletzt-Ring nur bei `ringe || self || hov`. Rechnung pruefbelege/2026-10-21/netz.mjs (kette-gewebe): ZULETZT = 4× „KiN OS · Sichten“, 1× „Zentrale · Material bekommt Form“ (19.10., 20:54 UTC); „Zentrale · Material bekommt Form“ Bezirk Zentrale, juengst? false.
 - **vorschlag:** Die Zuletzt-Ringe (höchstens fünf) von juengst abkoppeln und im Überblick immer zeigen. Nur die Phasenringe ausdünnen, den goldenen Ring eines kanonischen Werks ausgenommen. Falls juengst bleibt, mit ankunft.letzte bzw. ohne Ralfs Einträge und Formen rechnen statt mit zeitspanne[1].
 - **Gegenprüfung:** echt, Schwere leicht: Der Kern des Befunds stimmt. Ein Teil der Begründung ist falsch, und die Folgen sind kleiner als gemeldet.
 
 Belegt:
 - Rückschritt gegenüber 26356a7: Dort zeichnete netz.js:140 den Zuletzt-Ring an jedem Werk mit einem der fünf jüngsten Einträge, ohne weitere Bedingung („else if(N.zuletzt && N.zuletzt.has(m.id))“). Seit 35c59bc braucht er im Überblick `ringe || self || hov`, also N.juengst (netz.js:173/180).
 - juengst wird nach zeitspanne[1] gewählt (netz.js:64–67). In zeitspanne stecken alle Fassungen eines Werks (daten.js:115/194), also auch Ralfs eigene Einträge und behaltene Formen. ankunft.letzte schließt genau diese aus (ankunft.js:76–77). Die beiden Mengen sind also verschieden berechnet.
-- Nachgerechnet mit scratchpad/pruefung2/widerlegung/zuletzt-ring.mjs. Bei kette-gewebe und kette-claude gilt gleich: ZULETZT = 4× „KiN OS · Sichten“ und 1× „Zentrale · Material bekommt Form“, beide Werke in der Mitte. juengst der Mitte ist nur „KiN OS · Sichten“, „Material bekommt Form“ trägt im Überblick also keinen Zuletzt-Ring.
-- Schärfer, mit scratchpad/pruefung2/widerlegung/ralf-eintrag.mjs, nur im Speicher: Ein einziger Eintrag von Ralf in „Ein Inhalt, viele Verwendungen“ macht dieses Werk zum juengst der Mitte. Danach hat keines der beiden Zuletzt-Werke im Überblick noch einen Ring, obwohl letzte() unverändert bleibt. Ist Ralf gerade in diesem Werk (aktiv), zeigt der ganze Überblick keinen einzigen Zuletzt-Ring mehr. Das widerspricht Ralfs „die letzten paar immer“ (ankunft.js:70) und dem unveränderten Satz in BERICHT.md:54 („im Netz am Mond“).
+- Nachgerechnet mit pruefbelege/2026-10-21/widerlegung/zuletzt-ring.mjs. Bei kette-gewebe und kette-claude gilt gleich: ZULETZT = 4× „KiN OS · Sichten“ und 1× „Zentrale · Material bekommt Form“, beide Werke in der Mitte. juengst der Mitte ist nur „KiN OS · Sichten“, „Material bekommt Form“ trägt im Überblick also keinen Zuletzt-Ring.
+- Schärfer, mit pruefbelege/2026-10-21/widerlegung/ralf-eintrag.mjs, nur im Speicher: Ein einziger Eintrag von Ralf in „Ein Inhalt, viele Verwendungen“ macht dieses Werk zum juengst der Mitte. Danach hat keines der beiden Zuletzt-Werke im Überblick noch einen Ring, obwohl letzte() unverändert bleibt. Ist Ralf gerade in diesem Werk (aktiv), zeigt der ganze Überblick keinen einzigen Zuletzt-Ring mehr. Das widerspricht Ralfs „die letzten paar immer“ (ankunft.js:70) und dem unveränderten Satz in BERICHT.md:54 („im Netz am Mond“).
 
 Widerlegt oder überzeichnet:
 - „Das Werk, das beim Öffnen zuerst gezeigt wird“ trifft auf die Testkopien nicht zu. Ohne Merker startet kette-gewebe in „Émile Durkheim“ (haupt.js:575f., nach zeitspanne[1]) und kette-claude in „KiN OS · Sichten“. Wäre „Material bekommt Form“ das offene Werk, hätte es über `self` (aktiv) seinen Ring ohnehin.
@@ -1213,13 +1277,13 @@ Abhilfe: Zuletzt-Ringe (höchstens fünf, ankunft.letzte) von juengst lösen. Nu
 - **zeile:** 83
 - **schwere:** leicht
 - **befund:** Ein Bündel wird ganz im Stil seines häufigsten Kantentyps gezeichnet (x.typ). Typen in der Minderheit sind im Überblick unsichtbar: Ein „widerspricht“ verliert seine Unterbrechung, ein „remixt-aus“ seinen Materialfluss. Bei Gleichstand gewinnt der zuerst eingefügte Typ. Die Marke des Bündels („A → B · n Fäden · k Verbindungen“, bedienung.js:98) nennt keinen Typ, auch dort erfährt man es nicht. Der Pfeil bedeutet je nach Typ etwas anderes (Material fließt von, verweist auf, gehört zu). In der Testkopie sind derzeit alle sechs Bündel reine „verweist-auf“-Bündel, der Fehler zeigt sich dort also noch nicht.
-- **beleg:** Simulation nur im Speicher (scratchpad/pruefung2/buendel.mjs): eine Kante REiMWERK „widerspricht“ „Die Wörter bleiben …“ zur Testkopie hinzugefügt → Bündel Text und Reim → KiNTEGRiTY: typ 'verweist-auf', typen [[verweist-auf,4],[widerspricht,1]], 5 Kanten. Gezeichnet wird es mit STIL['verweist-auf'] (ohne Lücke), die Marke lautet „Text und Reim → KiNTEGRiTY · 5 Fäden · 5 Verbindungen“.
+- **beleg:** Simulation nur im Speicher (pruefbelege/2026-10-21/buendel.mjs): eine Kante REiMWERK „widerspricht“ „Die Wörter bleiben …“ zur Testkopie hinzugefügt → Bündel Text und Reim → KiNTEGRiTY: typ 'verweist-auf', typen [[verweist-auf,4],[widerspricht,1]], 5 Kanten. Gezeichnet wird es mit STIL['verweist-auf'] (ohne Lücke), die Marke lautet „Text und Reim → KiNTEGRiTY · 5 Fäden · 5 Verbindungen“.
 - **vorschlag:** Bei gemischten Bündeln die Typen in der Marke nennen (etwa „4 verweisen · 1 widerspricht“). Im Bild einen Widerspruch nie überdecken, etwa mit eigener Lücke oder einem Aschepunkt im Bündel, sobald x.typen 'widerspricht' enthält, und Materialfluss zeigen, sobald es eine Übernahme gibt.
 - **Gegenprüfung:** echt, Schwere leicht: Ich konnte den Befund nicht widerlegen. Er ist echt, bleibt aber leicht, weil er in den heutigen Daten nicht auftritt und man die Fäden einen Schritt tiefer wiederfindet.
 
 Code: Die Bündel kommen erst mit 35c59bc. In 26356a7 zeichnete der Überblick jeden Faden einzeln mit seinem eigenen STIL[f.typ]. app/js/netz.js Z. 82 zählt die Typen je Bündel in x.typen. Z. 83 nimmt davon nur den häufigsten als x.typ. Bei Gleichstand gewinnt der zuerst eingefügte Typ, weil sort stabil ist. Z. 208–217 zeichnen den Bogen nur mit STIL[x.typ]. Die Lücke für „widerspricht“ (luecke, ASCHE) und das Fließlicht für „remixt-aus“/„erweitert“ (fluss: 'material') hängen allein daran. Typen in der Minderheit hinterlassen keine Spur. Die Marke in bedienung.js Z. 95–98 nennt nur „A → B“, die Zahl der Fäden, die Zahl der Verbindungen und die Verwendung, aber keinen Typ. Der Bericht verspricht dagegen „Fäden zwischen Werken zeigen Typ und Richtung“ und „unterbrochen bei ‚trägt nicht‘“ (BERICHT.md Z. 28 und 80). Ein Widerspruch soll also sichtbar bleiben.
 
-Nachgerechnet (scratchpad/pruefung2/widerlegung/buendel-typen.mjs, nur gelesen): In kette-gewebe und kette-claude gibt es je 30 Fäden und 6 Bündel. Alle Bündel sind reine „verweist-auf“-Bündel. Die einzige „widerspricht“-Kante liegt innerhalb eines Werks und wird gar kein Faden. Die vier „remixt-aus“-Kanten liegen innerhalb eines Werks oder Bezirks. Heute sieht man den Fehler also nicht, das gibt der Prüfer selbst an. Seine Simulation (buendel.mjs) habe ich nachgefahren. Sie liefert „Bündel 7 -> 2 typ verweist-auf [[verweist-auf,4],[widerspricht,1]] kanten 5“. Sobald eine Übernahme oder ein Widerspruch über eine Bezirksgrenze hinzukommt, zeigt der Überblick ihn nicht. Das ist ein naheliegender Fall, wenn der Bestand wächst.
+Nachgerechnet (pruefbelege/2026-10-21/widerlegung/buendel-typen.mjs, nur gelesen): In kette-gewebe und kette-claude gibt es je 30 Fäden und 6 Bündel. Alle Bündel sind reine „verweist-auf“-Bündel. Die einzige „widerspricht“-Kante liegt innerhalb eines Werks und wird gar kein Faden. Die vier „remixt-aus“-Kanten liegen innerhalb eines Werks oder Bezirks. Heute sieht man den Fehler also nicht, das gibt der Prüfer selbst an. Seine Simulation (buendel.mjs) habe ich nachgefahren. Sie liefert „Bündel 7 -> 2 typ verweist-auf [[verweist-auf,4],[widerspricht,1]] kanten 5“. Sobald eine Übernahme oder ein Widerspruch über eine Bezirksgrenze hinzukommt, zeigt der Überblick ihn nicht. Das ist ein naheliegender Fall, wenn der Bestand wächst.
 
 Warum nur leicht:
 - Im Bezirk zeichnet Z. 190–192 jeden Faden mit seinem eigenen Stil.
@@ -1243,7 +1307,7 @@ Beleg aus SPiRALCELLS (nur gelesen): /Volumes/ThunderBolt4_2TB/Development/Proje
 
 Konkretes Fehlbild, sobald so eine Kante im Bestand liegt: Die Marke zeigt „„Neu“ übernimmt Material aus „Quelle“ · „Gesamte neue Fassung“ → „<Abschnitt der Quelle>““. Gelesen heißt das: die neue Fassung geht in den Quellabschnitt. Satz und Licht sagen das Gegenteil. Die eigene Oberfläche von SPiRALCELLS vermeidet diese Falle; sie setzt keinen Pfeil, sondern „Hier/Dort“ (workspace.js:443-444, 452).
 
-In den Testdaten noch nicht sichtbar. Nachgezählt mit /private/tmp/claude-501/-Volumes-ThunderBolt4-2TB-Development-Projects-spiralcells-lichtwerk/1d7844bd-f2fa-430c-bed6-f193d9870ad0/scratchpad/pruefung2/teilpfeil.mjs: in kette-gewebe, kette-claude und testdaten/state.json ist ('remixt-aus', usage) = 0 und ('remixt-aus', ohne) = 4.
+In den Testdaten noch nicht sichtbar. Nachgezählt mit pruefbelege/2026-10-21/teilpfeil.mjs: in kette-gewebe, kette-claude und testdaten/state.json ist ('remixt-aus', usage) = 0 und ('remixt-aus', ohne) = 4.
 
 Nebenbefunde:
 - Die eine „erweitert“-Kante mit Verwendung zeigt dieselbe Reihenfolge, also B-Teil → A-Teil gegen das Licht. Bei „B erweitert A“ ist das aber vertretbar lesbar und kein klarer Fehler. Ein Umdrehen sollte deshalb nur „remixt-aus“ betreffen, nicht pauschal alle fließenden Typen.
@@ -1256,7 +1320,7 @@ Schwere leicht: Es geht nur um den Marken-Text. Es gehen keine Daten verloren, u
 - **zeile:** 81
 - **schwere:** leicht
 - **befund:** Die Marke der Mitte sagt „die Mitte · 9 Werke · 9 Dächer darum“. werkeIn('mitte') hängt aber das Lesematerial an (Durkheim, Radcliffe-Brown), und laut ordnung.js „ist Lesematerial kein Werk“. Es sind 7 Werke und 2 Lesematerialien. Die Zeile selbst ist alt, aber die neue Dach-Marke zählt richtig ohne Lesematerial (Summe der Bereichswerke, knospenIn filtert material). So zählen Mitte und Dächer jetzt nach verschiedenen Regeln. Für „ohne Dach“ gilt dasselbe, sobald dort Material hängt.
-- **beleg:** Rechnung scratchpad/pruefung2/mitte.mjs (kette-gewebe): werkeIn(mitte) = 9: 7 Werke + „Émile Durkheim [Lesematerial]“ + „Alfred Radcliffe-Brown [Lesematerial]“. Bildzeile in gewebe2-03-mitte-innen.jpg zeigt beide als „· Lesematerial“ beschriftet.
+- **beleg:** Rechnung pruefbelege/2026-10-21/mitte.mjs (kette-gewebe): werkeIn(mitte) = 9: 7 Werke + „Émile Durkheim [Lesematerial]“ + „Alfred Radcliffe-Brown [Lesematerial]“. Bildzeile in gewebe2-03-mitte-innen.jpg zeigt beide als „· Lesematerial“ beschriftet.
 - **vorschlag:** In der Mitte-Marke baum.mitte.werke.length zählen und Lesematerial getrennt nennen („7 Werke · 2 Lesematerial“), ebenso bei „ohne Dach“.
 - **Gegenprüfung:** echt, Schwere leicht: Der Befund lässt sich nicht widerlegen. Die Zahl ist falsch und für Ralf sichtbar. An einer Stelle ist er allerdings ungenau.
 
@@ -1267,7 +1331,7 @@ Schwere leicht: Es geht nur um den Marken-Text. Es gehen keine Daten verloren, u
 - Die Kopfzeile von ordnung.js:4 sagt: „Lesematerial … ist kein Werk unter Werken“.
 
 **Nachgerechnet**
-Mit scratchpad/pruefung2/mitte.mjs auf testdaten/kette-gewebe kommt werkeIn(mitte) auf 9. Das sind 7 Werke und 2 Lesematerialien. Die Marke zeigt also „9 Werke“, belegt sind 7 Werke und 2 Lesematerialien.
+Mit pruefbelege/2026-10-21/mitte.mjs auf testdaten/kette-gewebe kommt werkeIn(mitte) auf 9. Das sind 7 Werke und 2 Lesematerialien. Die Marke zeigt also „9 Werke“, belegt sind 7 Werke und 2 Lesematerialien.
 
 **Dieselbe falsche Zahl an zweiter Stelle**
 Das hat der Prüfer nicht genannt: app/js/haupt.js:129–130 (insDach) bildet die Bildzeile und die Ansage beim Hineinfahren ebenfalls aus werkeIn(j).length. Dort steht dann „Zentrale: 9 Werke in der Mitte.“ Dazu kommt ein Zufall, der die Sache verschärft. Neben „9 Dächer darum“ und der Übersichtszeile „neun Werke noch ohne Dach“ (bedienung.js:51, in gewebe2-03 sichtbar) erscheint eine dritte, falsche Neun. Sie widerspricht genau der Korrektur, die Ralf ausdrücklich bestätigt hat: Durkheim ist ein Leseauszug, kein Werk.
@@ -1292,7 +1356,7 @@ Nichts bricht, und die Marke der Mitte erscheint nur beim Zeigen oder Wählen. D
 - **zeile:** 67
 - **schwere:** leicht
 - **befund:** familieVon (wuchs.js:105) nimmt aus dem Rohlabel nur den Teil vor „ · “ oder „ (“. Dieser Name erscheint als sichtbarer Text am Bogen (#familien, haupt.js:67: s.textContent = b.f) und in der Marke (herkunftSatz, bedienung.js:115: `${fam} · k von n`). An beiden Stellen läuft er weder durch menschlich() noch durch kurz(). Alle anderen Namen im Bild laufen durch kurz(), das menschlich() enthält, etwa Werknamen mit kurz(…, 30). Fängt das Label einer großen Übernahme mit einem lokalen Pfad, einer Kennung oder einem langen Satz an, steht das wörtlich und in voller Länge am Fächer. Das ist heute noch nicht ausgelöst.
-- **beleg:** Rechnung mit /private/tmp/claude-501/-Volumes-ThunderBolt4-2TB-Development-Projects-spiralcells-lichtwerk/1d7844bd-f2fa-430c-bed6-f193d9870ad0/scratchpad/pruefung2/familien-roh.mjs auf kette-gewebe und kette-claude. Nur „FASKA Varianten · Vergleich“ löst reihenLage aus. Seine Namen (Invaria 2, FASKA-EINE-APP, FASKA Lernpfade, Google Anti-Gravity, Astra, Sonnenjahr) sind harmlos, und menschlich() würde heute an keinem Namensanfang etwas ändern. Der längste Namensanfang im Bestand hat aber 68 Zeichen und wäre ungekürzt. Code: wuchs.js:105, wuchs.js:133, haupt.js:67, bedienung.js:115. Bild standbilder/gewebe2-07-faska-varianten-familien.jpg: Die Namen sind dort korrekt, der Befund ist also latent.
+- **beleg:** Rechnung mit pruefbelege/2026-10-21/familien-roh.mjs auf kette-gewebe und kette-claude. Nur „FASKA Varianten · Vergleich“ löst reihenLage aus. Seine Namen (Invaria 2, FASKA-EINE-APP, FASKA Lernpfade, Google Anti-Gravity, Astra, Sonnenjahr) sind harmlos, und menschlich() würde heute an keinem Namensanfang etwas ändern. Der längste Namensanfang im Bestand hat aber 68 Zeichen und wäre ungekürzt. Code: wuchs.js:105, wuchs.js:133, haupt.js:67, bedienung.js:115. Bild standbilder/gewebe2-07-faska-varianten-familien.jpg: Die Namen sind dort korrekt, der Befund ist also latent.
 - **vorschlag:** Den Namen beim Anzeigen durch den Filter führen: haupt.js:67 s.textContent = kurz(b.f, 28), bedienung.js:115 kurz(fam, 28). Oder schon in familieVon menschlich() anwenden; daten.js ist in wuchs.js bereits importiert.
 - **Gegenprüfung:** echt, Schwere leicht: Ich konnte den Befund nicht widerlegen. Die Lücke ist neu in 35c59bc und belegt, wird aber vom heutigen Bestand nicht ausgelöst.
 
@@ -1364,7 +1428,7 @@ Echt bleibt er trotzdem. Es ist ein neuer Rückschritt dieses Commits:
 
 Der Vorschlag des Prüfers ist sinnvoll: im Zweig für mehr als 60 Fassungen nur sichtbare Blätter zulassen (Z.gBorn[Z.seedFirst[i]] !== -1 und Geburtszeit ≤ S.clock), und familienNamen erst zeigen, wenn !Z.S.aufzug gilt.
 
-Beide Skripte liegen in /private/tmp/claude-501/-Volumes-ThunderBolt4-2TB-Development-Projects-spiralcells-lichtwerk/1d7844bd-f2fa-430c-bed6-f193d9870ad0/scratchpad/pruefung2/widerlegung-aufzug/.
+Beide Skripte liegen in pruefbelege/2026-10-21/widerlegung-aufzug/.
 
 ### wege 7 · Am Handy sind weitere Verbindungen eines Fadens und ein deckungsgleicher Gegenfaden unerreichbar
 - **datei:** app/js/bedienung.js
@@ -1410,7 +1474,7 @@ Code (Stand 35c59bc):
 - markeFuer (bedienung.js:90–92) zeigt darum „Verbindung 1 von 2 · ←/→ wählt“ mit from_part → to_part und Zweck der ersten Kante. Dieselbe Angabe hört der Screenreader nach „Zurück im Netz.“ (haupt.js:147).
 - Eingabe oder Tippen (bedienung.js:364 und 452) folgt dann mit k = 0 der ersten Kante.
 
-Nachgerechnet mit /private/tmp/claude-501/-Volumes-ThunderBolt4-2TB-Development-Projects-spiralcells-lichtwerk/1d7844bd-f2fa-430c-bed6-f193d9870ad0/scratchpad/pruefung2/faden-k.mjs auf kette-claude und kette-gewebe (beide gleich):
+Nachgerechnet mit pruefbelege/2026-10-21/faden-k.mjs auf kette-claude und kette-gewebe (beide gleich):
 - 6 von 30 Fäden haben mehr als eine Kante, und bei allen sechs führen die Kanten an verschiedene Ziele.
 - Faden 29 hat 2 Kanten, beide mit to_part, mit verschiedenen Zielfassungen. Faden 0 hat 3 Kanten, davon 2 mit to_part.
 
@@ -1495,14 +1559,14 @@ Die Werkstattszene `netz` ruft genau `oeffneMond` und dann `zumNetz` auf (`haupt
 
 Nicht nachgerechnet habe ich den Wortlaut „FASKA: 23 Werke in 4 Bereichen.“ Für den Befund ist er unerheblich.
 
-## Verworfen oder ungeprüft (15)
+## Verworfen oder ungeprüft (13)
 
 ### leistung 1 · Leseraum: kandidaten() rechnet bei buchlangen Fassungen bis zu 26 volle Passagenabgleiche in einem Klick
 - **datei:** app/js/stoff.js
 - **zeile:** 173
 - **schwere:** leicht
 - **befund:** Neu in 35c59bc: kandidaten() ruft teilenWortlaut() für bis zu 24 Kandidaten auf (stoff.js:173) und zusätzlich für Herkunft und Vorgängerin (stoff.js:168, 170). Jeder Aufruf, der die Schwelle wortAnteil ≥ 0,1 überschreitet, rechnet materialParagraphs zweimal, alignParagraphs und abgleich() mit Wort-LCS (stoff.js:145). baueRuhig() ruft danach teilenWortlaut() über ALLE Kandidaten auf, ohne die Grenze von 24 und ohne nach 4 Treffern abzubrechen: erst filter(), dann slice(0, 4) (stoff.js:414). Der Speicher hängt an den Fassungsobjekten (stoff.js:141) und ist nach jedem Auffrischen leer. Der Aufwand je Paar wächst mit n·m Passagen bis zur Grenze von alignParagraphs bei n·m = 100 000 (materialraum.js:84), also bis etwa 316 × 316 Passagen. Mit dem heutigen Bestand liegt nichts über der Grenze. Buchlange Fassungen mit wenigen Verbindungen blockieren den Hauptfaden aber für eine halbe bis mehrere Sekunden.
-- **beleg:** Gemessen mit Node gegen testdaten/kette-gewebe. Mit dem heutigen Bestand dauert der teuerste Klick auf „Vergleichen“ (kalter Speicher) 27 ms: „Zentrale · Material bekommt Form / Gegenlese Antigravity · Runde 2“, kandidaten 21,9 ms plus Paarabgleich 5,5 ms. Höchstens 5 Kandidaten, größte Fassung 64 Passagen (Skript /private/tmp/claude-501/-Volumes-ThunderBolt4-2TB-Development-Projects-spiralcells-lichtwerk/1d7844bd-f2fa-430c-bed6-f193d9870ad0/scratchpad/pruefung2/messe-lese.mjs). Hochrechnung aus echtem Prosa-Wortlaut der Kette (Skript .../pruefung2/messe-buch.mjs, eine überarbeitete Fassung, jeder dritte Absatz geändert): ein teilenWortlaut-Paar kostet bei 64 Passagen 12,3 ms, bei 150 Passagen 30,6 ms und bei 300 Passagen 98,7 ms (davon alignParagraphs 85,8 ms). Ein Kapitel mit 300 Passagen und 5 verbundenen Fassungen kostet damit 5 × 99 ms plus 99 ms Paarabgleich, also etwa 0,6 s. Beim vollen Satz von 24 + 2 Kandidaten sind es 26 × 99 ms, also etwa 2,6 s, auf diesem Mac und ohne DOM; am Handy mehrfach länger. Zum Vergleich liegen alle Bildschleifen unter den Grenzen. Netz bei U.dach = null, 'mitte' und jedem Dach: höchstens 15 903 Punkte (9,9 % von MAXP), CPU im Median 0,9 bis 2,9 ms, p90 höchstens 5,0 ms. Übergang Zelle→Netz: höchstens 22 791 Punkte bei 1,9 ms. Zelle mit kelchK 0 und 1: höchstens 7 394 Punkte bei rund 1 ms. Die Rechnungen in familienNamen, trefferSame, amRing, netzMass und fadenWeg liegen bei höchstens 0,2 ms. randFliessen trifft höchstens 2 Passagen mit Rand je Fassung, das sind 2 erzwungene Layouts je resize. Der Neubau von Netz nach dem Auffrischen dauert 1,2 ms (messe-netz.mjs, messe-zelle.mjs, messe-rand.mjs, messe-bau.mjs im selben Ordner).
+- **beleg:** Gemessen mit Node gegen testdaten/kette-gewebe. Mit dem heutigen Bestand dauert der teuerste Klick auf „Vergleichen“ (kalter Speicher) 27 ms: „Zentrale · Material bekommt Form / Gegenlese Antigravity · Runde 2“, kandidaten 21,9 ms plus Paarabgleich 5,5 ms. Höchstens 5 Kandidaten, größte Fassung 64 Passagen (Skript pruefbelege/2026-10-21/messe-lese.mjs). Hochrechnung aus echtem Prosa-Wortlaut der Kette (Skript .../pruefung2/messe-buch.mjs, eine überarbeitete Fassung, jeder dritte Absatz geändert): ein teilenWortlaut-Paar kostet bei 64 Passagen 12,3 ms, bei 150 Passagen 30,6 ms und bei 300 Passagen 98,7 ms (davon alignParagraphs 85,8 ms). Ein Kapitel mit 300 Passagen und 5 verbundenen Fassungen kostet damit 5 × 99 ms plus 99 ms Paarabgleich, also etwa 0,6 s. Beim vollen Satz von 24 + 2 Kandidaten sind es 26 × 99 ms, also etwa 2,6 s, auf diesem Mac und ohne DOM; am Handy mehrfach länger. Zum Vergleich liegen alle Bildschleifen unter den Grenzen. Netz bei U.dach = null, 'mitte' und jedem Dach: höchstens 15 903 Punkte (9,9 % von MAXP), CPU im Median 0,9 bis 2,9 ms, p90 höchstens 5,0 ms. Übergang Zelle→Netz: höchstens 22 791 Punkte bei 1,9 ms. Zelle mit kelchK 0 und 1: höchstens 7 394 Punkte bei rund 1 ms. Die Rechnungen in familienNamen, trefferSame, amRing, netzMass und fadenWeg liegen bei höchstens 0,2 ms. randFliessen trifft höchstens 2 Passagen mit Rand je Fassung, das sind 2 erzwungene Layouts je resize. Der Neubau von Netz nach dem Auffrischen dauert 1,2 ms (messe-netz.mjs, messe-zelle.mjs, messe-rand.mjs, messe-bau.mjs im selben Ordner).
 - **vorschlag:** Die Prüfung teuer nur für wenige Kandidaten rechnen. In kandidaten() teilenWortlaut nur für die ersten 4 bis 6 Kandidaten, die schon nach wortAnteil sortiert sind, statt für 24. In baueRuhig() eine Schleife statt filter(): nach 4 Treffern abbrechen und nur Kandidaten prüfen, die schon im Speicher liegen. Für große Paare (zum Beispiel ab Passagen(a) · Passagen(b) > 4000) nur wortAnteil als Vorblick nehmen oder die Rechnung stückweise über requestIdleCallback verteilen. Den Speicher geteilt/woerterVon intern nach Fassungskennung und Inhaltslänge führen statt nach Objekt, damit er das Auffrischen übersteht. Die Kennung bleibt dabei unsichtbar, nur als Schlüssel einer Map.
 - **Gegenprüfung:** verworfen, Schwere leicht: Der Mechanismus stimmt, eine Folge zeigt sich aber nirgends. Heute ist der Befund unerheblich, und die Hochrechnung baut auf einem Bestand, den es nicht gibt.
 
@@ -1510,11 +1574,11 @@ Was zutrifft:
 - kandidaten() ruft teilenWortlaut für bis zu 24 Kandidaten auf (stoff.js:173), dazu für Herkunft und Vorgängerin (stoff.js:168 und 170).
 - baueRuhig filtert über alle Kandidaten und schneidet erst danach auf 4 ab (stoff.js:414).
 - Vor 35c59bc kostete vorschlag() fast nichts. Den einen Paarabgleich in baueVergleich gab es schon vorher (26356a7 stoff.js:252).
-- Die Schwelle wortAnteil ≥ 0,1 sortiert bei langen Texten nichts aus. Nachgerechnet mit fremden echten Absätzen der Kette: bei 64 gegen 64 Passagen liegt der Anteil bei 0,25, bei 150 gegen 150 bei 0,32. Skript: /private/tmp/claude-501/-Volumes-ThunderBolt4-2TB-Development-Projects-spiralcells-lichtwerk/1d7844bd-f2fa-430c-bed6-f193d9870ad0/scratchpad/pruefung2/widerlegung/schwelle.mjs.
+- Die Schwelle wortAnteil ≥ 0,1 sortiert bei langen Texten nichts aus. Nachgerechnet mit fremden echten Absätzen der Kette: bei 64 gegen 64 Passagen liegt der Anteil bei 0,25, bei 150 gegen 150 bei 0,32. Skript: pruefbelege/2026-10-21/widerlegung/schwelle.mjs.
 - Die Kosten je Paar habe ich nachgemessen: etwa 120 ms bei 300 gegen 300 Passagen.
 
 Was den Befund widerlegt:
-1. Im Bestand gibt es keine solche Fassung. In kette-gewebe und kette-claude hat keine Fassung mehr als 64 Passagen, keine über 100. Höchstens 14 Kanten und 5 gelesene je Fassung, zusammen also höchstens 19 Kandidaten. Die Grenze von 24 und der Fall „mehr als 24“ in baueRuhig werden darum nie erreicht. Skript: /private/tmp/claude-501/-Volumes-ThunderBolt4-2TB-Development-Projects-spiralcells-lichtwerk/1d7844bd-f2fa-430c-bed6-f193d9870ad0/scratchpad/pruefung2/widerlegung/verteilung.mjs.
+1. Im Bestand gibt es keine solche Fassung. In kette-gewebe und kette-claude hat keine Fassung mehr als 64 Passagen, keine über 100. Höchstens 14 Kanten und 5 gelesene je Fassung, zusammen also höchstens 19 Kandidaten. Die Grenze von 24 und der Fall „mehr als 24“ in baueRuhig werden darum nie erreicht. Skript: pruefbelege/2026-10-21/widerlegung/verteilung.mjs.
 2. Der teuerste Klick kostet heute 27 ms. Das hat der Prüfer selbst gemessen, und er schreibt selbst, dass nichts über der Grenze liegt.
 3. Die 2,6 s sind ausgedacht. Dafür bräuchte es 26 buchlange Fassungen, alle mit derselben verbunden und alle mit etwa 300 Passagen. Teuer ist nur lang gegen lang. Eine kurze Gegenlese gegen ein Kapitel mit 300 Passagen kostet 10 ms. Denkbar ist ein Kapitel mit zwei oder drei langen Überarbeitungen. Das wären einmalig etwa 0,3 s am Mac, gemerkt bis zum nächsten Auffrischen. Das ist ein spürbares Stocken, aber nichts geht kaputt.
 4. Dass der Speicher nach jedem Auffrischen leer ist, hat keine praktische Folge. Wer den Leseraum öffnet, setzt über B.waehle(sel, 2) und oeffneLese auch U.lese = true (haupt.js:174, bedienung.js:201). Solange das gilt, wartet das Auffrischen aus dem Hintergrund (haupt.js:261 und 277). Während des Lesens bleibt der Speicher also erhalten.
@@ -1530,7 +1594,7 @@ Der Vorschlag ist eine sinnvolle Vorsorge für buchlange Texte, etwa nur 4 bis 6
 - **vorschlag:** Den Satz nach derselben Bedingung wählen wie ungefaehr: eindeutig wörtlich → „an der Stelle, die der Faden nennt“; mehrfach oder Abschnitt → „ungefähr an der Stelle, die der Faden nennt (der Teil steht N-mal im Text)“; ohne Fund wie bisher.
 - **Gegenprüfung:** verworfen, Schwere leicht: Die Beobachtung im Code stimmt, folgenreich ist sie aber nicht. Darum echt=false.
 
-Was stimmt: haupt.js:209 setzt ungefaehr, wenn die Fundart nicht wörtlich ist oder der Teil mehrfach vorkommt. haupt.js:211 wählt den Satz der Bildzeile dagegen nur danach, ob es überhaupt einen Fund gibt. Nachgerechnet habe ich mit /private/tmp/claude-501/-Volumes-ThunderBolt4-2TB-Development-Projects-spiralcells-lichtwerk/1d7844bd-f2fa-430c-bed6-f193d9870ad0/scratchpad/pruefung2/ungefaehr/zeile.mjs. Es baut die Netzfäden wie netz.js:69-75 und wendet das echte verorte aus stoff.js auf beide Testketten an. Ergebnis: 7 Kanten nennen einen Teil der Zielfassung. 1 davon wird eindeutig gefunden (F28 Genealogical Spiral), 2 nur ungefähr (F26 „Grundfassung“ zweimal, F27 „gedankenspirale“ viermal), 4 gar nicht. Bei F26 und F27 kommen also der Satz „an der Stelle, die der Faden nennt“ und die Marke „ungefähr hier“ zusammen. So weit hat der Prüfer recht.
+Was stimmt: haupt.js:209 setzt ungefaehr, wenn die Fundart nicht wörtlich ist oder der Teil mehrfach vorkommt. haupt.js:211 wählt den Satz der Bildzeile dagegen nur danach, ob es überhaupt einen Fund gibt. Nachgerechnet habe ich mit pruefbelege/2026-10-21/ungefaehr/zeile.mjs. Es baut die Netzfäden wie netz.js:69-75 und wendet das echte verorte aus stoff.js auf beide Testketten an. Ergebnis: 7 Kanten nennen einen Teil der Zielfassung. 1 davon wird eindeutig gefunden (F28 Genealogical Spiral), 2 nur ungefähr (F26 „Grundfassung“ zweimal, F27 „gedankenspirale“ viermal), 4 gar nicht. Bei F26 und F27 kommen also der Satz „an der Stelle, die der Faden nennt“ und die Marke „ungefähr hier“ zusammen. So weit hat der Prüfer recht.
 
 Warum das ohne Folgen bleibt:
 1. Man sieht beides nicht gleichzeitig. Der Satz erscheint 420 ms nach dem Aufruf (bedienung.js:28-32). Der Leseraum öffnet nach 1300 ms (haupt.js:210). Beim Öffnen setzt stoff.js:83 die Klasse im-stoff, und stil.css:270 blendet #line dann mit visibility:hidden aus. Der Satz steht also nur rund 0,9 s während des Flugs da und ist weg, bevor die Passage mit „ungefähr hier“ auftaucht. Bei reduzierter Bewegung (W.RM) läuft der Timer zum Lesen vor dem der Bildzeile. Der Satz landet dann schon in einer verborgenen Zeile und ist gar nicht zu sehen.
@@ -1544,11 +1608,11 @@ Was bleibt, ist eine sprachliche Glättung. Den Satz nach derselben Bedingung zu
 - **zeile:** 85
 - **schwere:** leicht
 - **befund:** Die Dach-Marke sagt „N Verbindungen darin“. N kommt aus N.innen, und das zählt nur Fäden zwischen zwei verschiedenen Werken desselben Bezirks (netz.js:79), weil this.faeden Kanten innerhalb eines Werks ausschließt. Kanten innerhalb der Werke eines Dachs fehlen. Bei FASKA steht „2 Verbindungen darin“, tatsächlich liegen 5 Kanten im Dach. Phänomenatlas zeigt gar keine Angabe, obwohl es 1 Kante im Dach gibt.
-- **beleg:** Rechnung scratchpad/pruefung2/innen.mjs (kette-gewebe): alle Kanten im Bezirk FASKA 5, Phänomenatlas 1, KiNTEGRiTY 18; davon zwischen Werken FASKA 2, KiNTEGRiTY 17 (= N.innen).
+- **beleg:** Rechnung pruefbelege/2026-10-21/innen.mjs (kette-gewebe): alle Kanten im Bezirk FASKA 5, Phänomenatlas 1, KiNTEGRiTY 18; davon zwischen Werken FASKA 2, KiNTEGRiTY 17 (= N.innen).
 - **vorschlag:** Die Zeile genau benennen, etwa „2 Fäden zwischen seinen Werken“, oder beide Zahlen nennen.
 - **Gegenprüfung:** verworfen, Schwere leicht: Die Zahlen des Prüfers stimmen, aber er misst eine andere Ebene als die Marke. Die Marke ist richtig gezählt und hat kein Fehlbild.
 
-**Nachgerechnet** mit `/private/tmp/claude-501/-Volumes-ThunderBolt4-2TB-Development-Projects-spiralcells-lichtwerk/1d7844bd-f2fa-430c-bed6-f193d9870ad0/scratchpad/pruefung2/widerlegung/innen-zaehlung.mjs` gegen kette-gewebe, Stand HEAD 35c59bc:
+**Nachgerechnet** mit `pruefbelege/2026-10-21/widerlegung/innen-zaehlung.mjs` gegen kette-gewebe, Stand HEAD 35c59bc:
 
 | Bezirk | Kanten insgesamt | davon zwischen Werken | davon in einem Werk | N.innen |
 |---|---|---|---|---|
@@ -1570,7 +1634,7 @@ Was bleibt, ist eine sprachliche Glättung. Den Satz nach derselben Bedingung zu
 - **zeile:** 107
 - **schwere:** mittel
 - **befund:** bigHead() rechnet Winkel und Wippen direkt aus der Wanduhr: th = t·TAU/16, bp = t·TAU·0,3. U.RM wird dabei nicht beachtet. baueNetz zeichnet je Kopf zusätzlich 30 Spurpunkte (netz.js:225–229), ebenfalls ohne Rücksicht auf U.RM. Da W.wall immer weiterläuft (haupt.js:413), kreisen die fünf Köpfe bei reduzierter Bewegung genauso schnell wie sonst. In der Zelle dagegen drosselt der Code die Köpfe auf 15 % (zelle.js:17 OM0_RM, zelle.js:286). Der Diff hat den Kranz an den Rand der Mitte verlegt, Radius 1,06·R. Dadurch läuft er beim Blick in die Mitte genau am Bildrand entlang.
-- **beleg:** Code: netz.js:107 (bigHead ohne U.RM), netz.js:225–229 (Spurschleife über wall − k·0,018), haupt.js:413 (W.wall += rdt, unbedingt). Zum Vergleich zelle.js:17/286 (OM0_RM = 0,15·OM0). Rechnung mit /private/tmp/claude-501/-Volumes-ThunderBolt4-2TB-Development-Projects-spiralcells-lichtwerk/1d7844bd-f2fa-430c-bed6-f193d9870ad0/scratchpad/pruefung2/kranz-rm.mjs auf kette-gewebe (Mitte R = 14,35): Im Überblick 800×600 läuft ein Kopf mit etwa 31 px/s, bei 375×812 mit etwa 32 px/s. In der Mitte (S = 1,08·R) sind es etwa 116 px/s, ein Umlauf dauert 16 s, die Spur ist 0,54 s lang, alles unabhängig von RM. Bild: standbilder/gewebe2-03-mitte-innen.jpg, links von x≈90 bis 310 und y≈70 bis 410. Dort stehen die fünf Köpfe (rot, violett, grün, blau, orange) mit Schweifen am Rand der Mitte.
+- **beleg:** Code: netz.js:107 (bigHead ohne U.RM), netz.js:225–229 (Spurschleife über wall − k·0,018), haupt.js:413 (W.wall += rdt, unbedingt). Zum Vergleich zelle.js:17/286 (OM0_RM = 0,15·OM0). Rechnung mit pruefbelege/2026-10-21/kranz-rm.mjs auf kette-gewebe (Mitte R = 14,35): Im Überblick 800×600 läuft ein Kopf mit etwa 31 px/s, bei 375×812 mit etwa 32 px/s. In der Mitte (S = 1,08·R) sind es etwa 116 px/s, ein Umlauf dauert 16 s, die Spur ist 0,54 s lang, alles unabhängig von RM. Bild: standbilder/gewebe2-03-mitte-innen.jpg, links von x≈90 bis 310 und y≈70 bis 410. Dort stehen die fünf Köpfe (rot, violett, grün, blau, orange) mit Schweifen am Rand der Mitte.
 - **vorschlag:** In baueNetz die Zeit für den Kranz unter U.RM drosseln, wie in der Zelle, z. B. const tk = U.RM ? wall * 0.15 : wall, und bigHead(N, i, tk …) aufrufen. Unter U.RM die Spurschleife (k < 30) weglassen und nur den Kopf zeichnen. Den Kopf in U.bigHeads für trefferKopf weiter setzen.
 - **Gegenprüfung:** verworfen, Schwere leicht: Widerlegt. Der Code ist richtig zitiert: bigHead (netz.js:107) und die Spurschleife (netz.js:226–229) fragen U.RM nicht ab, und W.wall läuft immer weiter (haupt.js:413). Es fehlt aber die Folge. Der Vergleich mit der Zelle verkehrt sich beim Nachrechnen ins Gegenteil.
 
@@ -1584,7 +1648,7 @@ Was bleibt, ist eine sprachliche Glättung. Den Satz nach derselben Bedingung zu
 
 Das Bild gewebe2-03-mitte-innen.jpg zeigt den Kranz links außerhalb des punktierten Rings, etwa bei x ≈ 90 bis 310. Es ist ohne RM aufgenommen und belegt deshalb nur die Lage, nicht das Verhalten unter RM.
 
-Rechnung: /private/tmp/claude-501/-Volumes-ThunderBolt4-2TB-Development-Projects-spiralcells-lichtwerk/1d7844bd-f2fa-430c-bed6-f193d9870ad0/scratchpad/pruefung2/widerlegung/kranz-vs-zelle-rm.mjs
+Rechnung: pruefbelege/2026-10-21/widerlegung/kranz-vs-zelle-rm.mjs
 
 Randbemerkung, nicht Teil dieses Befunds: Die Leertaste setzt U.paused (bedienung.js:438). Das hält die Zelle an, aber nicht den Netz-Kranz, weil bigHead an W.wall hängt. Wenn überhaupt, wäre das der tragfähigere Ansatz, und er wäre eigens zu prüfen.
 
@@ -1593,7 +1657,7 @@ Randbemerkung, nicht Teil dieses Befunds: Die Leertaste setzt U.paused (bedienun
 - **zeile:** 92
 - **schwere:** leicht
 - **befund:** markeFuer zeigt für einen Faden jetzt usage.from_part, to_part und purpose. Das läuft nur durch kurz(menschlich(…)). Der Leseraum zeigt dieselben Felder über zeige() (stoff.js:61–63). zeige() übersetzt zusätzlich Runden-Kennungen wie „systemleitung-tragwerk-20261018“ in „Runde vom 18. Okt.“. menschlich() fängt sie nicht ab, weil „20261018“ nur aus Ziffern besteht und die Hash-Regel einen Buchstaben a–f verlangt. Der Text der Marke geht außerdem über ansage() ins aria-live: bei ←/→ (bedienung.js, Pfeil-Zweig für Fäden), in buendelHinein und im Rückweg haupt.js zurueck(). Verbindet eine Kante mit beschriebener Verwendung zwei Werke und nennt sie eine Runde, steht die Kennung sichtbar in der Marke und wird vorgelesen.
-- **beleg:** Rechnung mit /private/tmp/claude-501/-Volumes-ThunderBolt4-2TB-Development-Projects-spiralcells-lichtwerk/1d7844bd-f2fa-430c-bed6-f193d9870ad0/scratchpad/pruefung2/marke-kennungen.mjs. In beiden Testketten (je 30 Fäden) findet es heute keinen Treffer. Im Bestand stehen aber schon zwei Zwecke mit Runden-Kennung: „Gegenlese in der Runde systemleitung-verwendung-20261018“ und „…-tragwerk-20261018“. Beide liegen noch innerhalb von „Ein Inhalt, viele Verwendungen“ und sind deshalb kein Faden. Bild standbilder/gewebe2-11-faden-marke.jpg: Die Marke zeigt dort Teile und Zweck ungefiltert, im Moment ohne Kennung. Der Befund ist latent.
+- **beleg:** Rechnung mit pruefbelege/2026-10-21/marke-kennungen.mjs. In beiden Testketten (je 30 Fäden) findet es heute keinen Treffer. Im Bestand stehen aber schon zwei Zwecke mit Runden-Kennung: „Gegenlese in der Runde systemleitung-verwendung-20261018“ und „…-tragwerk-20261018“. Beide liegen noch innerhalb von „Ein Inhalt, viele Verwendungen“ und sind deshalb kein Faden. Bild standbilder/gewebe2-11-faden-marke.jpg: Die Marke zeigt dort Teile und Zweck ungefiltert, im Moment ohne Kennung. Der Befund ist latent.
 - **vorschlag:** zeige aus stoff.js exportieren oder die Runden-Regel in menschlich() (daten.js) aufnehmen. Dann in markeFuer an bedienung.js:92 (q und purpose) zeige statt menschlich verwenden.
 - **Gegenprüfung:** verworfen, Schwere leicht: Der Code-Unterschied besteht, aber er ist heute nicht folgenreich. Es gibt kein Fehlbild, nur eine Härtung für künftige Daten.
 
@@ -1601,7 +1665,7 @@ Was stimmt: Der Diff 26356a7..35c59bc führt in bedienung.js:92 die Anzeige von 
 
 Warum er nicht trägt:
 1. Fäden entstehen nur über Werkgrenzen. netz.js:70 überspringt Kanten mit a === b. Die einzigen beiden Runden-Schlüssel im Bestand liegen auf inneren Kanten von „Ein Inhalt, viele Verwendungen“. Das sind „Gegenlese in der Runde systemleitung-verwendung-20261018“ und „…-tragwerk-20261018“. Sie können also nie in einer Faden-Marke erscheinen.
-2. Nachgerechnet habe ich mit /private/tmp/claude-501/-Volumes-ThunderBolt4-2TB-Development-Projects-spiralcells-lichtwerk/1d7844bd-f2fa-430c-bed6-f193d9870ad0/scratchpad/pruefung2/zeige-vs-menschlich.mjs und …/pruefung2/runden-usage.mjs, gegen testdaten/kette-gewebe/state.json (Stand 21.10. 09:09). Ergebnis: 66 Kanten mit usage, davon 7 über Werkgrenzen. Bei diesen 7 liefern zeige() und menschlich() auf from_part, to_part und purpose ein identisches Ergebnis, 0 Unterschiede. Die beiden Unterschiede liegen nur auf inneren Kanten. kette-claude und testdaten/state.json ergeben dasselbe. Auch …/pruefung2/marke-kennungen.mjs findet in beiden Ketten (je 30 Fäden) keinen Treffer.
+2. Nachgerechnet habe ich mit pruefbelege/2026-10-21/zeige-vs-menschlich.mjs und pruefbelege/2026-10-21/runden-usage.mjs, gegen testdaten/kette-gewebe/state.json (Stand 21.10. 09:09). Ergebnis: 66 Kanten mit usage, davon 7 über Werkgrenzen. Bei diesen 7 liefern zeige() und menschlich() auf from_part, to_part und purpose ein identisches Ergebnis, 0 Unterschiede. Die beiden Unterschiede liegen nur auf inneren Kanten. kette-claude und testdaten/state.json ergeben dasselbe. Auch pruefbelege/2026-10-21/marke-kennungen.mjs findet in beiden Ketten (je 30 Fäden) keinen Treffer.
 3. Bild standbilder/gewebe2-11-faden-marke.jpg: In der Marke („Émile Durkheim“ verweist auf „Alfred Radcliffe-Brown“) stehen Teile und Zweck ohne jede Kennung.
 
 Der Prüfer nennt den Befund selbst latent. Ein sichtbares oder vorgelesenes Fehlbild entsteht erst, wenn künftig eine Kante über Werkgrenzen einen Runden-Schlüssel oder einen relativen Cloud-Pfad in ihren usage-Texten trägt. Als Härtung bleibt der Hinweis sinnvoll: eine gemeinsame Filterfunktion für Marke und Leseraum. Nebenbei fällt auf, dass zeige() selbst „Gegenlese in der Runde Runde vom 18. Okt.“ erzeugt, also „Runde“ doppelt. Wer zeige() einfach in die Marke übernimmt, holt diese Dopplung mit hinein.
@@ -1619,7 +1683,7 @@ Was stimmt: zustand() (stoff.js:31) gibt ungefaehr nicht mit. merkeOrt (haupt.js
 
 Warum es trotzdem kein echter Befund ist:
 
-1. Der Hinweis auf die ungenaue Fundstelle geht nicht verloren. Er hängt nicht nur am Zustand, er steht auch in den Daten an derselben Passage. baueLesen() hängt jede Verwendung der Zielfassung als Randnotiz an die verortete Passage (stoff.js:328-334). randNotiz() schreibt dort ausdrücklich „steht N-mal im Wortlaut, hier die erste passende Stelle“ oder „Abschnitt, nicht wörtlich“ hinein (stoff.js:298-300). Der Faden bzw. die gefolgte Verwendung ist dieselbe Kante. Sie wird mit derselben Funktion (verorte) gegen dieselben Absätze verortet und landet deshalb immer an genau der Passage, die vorher „ungefähr hier“ hieß. Nachgerechnet in /private/tmp/claude-501/-Volumes-ThunderBolt4-2TB-Development-Projects-spiralcells-lichtwerk/1d7844bd-f2fa-430c-bed6-f193d9870ad0/scratchpad/pruefung2/widerlegung-ungefaehr/randnotiz.mjs: In kette-gewebe und in kette-claude tragen jeweils 12 von 12 ungefähren Zielen genau diesen Hinweis in der Randnotiz an derselben Passage. Für Faden 27 heißt das: Absatz 0 zeigt auch nach dem Neuladen und nach dem Rückweg „steht 4-mal im Wortlaut, hier die erste passende Stelle“.
+1. Der Hinweis auf die ungenaue Fundstelle geht nicht verloren. Er hängt nicht nur am Zustand, er steht auch in den Daten an derselben Passage. baueLesen() hängt jede Verwendung der Zielfassung als Randnotiz an die verortete Passage (stoff.js:328-334). randNotiz() schreibt dort ausdrücklich „steht N-mal im Wortlaut, hier die erste passende Stelle“ oder „Abschnitt, nicht wörtlich“ hinein (stoff.js:298-300). Der Faden bzw. die gefolgte Verwendung ist dieselbe Kante. Sie wird mit derselben Funktion (verorte) gegen dieselben Absätze verortet und landet deshalb immer an genau der Passage, die vorher „ungefähr hier“ hieß. Nachgerechnet in pruefbelege/2026-10-21/widerlegung-ungefaehr/randnotiz.mjs: In kette-gewebe und in kette-claude tragen jeweils 12 von 12 ungefähren Zielen genau diesen Hinweis in der Randnotiz an derselben Passage. Für Faden 27 heißt das: Absatz 0 zeigt auch nach dem Neuladen und nach dem Rückweg „steht 4-mal im Wortlaut, hier die erste passende Stelle“.
 
 2. .stelle behauptet keine Fundstelle. Es ist die Lesestelle. Der Abschnittskommentar heißt „Lesestelle“, die Nummerntaste lautet „als Lesestelle merken“ (stoff.js:261). beimRollen setzt z.stelle bei jedem Rollen neu (stoff.js:437-440). Nach dem Neuladen markiert .stelle also „hier warst du“, und das ist wahr. Weder die Zeile noch die Ansage sprechen nach dem Neuladen oder auf dem Rückweg von einer Stelle, die der Faden nennt. Diesen Satz gibt es nur beim Folgen selbst (haupt.js:211).
 
@@ -1632,7 +1696,7 @@ Warum es trotzdem kein echter Befund ist:
 - **befund:** Befund 2 ist im Kern behoben: Claude, Codex und Hermes liegen jetzt in drei eigenen Keilen, ohne Farbwechsel innerhalb eines Keils. Neu ist Folgendes: Die Keile liegen nun 144° auseinander, Stiele und Fäden werden aber weiter als gerade Strecken zwischen Blattmitten gezeichnet. Dadurch laufen Linien quer durch die leere Zelle.
 (a) Beim Stimmwechsel biegen die Körner des Codex-Blatts, das an Claudes Fassung weiterschreibt, per biege() von 27° nach 144°. Sein Stiel und der Stiel des nächsten Glieds sind gerade Linien (strich() interpoliert linear, Z. 533/552) von 0,41 R und 0,49 R. Sie hängen als Zickzack unter dem Keim. wuchs.js:149 setzt nur th0, der Stiel folgt dem Bogen nicht.
 (b) Fäden zwischen Ausprägungen (baueFaeden, Z. 585): mittlere Länge vorher 0,31 R, jetzt 0,43 R. Länger als 0,6 R sind jetzt 16 statt 10, bis 1,68 R, also fast der Durchmesser. Die Gegenlese-Fäden wachsen von 0,45 R auf 0,66 R.
-- **beleg:** gewebe2-05: dünne gerade Punktlinien um den Keim: senkrecht bei x≈367 (y 280–347) und bei x≈465 (y 280–360) quer durch den orangen Fächer, waagerecht bei y≈348 (x 390–470), schräg von (373,263) nach (427,290). In gewebe-04 gibt es diese Linien nicht. Rechnung: /private/tmp/claude-501/-Volumes-ThunderBolt4-2TB-Development-Projects-spiralcells-lichtwerk/1d7844bd-f2fa-430c-bed6-f193d9870ad0/scratchpad/pruefung2/linien.mjs (lange Stiele, Nachbild linien-ein.png), faeden.mjs und lese.mjs (alt gegen neu).
+- **beleg:** gewebe2-05: dünne gerade Punktlinien um den Keim: senkrecht bei x≈367 (y 280–347) und bei x≈465 (y 280–360) quer durch den orangen Fächer, waagerecht bei y≈348 (x 390–470), schräg von (373,263) nach (427,290). In gewebe-04 gibt es diese Linien nicht. Rechnung: pruefbelege/2026-10-21/linien.mjs (lange Stiele, Nachbild linien-ein.png), faeden.mjs und lese.mjs (alt gegen neu).
 - **vorschlag:** Den Stiel eines Wechselblatts als Bogen zeichnen: Punkte über biege(th0, th1, t) und den Radius interpolieren statt linear in x/z. Fäden und Gegenlese zwischen verschiedenen Keilen ohne Auswahl stärker dämpfen oder außen herum führen. Am Bild prüfen, ob unter dem Keim kein Zickzack bleibt.
 - **Gegenprüfung:** verworfen, Schwere leicht: Der Befund ist widerlegt. Die Rechenwerte stimmen, aber die Linien im Bild sind etwas anderes, als der Befund sagt, und der Bildvergleich trägt nicht.
 
@@ -1656,14 +1720,14 @@ Dass diese Linien in gewebe-04 fehlen, liegt an der Auswahl in diesem Bild. Ist 
 
 4. Die eine sichtbar verlängerte Linie ist so gewollt. Faden 33→12 ist ein belegter Bezug von Hermes zu Claude (Beleg 1). Der angenommene Befund 2 verlangt eigene Keile für jede Stimme. Damit muss eine belegte Beziehung zwischen zwei Stimmen von Keil zu Keil reichen. Laut Kopf von baueWuchs sind die Fäden das eigene Zeichen für Werkbeziehungen.
 
-Es bleibt ein Gestaltungswunsch (Stiel als Bogen, Fäden außen herum), kein belegter Fehler. Dateien: Ordner /private/tmp/claude-501/-Volumes-ThunderBolt4-2TB-Development-Projects-spiralcells-lichtwerk/1d7844bd-f2fa-430c-bed6-f193d9870ad0/scratchpad/pruefung2/widerlegung-sehnen/ mit segmente.mjs, ueberlage.py, zuordnen.py, hell.mjs, sichtbar.py und den Überlagerungen ov-faeden.jpg, ov-stiele.jpg und unten.jpg.
+Es bleibt ein Gestaltungswunsch (Stiel als Bogen, Fäden außen herum), kein belegter Fehler. Dateien: Ordner pruefbelege/2026-10-21/widerlegung-sehnen/ mit segmente.mjs, ueberlage.py, zuordnen.py, hell.mjs, sichtbar.py und den Überlagerungen ov-faeden.jpg, ov-stiele.jpg und unten.jpg.
 
 ### bild-zelle 6 · Volle Zellen nur teilweise: „Ein Inhalt“ ist zu drei Vierteln leer
 - **datei:** app/js/zelle.js
 - **zeile:** 120
 - **schwere:** leicht
 - **befund:** Der Commit verspricht volle Zellen. Nachgerechnet bedeckt die Draufsicht der Zentrale jetzt 33,4 % der Scheibe (vorher 18,6 %), „Ein Inhalt“ 25,0 % (vorher 11,8 %). In „Ein Inhalt“ sind 68 von 71 Blättern (96 % der Körner) durch den halben Fächerbogen begrenzt (bogen in Z. 120), nicht durch die flächentreue Breite. Die Keile summieren sich nur auf 264°, und die nach Körnern gewichtete Fächerspanne beträgt 28°, weil Claudes Keil auf sieben Wurzeln aufgeteilt wird. Im Bild ist die untere Hälfte unter dem Keim bis auf den orangen Schweif leer, ebenso der Bereich über dem Keim zwischen Blau und Grün. Nach dem Verdikt zu 10 sind Ranken gewollt. Ob das reicht, entscheidet Ralf, aber „voll“ ist es nicht.
-- **beleg:** gewebe2-05: leere Flächen bei (300–450, 360–480) und (330–430, 180–230); zum Vergleich runde2-zelle-oben als volle Scheibe. Rechnung: /private/tmp/claude-501/-Volumes-ThunderBolt4-2TB-Development-Projects-spiralcells-lichtwerk/1d7844bd-f2fa-430c-bed6-f193d9870ad0/scratchpad/pruefung2/analyse.mjs (Bedeckung, Körner je 30°), breite.mjs (begrenzende Breite) und sek2.mjs (Keilbreiten).
+- **beleg:** gewebe2-05: leere Flächen bei (300–450, 360–480) und (330–430, 180–230); zum Vergleich runde2-zelle-oben als volle Scheibe. Rechnung: pruefbelege/2026-10-21/analyse.mjs (Bedeckung, Körner je 30°), breite.mjs (begrenzende Breite) und sek2.mjs (Keilbreiten).
 - **vorschlag:** Den Fächer eines Keils nach Körnermasse statt nach Zahl der Wurzeln aufteilen und die Lücken zwischen den Keilen (264° von 360°) schließen, wenn eine Stimme fehlt. Ralf am Bild fragen, ob Ranken oder Fülle gewollt sind.
 - **Gegenprüfung:** verworfen, Schwere leicht: Widerlegt. Die Zahlen zu „Ein Inhalt“ lassen sich nachrechnen. Die Leere, die sie beschreiben, ist aber eine gewollte Gestaltung, die schon entschieden ist. Ein Fehler im Code ist sie nicht.
 
@@ -1691,7 +1755,7 @@ Falsch sind die Zahlen zur Zentrale. Mit seinem eigenen analyse.mjs komme ich au
 Übrig bleibt nur, dass das Wort „volle Zellen“ in der Commit-Überschrift zu viel verspricht. Das ist eine Frage der Formulierung im Commit, kein Fehlbild der App. Ob Ralf Fülle oder Ranken will, ist schon als seine Entscheidung vorgemerkt. Damit ist der Befund Geschmack bzw. bereits entschieden und nicht folgenreich.
 
 Belege:
-- /private/tmp/claude-501/-Volumes-ThunderBolt4-2TB-Development-Projects-spiralcells-lichtwerk/1d7844bd-f2fa-430c-bed6-f193d9870ad0/scratchpad/pruefung2/widerlegung-voll/fuellt.mjs
+- pruefbelege/2026-10-21/widerlegung-voll/fuellt.mjs
 - app/js/zelle.js:111, :120
 - app/js/wuchs.js:70, :79, :90
 - protokolle/bildkritik-gewebe-2026-10-21.json, bestaetigt[9].verdikt
@@ -1709,9 +1773,9 @@ Belege:
 
 2. SILVER ist kein exklusives Zeichen für Form und Abstammung. Im selben Code ist es die Farbe der menschlichen Stimme (zelle.js:42 und :44, s === MENSCH ? SILVER). Es ist auch die Farbe der Auswahl- und Hover-Ringe (zelle.js:445, haupt.js:444 und :449, netz.js:176 und :235), der Wurfbahnen (haupt.js:343–345 und :400–401) und der Werkbeziehungsfäden im Netz (netz.js:260–263, 'gehört-zu' ist reines SILVER, 'testet' und 'verweist-auf' sind Silbermischungen). Die harte Projektregel reserviert nur Gold für Ralfs Kristallisieren. Silber ist die allgemeine helle Auszeichnung. Dass ein „trägt“-Faden silbern ist, passt sogar zu den silbernen Werkbeziehungsfäden im Netz.
 
-3. „tragfähig“ in SILVER ist gedeckt und heute nicht sichtbar. Der Vorschlag von Befund 26 lautete wörtlich „tragfähig hell in SILVER oder WG“. Das Verdikt nahm ihn an, Kern war „nicht in GOLDC“. Die Umsetzung hat also eine der beiden freigegebenen Möglichkeiten gewählt. Das Nachrechnen (scratchpad/pruefung2/tragfaehig.mjs, bestand() aus app/js/daten.js) ergibt für testdaten/kette-gewebe, kette-claude und testdaten/state.json jeweils 0 tragfähige Fäden innerhalb eines Werks und 2 in m.aussen. baueFaeden zeichnet die m.aussen-Fäden nicht. Formfäden gibt es in den Testdaten keine. Kein Faden erscheint heute silbern wegen eines Befunds. Der Fehler ist also nur möglich, nicht vorhanden. Selbst später unterscheidet sich ein solcher Faden vom Formfaden: Die Grundhelligkeit ist 0,05 + 0,45·beleg gegen 0,14, und die Stärke hängt am Beleg.
+3. „tragfähig“ in SILVER ist gedeckt und heute nicht sichtbar. Der Vorschlag von Befund 26 lautete wörtlich „tragfähig hell in SILVER oder WG“. Das Verdikt nahm ihn an, Kern war „nicht in GOLDC“. Die Umsetzung hat also eine der beiden freigegebenen Möglichkeiten gewählt. Das Nachrechnen (pruefbelege/2026-10-21/tragfaehig.mjs, bestand() aus app/js/daten.js) ergibt für testdaten/kette-gewebe, kette-claude und testdaten/state.json jeweils 0 tragfähige Fäden innerhalb eines Werks und 2 in m.aussen. baueFaeden zeichnet die m.aussen-Fäden nicht. Formfäden gibt es in den Testdaten keine. Kein Faden erscheint heute silbern wegen eines Befunds. Der Fehler ist also nur möglich, nicht vorhanden. Selbst später unterscheidet sich ein solcher Faden vom Formfaden: Die Grundhelligkeit ist 0,05 + 0,45·beleg gegen 0,14, und die Stärke hängt am Beleg.
 
-4. Die Tagesringe sind praktisch unsichtbar. Ihr Alpha ist 0,06·vis·tilt·fog, die Punktgröße 0,004, und sie erscheinen nur von der Seite. In gewebe2-06 ist bei 19. und 18. Okt. kein Ring zu erkennen, auch nicht im Ausschnitt mit dreifacher Helligkeit (scratchpad/pruefung2/kelch-ausschnitt-hell.png). Der Befund räumt das selbst ein („kaum zu sehen“). Bei dieser Deckkraft ist der Farbunterschied zwischen SILVER (#e6ecff) und WG (#fff6e0) nicht wahrnehmbar. Das Zeichen trägt die Form, ein waagerechter Ring auf Höhe der Datumsmarke. Den Abstammungsweg zeichnet dagegen ein Stiel mit Alpha 0,55 und Stärke 0,0075 (zelle.js:552). Verwechseln kann man beide nicht. Das behauptete Fehlbild „silberner Abstammungsweg neben silbernen Befundfäden und silbernen Tagesringen“ tritt also nicht auf: Befundfäden gibt es heute keine, und die Ringe sieht man nicht.
+4. Die Tagesringe sind praktisch unsichtbar. Ihr Alpha ist 0,06·vis·tilt·fog, die Punktgröße 0,004, und sie erscheinen nur von der Seite. In gewebe2-06 ist bei 19. und 18. Okt. kein Ring zu erkennen, auch nicht im Ausschnitt mit dreifacher Helligkeit (pruefbelege/2026-10-21/kelch-ausschnitt-hell.png). Der Befund räumt das selbst ein („kaum zu sehen“). Bei dieser Deckkraft ist der Farbunterschied zwischen SILVER (#e6ecff) und WG (#fff6e0) nicht wahrnehmbar. Das Zeichen trägt die Form, ein waagerechter Ring auf Höhe der Datumsmarke. Den Abstammungsweg zeichnet dagegen ein Stiel mit Alpha 0,55 und Stärke 0,0075 (zelle.js:552). Verwechseln kann man beide nicht. Das behauptete Fehlbild „silberner Abstammungsweg neben silbernen Befundfäden und silbernen Tagesringen“ tritt also nicht auf: Befundfäden gibt es heute keine, und die Ringe sieht man nicht.
 
 Ergebnis: Die Abweichung von Verdikt 23, Punkt 4, ist wörtlich richtig, aber folgenlos. Die Prämisse, Silber sei exklusiv vergeben, trifft nicht zu. Die Tagesringe in WG umzustellen, wäre eine billige Ordnungsgeste, ist aber kein echter Befund.
 
@@ -1844,22 +1908,4 @@ Vom Vorschlag fällt document.fonts.ready weg, denn es gibt keine Webfonts. stil
 
 Nebenbei, nicht Teil dieses Befunds: In umhaengen (stoff.js:103–105) wird scrollTop gleich nach baue() zurückgesetzt, also bevor randFliessen im nächsten Frame die Zeilen über der Leseposition kürzt. Das könnte nach einem Auffrischen einen kleinen Sprung geben.
 
-Skript: /private/tmp/claude-501/-Volumes-ThunderBolt4-2TB-Development-Projects-spiralcells-lichtwerk/1d7844bd-f2fa-430c-bed6-f193d9870ad0/scratchpad/pruefung2/widerlegung-randfluss/rand10.mjs (Messung: profil.py im selben Ordner).
-
-### bruch 7 · Der Stimmenkranz im Netz kreist auch bei reduzierter Bewegung, jetzt über die ganze Mitte
-- **datei:** app/js/netz.js
-- **zeile:** 107
-- **schwere:** leicht
-- **befund:** bigHead übernimmt die Uhrzeit ungebremst: eine Runde in 16 s, mit Wobble und einem Schweif aus 30 Stellen. U.RM wird nicht beachtet, anders als in der Zelle, wo OM0_RM die Köpfe auf 15 % verlangsamt. Mit diesem Stand kreisen die Köpfe am Rand der vergrößerten Mitte (1,06·Rm statt 0,62·Rm). In der Mitte laufen sie also fast bildgroß, mit deutlich mehr Bewegung auf dem Schirm als vorher. Die Lücke ist älter, wird durch den neuen Radius aber deutlich sichtbarer.
-- **beleg:** netz.js:107–108 (th = t·TAU/16, ohne RM), 226–229 (Schweif und Kopf mit wall). Rechnung: in der Mitte bei 1200×800 hat der Ring etwa 374 px Radius (…/pruefung2/dach-rand.mjs: x 226…974), die Kopfbahn etwa 396 px. Das ergibt bei reduzierter Bewegung etwa 156 px/s.
-- **vorschlag:** Die Zeit in bigHead bei U.RM auf etwa 15 % setzen (wie OM0_RM) oder den Kranz bei U.RM stehen lassen, und den Schweif bei U.RM weglassen.
-- **Gegenprüfung:** fehlt noch
-
-### bruch 8 · Ein Vergleich mit einer Fassung aus einem anderen Werk übersteht kein Neuladen
-- **datei:** app/js/haupt.js
-- **zeile:** 221
-- **schwere:** leicht
-- **befund:** merkeOrt schreibt das Gegenüber nur als Nummer im eigenen Mond in die Adresszeile. Liegt es in einem anderen Werk, ergibt findIndex −1 + 1 = 0, also vergleich: null. Beim Neuladen gewinnt die Adresszeile (ausLink, Z. 229), vg wird null (Z. 239), und der Leseraum öffnet im Lesen statt im Vergleich. Der gemerkte Sitzungszustand mit dem Gegenüber wird dabei verworfen. Der neue vorschlag() bevorzugt Partner über Kanten, und darunter sind werkfremde.
-- **beleg:** haupt.js:221–222 (vi), 229 (ausLink), 239 (vg). Rechnung …/pruefung2/vorschlag-mond.mjs: 7 von 485 Vorschlägen liegen in einem anderen Werk, z. B. „FASKA Eigenraum / Hauptarbeitsraum → FASKA Varianten · Vergleich“ und „Mooncells / Hauptarbeitsraum → MOONFiNGERS“. Dazu kommt jede „fremd“-Perle im Faden des Vergleichs.
-- **vorschlag:** Für ein werkfremdes Gegenüber dessen lesbaren Mondnamen mit Fassungsnummer in den Link schreiben (ohne Kennung, etwa &gegen=moonfingers-3). Oder bei ausLink den gemerkten Vergleich der Sitzung übernehmen, wenn er zur selben Fassung gehört.
-- **Gegenprüfung:** fehlt noch
+Skript: pruefbelege/2026-10-21/widerlegung-randfluss/rand10.mjs (Messung: profil.py im selben Ordner).

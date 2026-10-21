@@ -1,0 +1,20 @@
+import {readFileSync} from 'node:fs';
+const R = '/Volumes/ThunderBolt4_2TB/Development/Projects/spiralcells-lichtwerk-gewebe/';
+const {bestand} = await import(R + 'app/js/daten.js');
+const {Zelle} = await import(R + 'app/js/zelle.js');
+const state = JSON.parse(readFileSync(R + 'testdaten/' + (process.argv[3] || 'kette-gewebe') + '/state.json', 'utf8'));
+const B = bestand(state);
+const m = B.monde.find(m => m.titel.startsWith(process.argv[2] || 'Ein Inhalt'));
+console.log(m.titel, 'n', m.samen.length, 'stimmen', m.stimmen, 'traum', m.traumfeld, 'zeitspanne', new Date(m.zeitspanne[0]).toISOString(), new Date(m.zeitspanne[1]).toISOString());
+const Z = new Zelle(m, {ohneAufzug: true});
+console.log('G', Z.G, 'Rfinal', Z.Rfinal.toFixed(3), 'curl', Z.curl.toFixed(3));
+console.log('tage', Z.tage.map(t => ({i: t.i, y: +t.y.toFixed(3), d: new Date(t.t).toLocaleDateString('de-DE', {day:'numeric', month:'short'}), iso: new Date(t.t).toISOString()})));
+const fmt = t => new Date(t).toLocaleString('de-DE', {day:'numeric', month:'short', hour:'2-digit', minute:'2-digit'});
+const sam = m.samen;
+const tagHist = new Map(); sam.forEach((s,i) => { const d = new Date(s.zeit).toLocaleDateString('de-DE'); tagHist.set(d, (tagHist.get(d)||0)+1); });
+console.log('Ausprägungen je Tag', [...tagHist]);
+console.log('erste 3', sam.slice(0,3).map(s => fmt(s.zeit) + ' ' + s.stimme), 'letzte', fmt(sam[sam.length-1].zeit));
+// sortiert nach Zeit?
+let unsort = 0; for(let i=1;i<sam.length;i++) if(sam[i].zeit < sam[i-1].zeit) unsort++; console.log('nicht zeitlich sortiert', unsort);
+console.log('seedY range', Math.min(...Z.seedY).toFixed(3), Math.max(...Z.seedY).toFixed(3));
+export {Z, m, B};

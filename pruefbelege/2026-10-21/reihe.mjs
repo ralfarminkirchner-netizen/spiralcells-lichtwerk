@@ -1,0 +1,13 @@
+import {N, B} from './lage.mjs';
+const R = '/Volumes/ThunderBolt4_2TB/Development/Projects/spiralcells-lichtwerk-gewebe/';
+const {wuchs, rangRadien} = await import(R + 'app/js/wuchs.js');
+const bn = b => b === 'mitte' ? 'Mitte' : b === 'ohne' ? 'ohne Dach' : N.daecher[b].name;
+console.log('\n--- Werke mit gedrängtem Wuchs (viele Punkte auf einem Radius)');
+const rows = [];
+B.monde.forEach((m, i) => { if(N.baum.material.has(i) || !m.samen.length) return; const W = wuchs(m), rr = rangRadien(Array.from(W.s1));
+  const cnt = new Map(); for(const r of rr) cnt.set(r.toFixed(5), (cnt.get(r.toFixed(5)) || 0) + 1);
+  const maxGleich = Math.max(...cnt.values()), reihe = [...W.art].filter(a => a === 'reihe').length, k = N.mini[i].pts.length / 6;
+  const litF = Math.pow(Math.min(1, 16 / Math.max(1, k)), 0.7);
+  rows.push({t: m.titel.slice(0, 44), bz: bn(N.bezirk(i)), n: m.samen.length, k, reihe, maxGleich, rM: N.rM[i].toFixed(2), litF: litF.toFixed(2), juengst: N.juengst.has(i), traum: !!m.traumfeld}); });
+rows.sort((a, b) => b.maxGleich - a.maxGleich);
+for(const r of rows.slice(0, 14)) console.log(JSON.stringify(r));

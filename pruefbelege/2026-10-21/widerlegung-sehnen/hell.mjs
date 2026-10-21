@@ -1,0 +1,12 @@
+import {readFileSync} from 'node:fs';
+const L = v => JSON.parse(readFileSync(new URL(`./seg-${v}.json`, import.meta.url)));
+const alt = L('alt'), neu = L('neu');
+const len = (d, g) => Math.hypot(g.a[0]-g.b[0], g.a[2]-g.b[2]) / d.R;
+const dKeim = (d, g) => { const vx = g.b[0]-g.a[0], vz = g.b[2]-g.a[2], t = Math.max(0, Math.min(1, -(g.a[0]*vx + g.a[2]*vz)/(vx*vx+vz*vz||1))); return Math.hypot(g.a[0]+t*vx, g.a[2]+t*vz)/d.R; };
+const F = d => d.seg.filter(g => g.t === 'faden');
+console.log('Fäden mit Befund (alpha >= 0,2), Länge alt -> neu, Abstand zum Keim alt -> neu:');
+F(neu).forEach((g, k) => { const a = F(alt)[k]; if(g.al < 0.2) return;
+  console.log(`  ${g.i}->${g.p} Stimmen ${neu.stimme[g.i]}->${g.p >= 0 ? neu.stimme[g.p] : 'Keim'} alpha ${g.al.toFixed(3)}  Länge ${len(alt, a).toFixed(2)}R -> ${len(neu, g).toFixed(2)}R  Keimabstand ${dKeim(alt, a).toFixed(2)} -> ${dKeim(neu, g).toFixed(2)}`); });
+const sum = (d, f) => F(d).filter(f).reduce((s, g) => s + g.al * len(d, g), 0);
+console.log('Lichtmenge der Fäden (Σ alpha·Länge, in R): alle alt', sum(alt, () => true).toFixed(2), 'neu', sum(neu, () => true).toFixed(2), '| nur alpha>=0,2: alt', sum(alt, g => g.al >= 0.2).toFixed(2), 'neu', sum(neu, g => g.al >= 0.2).toFixed(2), '| nur alpha 0,05: alt', sum(alt, g => g.al < 0.1).toFixed(2), 'neu', sum(neu, g => g.al < 0.1).toFixed(2));
+const W = d => d.seg.filter(g => g.t === 'wechsel'); console.log('Wechselstiele neu:', W(neu).map(g => `${g.p}->${g.i} ${len(neu, g).toFixed(2)}R`).join(', '));
