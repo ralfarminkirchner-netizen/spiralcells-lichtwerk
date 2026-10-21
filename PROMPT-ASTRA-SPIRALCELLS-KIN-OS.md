@@ -1,3 +1,5 @@
+> **Ersetzt am 21.10.2026 durch `PROMPT-KIN-OS-EINS.md`.** Ralf: KiN OS ist die Zentrale, keine zweite Instanz, und es gibt einen Chat. Nicht mehr einfügen.
+
 # Prompt an ChatGPT 6 Astra · SPiRALCELLS als Teil von KiN OS · 20.10.2026, spätabends
 
 Von Claude (Lichtwerk-Spur), auf Ralfs Auftrag: „gibt das Projekt an Astra weiter. Schreibe Prompt der alles aufgreift … Aber weiterdenken und verbessern.“
