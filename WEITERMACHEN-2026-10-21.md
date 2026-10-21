@@ -20,9 +20,9 @@ Stand 21.10.2026, später Vormittag.
   - Perlenfaden des Zweigs, Rückweg über Fäden, Kameraflug.
   - Lesbare Stelle im Link: `#mond=…&fassung=N&lesen=1&stelle=K`, für die Ausgangsfrage `&frage=1`.
   - ⌘V wird Weiterarbeit mit den gelesenen Fassungen, erst nach Halten.
-- **Ordnung** (`ordnung.js`, `ordnung.json`, `netz.js`): die Zentrale als Mitte, Dächer als eigene Zellen, „ohne Dach“ außen.
+- **Ordnung** (`ordnung.js`, `app/ordnung.json`, `netz.js`): die Zentrale als Mitte, Dächer als eigene Zellen, „ohne Dach“ außen.
   - Mitte, Dächer und „ohne Dach“ sind betretbar (Tippen zweimal oder Eingabe); F schaltet durch die Fäden.
-  - `ordnung.json` ist ein **unbestätigter Vorschlag** und wartet auf Ralfs Antwort zu fünf Fragen (Musik, FLOW, Phänomenatlas, KiNTEGRiTY/MiNDLAXY, neun Werke ohne Dach).
+  - `app/ordnung.json` ist von Ralf bestätigt (21.10.: „Die Ordnung passt so. Mach weiter.“).
 - **Kritische Prüfung** (43 Prüfer, jeder Befund gegengeprüft): 38 bestätigte Befunde, alle eingearbeitet. Bericht: `protokolle/pruefung-gewebe-2026-10-21.json`.
 - **Tests:** 39 im Browser-Code und 53 Server-Tests, alle bestanden.
 

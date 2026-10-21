@@ -16,7 +16,7 @@ Gebaut nach Codex' Übergabe vom Morgen, auf dem Zweig `gewebe`. Geprüft an ein
   - In der Mitte steht die Zentrale mit den Stimmen und den Türen. Darum liegen neun Dächer als eigene Zellen: FASKA, Phänomenatlas, KiNTEGRiTY, MiNDLAXY, SEiN, Spiele und Welten, KlebensFroh, Text und Reim, ADHS OS.
   - Außen liegen die neun Werke, die noch ohne Dach sind. Durkheim und Radcliffe-Brown sind Lesematerial und hängen an SPiRALCELLS.
   - Zweimal tippen (oder Eingabe) fährt in ein Dach hinein. Dort stehen die Namen der Bereiche und Werke, Escape führt hinaus.
-  - Die Ordnung steht in `ordnung.json`, im Lichtwerk und nicht in SPiRALCELLS. Ein Werk ohne Zuordnung bleibt sichtbar „ohne Dach“ und wird nie in ein geratenes Dach gesteckt.
+  - Die Ordnung steht in `app/ordnung.json`, im Lichtwerk und nicht in SPiRALCELLS. Ein Werk ohne Zuordnung bleibt sichtbar „ohne Dach“ und wird nie in ein geratenes Dach gesteckt.
 - **Die eigene Entwicklung in jeder Zelle.** Jede Ausprägung hängt dort, wo sie herkommt:
   - an ihrer Vorgängerin im Zweig,
   - an der fremden Fassung, aus der ihr Zweig fortgesetzt wurde (eine Gabel mit kleinem Knoten),

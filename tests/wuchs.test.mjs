@@ -84,7 +84,7 @@ test('Zelle und Netz: alle Monde bauen, jede Lage endlich, Punktbudget gehalten'
   setCamera({target: N.mitte, dist: N.Rm2 * 3, yaw: 0.35, pitch: 0.87, fov: 0.7, S: N.Rm2, shift: 0, shiftX: 0}, 1200, 800);
   L.pc = 0; baueNetz(N, U, 2, 1, -1, 0); assert.ok(L.pc > 1000 && L.pc < 60000, 'Punkte im Netz ' + L.pc);
   assert.equal(N.baum.ohne.length, B.monde.length, 'ohne Ordnung steht alles „ohne Dach“');
-  const N2 = new Netz(B, JSON.parse(readFileSync('ordnung.json', 'utf8')));
+  const N2 = new Netz(B, JSON.parse(readFileSync('app/ordnung.json', 'utf8')));
   L.pc = 0; baueNetz(N2, U, 2, 1, -1, 0); assert.ok(L.pc < 80000, 'Punkte im Netz mit Dächern ' + L.pc);
 });
 

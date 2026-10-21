@@ -44,7 +44,7 @@ HIER = os.path.dirname(os.path.abspath(__file__))
 WURZEL = os.path.dirname(HIER)
 APP = os.path.join(WURZEL, "app")
 STANDBILDER = os.path.join(WURZEL, "standbilder")
-ORDNUNG = os.path.join(WURZEL, "ordnung.json")   # Mitte, Dächer, Bereiche: belegt aus Ralfs Quellen, von ihm zu bestätigen
+ORDNUNG = os.path.join(APP, "ordnung.json")   # Mitte, Dächer, Bereiche: von Ralf bestätigt; liegt in app/, damit auch ein älterer Server sie ausliefert
 SKIZZEN = os.path.join(os.path.dirname(WURZEL), "kin-os-sichten-codex")   # Codex' echter Ordner, nicht die Hardlinks
 SKIZZEN_WEG = "/kin-os-sichten-codex/"
 

@@ -55,7 +55,7 @@ const RUHEMOND = {id: '', titel: 'SPiRALCELLS ruht', samen: [], keim: [], stimme
   faeden: [], aussen: [], befunde: [], zeitspanne: [0, 0], traumfeld: true, winkel: null, keimKristall: false, keimSatz: '', zweige: []};
 
 async function laden(){
-  const [{daten, stand}, umg, ord] = await Promise.all([schreib.lesenMitStand('/lichtwerk/graph'), schreib.lesen('/lichtwerk/umgebung').catch(() => []), schreib.lesen('/lichtwerk/ordnung').catch(() => null)]);
+  const [{daten, stand}, umg, ord] = await Promise.all([schreib.lesenMitStand('/lichtwerk/graph'), schreib.lesen('/lichtwerk/umgebung').catch(() => []), schreib.lesen('/lichtwerk/ordnung').catch(() => schreib.lesen('/ordnung.json')).catch(() => null)]);   // ein noch laufender älterer Server kennt nur die Datei
   W.ordnung = ord; W.B = bestand(daten); W.N = netzBauen(W.B); W.umgebung = umg; W.N.tueren = umg.filter(u => u.adresse); W.stand = stand; dachNamen();
   W.namen = link.namen(W.B.monde); W.geladen = Date.now(); W.N.neu = W.neuMonde || null; zuletztMerken();
   W.ruht = false; document.body.classList.remove('ruht'); tuerNamen();
