@@ -130,13 +130,13 @@ Alle Projekte liegen unter `/Volumes/ThunderBolt4_2TB/Development/Projects/`, au
   Vorbild für zwei umschaltbare Ansichten.
 - **Capacities:** Es gibt keinen lokalen Ordner. Das Material ist PR #1 auf GitHub (siehe Schritt 7 in
   `PROMPT-KIN-OS-EINS.md`).
-- **Frühere Gesamtsystem-Entwürfe:**
+- **Gesamtsystem-Entwürfe vom Oktober** (gehören zum Material, das du liest):
   - `kintegrity-gesamttragwerk-20261013/` (`CLAUDE-SYSTEMPROMPT-GESAMTSYSTEM-20261013-ABEND.md`,
     `CLAUDE-SYSTEMPROMPT-WERKVERBUND-20261013.md`, `CODEX-ERGAENZUNG-GESAMTSYSTEM-REA-20261014.md`,
     `CHATGPT-ERGAENZUNG-GESAMTSYSTEM-20261014.md`, `CLAUDE-WEITERGABE-GESAMTSYSTEM-20261014.md`),
-  - `mooncells-gesamttragwerk-20261013/`,
-  - `/Volumes/ThunderBolt4_2TB/Development/Artifacts/zentrale-gestaltung-20261019/` (Bauauftrag, Stimmen, zweite
-    Runde).
+  - `mooncells-gesamttragwerk-20261013/`.
+  Dazu gehören auch die Arbeiten von August und September, in den Projektordnern mit Datum im Namen und in deren
+  Übergaben.
 - **Codex' Arbeit nachlesen (nur lesen):**
   - Codex' Gedächtnis: `/Volumes/ThunderBolt4_2TB/HomeData/.codex/memories/memory_summary.md`. Ganz liegt es in
     `MEMORY.md` und `rollout_summaries/` daneben.
@@ -166,6 +166,8 @@ Alle Projekte liegen unter `/Volumes/ThunderBolt4_2TB/Development/Projects/`, au
   und SPiRALCELLS.
 - **19.10., KiNTEGRiTY-Benutzerweg** (`arbeite-im-bestehenden-kintegrity-am-n`): Werk → Herstellungsweise festhalten
   → an anderem Material verwenden → Ergebnis bearbeiten und speichern → Ursprung.
+- **19.10., Gestaltung der Zentrale** (`/Volumes/ThunderBolt4_2TB/Development/Artifacts/zentrale-gestaltung-20261019/`):
+  Bauauftrag, Stimmen mehrerer Modelle, zweite Runde.
 - **21.10., Lebensspirale** (KiNTEGRiTY-Sitzung um 06:45): Codex hat sechs Abnahmekriterien für „Claudes Auftrag“
   formuliert:
   - ein Werk mit zwei Darstellungen (Licht und Papier),
@@ -191,30 +193,25 @@ Alle Projekte liegen unter `/Volumes/ThunderBolt4_2TB/Development/Projects/`, au
     `git diff origin/main...origin/claude/relaxed-feynman-vngj7f`. Prüfe vorher, wie GitHub-main und die lokale
     Arbeitskopie `kintegrity` zusammenhängen.
 
-## Die ältere Architektur vom Mai: zuerst einordnen
+## Was alt ist: nur der Mai
 
-Im Repo DER TiSCH (`Projects/der-tisch`, letzter Commit 17.09.; GitHub `ralfarminkirchner-netizen/der-tisch`) liegen
-Systemdokumente. Sie sind älter als KiN OS und das Lichtwerk. Bestimme **vor** den Integrationsschritten, wie jedes von
-ihnen zu „KiN OS ist die Zentrale“ steht: abgelöst, eingebettet oder weiter gültig. Lege Ralf das als Teil der
-Systemkarte vor. Sonst arbeitest du gegen zwei Wahrheiten.
+Ralf, 21.10., wörtlich:
+- „Bitte hör auf mit so einem Zeug irgendwelche My-Dokumente [gemeint: Mai-Dokumente]. Zu prüfen. Das waren die
+  ersten Ideen und Gedanken seitdem hat sich so viel getan. Bitte prüfe all das neue Zeug miteinander. Sonst wird das
+  ein Knäuel bei dem gar nichts mehr passt.“
+- „Natürlich darfst du September und Oktober drin behalten. Auch August.“
+- „Kann sein, dass hier und da noch Ideen drin waren, die sonst untergehen. Aber die grobe Richtung ist schon klar, wie
+  es jetzt geworden ist.“
 
-- `SYSTEM_SYNC_BRIEFING_2026-05-26.md` („jede Instanz liest zuerst dieses Briefing“):
-  - Leitprinzip „modular, ein geteilter Kern, alle Apps docken an, Frontend und Backend getrennt“.
-  - Landkarte der Arbeitsorte: der-tisch, moonfingers-recovery, spiral_mind_writer, shared-core, knowledge-core,
-    shared-memory, mindlaxy.
-  - Gesamtbild: drei Kerne (TiSCH, Memory, Wissen) mit Obsidian, MiNDLAXY und Graphify; der TiSCH ist der
-    Denkmechanismus.
-- `HANDOFF_dual_shared_cores_2026-05-18.md` (der kanonische Vertrag) und `TISCH_SHARED_CORE_AUFTRAG_PATCH_2026-05-18.md`
-  (Vereinbarung für URN-Kennungen, Pflichtfelder für MemoryCandidate, `source_role`, `curation_state`).
-- `FAHRPLAN_Wissenssystem_2026-05-19.md` und `ENTSCHEIDUNG_spiral_und_cores_2026-05-19.md`. Dort steht die SPiRAL-Frage
-  „Insel oder Kern-Client“ mit der Empfehlung Kern-Client (Option B). Das berührt SPiRALCELLS direkt.
-- `KIMI_HANDOFF_2026-10-09.md` (lokal in `Projects/der-tisch-werkepisoden-20261011/`):
-  - KiNTEGRiTY TRAGWERK (Repo `kinegrity-tragwerk`, Werkbank M0 auf Railway) tritt dem TiSCH-Verbund bei.
-  - Angebote: hashverkettete Akten, Prüfnähte mit zwei Modellfamilien, ein Vergleichsschema mit elf Achsen.
-  - Bitte: Prüfszene E-1 an echtem Material aus TRAUMAATLAS oder FORMFORMER laufen lassen.
-  - Offen ist die Übernahmeentscheidung des TiSCH über den P2-Deckel aus dem Dissens-Protokoll.
-- Weitere Repos auf Ralfs GitHub-Konto, die zum System gehören: `kintegrity`, `kintegrity-erleben`,
-  `kintegrity-passage`, `kinegrity-tragwerk`.
+Das heißt:
+- **Alt sind die Dokumente vom Mai**, vor allem die Briefings, Verträge und Fahrpläne im Repo DER TiSCH. Sie sind
+  kein Maßstab. Du ordnest sie nicht ein, prüfst nicht, ob sie noch gelten, und legst Ralf nichts dazu zur Entscheidung
+  vor.
+- **Neu ist alles ab August:** die Arbeiten von August, September und Oktober, samt den Gesamtsystem-Entwürfen vom 13.
+  und 14.10. und Codex' Werken der letzten Tage. Das ist das Material, das du miteinander prüfst.
+- **Die Richtung gibt der heutige Stand vor.** Findest du im Mai-Material beim Lesen eine einzelne Idee, die sonst
+  untergeht und in diese Richtung passt, darfst du sie aufnehmen. Sag dann dazu, dass sie aus dem Mai kommt. Eine
+  eigene Suche danach startest du nicht.
 
 ## Leitbild für das Ganze (an den Belegen prüfen, nicht als Tatsache nehmen)
 
@@ -299,10 +296,35 @@ Diese Grundsätze ergeben sich aus allem bisher Gesagten. Sie sollen das System 
 4. Die Verbesserung der Serverwarteschlange (`dienst()` mit `request_queue_size=64`) wirkt erst nach einem Neustart
    von 8411. Diesen Neustart machst du nicht ungefragt.
 
-### 3 · Sichten: das ganze System (nur lesen, parallel, jeder Befund gegengeprüft)
+### 3 · Die neuen Teile gegeneinander prüfen (nur lesen, parallel, jeder Befund gegengeprüft)
 
-Lies für jeden Teil oben den echten Stand: Code, Daten, Dienst, letzte Commits, offene Dateien, Codex' Sitzungen der
-letzten Tage und die früheren Gesamtsystem-Entwürfe. Daraus entsteht **eine Systemkarte**. Sie hält für jeden Teil fest:
+Ralf will kein Knäuel. Prüfe deshalb nicht jeden Teil für sich, sondern die neuen Teile **miteinander**. Die Frage ist
+jedes Mal: Passt, was an einer Stelle gebaut ist, zu dem, was an der anderen gebaut ist? Lies dafür den echten Stand:
+Code, Daten, Dienst, letzte Commits, offene Dateien, Codex' Sitzungen der letzten Tage und die Entwürfe und
+Übergaben von August bis Oktober. Prüfe mindestens diese Paare:
+
+- **Lichtwerk (`gewebe`) und Codex' Werkraum und Materialraum** im selben Repo: Zeigen sie dieselben Werke und
+  Fassungen, denselben Vergleich, denselben Rückweg? Oder sind es zwei Ansichten mit verschiedenen Regeln für dasselbe?
+- **Lichtwerk und Lebensspirale:** Haben Licht und Papier dieselbe Umschaltung, dieselben Wörter und denselben
+  Arbeitsweg vom Original über Passage, Variante und Ergebnis bis zum Vergleich?
+- **Lichtwerk und SPiRALCELLS, KiN OS (8894) und der Fork (8895):** Gibt es einen Weg hinein und einen zurück, mit
+  denselben Formen?
+- **KiNFORMER-Formen, Fassungen in SPiRALCELLS (Faden „verweist auf“) und Formen in KiN:** Ist es an allen drei Orten
+  dieselbe Form?
+- **KiNTEGRiTY lokal und PR #1 und PR #2 auf GitHub:** Welcher Stand ist der echte? Widersprechen sich die Zweige?
+- **Phänomenatlas in GANZ SEiN, Ralfs Ordnung (eigenes Dach) und die Karten und Knoten in KiNTEGRiTY** (`card:`,
+  `atlas-node:`): Ist es derselbe Atlas mit denselben Namen?
+- **Traumaatlas und Neuroatlas, wie sie heute gebaut sind, und ihre Dächer in der Ordnung.**
+- **TiSCH und Querleser, wie sie heute laufen:** Lesen sie dieselben Werke und Quellen wie SPiRALCELLS und KiN?
+- **Die Prüfregeln aus der Capacities-Arbeit (PR #1)** neben den Regeln für Fäden im Lichtwerk und für Quellen in KiN.
+- **Namen:** Heißt dasselbe überall gleich? Das betrifft SPiRALCELLS, die Dächer und die Werke.
+
+Für jedes Paar hältst du eines von drei Ergebnissen fest:
+- es passt,
+- es widerspricht sich (mit Beleg an beiden Stellen),
+- es ist noch nicht verbunden.
+
+Daraus entsteht **eine Systemkarte**. Sie hält für jeden Teil fest:
 
 - was er für Ralf ist (in Ralfs Worten, wo es Belege gibt),
 - wo seine Datenwahrheit liegt,
@@ -333,16 +355,14 @@ Schick Ralf in einer Nachricht:
 
 Offene Entscheidungen, die du sicher findest:
 
-- Wie steht die Mai-Architektur (zwei geteilte Kerne, MOONFiNGERS, SPiRAL als Kern-Client) zu „KiN OS ist die
-  Zentrale“?
 - Gehört der Phänomenatlas technisch weiter in GANZ SEiN, oder bekommt er wie in der Ordnung einen eigenen Ort?
 - Wird PR #2 gemergt?
 - Legt Ralf einen Capacities-Test-Space und ein Token selbst an?
 - Wer baut die Lebensspirale Licht und Papier, du oder Codex' Automation? Wie wird die Writer-Sperre geteilt?
 - Wandert die Ordnung aus dem Lichtwerk in die Zentrale?
 
-Das sind sechs Kandidaten. Leg Ralf höchstens fünf vor; was sich aus den Belegen klären lässt, klärst du selbst.
-Frag nichts, was oben entschieden ist.
+Was sich aus den Belegen klären lässt, klärst du selbst. Frag nichts, was oben entschieden ist, und nichts zu den
+Mai-Dokumenten.
 
 ### 5 · Umsetzen, Schritt für Schritt nach Ralfs Ja
 
