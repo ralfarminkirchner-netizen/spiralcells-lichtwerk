@@ -30,7 +30,8 @@ export function wuchs(m, opt = {}){
   // Kette, Form, Keim über derived_from
   for(let i = 0; i < n; i++){
     const s = sam[i], d = (s.fassung || {}).derived_from;
-    if(s.form){ const o = idx.get(s.original); if(o != null && o < i){ eltern[i] = o; art[i] = 'form'; continue; } }
+    if(s.form){ const o = idx.get(s.original); if(o != null && o < i){ eltern[i] = o; art[i] = 'form'; continue; }
+      if(keimIds.has(s.original)){ eltern[i] = KEIM; art[i] = 'form'; continue; } }
     if(d && idx.has(d) && idx.get(d) < i){ const p = idx.get(d); eltern[i] = p; art[i] = s.stimme === QUELLE && sam[p].stimme === QUELLE ? 'reihe' : 'kette'; continue; }
     if(d && keimIds.has(d)){ eltern[i] = KEIM; art[i] = 'keim'; }
   }
@@ -39,6 +40,10 @@ export function wuchs(m, opt = {}){
   for(const f of m.faeden || []){
     if(!HERKUNFT.includes(f.typ) || f.form) continue;
     const c = idx.get(f.von); if(c == null || art[c] !== 'frei') continue;
+    // Nur die Kante, die SPiRALCELLS beim Abzweigen mit der Fassung zugleich anlegt: gleicher Urheber, gleicher Augenblick.
+    // Eine später behauptete Beziehung (auch Ralfs Verbinden) bleibt Faden und wird nie zur Herkunft.
+    const v = sam[c].fassung || {}, k = f.kante || {}, dt = Math.abs((Date.parse(k.created_at) || 0) - (Date.parse(v.created_at) || 0));
+    if(k.author_id !== v.author_id || !(dt <= 5000)) continue;
     const q = idx.has(f.nach) ? idx.get(f.nach) : keimIds.has(f.nach) ? KEIM : null;
     if(q == null || (q >= 0 && q >= c)) continue;
     const rang = HERKUNFT.indexOf(f.typ), t = Date.parse((f.kante || {}).created_at) || 0, alt = gabel.get(c);

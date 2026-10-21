@@ -65,6 +65,14 @@ export class Netz {
   tuerPos(i, o){ const n = Math.max(1, this.tueren.length), Rm = this.L.mitte.R, a = -Math.PI / 2 + (i - (n - 1) / 2) * 0.55;
     o[0] = Math.cos(a) * Rm * 0.82; o[1] = Rm * 0.55; o[2] = Math.sin(a) * Rm * 0.82; return o; }
   dachVon(i){ const o = this.baum.ort[i]; return o && o.ebene === 'dach' ? o.dach : -1; }
+  /* Der Bezirk eines Werks: 'mitte', ein Dachindex oder 'ohne'; Lesematerial gehört zum Bezirk seines Werks */
+  bezirk(i, tiefe = 0){ const o = this.baum.ort[i]; if(!o) return 'ohne';
+    if(o.ebene === 'material') return o.werk != null && tiefe < 3 ? this.bezirk(o.werk, tiefe + 1) : o.dach != null ? Math.max(0, this.daecher.findIndex(d => d.name === o.dach)) : 'mitte';
+    return o.ebene === 'dach' ? o.dach : o.ebene; }
+  /* Werke eines Bezirks, für die Tastatur: erst die eigenen, dann das Lesematerial an ihnen */
+  werkeIn(b){ const eigen = b === 'mitte' ? this.baum.mitte.werke : b === 'ohne' ? this.baum.ohne : (this.daecher[b] ? this.daecher[b].bereiche.flatMap(x => x.werke) : []);
+    const mat = [...this.baum.material.keys()].filter(i => this.bezirk(i) === b); return [...eigen, ...mat]; }
+  bezirkZiel(b){ return b === 'mitte' ? this.L.mitte : b === 'ohne' ? this.L.ohne : this.daecher[b] || null; }
 }
 
 const TMP = [0, 0, 0, 0];
@@ -85,17 +93,17 @@ function huelle(c, R, yS, col, a, pts, cx, cyy, cz){
 export function baueNetz(N, U, wall, vis, aktiv, aktivDetail){
   if(vis <= 0.003) return;
   const cx = CAM.P[0], cyy = CAM.P[1], cz = CAM.P[2], soloAny = U.solo >= 0;
-  const hov = U.hover && U.hover.art === 'mond' ? U.hover.i : -1, imDach = U.dach != null ? U.dach : -1;
+  const hov = U.hover && U.hover.art === 'mond' ? U.hover.i : -1, imDach = U.dach;   // null, 'mitte', 'ohne' oder ein Dach
   const hovD = U.hover && U.hover.art === 'dach' ? U.hover.i : -1, selD = U.sel && U.sel.art === 'dach' ? U.sel.i : -1;
   // Mitte: die Zentrale, ein warmer Keim mit eigener Hülle
   const Lm = N.L.mitte, puls = U.RM ? 0.85 : 0.75 + 0.25 * Math.sin(wall * 0.9), hovM = U.hover && U.hover.art === 'mitte', selM = U.sel && U.sel.art === 'mitte';
   P(0, 0, 0, Lm.R * 0.12, KEIMC[0], KEIMC[1], KEIMC[2], 0.8 * vis * puls * (hovM || selM ? 1.5 : 1));
   P(0, 0, 0, Lm.R * 1.6, KEIMC[0], KEIMC[1], KEIMC[2], 0.05 * vis);
-  ring([0, -0.05, 0], Lm.R, KEIMC, (hovM || selM ? 0.9 : 0.55) * vis * (imDach >= 0 ? 0.4 : 1), 0.09, 1);
-  huelle([0, 0, 0], Lm.R, 0.42, WG, (hovM || selM ? 0.9 : 0.5) * vis * (imDach >= 0 ? 0.4 : 1), MEMD, cx, cyy, cz);
-  U.mitteSchirm = toScreen(0, Lm.R * 0.42, 0);
+  ring([0, -0.05, 0], Lm.R, KEIMC, (hovM || selM ? 0.9 : 0.55) * vis * (imDach === 'mitte' ? 1.3 : imDach != null ? 0.4 : 1), 0.09, 1);
+  huelle([0, 0, 0], Lm.R, 0.42, WG, (hovM || selM ? 0.9 : 0.5) * vis * (imDach === 'mitte' ? 1.3 : imDach != null ? 0.4 : 1), MEMD, cx, cyy, cz);
+  U.mitteSchirm = toScreen(0, 0, Lm.R * 0.95);   // vorn am Rand der Mitte, nicht über den Türen
   // Dächer: je eine Hülle, Bereiche als leise Ringe am Boden
-  for(let j = 0; j < N.daecher.length; j++){ const d = N.daecher[j], hell = j === imDach ? 1.35 : imDach >= 0 ? 0.35 : 1, an = j === hovD || j === selD;
+  for(let j = 0; j < N.daecher.length; j++){ const d = N.daecher[j], hell = j === imDach ? 1.35 : imDach != null ? 0.35 : 1, an = j === hovD || j === selD;
     const c = an ? mixc(WG, SILVER, 0.4) : WG;
     // Ein Dach ist eine eigene Zelle: leuchtender Rand am Boden, Innenglühen, Hülle darüber
     P(d.mitte[0], 0, d.mitte[2], d.R * 1.7, c[0], c[1], c[2], 0.03 * vis * hell * (an ? 1.6 : 1));
@@ -104,13 +112,13 @@ export function baueNetz(N, U, wall, vis, aktiv, aktivDetail){
     for(const b of d.bereiche) ring([b.mitte[0], -0.05, b.mitte[2]], b.R, WG, 0.16 * vis * hell, 0.06, 2);
     U.daecherSchirm[j] = toScreen(d.mitte[0], d.R * 0.42, d.mitte[2]); }
   U.daecherSchirm.length = N.daecher.length;
-  if(N.L.ohne){ const o = N.L.ohne; ring([o.mitte[0], -0.05, o.mitte[2]], o.R, DUSTC, 0.2 * vis, 0.07, 3);
+  if(N.L.ohne){ const o = N.L.ohne, hO = U.hover && U.hover.art === 'ohne' || U.sel && U.sel.art === 'ohne'; ring([o.mitte[0], -0.05, o.mitte[2]], o.R, DUSTC, (hO ? 0.45 : 0.2) * vis * (imDach === 'ohne' ? 1.6 : imDach != null ? 0.5 : 1), 0.07, 3);
     U.ohneSchirm = toScreen(o.mitte[0], o.R * 0.3, o.mitte[2]); } else U.ohneSchirm = null;
   // Werke
   for(let n = 0; n < N.N; n++){
     const m = N.B.monde[n], o = N.pos[n], pts = N.mini[n].pts, k = pts.length / 6, material = N.baum.material.has(n);
     const self = n === aktiv, fade = self ? (1 - aktivDetail) : 1; if(fade <= 0.01){ U.monde[n] = null; continue; }
-    const dj = N.dachVon(n), dachHell = imDach < 0 ? 1 : dj === imDach ? 1.2 : 0.3;
+    const dachHell = imDach == null ? 1 : N.bezirk(n) === imDach ? 1.2 : 0.3;
     const dc = Math.hypot(o[0] - cx, o[1] - cyy, o[2] - cz), near = sstep(CAM.S * 0.03, CAM.S * 0.3, dc);
     let a = vis * fade * (self ? 1 : near) * dachHell;
     if(soloAny) a *= m.stimmen.includes(U.solo) ? 1.3 : 0.18;
@@ -138,7 +146,7 @@ export function baueNetz(N, U, wall, vis, aktiv, aktivDetail){
     const d = Math.hypot(A[0] - Bp[0], A[2] - Bp[2]), n = Math.round(clamp(d * 5, 14, 120)), lift = d * 0.16 + 0.4;
     const anF = U.sel && U.sel.art === 'faden' && U.sel.i === fi, hovF = U.hover && U.hover.art === 'faden' && U.hover.i === fi;
     const beteiligt = aktiv === f.von || aktiv === f.nach || (U.sel && U.sel.art === 'mond' && (U.sel.i === f.von || U.sel.i === f.nach));
-    const dimm = imDach >= 0 && N.dachVon(f.von) !== imDach && N.dachVon(f.nach) !== imDach ? 0.25 : 1;
+    const dimm = imDach != null && N.bezirk(f.von) !== imDach && N.bezirk(f.nach) !== imDach ? 0.25 : 1;
     const st = STIL[f.typ] || STIL['verweist-auf'];
     const al = vis * (st.a + 0.03 * Math.min(6, f.kanten.length)) * (soloAny ? 0.3 : 1) * (anF || hovF ? 2.6 : beteiligt ? 1.8 : 1) * dimm;
     const pt = t => [mix(A[0], Bp[0], t), mix(A[1], Bp[1], t) + Math.sin(Math.PI * t) * lift, mix(A[2], Bp[2], t)];
@@ -157,9 +165,9 @@ export function baueNetz(N, U, wall, vis, aktiv, aktivDetail){
   for(let k = 0; k < MEM2.length / 3; k++){ const ux = MEM2[k * 3], uy = MEM2[k * 3 + 1], uz = MEM2[k * 3 + 2];
     const x = ux * Rm2, y = uy * Rm2 * 0.45, z = uz * Rm2;
     const vx = cx - x, vy = cyy - y, vz = cz - z, vl = Math.hypot(vx, vy, vz) || 1, fres = Math.pow(1 - Math.abs((ux * vx + uy * vy * 0.45 + uz * vz) / vl), 4.0);
-    const lum = (0.004 + fres) * vis * 0.32 * (imDach >= 0 ? 0.4 : 1); P(x, y, z, Rm2 * 0.0035, WG[0] * lum, WG[1] * lum * 0.97, WG[2] * lum * 0.98, 0.7); }
+    const lum = (0.004 + fres) * vis * 0.32 * (imDach != null ? 0.4 : 1); P(x, y, z, Rm2 * 0.0035, WG[0] * lum, WG[1] * lum * 0.97, WG[2] * lum * 0.98, 0.7); }
   // Die fünf Stimmen um die Mitte
-  for(let i = 0; i < 5; i++){ const c = mixc(VOICES[i].c, WG, 0.35), al = vis * (0.25 + 0.75 * N.stimmAnteil[i]) * U.soloA[i] * (imDach >= 0 ? 0.4 : 1);
+  for(let i = 0; i < 5; i++){ const c = mixc(VOICES[i].c, WG, 0.35), al = vis * (0.25 + 0.75 * N.stimmAnteil[i]) * U.soloA[i] * (imDach != null && imDach !== 'mitte' ? 0.4 : 1);
     for(let k = 0; k < 90; k++){ bigHead(N, i, wall - k * 0.018, TMP); const age = k / 90; P(TMP[0], TMP[1], TMP[2], N.L.mitte.R * mix(0.03, 0.006, age), c[0], c[1], c[2], Math.pow(1 - age, 1.5) * al * 0.6); }
     bigHead(N, i, wall, TMP); P(TMP[0], TMP[1], TMP[2], N.L.mitte.R * 0.1, c[0], c[1], c[2], 2.0 * al);
     U.bigHeads[i] = toScreen(TMP[0], TMP[1], TMP[2]); }
@@ -167,7 +175,7 @@ export function baueNetz(N, U, wall, vis, aktiv, aktivDetail){
   for(let i = 0; i < N.tueren.length; i++){ const t = N.tueren[i]; N.tuerPos(i, TMP); const wach = t.wach === true;
     const c = wach ? KEIMC : DUSTC, pu = wach ? 0.75 + 0.25 * Math.sin(wall * 1.3 + i) : 0.35, h = U.hover && U.hover.art === 'tuer' && U.hover.i === i;
     P(TMP[0], TMP[1], TMP[2], N.L.mitte.R * 0.05, c[0], c[1], c[2], vis * pu * (h ? 2.2 : 1.2));
-    screenRing([TMP[0], TMP[1], TMP[2]], N.L.mitte.R * 0.08, wach ? GOLDC : DUSTC, vis * (h ? 0.6 : 0.25));
+    screenRing([TMP[0], TMP[1], TMP[2]], N.L.mitte.R * 0.08, wach ? SILVER : DUSTC, vis * (h ? 0.6 : 0.25));   // Gold bleibt Ralfs Kristallisieren
     U.tueren[i] = toScreen(TMP[0], TMP[1], TMP[2]); }
 }
 

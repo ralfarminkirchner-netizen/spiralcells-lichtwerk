@@ -180,7 +180,7 @@ function behaltenKnopf(key){
   tunEl.querySelectorAll('.halten.drueckt').forEach(b => b.dispatchEvent(new Event('pointercancel'))); tunEl.innerHTML = '';
   if(!key || !z) return;
   const v = z.v;
-  const b = hilfe.haltKnopf('Behalten', tastatur() ? 'halten · H · als Fassung unter deinem Namen' : 'halten · als Fassung unter deinem Namen', 'gold', 1500, async () => {
+  const b = hilfe.haltKnopf('Behalten', tastatur() ? 'halten · H · als Fassung unter deinem Namen' : 'halten · als Fassung unter deinem Namen', '', 1500, async () => {
     if(!z || z.v !== v || z.jetzt !== key) return;
     satzEl.textContent = 'Wird behalten …'; tunEl.innerHTML = ''; tischEl.focus({preventScroll: true});
     const r = await hilfe.behalten(v, key);

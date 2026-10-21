@@ -41,11 +41,19 @@ const norm = t => String(t || '').toLowerCase().replace(/[„“"'»«‚‘’*
 /* Wo steht ein Teil? 'wörtlich' im Text, 'abschnitt' als Überschrift, sonst nicht verortet. Keine erfundene Präzision. */
 export function verorte(teil, absaetze){
   const t = norm(teil); if(t.length < 3) return null;
-  for(const a of absaetze){ if(norm(a.text).includes(t)) return {index: a.index, art: 'wörtlich'}; }
-  for(const a of absaetze){ const h = norm(a.heading || (String(a.text).match(/^\s{0,3}#{1,6}\s+(.*)$/m) || [])[1] || '');
-    if(h && h.length >= 3 && (h === t || h.includes(t) || (t.includes(h) && h.length >= 8))) return {index: a.index, art: 'abschnitt'}; }
+  const kopf = a => norm(a.heading || (String(a.text).match(/^\s{0,3}#{1,6}\s+(.*)$/m) || [])[1] || '');
+  const treffer = absaetze.filter(a => (' ' + norm(a.text) + ' ').includes(' ' + t + ' ') || norm(a.text).includes(t));
+  if(treffer.length){ const k = treffer.find(a => kopf(a) && kopf(a).includes(t)) || treffer[0];   // bei mehreren: die Überschrift zuerst
+    return {index: k.index, art: 'wörtlich', mehrfach: treffer.length}; }
+  for(const a of absaetze){ const h = kopf(a);
+    if(h && h.length >= 3 && (h === t || h.includes(t) || (t.includes(h) && h.length >= 8))) return {index: a.index, art: 'abschnitt', mehrfach: 1}; }
   return null;
 }
+/* Rundenschlüssel und relative Cloud-Pfade aus Verwendungstexten lesbar machen */
+const MON = ['Jan.', 'Feb.', 'März', 'Apr.', 'Mai', 'Juni', 'Juli', 'Aug.', 'Sep.', 'Okt.', 'Nov.', 'Dez.'];
+const zeige = t => menschlich(t)
+  .replace(/\b[a-z]+(?:-[a-z]+)+-(20\d{2})(\d{2})(\d{2})\b/g, (_, y, mo, d) => `Runde vom ${Number(d)}. ${MON[Number(mo) - 1] || ''}`.trim())
+  .replace(/(?:Library\/)?Mobile Documents\/[^\s<>"'`)\]]+/g, x => x.split(/[\/:]/).filter(Boolean).pop() || '[Ablage]');
 /* Verwendungen (Kanten mit beschriebener Verwendung) an dieser Fassung, je mit eigenem und fremdem Teil */
 function verwendungen(v){
   const out = [];
@@ -56,22 +64,38 @@ function verwendungen(v){
 }
 
 /* ------------------------------------------------------------ Öffnen */
-export function oeffne({mond, i, keim, modus = 'lesen', vergleich = null, stelle = null}){
-  const v = keim ? mond.keim[mond.keim.length - 1] : mond.samen[i] && mond.samen[i].fassung; if(!v) return false;
-  z = {mond, v, si: keim ? -1 : i, modus, vergleich, stelle};
+const HINTEN = '#gl, #lese, .corner, #zurueck, #marke, #siegel ~ .corner';
+export function oeffne({mond, i, keim, variantId, modus = 'lesen', vergleich = null, stelle = null, ungefaehr = false}){
+  if(variantId){ const si = mond.samen.findIndex(s => s.id === variantId); if(si >= 0){ i = si; keim = false; } else if(mond.keim.some(k => k.id === variantId)) keim = true; }
+  const v = keim ? (mond.keim.find(k => k.id === variantId) || mond.keim[mond.keim.length - 1]) : mond.samen[i] && mond.samen[i].fassung; if(!v) return false;
+  z = {mond, v, si: keim ? -1 : i, modus, vergleich: vergleich === (v && v.id) ? null : vergleich, stelle, ungefaehr: ungefaehr && stelle != null ? stelle : null};
   if(modus === 'vergleich' && !W.B.fassungen.get(vergleich)) z.vergleich = vorschlag();
   if(modus === 'vergleich' && !z.vergleich) z.modus = 'lesen';
   baue();
   const R = roh(); R.hidden = false; document.body.classList.add('im-stoff');
-  requestAnimationFrame(() => { springe(z.stelle); R.querySelector('.stoff-flaeche').focus({preventScroll: true}); });
+  document.querySelectorAll(HINTEN).forEach(n => { n.inert = true; });   // ein Dialog: dahinter ist nichts erreichbar
+  requestAnimationFrame(() => { if(!z) return; springe(z.stelle); R.querySelector('.stoff-flaeche').focus({preventScroll: true}); });
   hilfe.ansage(`Material: ${kurz(v.label, 120)}. Escape führt zurück in die Zelle.`);
   hilfe.merkeOrt && hilfe.merkeOrt();
   return true;
 }
 export function schliesse(){
   if(!z) return; z = null; const R = roh(); R.hidden = true; document.body.classList.remove('im-stoff');
+  document.querySelectorAll(HINTEN).forEach(n => { n.inert = false; });
   hilfe.merkeOrt && hilfe.merkeOrt();
 }
+/* Nach erneuern(): derselbe Mond, dieselbe Fassung, neue Indizes */
+export function umhaengen(){
+  if(!z || !W.B) return; const m = W.B.mondVon.get(z.mond.id); if(!m){ schliesse(); return; }
+  const si = m.samen.findIndex(s => s.id === z.v.id), keim = si < 0 && m.keim.some(k => k.id === z.v.id);
+  if(si < 0 && !keim){ schliesse(); return; }
+  const f = document.activeElement && document.activeElement.dataset ? document.activeElement.dataset.k : null;
+  z = {...z, mond: m, si: keim ? -1 : si, v: W.B.fassungen.get(z.v.id) || z.v};
+  if(z.vergleich && !W.B.fassungen.get(z.vergleich)){ z.vergleich = null; z.modus = 'lesen'; }
+  const oben = roh().querySelector('.stoff-flaeche').scrollTop; baue(); roh().querySelector('.stoff-flaeche').scrollTop = oben; fokus(f);
+}
+function fokus(k){ if(!k) return; const n = roh().querySelector(`[data-k="${k}"]`); if(n) n.focus({preventScroll: true}); }
+
 /* Die naheliegende zweite Fassung: Herkunft im Wuchs, sonst die Vorgängerin im Zweig, sonst eine gelesene */
 function vorschlag(){
   const Z = W.Z, i = z.si; if(i < 0 || !Z || Z.m !== z.mond) return null;
@@ -94,8 +118,9 @@ function baue(){
   R.querySelector('.stoff-zurueck span:last-child').textContent = (hilfe.rueckSatz && hilfe.rueckSatz()) || 'zur Zelle';
   // Lesen oder Vergleichen
   const tun = R.querySelector('.stoff-modus'); tun.innerHTML = '';
-  const lesen = knopf('Lesen', () => { z.modus = 'lesen'; baue(); hilfe.merkeOrt && hilfe.merkeOrt(); }, 'stoff-knopf');
-  const vergl = knopf('Vergleichen', () => { z.modus = 'vergleich'; z.vergleich = z.vergleich || vorschlag(); if(!z.vergleich){ hilfe.zeile('Für diese Fassung gibt es noch keine zweite zum Vergleichen.'); z.modus = 'lesen'; } baue(); hilfe.merkeOrt && hilfe.merkeOrt(); }, 'stoff-knopf');
+  const lesen = knopf('Lesen', () => { z.modus = 'lesen'; baue(); fokus('lesen'); hilfe.merkeOrt && hilfe.merkeOrt(); }, 'stoff-knopf');
+  const vergl = knopf('Vergleichen', () => { z.modus = 'vergleich'; z.vergleich = z.vergleich || vorschlag(); if(!z.vergleich){ hilfe.zeile('Für diese Fassung gibt es noch keine zweite zum Vergleichen.'); z.modus = 'lesen'; } baue(); fokus('vergleich'); hilfe.merkeOrt && hilfe.merkeOrt(); }, 'stoff-knopf');
+  lesen.dataset.k = 'lesen'; vergl.dataset.k = 'vergleich';
   lesen.setAttribute('aria-pressed', String(z.modus === 'lesen')); vergl.setAttribute('aria-pressed', String(z.modus === 'vergleich'));
   tun.append(lesen, vergl);
   baueFaden();
@@ -109,12 +134,13 @@ function baueFaden(){
   const nav = roh().querySelector('.stoff-faden'); nav.innerHTML = '';
   const Z = W.Z, m = z.mond; if(z.si < 0 || !Z || Z.m !== m) return;
   const Wu = Z.W, zw = Wu.zweige[Wu.zweigVon[z.si]], strang = el('div', 'strang');
-  const perle = (id, text, unter, art) => { const b = el('button', 'perle ' + (art || ''), null); b.type = 'button'; const ziel = W.B.fassungen.get(id);
+  let nr = 0;
+  const perle = (id, text, unter, art) => { const b = el('button', 'perle ' + (art || ''), null); b.type = 'button'; const ziel = W.B.fassungen.get(id), k = 'p' + (nr++); b.dataset.k = k;
     b.append(el('i'), el('span', null, text)); if(unter) b.append(el('small', null, unter));
     const gewaehlt = z.modus === 'vergleich' ? id === z.vergleich : id === z.v.id;
     if(id === z.v.id) b.classList.add('hier'); if(gewaehlt && z.modus === 'vergleich') b.classList.add('gegenueber');
     b.setAttribute('aria-label', `${text}${unter ? ', ' + unter : ''}${id === z.v.id ? ', diese Fassung' : ''}`);
-    b.addEventListener('click', () => waehle(id)); if(!ziel) b.disabled = true; return b; };
+    b.addEventListener('click', () => { waehle(id); fokus(k); }); if(!ziel) b.disabled = true; return b; };
   const erste = zw[0], p = Wu.eltern[erste];
   if(p >= 0){ strang.append(perle(m.samen[p].id, 'Herkunft', kurz(m.samen[p].label, 28), 'herkunft')); strang.append(el('span', 'glied')); }
   zw.forEach((i, k) => { if(k) strang.append(el('span', 'glied'));
@@ -136,7 +162,7 @@ function waehle(id){
   if(z.modus === 'vergleich'){ if(id === z.v.id) return; z.vergleich = id; baue(); hilfe.merkeOrt && hilfe.merkeOrt(); return; }
   if(id === z.v.id) return;
   const m = z.mond, si = m.samen.findIndex(s => s.id === id);
-  if(si >= 0){ z = {...z, v: m.samen[si].fassung, si, stelle: null}; hilfe.waehleKorn && hilfe.waehleKorn(si); baue(); springe(null); hilfe.merkeOrt && hilfe.merkeOrt(); }
+  if(si >= 0){ z = {...z, v: m.samen[si].fassung, si, stelle: null, ungefaehr: null, vergleich: z.vergleich === id ? null : z.vergleich}; hilfe.waehleKorn && hilfe.waehleKorn(si); baue(); springe(null); hilfe.merkeOrt && hilfe.merkeOrt(); }
 }
 
 /* ------------------------------------------------------------ Lesen */
@@ -159,13 +185,16 @@ function passage(a, rand){
 function randNotiz(u){
   const f = W.B.fassungen.get(u.fremd); if(!f) return null;
   const om = W.B.mondVon.get(W.B.werkVon(u.fremd)), wo = om && om.id !== z.mond.id ? ` in „${kurz(om.titel, 36)}“` : '';
-  const typ = u.e.edge_type, satz = u.raus ? (TYP_SATZ[typ] || 'verbunden mit') : ({'verweist-auf': 'wird erwähnt in', 'remixt-aus': 'weiterverwendet in', 'erweitert': 'erweitert in', 'testet': 'geprüft in', 'widerspricht': 'widersprochen in'}[typ] || 'verbunden mit');
+  const typ = u.e.edge_type, satz = u.raus ? (TYP_SATZ[typ] || 'verbunden mit') : ({'verweist-auf': 'wird erwähnt von', 'remixt-aus': 'weiterverwendet von', 'erweitert': 'erweitert von', 'testet': 'geprüft von', 'widerspricht': 'widersprochen von'}[typ] || 'verbunden mit');
   const b = el('button', 'notiz'); b.type = 'button';
-  b.append(el('span', 'art', `${satz}${wo}`), el('span', 'ziel', `„${kurz(f.label, 60)}“`));
-  if(u.fremdTeil) b.append(el('span', 'teil', `dort: „${kurz(u.fremdTeil, 70)}“`));
-  const zweck = u.e.usage.purpose; if(zweck) b.append(el('span', 'zweck', kurz(zweck, 150)));
+  const ziel = `„${kurz(zeige(f.label), 60)}“${wo}`, teil = u.fremdTeil ? `dort: „${kurz(zeige(u.fremdTeil), 70)}“` : '', zweck = u.e.usage.purpose ? kurz(zeige(u.e.usage.purpose), 150) : '';
+  b.append(el('span', 'art', satz), el('span', 'ziel', ziel));
+  if(teil) b.append(el('span', 'teil', teil));
+  if(zweck) b.append(el('span', 'zweck', zweck));
   const vt = VERTRAEGLICH[u.e.usage.compatibility]; if(vt) b.append(el('span', 'vertraeglich', vt));
-  if(u.verortet && u.verortet.art === 'abschnitt') b.append(el('span', 'ungefaehr', 'Abschnitt, nicht wörtlich'));
+  const vo = u.verortet, ungenau = vo && vo.art === 'abschnitt' ? 'Abschnitt, nicht wörtlich' : vo && vo.mehrfach > 1 ? `steht ${vo.mehrfach}-mal im Wortlaut, hier die erste passende Stelle` : '';
+  if(ungenau) b.append(el('span', 'ungefaehr', ungenau));
+  b.setAttribute('aria-label', [satz, ziel, teil, zweck, vt, ungenau].filter(Boolean).join('. ') + '. Folgen öffnet diese Fassung.');
   b.addEventListener('click', () => folge(u));
   return b;
 }
@@ -173,7 +202,8 @@ function randNotiz(u){
 function folge(u){
   const om = W.B.mondVon.get(W.B.werkVon(u.fremd)); if(!om) return;
   const ziel = W.B.fassungen.get(u.fremd), abs = materialParagraphs(ziel.content), wo = u.fremdTeil ? verorte(u.fremdTeil, abs) : null;
-  hilfe.folgeStoff(u.fremd, om, {modus: 'lesen', stelle: wo ? wo.index : null});
+  // Nur ein eindeutiger wörtlicher Fund wird Lesestelle; sonst „ungefähr hier“
+  hilfe.folgeStoff(u.fremd, om, {modus: 'lesen', stelle: wo ? wo.index : null, ungefaehr: !!wo && (wo.art !== 'wörtlich' || wo.mehrfach > 1)});
 }
 function baueLesen(text){
   const abs = materialParagraphs(z.v.content);
@@ -182,21 +212,28 @@ function baueLesen(text){
   const us = verwendungen(z.v).map(u => ({...u, verortet: verorte(u.teil, abs)})), proStelle = new Map(), lose = [];
   for(const u of us){ const n = randNotiz(u); if(!n) continue; if(u.verortet){ if(!proStelle.has(u.verortet.index)) proStelle.set(u.verortet.index, []); proStelle.get(u.verortet.index).push(n); } else lose.push({u, n}); }
   if(lose.length){ const kopf = el('section', 'lose'); kopf.append(el('p', 'stoff-leise', `${lose.length} ${lose.length === 1 ? 'Verwendung nennt' : 'Verwendungen nennen'} einen Teil, der im Wortlaut nicht steht:`));
-    for(const {u, n} of lose){ n.prepend(el('span', 'teil eigen', `hier: „${kurz(u.teil, 70)}“`)); kopf.append(n); } text.append(kopf); }
+    for(const {u, n} of lose){ n.prepend(el('span', 'teil eigen', `hier: „${kurz(zeige(u.teil), 70)}“`)); kopf.append(n); } text.append(kopf); }
   for(const a of abs) text.append(passage(a, proStelle.get(a.index)));
   text.append(el('p', 'stoff-ende', 'Das Material endet hier.'));
   markiere();
 }
 
 /* ------------------------------------------------------------ Vergleichen */
+/* Längste gemeinsame Folge über Zeichenfolgen-Stücke; null, wenn es zu groß wird */
+function lcs(A, Bt){
+  if(A.length * Bt.length > 90000) return null;
+  const ka = new Set(), kb = new Set(), w = Bt.length + 1, dp = new Uint32Array((A.length + 1) * w);
+  for(let i = A.length - 1; i >= 0; i--) for(let j = Bt.length - 1; j >= 0; j--) dp[i * w + j] = A[i] === Bt[j] ? dp[(i + 1) * w + j + 1] + 1 : Math.max(dp[(i + 1) * w + j], dp[i * w + j + 1]);
+  let i = 0, j = 0; while(i < A.length && j < Bt.length){ if(A[i] === Bt[j]){ ka.add(i++); kb.add(j++); } else if(dp[(i + 1) * w + j] >= dp[i * w + j + 1]) i++; else j++; }
+  return {ka, kb};
+}
+/* Erst Wort für Wort; wird das zu groß, Zeile für Zeile; wird auch das zu groß, gar nicht – und das wird gesagt */
 function wortVergleich(a, b){
-  const A = a.match(/\s+|[^\s]+/g) || [], Bt = b.match(/\s+|[^\s]+/g) || [], ka = new Set(), kb = new Set();
-  if(A.length * Bt.length > 90000){ let f = 0; while(f < Math.min(A.length, Bt.length) && A[f] === Bt[f]){ ka.add(f); kb.add(f); f++; }
-    let i = A.length - 1, j = Bt.length - 1; while(i >= f && j >= f && A[i] === Bt[j]){ ka.add(i--); kb.add(j--); } }
-  else { const w = Bt.length + 1, dp = new Uint32Array((A.length + 1) * w);
-    for(let i = A.length - 1; i >= 0; i--) for(let j = Bt.length - 1; j >= 0; j--) dp[i * w + j] = A[i] === Bt[j] ? dp[(i + 1) * w + j + 1] + 1 : Math.max(dp[(i + 1) * w + j], dp[i * w + j + 1]);
-    let i = 0, j = 0; while(i < A.length && j < Bt.length){ if(A[i] === Bt[j]){ ka.add(i++); kb.add(j++); } else if(dp[(i + 1) * w + j] >= dp[i * w + j + 1]) i++; else j++; } }
-  return {A, Bt, ka, kb};
+  let A = a.match(/\s+|[^\s]+/g) || [], Bt = b.match(/\s+|[^\s]+/g) || [], k = lcs(A, Bt);
+  if(k) return {A, Bt, ...k, grob: null};
+  A = a.split(/(\n)/); Bt = b.split(/(\n)/); k = lcs(A, Bt);
+  if(k) return {A, Bt, ...k, grob: 'zeilen'};
+  return {A: [a], Bt: [b], ka: new Set([0]), kb: new Set([0]), grob: 'keiner'};
 }
 function markiert(node, toks, keep, art){
   let lauf = '', an = null; const flush = () => { if(!lauf) return; node.append(an ? el(art, null, lauf) : document.createTextNode(lauf)); lauf = ''; };
@@ -227,6 +264,7 @@ function baueVergleich(text){
       zelle.append(el('span', 'nr-klein', `${seite === 'hier' ? 'Passage' : 'gegenüber'} ${teil.index + 1}`));
       const t = el(teil.structured ? 'pre' : 'p');
       if(wv) markiert(t, seite === 'hier' ? wv.A : wv.Bt, seite === 'hier' ? wv.ka : wv.kb, seite === 'hier' ? 'del' : 'ins');
+      if(wv && wv.grob && seite === 'hier') zelle.append(el('span', 'grob', wv.grob === 'zeilen' ? 'zu lang für den Wortabgleich: Zeile für Zeile verglichen' : 'zu lang für einen Abgleich: unmarkiert'));
       else t.append(el(seite === 'hier' ? 'del' : 'ins', null, menschlich(teil.text)));
       zelle.append(t); zeile.append(zelle); }
     text.append(zeile); abw.push(zeile);
@@ -239,8 +277,9 @@ function baueVergleich(text){
 }
 
 /* ------------------------------------------------------------ Lesestelle */
-function markiere(){ const R = roh(); R.querySelectorAll('.passage.stelle').forEach(n => n.classList.remove('stelle'));
-  if(z && z.stelle != null){ const n = R.querySelector(`.stoff-text > .passage[data-i="${z.stelle}"]`); if(n) n.classList.add('stelle'); } }
+function markiere(){ const R = roh(); R.querySelectorAll('.passage.stelle, .passage.ungefaehr').forEach(n => n.classList.remove('stelle', 'ungefaehr'));
+  if(z && z.ungefaehr != null){ const n = R.querySelector(`.stoff-text > .passage[data-i="${z.ungefaehr}"]`); if(n) n.classList.add('ungefaehr'); }
+  if(z && z.stelle != null && z.stelle !== z.ungefaehr){ const n = R.querySelector(`.stoff-text > .passage[data-i="${z.stelle}"]`); if(n) n.classList.add('stelle'); } }
 function springe(i){ const f = roh().querySelector('.stoff-flaeche'); if(i == null){ f.scrollTop = 0; return; }
   const n = roh().querySelector(`.stoff-text [data-i="${i}"]`); if(n){ n.scrollIntoView({block: 'start'}); f.scrollTop -= 24; markiere(); } }
 let rollT = 0;
@@ -253,7 +292,7 @@ function beimRollen(){ if(!z) return; const jetzt = performance.now(); if(jetzt 
 export function taste(e){
   if(!z) return false;
   if(e.key === 'Escape'){ e.preventDefault(); hilfe.zurueckAusStoff(); return true; }
-  if((e.key === '[' || e.key === ']') && !e.metaKey && !e.ctrlKey){ const Z = W.Z; if(z.si < 0 || !Z) return true; const zw = Z.W.zweige[Z.W.zweigVon[z.si]], k = zw.indexOf(z.si) + (e.key === ']' ? 1 : -1);
+  if((e.key === '[' || e.key === ']') && !e.metaKey && !e.ctrlKey){ const Z = W.Z; if(z.si < 0 || !Z || Z.m !== z.mond) return true; const zw = Z.W.zweige[Z.W.zweigVon[z.si]], k = zw.indexOf(z.si) + (e.key === ']' ? 1 : -1);
     if(k >= 0 && k < zw.length) waehle(z.mond.samen[zw[k]].id); return true; }
   return false;
 }

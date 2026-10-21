@@ -63,8 +63,9 @@ export class Zelle {
     const total = Math.max(1, sam.reduce((a, s) => a + (s.form ? 0 : Math.max(1, s.laenge)), 0));
     let cpg = total / clamp(Math.round(total / 45), Math.min(NMAX, Math.max(60, n * 3)), NMAX);
     let counts;
+    const minK = 3 * n > NMAX ? Math.max(1, Math.floor(NMAX / Math.max(1, n))) : 3;   // sehr viele Ausprägungen: weniger Körner je Ausprägung
     for(let pass = 0; pass < 4; pass++){
-      counts = sam.map(s => s.form ? 3 : Math.max(3, Math.round(Math.max(1, s.laenge) / cpg)));
+      counts = sam.map(s => s.form ? minK : Math.max(minK, Math.round(Math.max(1, s.laenge) / cpg)));
       const sum = counts.reduce((a, b) => a + b, 0);
       if(sum <= NMAX) break; cpg *= sum / NMAX * 1.02;
     }
@@ -386,7 +387,10 @@ export function baueZelle(Z, U, wall, rdt, vis){
   const selFirst = selSeed >= 0 ? Z.seedFirst[selSeed] : -1, selEnd = selSeed >= 0 ? selFirst + Z.seedCount[selSeed] : -1;
   const hov = U.hover && U.hover.zelle === Z && U.hover.art === 'same' ? U.hover.i : -1;
   const linked = U.linkedSeeds;
-  if(Z.wahl.i !== selSeed){ Z.wahl = {i: selSeed, pfad: selSeed >= 0 ? new Set(ahnen(Z.W, selSeed)) : null, nach: selSeed >= 0 ? new Set(nachkommen(Z.W, selSeed)) : null}; }
+  if(Z.wahl.i !== selSeed){   // Abstammungslicht: nur über belegte Abstammung, nie entlang einer Übernahmereihe
+    const pf = []; if(selSeed >= 0) for(let k = selSeed; k >= 0; k = Z.W.eltern[k]){ pf.push(k); if(Z.W.art[k] === 'reihe') break; }
+    const nf = selSeed >= 0 ? nachkommen(Z.W, selSeed).filter(k => Z.W.art[k] !== 'reihe') : null;
+    Z.wahl = {i: selSeed, pfad: selSeed >= 0 ? new Set(pf) : null, nach: nf ? new Set(nf) : null}; }
   const pfad = Z.wahl.pfad, nach = Z.wahl.nach, HN = Z.huelleN; HN.fill(0);
   for(let g = 0; g < Z.G; g++){
     Z.gSicht[g] = 0;
@@ -515,7 +519,7 @@ function baueWuchs(Z, U, vis, fog, selSeed, wall){
   const mitte = (i, o) => { o[0] = mP[i * 3]; o[1] = mP[i * 3 + 1]; o[2] = mP[i * 3 + 2]; return o; };
   for(let i = 0; i < n; i++){
     if(!sicht[Z.seedCore[i]]) continue;
-    const s = m.samen[i], st = s.stimme, auf = pfad && pfad.has(i), art = W.art[i], p = W.eltern[i];
+    const s = m.samen[i], st = s.stimme, art = W.art[i], auf = pfad && pfad.has(i) && art !== 'reihe', p = W.eltern[i];
     if(art === 'frei') continue;   // ohne belegte Herkunft: kein Stiel, ehrlich abgesetzt
     const farbe = s.form ? SILVER : typeof st === 'number' ? mixc(VOICES[st].c, STIELC, 0.45) : STIELC;
     if(p >= 0){ if(!sicht[Z.seedCore[p]]) continue; mitte(p, A); } else { A[0] = O[0]; A[1] = O[1]; A[2] = O[2]; }
@@ -524,7 +528,7 @@ function baueWuchs(Z, U, vis, fog, selSeed, wall){
     const basis = art === 'reihe' ? 0.045 : art === 'gabel' || art === 'form' ? 0.2 : 0.13;
     let al = (auf ? 0.55 : basis) * vis * lockDim * (soloAny ? (typeof st === 'number' && st === U.solo ? 1.5 : 0.25) : 1) * (selSeed >= 0 && !auf ? 0.45 : 1);
     if(al < 0.004) continue;
-    strich(A, Bq, auf ? 0.0048 : art === 'reihe' ? 0.0028 : 0.0036, auf ? SILVER : farbe, al, art === 'reihe' ? 8 : 40, 0);
+    strich(A, Bq, auf ? 0.0048 : art === 'reihe' ? 0.0028 : 0.0036, auf ? SILVER : farbe, al, art === 'reihe' ? 8 : Math.max(6, Math.min(40, Math.floor(6000 / n))), 0);
     // Gabel: ein kleiner Knoten, wo ein Zweig aus einer fremden Fassung fortgesetzt wurde
     if(art === 'gabel' && p >= 0) P(A[0], A[1], A[2], 0.012, farbe[0], farbe[1], farbe[2], 0.6 * vis * lockDim * (selSeed >= 0 && !auf ? 0.5 : 1));
   }

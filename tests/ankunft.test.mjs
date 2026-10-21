@@ -58,7 +58,8 @@ test('Link lesen: nur bekannte Schlüssel und feste Herkunft', () => {
   assert.deepEqual(mv(lies('#mond=../etc&von=kinos')), {mond: null, von: 'kinos'});
   assert.deepEqual(mv(lies('#mond=Zentrale')), {mond: null, von: null}, 'nur Kleinbuchstaben');
   // Die genaue Stelle bleibt lesbar: Fassung und Passage als kleine Zahlen, nie eine Kennung
-  assert.deepEqual(lies('#mond=x&fassung=3&lesen=1&stelle=4'), {mond: 'x', von: null, fassung: 3, stelle: 4, lesen: true, vergleich: null});
+  assert.deepEqual(lies('#mond=x&fassung=3&lesen=1&stelle=4'), {mond: 'x', von: null, fassung: 3, stelle: 4, lesen: true, vergleich: null, frage: false});
+  assert.equal(bau('x', null, {frage: true, lesen: true, stelle: 0}), '#mond=x&frage=1&lesen=1&stelle=1');
   assert.equal(lies('#mond=x&fassung=a1b2c3d4-0000').fassung, null);
   assert.equal(bau('x', null, {fassung: 3, lesen: true, stelle: 3}), '#mond=x&fassung=3&lesen=1&stelle=4');
   assert.equal(bau('x', null, {fassung: 3}), '#mond=x&fassung=3');

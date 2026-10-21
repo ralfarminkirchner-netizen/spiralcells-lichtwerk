@@ -24,21 +24,25 @@ export function ordne(B, O){
   const merke = (k, i) => { if(!schl.has(k)) schl.set(k, []); schl.get(k).push(i); };
   monde.forEach((m, i) => { const k = werkSchluessel(m.werk); merke(k, i); if(k.startsWith('ordner:')) merke('titel:' + String(m.werk.title || '').trim().toLowerCase(), i); });   // auch über den Titel auffindbar
   const key = ref => ref.startsWith('ordner:') || ref.startsWith('titel:') ? ref : 'titel:' + ref.trim().toLowerCase();
-  const vergeben = new Set(), finde = ref => {
+  // Die Datei wird von Hand gepflegt: nur Texte und {werk: Text} gelten, alles andere wird als „fehlt“ gemeldet, nie als Ausnahme
+  const text = r => typeof r === 'string' ? r : r && typeof r === 'object' && typeof r.werk === 'string' ? r.werk : null;
+  const reihe = x => Array.isArray(x) ? x : [], obj = x => x && typeof x === 'object' && !Array.isArray(x) ? x : null;
+  const vergeben = new Set(), finde = ref => { if(typeof ref !== 'string' || !ref.trim()) return -1;
     const kandidaten = (schl.get(key(ref)) || []).filter(i => !vergeben.has(i)); if(!kandidaten.length) return -1;
     vergeben.add(kandidaten[0]); return kandidaten[0]; };
-  const suche = ref => { const c = schl.get(key(ref)) || []; return c.length ? c[0] : -1; };   // nur nachsehen, nichts vergeben
+  const suche = ref => { if(typeof ref !== 'string' || !ref.trim()) return -1; const c = schl.get(key(ref)) || []; return c.length ? c[0] : -1; };   // nur nachsehen, nichts vergeben
   const fehlt = [];
-  const liste = refs => (refs || []).map(r => { const i = finde(typeof r === 'string' ? r : r.werk); if(i < 0) fehlt.push(typeof r === 'string' ? r : r.werk); return i; }).filter(i => i >= 0);
-  const o = O || {};
-  const mitte = {name: (o.mitte && o.mitte.name) || 'Zentrale', satz: (o.mitte && o.mitte.satz) || '', werke: liste(o.mitte && o.mitte.werke)};
-  const daecher = (o.daecher || []).map(d => ({name: d.name, satz: d.satz || '', bereiche: (d.bereiche || []).map(b => ({name: b.name, satz: b.satz || '', werke: liste(b.werke)})).filter(b => b.werke.length)}))
+  const liste = refs => reihe(refs).map(r => { const t = text(r), i = finde(t); if(i < 0) fehlt.push(t == null ? 'unlesbarer Eintrag' : t); return i; }).filter(i => i >= 0);
+  const o = obj(O) || {}, om = obj(o.mitte) || {}, name = (x, n) => typeof x === 'string' && x.trim() ? x.trim() : n;
+  const mitte = {name: name(om.name, 'Zentrale'), satz: name(om.satz, ''), werke: liste(om.werke)};
+  const daecher = reihe(o.daecher).map(obj).filter(Boolean).map((d, j) => ({name: name(d.name, `Dach ${j + 1}`), satz: name(d.satz, ''),
+      bereiche: reihe(d.bereiche).map(obj).filter(Boolean).map((b, k) => ({name: name(b.name, `Bereich ${k + 1}`), satz: name(b.satz, ''), werke: liste(b.werke)})).filter(b => b.werke.length)}))
     .filter(d => d.bereiche.length);
   // Lesematerial: an einem Werk (dann wandert es mit ihm) oder an einem Dach
   const material = new Map();   // Mondindex → Ziel {werk: i} | {dach: name}
-  for(const q of o.material || []){ const i = finde(q.werk); if(i < 0){ fehlt.push(q.werk); continue; }
-    const ziel = q.an ? suche(q.an) : -1;
-    material.set(i, ziel >= 0 && ziel !== i ? {werk: ziel} : {dach: q.dach || null}); }
+  for(const q of reihe(o.material).map(obj).filter(Boolean)){ const i = finde(text(q)); if(i < 0){ fehlt.push(text(q) || 'unlesbarer Eintrag'); continue; }
+    const ziel = typeof q.an === 'string' ? suche(q.an) : -1;
+    material.set(i, ziel >= 0 && ziel !== i ? {werk: ziel} : {dach: typeof q.dach === 'string' ? q.dach : null}); }
   const ohne = monde.map((_, i) => i).filter(i => !vergeben.has(i));
   // Rückverweis: wo steht jeder Mond?
   const ort = new Array(monde.length).fill(null);
@@ -93,9 +97,13 @@ export function lage(baum, rWerk, opt = {}){
     return {mitte: [c[0], y, c[1]], R: x.R, bereiche}; });
   ohneK.werke.forEach((i, k) => { pos[i] = [ohneMitte[0] + ohneK.rel[k][0], y, ohneMitte[1] + ohneK.rel[k][1]]; });
   // Lesematerial sitzt dicht an seinem Werk, sonst am Rand seines Dachs
+  const proZiel = new Map();
   for(const [i, z] of baum.material){
-    if(z.werk != null && pos[z.werk]){ const p = pos[z.werk], a = i * GOLD; pos[i] = [p[0] + Math.cos(a) * (rWerk[z.werk] + 0.25), y, p[2] + Math.sin(a) * (rWerk[z.werk] + 0.25)]; }
-    else { const dj = baum.daecher.findIndex(d => d.name === z.dach); const c = dj >= 0 ? daecher[dj] : {mitte: [ohneMitte[0], y, ohneMitte[1]], R: ohneK.R}; const a = i * GOLD; pos[i] = [c.mitte[0] + Math.cos(a) * c.R * 0.92, y, c.mitte[2] + Math.sin(a) * c.R * 0.92]; }
+    if(z.werk != null && pos[z.werk]){ const p = pos[z.werk], k = proZiel.get(z.werk) || 0; proZiel.set(z.werk, k + 1);
+      // nach außen, weg von der Mitte seines Bezirks, nebeneinander; so überdeckt es kein fremdes Werk
+      const a = Math.atan2(p[2], p[0]) + (k - 0.5) * 0.5, d = rWerk[z.werk] + 0.45 + rWerk[i];
+      pos[i] = [p[0] + Math.cos(a) * d, y, p[2] + Math.sin(a) * d]; }
+    else { const dj = baum.daecher.findIndex(d => d.name === z.dach); const c = dj >= 0 ? daecher[dj] : {mitte: [0, y, 0], R: Rm}; const a = i * GOLD; pos[i] = [c.mitte[0] + Math.cos(a) * c.R * 0.92, y, c.mitte[2] + Math.sin(a) * c.R * 0.92]; }
   }
   return {pos, mitte: {mitte: [0, y, 0], R: Rm}, daecher, ohne: baum.ohne.length ? {mitte: [ohneMitte[0], y, ohneMitte[1]], R: ohneK.R} : null, R: Rall};
 }

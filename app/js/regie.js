@@ -15,7 +15,7 @@ export function regie(U, Z, N, RM){
   // Netz
   if(N){
     // Im Netz: das Ganze, oder ein Dach nah (U.dachK blendet weich hinüber)
-    const d = U.dach != null && N.daecher && N.daecher[U.dach] ? N.daecher[U.dach] : null;
+    const d = U.dach != null && N.bezirkZiel ? N.bezirkZiel(U.dach) : null;
     if(d) U.dachZiel = d; const dz = U.dachZiel, dk = dz ? (RM ? Math.round(U.dachK) : eio(U.dachK)) : 0;
     const nMitte = dz ? [mix(N.mitte[0], dz.mitte[0], dk), mix(N.mitte[1], dz.mitte[1], dk), mix(N.mitte[2], dz.mitte[2], dk)] : N.mitte;
     const nS = Math.exp(mix(Math.log(N.Rm2 * 0.9), Math.log(dz ? dz.R * 1.35 : N.Rm2 * 0.9), dk)), inward = U.netDir < 0;

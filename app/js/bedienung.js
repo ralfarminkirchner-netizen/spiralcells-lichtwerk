@@ -60,7 +60,7 @@ let markeW = 200;
 export function setzeMarke(sx, sy){
   const w = markeW, links = sx > CAM.cssW - w - 40;
   markeEl.classList.toggle('links', links);
-  const x = links ? sx - w - 22 : sx + 22, y = clamp(sy - 16, 60, CAM.cssH - 140);
+  const x = clamp(links ? sx - w - 22 : sx + 22, 12, Math.max(12, CAM.cssW - w - 12)), y = clamp(sy - 16, 60, CAM.cssH - 140);
   markeEl.style.transform = `translate(${Math.round(x)}px,${Math.round(y)}px)`;
 }
 
@@ -78,7 +78,8 @@ export function markeFuer(sel){
     if(gleich(U.sel, sel)) teile.push('tippen öffnet');
     return [m.titel, teile.join(' · ')]; }
   if(sel.art === 'tuer'){ const t = W.N.tueren[sel.i]; return [t.satz, t.wach ? 'wach · noch einmal tippen öffnet' : 'ruht gerade']; }
-  if(sel.art === 'mitte'){ const b = W.N.baum, n = b.mitte.werke.length; return [b.mitte.name || 'Zentrale', `die Mitte · ${n} ${n === 1 ? 'Werk' : 'Werke'} · ${b.daecher.length} ${b.daecher.length === 1 ? 'Dach' : 'Dächer'} darum`]; }
+  if(sel.art === 'mitte'){ const b = W.N.baum, n = W.N.werkeIn('mitte').length; return [b.mitte.name || 'Zentrale', [`die Mitte · ${n} ${n === 1 ? 'Werk' : 'Werke'} · ${b.daecher.length} ${b.daecher.length === 1 ? 'Dach' : 'Dächer'} darum`, gleich(U.sel, sel) ? 'tippen fährt hinein' : ''].filter(Boolean).join(' · ')]; }
+  if(sel.art === 'ohne'){ const n = W.N.werkeIn('ohne').length; return ['ohne Dach', [`${n} ${n === 1 ? 'Werk' : 'Werke'}, noch keinem Dach belegt zugeordnet`, gleich(U.sel, sel) ? 'tippen fährt hinein' : ''].filter(Boolean).join(' · ')]; }
   if(sel.art === 'dach'){ const d = W.N.daecher[sel.i], n = d.bereiche.reduce((a, x) => a + x.werke.length, 0);
     return [d.name, [d.satz, `${n} ${n === 1 ? 'Werk' : 'Werke'} in ${d.bereiche.length} ${d.bereiche.length === 1 ? 'Bereich' : 'Bereichen'}`, gleich(U.sel, sel) ? 'tippen fährt hinein' : ''].filter(Boolean).join(' · ')]; }
   if(sel.art === 'faden'){ const f = W.N.faeden[sel.i], A = W.B.monde[f.von], Bm = W.B.monde[f.nach];
@@ -97,7 +98,9 @@ export function herkunftSatz(sel){
   const zweig = W2.zweige[W2.zweigVon[i]].length, stelle = zweig > 1 ? `${W2.reihe[i]}. von ${zweig} im Zweig` : '';
   const satz = {kette: '', keim: 'aus der Ausgangsfrage', frei: 'ohne belegte Herkunft', form: `Form von ${name(p)}`,
     gabel: `fortgesetzt aus ${name(p)}${typeof s[p]?.stimme === 'number' ? ' (' + STIMMEN[s[p].stimme].name + ')' : ''}`, reihe: 'Teil einer Übernahme, keine Entwicklung'}[art] || '';
-  const kinder = W2.kinder[i].length, ab = kinder > 1 ? `${kinder} Fortsetzungen` : '';
+  // Fortsetzungen sind nur belegte Abstammung; eine Übernahmereihe und behaltene Formen heißen, was sie sind
+  const ks = W2.kinder[i], fort = ks.filter(k => W2.art[k] === 'kette' || W2.art[k] === 'gabel').length, reihe = ks.filter(k => W2.art[k] === 'reihe').length, formen = ks.filter(k => W2.art[k] === 'form').length;
+  const ab = [fort > 1 ? `${fort} Fortsetzungen` : '', reihe > 1 ? `${reihe} übernommene Fassungen` : '', formen ? `${formen} ${formen === 1 ? 'Form' : 'Formen'}` : ''].filter(Boolean).join(' · ');
   return [satz, stelle, ab].filter(Boolean).join(' · ');
 }
 
@@ -187,7 +190,7 @@ export function oeffneLese(sel){
   leseEl.scrollTop = gleicheFassung ? scroll : 0;
   if(!gleicheFassung || fokusInnen) leseEl.focus({preventScroll: true});
   verbirgMarke();
-  if(!gleicheFassung) ansage(`${leseEl.querySelector('.lese-wer').textContent}: ${leseEl.querySelector('.lese-titel').textContent}. Lesefläche offen, Escape schließt.`);
+  if(!gleicheFassung && !stoff.offen()) ansage(`${leseEl.querySelector('.lese-wer').textContent}: ${leseEl.querySelector('.lese-titel').textContent}. Lesefläche offen, Escape schließt.`);
 }
 /* Handlungen unten, still, immer an der angezeigten Fassung: zuerst Kristallisieren, Verbinden, Ablegen; der Rest auf Wunsch */
 function baueTun(v, sel){
@@ -256,7 +259,8 @@ export function siegel(satz, vorschau, knoepfe, lassen){
   setTimeout(() => { const f = w.querySelector('button'); f && f.focus({preventScroll: true}); }, 60);
 }
 export function stoppeHalten(wurzel){ (wurzel || document).querySelectorAll('.halten.drueckt').forEach(b => b.dispatchEvent(new Event('pointercancel'))); }
-export function schliesseSiegel(){ stoppeHalten(siegelEl); const innen = siegelEl.contains(document.activeElement); siegelEl.hidden = true; U.siegel = null; if(innen) (U.lese ? leseEl : canvas).focus({preventScroll: true}); }
+export function schliesseSiegel(){ stoppeHalten(siegelEl); const innen = siegelEl.contains(document.activeElement) || document.activeElement === document.body; siegelEl.hidden = true; U.siegel = null;
+  if(innen) (stoff.offen() ? document.querySelector('#stoff .stoff-flaeche') : U.lese ? leseEl : canvas).focus({preventScroll: true}); }
 
 /* ------------------------------------------------------------ Auswahl */
 export function waehle(sel, stufe){
@@ -293,12 +297,21 @@ function trefferTuer(sx, sy){ if(U.netK < 0.5) return -1; let best = -1, bd = 36
 
 function trefferSchirm(liste, sx, sy, r){ if(U.netK < 0.5) return -1; let best = -1, bd = r * r;
   for(let i = 0; i < liste.length; i++){ const h = liste[i]; if(!h || h[2] <= 0) continue; const d = (h[0] - sx) ** 2 + (h[1] - sy) ** 2; if(d < bd){ bd = d; best = i; } } return best; }
+/* Die Namen der Bezirke sind anfassbar: wer auf „FASKA“ tippt, meint FASKA */
+function trefferName(sx, sy){ if(U.netK < 0.5 || !W.N) return null; const el = document.getElementById('dachnamen'); if(!el) return null; const nd = W.N.daecher.length;
+  for(let j = 0; j < el.children.length; j++){ const s = el.children[j]; if(Number(s.style.opacity || 0) < 0.15) continue; const r = s.getBoundingClientRect();
+    if(sx >= r.left - 8 && sx <= r.right + 8 && sy >= r.top - 8 && sy <= r.bottom + 8) return j === 0 ? {art: 'mitte'} : j <= nd ? {art: 'dach', i: j - 1} : {art: 'ohne'}; }
+  return null; }
 export function treffer(sx, sy){
-  const t = trefferTuer(sx, sy); if(t >= 0) return {art: 'tuer', i: t};
-  const mo = trefferMond(sx, sy); if(mo >= 0) return {art: 'mond', i: mo, mond: W.B.monde[mo]};
-  const fa = trefferSchirm(U.knoten, sx, sy, 22); if(fa >= 0) return {art: 'faden', i: fa};
-  if(U.dach == null){ const da = trefferSchirm(U.daecherSchirm, sx, sy, 60); if(da >= 0) return {art: 'dach', i: da};
-    if(U.mitteSchirm && trefferSchirm([U.mitteSchirm], sx, sy, 60) === 0) return {art: 'mitte'}; }
+  const na = trefferName(sx, sy); if(na) return na;
+  if(U.netK >= 0.5){   // im Netz: das Nächstliegende gewinnt, gleich welcher Art
+    const kand = [], d2 = h => h && h[2] > 0 ? (h[0] - sx) ** 2 + (h[1] - sy) ** 2 : Infinity, nimm = (h, r, x) => { const d = d2(h); if(d < r * r) kand.push([d / (r * r), x]); };
+    U.tueren.forEach((h, i) => nimm(h, 30, {art: 'tuer', i}));
+    U.monde.forEach((h, i) => nimm(h, 30, {art: 'mond', i, mond: W.B.monde[i]}));
+    U.knoten.forEach((h, i) => nimm(h, 26, {art: 'faden', i}));
+    if(U.dach == null){ U.daecherSchirm.forEach((h, i) => nimm(h, 46, {art: 'dach', i})); nimm(U.mitteSchirm, 46, {art: 'mitte'}); nimm(U.ohneSchirm, 46, {art: 'ohne'}); }
+    const k = trefferKopf(sx, sy); if(k >= 0) kand.push([0.6, {art: 'kopf', i: k}]);
+    kand.sort((a, b) => a[0] - b[0]); return kand.length ? kand[0][1] : null; }
   const k = trefferKopf(sx, sy); if(k >= 0) return {art: 'kopf', i: k};
   if(trefferKeim(sx, sy)) return {art: 'keim', mond: W.Z.m, zelle: W.Z};
   const s = trefferSame(sx, sy); if(s >= 0) return {art: 'same', i: s, mond: W.Z.m, zelle: W.Z};
@@ -328,7 +341,7 @@ function tippen(sx, sy){
   if(t.art === 'tuer'){ if(gleich(U.sel, t)){ tuerOeffnen(W.N.tueren[t.i]); return; } waehle(t, 1); return; }
   if(t.art === 'mond'){ if(gleich(U.sel, t)){ api.oeffneMond(t.i, {}); return; } waehle(t, 1); return; }
   if(t.art === 'dach'){ if(gleich(U.sel, t)){ api.insDach(t.i); return; } waehle(t, 1); return; }
-  if(t.art === 'mitte'){ waehle(t, 1); return; }
+  if(t.art === 'mitte' || t.art === 'ohne'){ if(gleich(U.sel, t)){ api.insDach(t.art); return; } waehle(t, 1); return; }
   if(t.art === 'faden'){ if(gleich(U.sel, t)){ const f = W.N.faeden[t.i], e = f.kanten[0], m = W.B.mondVon.get(W.B.werkVon(e.from_variant_id)); waehle(null); api.oeffneMond(W.B.monde.indexOf(m), {waehle: e.from_variant_id, stufe: 2}); return; } waehle(t, 1); return; }
   // Same oder Keim: erste Berührung Marke, zweite Lesefläche
   if(gleich(U.sel, t)){ if(U.stufe < 2){ waehle(t, 2); } return; }
@@ -353,7 +366,7 @@ export function installiere(a){
   formen.init({absaetze, kurz, ansage, zeile, haltKnopf, behalten: (v, k) => api.formBehalten(v, k), funke(){ const p = kornWelt(U.sel); if(p) burst(p[0], p[1], p[2], SILVER, 18, 0.3, 0.7, 0.01); }});
   canvas.addEventListener('pointerdown', e => {
     if(U.fahrt){ U.netK = U.netT; U.fahrt = null; }
-    U.flug = null;   // Berührung schneidet den Flug ab
+    U.flug = null; clearTimeout(U.lesenUhr);   // Berührung schneidet den Flug ab, und das Lesen danach
     try{ canvas.setPointerCapture(e.pointerId); }catch(_){} U.pp.set(e.pointerId, {x: e.clientX, y: e.clientY}); activity(); klangWake();
     if(U.pp.size === 2){ const [p, q] = [...U.pp.values()]; U.pinch0 = Math.hypot(p.x - q.x, p.y - q.y); U.zoom0 = U.zoom; U.mode = 'pinch'; setHold(false); U.bind = null; return; }
     U.mode = 'press'; U.x0 = U.x = e.clientX; U.y0 = U.y = e.clientY; U.t0 = performance.now();
@@ -409,7 +422,13 @@ export function installiere(a){
     else if(k === '?'){ U.hintUntil = W.wall + 8; hintEl.textContent = 'S Seite · N Netz · W Werkraum · 1–5 eine Stimme · ⌘V legt ab · Halten verbindet · Esc zurück'; }
     else if(k === 'Enter' && U.waehlen && U.sel && (U.sel.art === 'same' || U.sel.art === 'keim')){ const w = U.waehlen, nach = U.sel.art === 'same' ? U.sel.mond.samen[U.sel.i].id : U.sel.mond.keim[U.sel.mond.keim.length - 1].id;
       U.waehlen = null; if(nach !== w.von && U.sel.mond.id === w.mondId) api.kanteFragen(w.von, nach); else zeile('Nichts verbunden.'); }
-    else if(k === 'Enter'){ if(U.sel){ if(U.sel.art === 'mond') api.oeffneMond(U.sel.i, {}); else if(U.sel.art === 'dach') api.insDach(U.sel.i); else if(U.sel.art === 'mitte' || U.sel.art === 'faden'){ const p = U.sel.art === 'mitte' ? U.mitteSchirm : U.knoten[U.sel.i]; if(p) tippen(p[0], p[1]); } else if(U.sel.art === 'tuer'){ tippen(U.tueren[U.sel.i][0], U.tueren[U.sel.i][1]); } else waehle(U.sel, 2); } }
+    else if(k === 'Enter'){ if(U.sel){ const s = U.sel;
+      if(s.art === 'mond') api.oeffneMond(s.i, {}); else if(s.art === 'dach') api.insDach(s.i); else if(s.art === 'mitte' || s.art === 'ohne') api.insDach(s.art);
+      else if(s.art === 'faden'){ const f = W.N.faeden[s.i], e = f.kanten[0], m = W.B.mondVon.get(W.B.werkVon(e.from_variant_id)); waehle(null); api.oeffneMond(W.B.monde.indexOf(m), {waehle: e.from_variant_id, stufe: 2}); }
+      else if(s.art === 'tuer') tuerOeffnen(W.N.tueren[s.i]); else waehle(s, 2); } }
+    else if((k === 'f' || k === 'F') && U.netK > 0.5 && W.N && W.N.faeden.length){   // Fäden zwischen Werken, einer nach dem anderen
+      const n = W.N.faeden.length; let i = U.sel && U.sel.art === 'faden' ? U.sel.i + (e.shiftKey ? -1 : 1) : 0; i = (i + n) % n;
+      waehle({art: 'faden', i}, 1); const [t, s] = markeFuer(U.sel); ansage(`Faden ${i + 1} von ${n}: ${t}. ${s}`); }
     else if(k === 'ArrowUp'){ U.elevOff = clamp(U.elevOff + 0.08, 2 * DEG - U.baseElev, 90 * DEG - U.baseElev); }
     else if(k === 'ArrowDown'){ U.elevOff = clamp(U.elevOff - 0.08, 2 * DEG - U.baseElev, 90 * DEG - U.baseElev); }
     else if((k === 'h' || k === 'H') && !U.keyHold){ U.keyHold = true; setHold(true, CAM.cssW / 2, CAM.cssH / 2); }
@@ -456,6 +475,7 @@ function seite(){ if(U.netT > 0.5) return; U.kelchT = U.kelchT > 0.5 ? 0 : 1; U.
   const b = $('#seite'); b.setAttribute('aria-pressed', U.kelchT > 0.5 ? 'true' : 'false'); b.setAttribute('aria-label', U.kelchT > 0.5 ? 'Von oben: das Werk' : 'Von der Seite: Geschichte');
   zeile(U.kelchT > 0.5 ? 'Von der Seite: die Geschichte. Unten der Keim, oben das Jüngste.' : mondSatz(W.Z && W.Z.m)); }
 export function zurueck(){
+  clearTimeout(U.lesenUhr);
   if(U.siegel){ const l = U.siegel.lassen; schliesseSiegel(); l && l(); return; }
   if(U.waehlen){ U.waehlen = null; zeile(mondSatz(W.Z && W.Z.m)); return; }
   if(U.lese){ schliesseLese(true); U.stufe = 1; return; }
@@ -466,10 +486,11 @@ export function zurueck(){
 }
 function schritt(d){
   if(U.netK > 0.5){
-    if(U.dach == null && W.N.daecher.length){ const n = W.N.daecher.length + 1;   // die Mitte und die Dächer
-      let i = U.sel && U.sel.art === 'dach' ? U.sel.i + 1 : U.sel && U.sel.art === 'mitte' ? 0 : (d > 0 ? -1 : 0); i = ((i + d) % n + n) % n;
-      waehle(i === 0 ? {art: 'mitte'} : {art: 'dach', i: i - 1}, 1); const [t, s] = markeFuer(U.sel); ansage(t + '. ' + s + (i ? '. Eingabe fährt hinein.' : '')); return; }
-    const liste = U.dach != null ? W.N.daecher[U.dach].bereiche.flatMap(b => b.werke) : W.B.monde.map((_, k) => k), n = liste.length;
+    if(U.dach == null && W.N.daecher.length){   // die Mitte, die Dächer und „ohne Dach“
+      const ring = [{art: 'mitte'}, ...W.N.daecher.map((_, i) => ({art: 'dach', i})), ...(W.N.L.ohne ? [{art: 'ohne'}] : [])], n = ring.length;
+      let i = U.sel ? ring.findIndex(r => gleich(r, U.sel)) : -1; i = i < 0 ? (d > 0 ? 0 : n - 1) : ((i + d) % n + n) % n;
+      waehle(ring[i], 1); const [t, s] = markeFuer(U.sel); ansage(t + '. ' + s + '. Eingabe fährt hinein.'); return; }
+    const liste = U.dach != null ? W.N.werkeIn(U.dach) : W.B.monde.map((_, k) => k), n = liste.length; if(!n) return;
     let j = U.sel && U.sel.art === 'mond' ? liste.indexOf(U.sel.i) + d : (d > 0 ? 0 : n - 1); j = (j + n) % n; const i = liste[j];
     waehle({art: 'mond', i, mond: W.B.monde[i]}, 1); const [t, s] = markeFuer(U.sel); ansage(t + '. ' + s); return; }
   const Z = W.Z; if(!Z) return; const n = Z.m.samen.length;
@@ -483,7 +504,7 @@ function schritt(d){
 let hoverT = 0;
 function hoverPruefen(sx, sy){ const now = performance.now(); if(now - hoverT < 60) return; hoverT = now;
   const t = treffer(sx, sy); U.hover = t; canvas.classList.toggle('zeigt', !!t);
-  if(!U.sel && !U.namenAn && !U.siegel && t && (t.art === 'mond' || t.art === 'tuer' || t.art === 'same' || t.art === 'keim' || t.art === 'kopf' || t.art === 'dach' || t.art === 'mitte' || t.art === 'faden')){ const [a, b] = markeFuer(t); zeigeMarke(a, b); U.hoverMarke = true; }
+  if(!U.sel && !U.namenAn && !U.siegel && t && (t.art === 'mond' || t.art === 'tuer' || t.art === 'same' || t.art === 'keim' || t.art === 'kopf' || t.art === 'dach' || t.art === 'mitte' || t.art === 'ohne' || t.art === 'faden')){ const [a, b] = markeFuer(t); zeigeMarke(a, b); U.hoverMarke = true; }
   else if(!U.sel && U.hoverMarke){ verbirgMarke(); U.hoverMarke = false; } }
 
 /* Lage der Marke und der leisen Anzeigen, jedes Bild */
@@ -496,6 +517,7 @@ export function uiFrame(){
     else if(sel.art === 'tuer'){ p = U.tueren[sel.i]; }
     else if(sel.art === 'dach'){ p = U.daecherSchirm[sel.i]; }
     else if(sel.art === 'mitte'){ p = U.mitteSchirm; }
+    else if(sel.art === 'ohne'){ p = U.ohneSchirm; }
     else if(sel.art === 'faden'){ p = U.knoten[sel.i]; }
     else if(sel.art === 'kopf'){ p = (U.netK > 0.6 ? U.bigHeads : U.heads)[sel.i]; }
     if(p && p[2] > 0) setzeMarke(p[0], p[1]); }

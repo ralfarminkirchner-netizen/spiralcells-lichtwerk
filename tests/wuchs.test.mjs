@@ -69,17 +69,34 @@ test('Zelle und Netz: alle Monde bauen, jede Lage endlich, Punktbudget gehalten'
   CAM.cssW = 1200; CAM.cssH = 800;
   let maxPc = 0;
   for(const m of B.monde){
-    const Z = new Zelle(m, {ohneAufzug: false});
-    for(let k = 0; k < 600; k++) Z.step(1 / 120, false);
+    const Z = new Zelle(m, {ohneAufzug: true}); Z.sofort();
+    for(let k = 0; k < 240; k++) Z.step(1 / 120, false);
+    if(m.samen.length) U.sel = {art: 'same', i: m.samen.length - 1, mond: m, zelle: Z};   // mit Auswahl: Abstammungslicht
     const o = [0, 0, 0];
     for(let g = 0; g < Z.G; g++){ Z.kornPos(g, o); assert.ok(o.every(Number.isFinite), m.titel); }
     for(let i = 0; i < m.samen.length; i++){ Z.seedPos(i, o); assert.ok(o.every(Number.isFinite), m.titel); }
     setCamera({target: Z.center(), dist: 5, yaw: 0, pitch: 1.4, fov: 0.6, S: Z.S.Sc, shift: 0, shiftX: 0}, 1200, 800);
     L.pc = 0; baueZelle(Z, U, 3, 1 / 60, 1); maxPc = Math.max(maxPc, L.pc);
+    U.kelchK = 1; Z.kelchK = 1; L.pc = 0; baueZelle(Z, U, 3.1, 1 / 60, 1); maxPc = Math.max(maxPc, L.pc); U.kelchK = 0; U.sel = null;
   }
   assert.ok(maxPc < 40000, 'Punkte je Zelle ' + maxPc);
   const N = new Netz(B, null);
   setCamera({target: N.mitte, dist: N.Rm2 * 3, yaw: 0.35, pitch: 0.87, fov: 0.7, S: N.Rm2, shift: 0, shiftX: 0}, 1200, 800);
   L.pc = 0; baueNetz(N, U, 2, 1, -1, 0); assert.ok(L.pc > 1000 && L.pc < 60000, 'Punkte im Netz ' + L.pc);
   assert.equal(N.baum.ohne.length, B.monde.length, 'ohne Ordnung steht alles „ohne Dach“');
+  const N2 = new Netz(B, JSON.parse(readFileSync('ordnung.json', 'utf8')));
+  L.pc = 0; baueNetz(N2, U, 2, 1, -1, 0); assert.ok(L.pc < 80000, 'Punkte im Netz mit Dächern ' + L.pc);
+});
+
+test('Ordnung: Formfehler werden „fehlt“, nie eine Ausnahme', () => {
+  for(const O of [{material: [{}]}, {mitte: {werke: [null, 3, {x: 1}]}}, {daecher: {}}, {daecher: [{bereiche: [null, {werke: 'FASKA GOLD'}]}]}, {mitte: 'x'}, [], 'kaputt', null]){
+    const b = ordne(B, O); assert.equal(b.mitte.werke.length + b.ohne.length + b.material.size + b.daecher.reduce((a, d) => a + d.bereiche.reduce((x, y) => x + y.werke.length, 0), 0), B.monde.length); }
+  const b = ordne(B, {mitte: {werke: [null, 'Zentrale · Material bekommt Form']}}); assert.ok(b.fehlt.length >= 1 && b.mitte.werke.length === 1);
+});
+
+test('Wuchs: eine nachträglich behauptete Kante wird nie Abstammung', () => {
+  const s = structuredClone(state), m = B.monde.find(x => x.titel.startsWith('Zentrale')), kimi = m.samen.find(x => x.stimme === 4), claude = m.samen.find(x => x.stimme === 0);
+  s.edges.push({id: 'probe-kante', edge_type: 'erweitert', from_variant_id: kimi.id, to_variant_id: claude.id, author_id: 'ralf-probe', created_at: '2030-01-01T00:00:00Z', note: 'Von Ralf im Lichtwerk verbunden.'});
+  const m2 = bestand(s).monde.find(x => x.id === m.id), W2 = wuchs(m2), i = m2.samen.findIndex(x => x.id === kimi.id);
+  assert.notEqual(W2.art[i], 'gabel'); assert.notEqual(W2.eltern[i], m2.samen.findIndex(x => x.id === claude.id));
 });

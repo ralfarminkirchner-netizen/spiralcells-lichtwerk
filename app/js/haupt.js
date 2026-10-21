@@ -38,10 +38,16 @@ const RUHEMOND = {id: '', titel: 'SPiRALCELLS ruht', samen: [], keim: [], stimme
 
 async function laden(){
   const [{daten, stand}, umg, ord] = await Promise.all([schreib.lesenMitStand('/lichtwerk/graph'), schreib.lesen('/lichtwerk/umgebung').catch(() => []), schreib.lesen('/lichtwerk/ordnung').catch(() => null)]);
-  W.ordnung = ord; W.B = bestand(daten); W.N = new Netz(W.B, W.ordnung); W.umgebung = umg; W.N.tueren = umg.filter(u => u.adresse); W.stand = stand; dachNamen();
+  W.ordnung = ord; W.B = bestand(daten); W.N = netzBauen(W.B); W.umgebung = umg; W.N.tueren = umg.filter(u => u.adresse); W.stand = stand; dachNamen();
   W.namen = link.namen(W.B.monde); W.geladen = Date.now(); W.N.neu = W.neuMonde || null; zuletztMerken();
   W.ruht = false; document.body.classList.remove('ruht'); tuerNamen();
 }
+/* Ein Formfehler in der Ordnung wird ein Satz, kein „schläft“: das Netz entsteht dann ohne Ordnung */
+function netzBauen(B){
+  try{ return new Netz(B, W.ordnung); }
+  catch(e){ W.ordnungKaputt = true; setTimeout(() => B && W.B === B && window.dispatchEvent(new Event('ordnung-unlesbar')), 0); return new Netz(B, null); }
+}
+addEventListener('ordnung-unlesbar', () => B.zeile('Die Ordnung ist gerade nicht lesbar. Das Netz zeigt alle Werke ohne Dach.'));
 function ruhen(){
   W.ruht = true; document.body.classList.add('ruht'); if(!W.Z || W.Z.m !== RUHEMOND){ W.Z = new Zelle(RUHEMOND, {ohneAufzug: true, RM: W.RM, au: klang}); }
   U.netT = 0; B.zeile('SPiRALCELLS schläft gerade. Das Bild wacht mit ihm auf.');
@@ -52,6 +58,7 @@ function mondNachId(id){ return W.B ? W.B.monde.findIndex(m => m.id === id) : -1
 function oeffneMond(i, opt = {}){
   const m = W.B.monde[i]; if(!m) return;
   if(!opt.behalteWeg) U.weg = [];
+  clearTimeout(U.lesenUhr); if(B.stoff.offen()) B.stoff.schliesse();
   // Flug: von Zelle zu Zelle zieht die Kamera kurz auf, das Netz zeigt den Weg; reduzierte Bewegung schneidet
   if(W.Z && W.Z.m !== m && W.Z.m.id && !W.RM && U.netK < 0.3 && opt.flug !== false) U.flug = {von: W.Z.center(), S: W.Z.S.Sc, t0: performance.now(), dauer: 1500};
   else U.flug = null;
@@ -71,13 +78,17 @@ function oeffneMond(i, opt = {}){
   ortAktualisieren();
 }
 /* In ein Dach hinein und wieder hinaus: die Kamera fährt, die anderen Dächer treten zurück */
-function insDach(j){ if(!W.N || !W.N.daecher[j]) return; U.dach = j; B.waehle(null); const d = W.N.daecher[j];
-  const n = d.bereiche.reduce((a, b) => a + b.werke.length, 0); B.zeile(`${d.name}: ${n} ${n === 1 ? 'Werk' : 'Werke'} in ${d.bereiche.length} ${d.bereiche.length === 1 ? 'Bereich' : 'Bereichen'}.`); }
-function ausDach(){ if(U.dach == null) return false; const j = U.dach; U.dach = null; B.waehle({art: 'dach', i: j}, 1); B.zeile(B.netzSatz(W.B)); return true; }
+function insDach(j){ if(!W.N || !W.N.bezirkZiel(j)) return; U.dach = j; B.waehle(null);
+  const n = W.N.werkeIn(j).length, wort = `${n} ${n === 1 ? 'Werk' : 'Werke'}`;
+  const satz = j === 'mitte' ? `${W.N.baum.mitte.name}: ${wort} in der Mitte.` : j === 'ohne' ? `Ohne Dach: ${wort}, noch keinem Dach zugeordnet.`
+    : `${W.N.daecher[j].name}: ${wort} in ${W.N.daecher[j].bereiche.length} ${W.N.daecher[j].bereiche.length === 1 ? 'Bereich' : 'Bereichen'}.`;
+  B.zeile(satz); B.ansage(satz + ' Pfeile wählen ein Werk, Escape führt hinaus.'); }
+function ausDach(){ if(U.dach == null) return false; const j = U.dach; U.dach = null; B.waehle(j === 'mitte' ? {art: 'mitte'} : j === 'ohne' ? {art: 'ohne'} : {art: 'dach', i: j}, 1); B.zeile(B.netzSatz(W.B)); return true; }
 function zumNetz(){
   if(!W.B || W.ruht) return;
+  clearTimeout(U.lesenUhr); if(B.stoff.offen()) B.stoff.schliesse();
   B.waehle(null); U.netDir = 1; U.netT = 1; U.kelchT = 0; U.zoom = 1; U.elevOff = 0; U.yawOff = 0; U.waehlen = null;
-  const dj = W.aktiv >= 0 && W.N ? W.N.dachVon(W.aktiv) : -1; U.dach = dj >= 0 ? dj : null;   // zurück in das Dach, aus dem du kamst
+  U.dach = W.aktiv >= 0 && W.N && W.N.baum.daecher.length ? W.N.bezirk(W.aktiv) : null;   // zurück in den Bezirk, aus dem du kamst
   if(W.aktiv >= 0) B.waehle({art: 'mond', i: W.aktiv, mond: W.B.monde[W.aktiv]}, 1);   // Rückweg: der Mond, aus dem du kamst, bleibt markiert
   B.zeile(B.netzSatz(W.B)); W.titelBis = -1; ortAktualisieren();
 }
@@ -88,7 +99,7 @@ function zurueck(){
   if(U.weg.length){ const w = U.weg.pop(); const i = mondNachId(w.mond);
     if(i >= 0){ if(i === W.aktiv && W.Z){ const Z = W.Z;
         if(w.same){ const si = Z.m.samen.findIndex(s => s.id === w.same); if(si >= 0){ B.waehle({art: 'same', i: si, mond: Z.m, zelle: Z}, 2); stoffZurueck(w); return; } }
-        if(w.keim){ B.waehle({art: 'keim', mond: Z.m, zelle: Z}, 2); return; }
+        if(w.keim){ B.waehle({art: 'keim', mond: Z.m, zelle: Z}, 2); stoffZurueck(w); return; }
         B.waehle(null); return; }
       oeffneMond(i, {ohneAufzug: true, waehle: w.same || w.keim, stufe: 2, behalteWeg: true}); stoffZurueck(w); return; } }
   zumNetz();
@@ -113,12 +124,14 @@ function ortZurueck(){
 function oeffneStoff(sel, opt = {}){ if(!sel || !W.Z) return; if(sel.art === 'same') B.waehle(sel, 2); B.stoff.oeffne({mond: sel.mond, i: sel.i, keim: sel.art === 'keim', ...opt}); merkeOrt(); }
 function rueckSatz(){ const w = U.weg[U.weg.length - 1]; if(!w || !w.ausStoff || !W.B) return 'zur Zelle';
   const f = w.stoff && W.B.fassungen.get(w.stoff.variantId); return f ? `zurück zu „${kurz(f.label, 40)}“` : 'zurück'; }
-function zurueckAusStoff(){ const w = U.weg[U.weg.length - 1]; B.stoff.schliesse();
+function zurueckAusStoff(){ const w = U.weg[U.weg.length - 1]; clearTimeout(U.lesenUhr); B.stoff.schliesse();
   if(w && w.ausStoff){ zurueck(); return; }   // über einen Faden gekommen: dorthin zurück, mit Lesestelle
-  if(U.sel) B.waehle(U.sel, 2); merkeOrt(); }
-function stoffZurueck(w){ if(!w || !w.stoff || !W.Z) return; const Z = W.Z, si = Z.m.samen.findIndex(s => s.id === w.stoff.variantId), keim = si < 0 && Z.m.keim.some(v => v.id === w.stoff.variantId);
-  if(si < 0 && !keim) return;
-  B.stoff.oeffne({mond: Z.m, i: si, keim, modus: w.stoff.modus, vergleich: w.stoff.vergleich, stelle: w.stoff.stelle}); merkeOrt(); }
+  if(U.sel) B.waehle(U.sel, 2); merkeOrt();
+  // Der Fokus kehrt dorthin zurück, wo der Leseraum begann
+  const k = [...document.querySelectorAll('#lese .lese-tun .halten')].find(b => /Ganz lesen/.test(b.textContent)); (k || document.getElementById('lese')).focus({preventScroll: true});
+  B.ansage('Zurück in der Lesefläche.'); }
+function stoffZurueck(w){ if(!w || !w.stoff || !W.Z) return; const Z = W.Z;
+  if(B.stoff.oeffne({mond: Z.m, variantId: w.stoff.variantId, modus: w.stoff.modus, vergleich: w.stoff.vergleich, stelle: w.stoff.stelle})) merkeOrt(); }
 /* Aus dem Leseraum einer Verwendung folgen: in die andere Fassung an ihre Stelle, der Rückweg führt an die eigene */
 function folgeStoff(variantId, mond, opt){
   const Z = W.Z; if(!Z) return; const z = B.stoff.zustand(), hier = hierMerken();
@@ -127,9 +140,9 @@ function folgeStoff(variantId, mond, opt){
   if(mond && mond.id !== Z.m.id){ const i = mondNachId(mond.id); if(i < 0) return; oeffneMond(i, {ohneAufzug: true, waehle: variantId, stufe: 2, behalteWeg: true}); }
   const Zn = W.Z, si = Zn.m.samen.findIndex(s => s.id === variantId), keim = si < 0 && Zn.m.keim.some(v => v.id === variantId);
   if(si >= 0) B.waehle({art: 'same', i: si, mond: Zn.m, zelle: Zn}, 2); else if(keim) B.waehle({art: 'keim', mond: Zn.m, zelle: Zn}, 2);
-  // Erst fliegen, dann lesen: der Weg zwischen den Werken bleibt sichtbar
-  const lesen = () => { if(W.Z !== Zn || B.stoff.offen()) return; if(si >= 0) B.stoff.oeffne({mond: Zn.m, i: si, ...opt}); else if(keim) B.stoff.oeffne({mond: Zn.m, keim: true, ...opt}); merkeOrt(); };
-  if(U.flug) setTimeout(lesen, U.flug.dauer * 0.9); else lesen();
+  // Erst fliegen, dann lesen: der Weg zwischen den Werken bleibt sichtbar. Berührung, Escape oder ein Ortswechsel heben das auf.
+  const lesen = () => { if(W.Z !== Zn || B.stoff.offen() || U.netT > 0.5 || W.ruht || !U.sel) return; B.stoff.oeffne({mond: Zn.m, variantId, ...opt}); merkeOrt(); };
+  clearTimeout(U.lesenUhr); if(U.flug) U.lesenUhr = setTimeout(lesen, U.flug.dauer * 0.9); else lesen();
   B.zeile(`In „${kurz(Zn.m.titel, 50)}“. Der Rückweg steht oben links.`); merkeOrt();
 }
 /* Der Ort, an dem Ralf gerade ist: im Speicher dieses Tabs nur Kennungen, in der Adresszeile nur lesbare Zahlen */
@@ -138,26 +151,35 @@ function merkeOrt(){
   if(WERKSTATT || !W.Z || !W.namen) return; const Z = W.Z, sel = U.sel, z = B.stoff.zustand();
   const same = sel && sel.art === 'same' && sel.mond === Z.m ? Z.m.samen[sel.i]?.id : null;
   try{ sessionStorage.setItem(ORT, JSON.stringify({mond: Z.m.id, same, stufe: U.stufe, stoff: z, kelch: U.kelchT > 0.5})); }catch(_){}
-  const fi = same ? Z.m.samen.findIndex(s => s.id === same) + 1 : 0, vi = z && z.vergleich ? Z.m.samen.findIndex(s => s.id === z.vergleich) + 1 : 0;
-  try{ history.replaceState(null, '', link.bau(W.namen[W.aktiv], W.von, {fassung: fi || null, lesen: !!z, stelle: z ? z.stelle : null, vergleich: vi || null})); }catch(_){}
+  const frage = !!(z && Z.m.keim.some(v => v.id === z.variantId)), lesend = z ? Z.m.samen.findIndex(s => s.id === z.variantId) + 1 : 0;
+  const fi = lesend || (same ? Z.m.samen.findIndex(s => s.id === same) + 1 : 0);
+  const vi = z && z.modus === 'vergleich' && z.vergleich && z.vergleich !== z.variantId ? Z.m.samen.findIndex(s => s.id === z.vergleich) + 1 : 0;
+  try{ history.replaceState(null, '', link.bau(W.namen[W.aktiv], W.von, {fassung: frage ? null : fi || null, frage, lesen: !!z, stelle: z ? z.stelle : null, vergleich: vi || null})); }catch(_){}
 }
 function ortWiederholen(ziel){
   const Z = W.Z; if(!Z) return;
   let o = null; try{ o = JSON.parse(sessionStorage.getItem(ORT) || 'null'); }catch(_){}
   if(o && o.mond !== Z.m.id) o = null;
-  // Die Adresszeile gewinnt (ein geteilter Link), sonst der gemerkte Ort dieses Tabs
-  const si = ziel && ziel.fassung ? ziel.fassung - 1 : o && o.same ? Z.m.samen.findIndex(s => s.id === o.same) : -1;
+  // Die Adresszeile gewinnt (ein geteilter Link), sonst der gemerkte Ort dieses Tabs; beides wird nie vermischt
+  const ausLink = !!(ziel && (ziel.fassung || ziel.frage));
+  if(ausLink && ziel.frage){ if(!Z.m.keim.length) return; Z.sofort(); B.waehle({art: 'keim', mond: Z.m, zelle: Z}, 2);
+    if(ziel.lesen) B.stoff.oeffne({mond: Z.m, keim: true, stelle: ziel.stelle ? ziel.stelle - 1 : null}); return; }
+  if(!ausLink && o && o.stoff && Z.m.keim.some(v => v.id === o.stoff.variantId)){ Z.sofort(); B.waehle({art: 'keim', mond: Z.m, zelle: Z}, 2);
+    B.stoff.oeffne({mond: Z.m, variantId: o.stoff.variantId, modus: o.stoff.modus, vergleich: o.stoff.vergleich, stelle: o.stoff.stelle}); return; }
+  const si = ausLink ? ziel.fassung - 1 : o && o.same ? Z.m.samen.findIndex(s => s.id === o.same) : -1;
   if(si < 0 || !Z.m.samen[si]) return;
   Z.sofort(); B.waehle({art: 'same', i: si, mond: Z.m, zelle: Z}, 2);
-  const lesen = ziel && ziel.fassung ? ziel.lesen : !!(o && o.stoff);
-  if(lesen){ const vg = ziel && ziel.vergleich ? Z.m.samen[ziel.vergleich - 1]?.id : o && o.stoff ? o.stoff.vergleich : null;
-    const stelle = ziel && ziel.stelle ? ziel.stelle - 1 : o && o.stoff ? o.stoff.stelle : null;
+  const passt = o && o.stoff && o.stoff.variantId === Z.m.samen[si].id ? o.stoff : null;   // gemerkter Leseraum nur zur selben Fassung
+  const lesen = ausLink ? ziel.lesen : !!passt;
+  if(lesen){ const vg = ausLink ? (ziel.vergleich ? Z.m.samen[ziel.vergleich - 1]?.id : null) : passt.modus === 'vergleich' ? passt.vergleich : null;
+    const stelle = ausLink ? (ziel.stelle ? ziel.stelle - 1 : null) : passt.stelle;
     B.stoff.oeffne({mond: Z.m, i: si, modus: vg ? 'vergleich' : 'lesen', vergleich: vg, stelle}); }
 }
 
 /* Einer belegten Beziehung folgen, auch in einen anderen Mond; der Rückweg wird gemerkt */
 function hierMerken(){ const Z = W.Z; if(!Z || !U.sel) return null;
-  return {mond: Z.m.id, same: U.sel.art === 'same' ? Z.m.samen[U.sel.i].id : null, keim: U.sel.art === 'keim' ? (Z.m.keim[Z.m.keim.length - 1] || {}).id : null}; }
+  const z = B.stoff.zustand(), keimOffen = z && Z.m.keim.some(v => v.id === z.variantId) ? z.variantId : null;
+  return {mond: Z.m.id, same: U.sel.art === 'same' ? Z.m.samen[U.sel.i].id : null, keim: U.sel.art === 'keim' ? keimOffen || (Z.m.keim[Z.m.keim.length - 1] || {}).id : null}; }
 function folge(variantId, mond){
   const Z = W.Z; if(!Z) return;
   const hier = hierMerken(); if(hier) U.weg.push(hier);
@@ -191,14 +213,14 @@ async function erneuernJetzt(von, opt){
   W.neuesWartet = false;
   const alt = W.Z, altId = alt && alt.m.id, altSel = U.sel, altSelId = altSel && altSel.art === 'same' ? alt.m.samen[altSel.i]?.id : null, stufe = U.stufe;
   const altB = W.B; W.B = bestand(daten); W.stand = stand;
-  const tueren = W.N ? W.N.tueren : []; W.N = new Netz(W.B, W.ordnung); W.N.tueren = tueren; W.N.neu = W.neuMonde || null; W.namen = link.namen(W.B.monde); dachNamen();
+  const tueren = W.N ? W.N.tueren : []; W.N = netzBauen(W.B); W.N.tueren = tueren; W.N.neu = W.neuMonde || null; W.namen = link.namen(W.B.monde); dachNamen();
   zuletztMerken();
   if(!alt || !altId){ return; }
   const i = mondNachId(altId); if(i < 0) return;
   W.aktiv = i; const m = W.B.monde[i];
   // Hat sich an diesem Mond nichts geändert, bleibt die Zelle, wie sie ist (nur Bestand und Netz sind neu)
   const fingerabdruck = mm => mm.samen.map(s => s.id + s.status).join() + '|' + mm.keim.map(v => v.id + v.status).join() + '|' + mm.faeden.length + '|' + mm.befunde.length;
-  if(fingerabdruck(m) === fingerabdruck(alt.m)){ alt.m = m; alt.origin = W.N.pos[i]; if(altSel && altSel.mond) altSel.mond = m; return; }
+  if(fingerabdruck(m) === fingerabdruck(alt.m)){ alt.m = m; alt.origin = W.N.pos[i]; if(altSel && altSel.mond) altSel.mond = m; if(B.stoff.offen()) B.stoff.umhaengen(); return; }
   const Z = new Zelle(m, {origin: W.N.pos[i], RM: W.RM, au: klang, ohneAufzug: true}); zuletztMarkieren(Z);
   // Bewegung übernehmen, damit nichts springt; Flüge (auch ein laufender Einwurf) wandern mit
   for(const k of ['theta', 'kv']) Z.S[k] = alt.S[k].slice();
@@ -225,6 +247,7 @@ async function erneuernJetzt(von, opt){
     const si = altSelId ? m.samen.findIndex(s => s.id === altSelId) : -1;
     if(altSel.art === 'keim') B.waehle({art: 'keim', mond: m, zelle: Z}, stufe); else if(si >= 0) B.waehle({art: 'same', i: si, mond: m, zelle: Z}, stufe); else B.waehle(null);
   }
+  if(B.stoff.offen()) B.stoff.umhaengen();
 }
 
 /* ------------------------------------------------------- Schreibwege */
@@ -234,7 +257,7 @@ async function ralfSicher(){
   if(W.B.mensch) return W.B.mensch;
   return new Promise(res => {
     B.siegel('Für dich gibt es in SPiRALCELLS noch keinen eigenen Eintrag.', 'Ablegen, Verbinden und Behalten geschehen in deinem Namen. Halten legt den Eintrag „Ralf“ an, als Mensch, nicht als Modell.',
-      [B.haltKnopf('Eintrag anlegen', 'halten', 'gold', 1500, async () => {
+      [B.haltKnopf('Eintrag anlegen', 'halten', '', 1500, async () => {
         try{ const a = await schreib.ralfAnlegen(); B.schliesseSiegel(); try{ await erneuern(null, {explizit: true}); }catch(_){} res(W.B.mensch || a); }
         catch(e){ B.schliesseSiegel(); B.zeile(ablehnung(e) + ' Es wurde nichts angelegt.'); res(null); } })],
       () => res(null));
@@ -266,7 +289,7 @@ async function einwurfFragen(text, zielId, zielLabel, mondId, ziel, gesehen){
   const satz = (zielId ? `In „${kurz(m.titel, 48)}“ ablegen, als Weiterarbeit an „${kurz(zielLabel, 56)}“` : m.keim.length ? `In „${kurz(m.titel, 48)}“ ablegen, zur Ausgangsfrage` : `In „${kurz(m.titel, 48)}“ ablegen, als eigenen neuen Zweig`)
     + (anders.length ? `, gelesen mit „${kurz(anders[0].label, 40)}“?` : '?');
   const n = text.length.toLocaleString('de-DE');
-  B.siegel(satz, kurz(text.replace(/^[#>\s]+/gm, ''), 240), [B.haltKnopf('Ablegen', `${n} Zeichen · halten`, 'gold', 1300, () => einwurfSenden(body, ziel))], () => B.zeile('Nichts abgelegt.'));
+  B.siegel(satz, kurz(text.replace(/^[#>\s]+/gm, ''), 240), [B.haltKnopf('Ablegen', `${n} Zeichen · halten`, '', 1300, () => einwurfSenden(body, ziel))], () => B.zeile('Nichts abgelegt.'));
 }
 async function einwurfSenden(body, ziel){
   schreib.merkeEinwurf(body); B.schliesseSiegel(); B.zeile('Wird abgelegt …');
@@ -330,7 +353,7 @@ function advance(rdt){
   U.dachK += ((U.dach != null ? 1 : 0) - U.dachK) * (1 - Math.exp(-rdt / (W.RM ? 0.1 : 0.7)));
   U.leseK += ((U.lese ? 1 : 0) - U.leseK) * k;
   U.kelchZeit += U.kelchK > 0.5 ? rdt : 0; U.netZeit += rdt;
-  if(W.Z) W.Z.RM = W.RM;
+  if(W.Z) W.Z.RM = W.RM; U.RM = W.RM;
   if(W.Z) W.Z.kelchK = W.RM ? Math.round(U.kelchK) : 0.5 - 0.5 * Math.cos(Math.PI * clamp(U.kelchK, 0, 1));
   if(U.mode === 'press' && performance.now() - U.t0 > (U.pressSeed >= 0 ? 700 : 450)){
     if(U.pressSeed >= 0 && W.Z){ U.mode = 'bind'; U.bind = {von: U.pressSeed, vonId: W.Z.m.samen[U.pressSeed].id, x: U.x, y: U.y, x0: U.x, y0: U.y, ziel: -1, ruhT: 0}; B.zeile('Zur zweiten Ausprägung ziehen, dort loslassen.'); }
@@ -396,9 +419,10 @@ function ui(cam){
   // Dächer und Mitte tragen im Netz ihren Namen
   if(dachEl && W.N){ const zeig = U.netK > 0.55 && !W.ruht, kids = dachEl.children, nd = W.N.daecher.length;
     for(let j = 0; j < kids.length; j++){ const el = kids[j], p = j === 0 ? U.mitteSchirm : j <= nd ? U.daecherSchirm[j - 1] : U.ohneSchirm;
-      const leise = U.dach != null && j - 1 !== U.dach ? 0.25 : 1;
+      const bz = j === 0 ? 'mitte' : j <= nd ? j - 1 : 'ohne', leise = U.dach != null && bz !== U.dach ? 0.25 : 1;
       if(!zeig || !p || p[2] <= 0){ if(el.style.opacity !== '0') el.style.opacity = '0'; continue; }
-      el.style.transform = `translate(${Math.round(p[0])}px,${Math.round(p[1] - 14)}px) translate(-50%,-100%)`; el.style.opacity = String((clamp((U.netK - 0.55) * 2.5, 0, 0.85) * leise).toFixed(2)); } }
+      const bw = el.offsetWidth || 80, px = clamp(p[0], 12 + bw / 2, CAM.cssW - 12 - bw / 2);   // Namen bleiben im Bild
+      el.style.transform = `translate(${Math.round(px)}px,${Math.round(p[1] - 14)}px) translate(-50%,-100%)`; el.style.opacity = String((clamp((U.netK - 0.55) * 2.5, 0, 0.85) * leise).toFixed(2)); } }
   // Türen im Netz tragen leise ihren Namen
   const zeigTueren = W.N && U.netK > 0.6;
   for(let j = 0; j < tuerEl.children.length; j++){ const el = tuerEl.children[j], p = U.tueren[j];
@@ -433,7 +457,9 @@ function linkFahrt(ziel){
   if(W.RM) U.netK = 0; else U.fahrt = {bis: performance.now() + 1500};
   return 'zelle';
 }
-addEventListener('hashchange', () => { const ziel = link.lies(location.hash); if(W.B && !W.ruht && ziel.mond && (!W.namen || W.namen[W.aktiv] !== ziel.mond)) linkFahrt(ziel); });
+addEventListener('hashchange', () => { const ziel = link.lies(location.hash); if(!W.B || W.ruht || !ziel.mond) return;
+  if(!W.namen || W.namen[W.aktiv] !== ziel.mond){ if(linkFahrt(ziel) === 'zelle') ortWiederholen(ziel); }
+  else if(ziel.fassung || ziel.frage){ if(B.stoff.offen()) B.stoff.schliesse(); ortWiederholen(ziel); } });
 /* Die letzten Einträge, immer: ein leiser Ring im Netz und an ihren Körnern in der Zelle, damit das Bild nie leer ist */
 function zuletztMerken(){
   W.zuletzt = ankunft.letzte(W.B); W.zuletztIds = new Set(W.zuletzt.map(e => e.id));
