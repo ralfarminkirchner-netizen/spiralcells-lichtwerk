@@ -11,7 +11,7 @@
 const MONAT = ['jan', 'feb', 'maerz', 'apr', 'mai', 'juni', 'juli', 'aug', 'sep', 'okt', 'nov', 'dez'];
 export const VON = {
   sternwerft: {satz: 'Zurück zur Sternwerft', adresse: 'http://127.0.0.1:8420/kin-os-sichten-codex/sternwerft.html'},
-  kinos: {satz: 'Zurück zu KiN OS', adresse: 'http://127.0.0.1:8895/'},
+  kinos: {satz: 'Zurück zu KiN OS', adresse: 'http://127.0.0.1:8894/'},
 };
 
 export function grundname(titel){
