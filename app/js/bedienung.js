@@ -345,7 +345,7 @@ export function installiere(a){
   api = a;
   formen.pruefe();
   stoff.init({ansage, zeile, herkunft: herkunftSatz, merkeOrt: () => api.merkeOrt(), folgeStoff: (id, m, o) => api.folgeStoff(id, m, o), zurueckAusStoff: () => api.zurueckAusStoff(),
-    waehleKorn: si => { const Z = W.Z; if(Z) waehle({art: 'same', i: si, mond: Z.m, zelle: Z}, 2); }, einwurf: (t, o) => api.einwurf(t, null, null, o)});
+    rueckSatz: () => api.rueckSatz(), waehleKorn: si => { const Z = W.Z; if(Z) waehle({art: 'same', i: si, mond: Z.m, zelle: Z}, 2); }, einwurf: (t, o) => api.einwurf(t, null, null, o)});
   stoff.installiere();
   formen.init({absaetze, kurz, ansage, zeile, haltKnopf, behalten: (v, k) => api.formBehalten(v, k), funke(){ const p = kornWelt(U.sel); if(p) burst(p[0], p[1], p[2], SILVER, 18, 0.3, 0.7, 0.01); }});
   canvas.addEventListener('pointerdown', e => {

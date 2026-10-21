@@ -352,3 +352,13 @@ button{font:inherit;color:inherit}
 .stoff-text .koerper .zitat{border-left:1px solid var(--ink-faint);padding-left:14px;color:var(--ink-soft)}
 .stoff-faden{padding-left:max(96px,env(safe-area-inset-left,0px))}
 @media (max-width:900px){ .stoff-faden{padding-left:max(12px,env(safe-area-inset-left,0px))} }
+@media (max-width:900px){
+  .stoff-kopf{grid-template-columns:auto minmax(0,1fr);grid-template-areas:"zurueck modus" "wer wer" "titel titel" "her her";row-gap:2px;padding-top:calc(6px + env(safe-area-inset-top,0px))}
+  .stoff-modus{justify-self:end;padding-top:0}
+  .stoff-modus .stoff-knopf{min-height:40px;padding:4px 12px;font-size:11px}
+  .stoff-titel{font-size:19px;margin:4px 0 2px}
+  .stoff-her{font-size:11px;letter-spacing:.08em}
+  .stoff-faden .perle{min-width:40px;min-height:44px;padding-top:4px}
+  .stoff-faden .glied{width:10px}
+  .stoff-fuss{font-size:10px;letter-spacing:.08em;padding-top:4px}
+}

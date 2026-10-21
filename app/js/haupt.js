@@ -108,6 +108,8 @@ function ortZurueck(){
 }
 /* Der Leseraum: hinein aus der Lesefläche, hinaus zurück zur Lesefläche oder den gemerkten Weg zurück */
 function oeffneStoff(sel, opt = {}){ if(!sel || !W.Z) return; if(sel.art === 'same') B.waehle(sel, 2); B.stoff.oeffne({mond: sel.mond, i: sel.i, keim: sel.art === 'keim', ...opt}); merkeOrt(); }
+function rueckSatz(){ const w = U.weg[U.weg.length - 1]; if(!w || !w.ausStoff || !W.B) return 'zur Zelle';
+  const f = w.stoff && W.B.fassungen.get(w.stoff.variantId); return f ? `zurück zu „${kurz(f.label, 40)}“` : 'zurück'; }
 function zurueckAusStoff(){ const w = U.weg[U.weg.length - 1]; B.stoff.schliesse();
   if(w && w.ausStoff){ zurueck(); return; }   // über einen Faden gekommen: dorthin zurück, mit Lesestelle
   if(U.sel) B.waehle(U.sel, 2); merkeOrt(); }
@@ -413,7 +415,7 @@ function frame(now){
 }
 
 /* ------------------------------------------------------------- Start */
-B.installiere({oeffneMond, zumNetz, zurZelle, zurueck, ortZurueck, folge, einwurf, status, kanteFragen, formBehalten, insDach, ausDach, oeffneStoff, zurueckAusStoff, folgeStoff, merkeOrt});
+B.installiere({oeffneMond, zumNetz, zurZelle, zurueck, ortZurueck, folge, einwurf, status, kanteFragen, formBehalten, insDach, ausDach, oeffneStoff, zurueckAusStoff, folgeStoff, merkeOrt, rueckSatz});
 /* Ein lesbarer Link: im Netz beginnen und in die Zelle fahren (höchstens 1,5 s; Berührung oder Esc schneidet ab) */
 function linkFahrt(ziel){
   W.von = ziel.von || W.von || null;

@@ -91,6 +91,7 @@ function baue(){
   if(v.status && v.status !== 'entwurf') her.push(STATUS_SATZ[v.status]);
   if(z.si >= 0 && hilfe.herkunft){ const h = hilfe.herkunft({art: 'same', i: z.si, mond: m, zelle: W.Z}); if(h) her.push(h); }
   R.querySelector('.stoff-her').textContent = her.join(' · ');
+  R.querySelector('.stoff-zurueck span:last-child').textContent = (hilfe.rueckSatz && hilfe.rueckSatz()) || 'zur Zelle';
   // Lesen oder Vergleichen
   const tun = R.querySelector('.stoff-modus'); tun.innerHTML = '';
   const lesen = knopf('Lesen', () => { z.modus = 'lesen'; baue(); hilfe.merkeOrt && hilfe.merkeOrt(); }, 'stoff-knopf');
