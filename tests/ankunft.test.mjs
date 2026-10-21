@@ -52,10 +52,16 @@ test('Lesbare Namen: der kurze Name gehört dem ältesten Mond dieses Titels', (
 });
 
 test('Link lesen: nur bekannte Schlüssel und feste Herkunft', () => {
-  assert.deepEqual(lies('#mond=zentrale-material-bekommt-form&von=sternwerft'), {mond: 'zentrale-material-bekommt-form', von: 'sternwerft'});
-  assert.deepEqual(lies('#mond=x&von=http://evil.example'), {mond: 'x', von: null});
-  assert.deepEqual(lies('#mond=../etc&von=kinos'), {mond: null, von: 'kinos'});
-  assert.deepEqual(lies('#mond=Zentrale'), {mond: null, von: null}, 'nur Kleinbuchstaben');
+  const mv = l => ({mond: l.mond, von: l.von});
+  assert.deepEqual(mv(lies('#mond=zentrale-material-bekommt-form&von=sternwerft')), {mond: 'zentrale-material-bekommt-form', von: 'sternwerft'});
+  assert.deepEqual(mv(lies('#mond=x&von=http://evil.example')), {mond: 'x', von: null});
+  assert.deepEqual(mv(lies('#mond=../etc&von=kinos')), {mond: null, von: 'kinos'});
+  assert.deepEqual(mv(lies('#mond=Zentrale')), {mond: null, von: null}, 'nur Kleinbuchstaben');
+  // Die genaue Stelle bleibt lesbar: Fassung und Passage als kleine Zahlen, nie eine Kennung
+  assert.deepEqual(lies('#mond=x&fassung=3&lesen=1&stelle=4'), {mond: 'x', von: null, fassung: 3, stelle: 4, lesen: true, vergleich: null});
+  assert.equal(lies('#mond=x&fassung=a1b2c3d4-0000').fassung, null);
+  assert.equal(bau('x', null, {fassung: 3, lesen: true, stelle: 3}), '#mond=x&fassung=3&lesen=1&stelle=4');
+  assert.equal(bau('x', null, {fassung: 3}), '#mond=x&fassung=3');
   assert.equal(bau('emile-durkheim', 'kinos'), '#mond=emile-durkheim&von=kinos');
   assert.equal(bau('emile-durkheim', 'fremd'), '#mond=emile-durkheim');
   for(const v of Object.values(VON)) assert.ok(v.adresse.startsWith('http://127.0.0.1:'));

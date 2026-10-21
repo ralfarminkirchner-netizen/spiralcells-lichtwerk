@@ -68,9 +68,13 @@ export function wuchs(m, opt = {}){
   const gw = k => gruppen.get(k).reduce((a, r) => a + breite[r], 0);
   const sektoren = new Map(), stimmen = [...gruppen.keys()].filter(k => typeof k === 'number'), andere = [...gruppen.keys()].filter(k => typeof k !== 'number').sort((a, b) => gw(b) - gw(a));
   if(stimmen.length){
-    const frei = [0, 1, 2, 3, 4].filter(L => !gruppen.has(L)), halb = andere.length > frei.length, b = (halb ? 36 : 68) * DEG;
-    for(const L of stimmen) sektoren.set(L, {mitte: L * SPEICHE, breite: b});
-    andere.forEach((k, j) => { const mitte = j < frei.length ? frei[j] * SPEICHE : ((j - frei.length) * 2 + 0.5) * 72 * DEG; sektoren.set(k, {mitte, breite: b}); });
+    const frei = [0, 1, 2, 3, 4].filter(L => !gruppen.has(L)), halb = andere.length > frei.length;
+    for(const L of stimmen) sektoren.set(L, {mitte: L * SPEICHE, breite: 0});
+    andere.forEach((k, j) => { const mitte = j < frei.length ? frei[j] * SPEICHE : ((j - frei.length) * 2 + 0.5) * 72 * DEG; sektoren.set(k, {mitte, breite: 0}); });
+    // Jeder Keil nimmt den Raum bis zur Hälfte seines nächsten Nachbarn; die Speiche bleibt seine Mitte
+    const ms = [...sektoren.values()];
+    for(const sek of ms){ let d = 2 * Math.PI; for(const o of ms){ if(o === sek) continue; const x = Math.abs(Math.atan2(Math.sin(o.mitte - sek.mitte), Math.cos(o.mitte - sek.mitte))); d = Math.min(d, x); }
+      sek.breite = Math.min(halb ? 36 * DEG : 150 * DEG, Math.max(30 * DEG, d - 8 * DEG)); }
   } else if(andere.length){
     const ws = andere.map(k => Math.max(0.2, Math.pow(gw(k), 0.6))), W = ws.reduce((a, x) => a + x, 0); let a = -Math.PI / 2;
     andere.forEach((k, j) => { const brt = 2 * Math.PI * ws[j] / W; sektoren.set(k, {mitte: a + brt / 2, breite: brt * 0.94}); a += brt; });

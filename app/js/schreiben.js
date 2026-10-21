@@ -55,7 +55,7 @@ export function etikett(text){
 }
 
 /* Baut den Einwurf als Weiterarbeit in Ralfs eigenem Zweig dieses Monds */
-export function einwurfKoerper(B, mond, text, zielId, ralf, rid){
+export function einwurfKoerper(B, mond, text, zielId, ralf, rid, gesehen){
   const eigene = B.roh.worktrees.filter(t => t.work_id === mond.id && t.author_id === ralf.id)
     .sort((a, b) => Date.parse(a.created_at) - Date.parse(b.created_at));
   const body = {work_id: mond.id, request_id: rid, label: etikett(text), content: String(text), notes: 'Im Lichtwerk abgelegt.',
@@ -69,6 +69,9 @@ export function einwurfKoerper(B, mond, text, zielId, ralf, rid){
   } else body.new_worktree = true;
   if(quelle && quelle !== body.derived_from) body.source_variant_id = quelle;
   if(body.new_worktree && !body.source_variant_id) body.contribution = {mode: 'review', seen_variant_ids: []};
+  // Aus dem Leseraum: welche Fassungen Ralf beim Fortsetzen vor Augen hatte, ehrlich mitgegeben
+  const gs = [...new Set((gesehen || []).filter(id => typeof id === 'string' && B.fassungen && B.fassungen.has(id)))].sort();
+  if(gs.length) body.contribution = {...body.contribution, seen_variant_ids: gs};
   return body;
 }
 

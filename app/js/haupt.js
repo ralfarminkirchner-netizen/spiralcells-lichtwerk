@@ -84,10 +84,10 @@ function zurueck(){
   if(U.netT > 0.5){ if(ausDach()) return; if(W.Z && W.aktiv >= 0) zurZelle(); return; }
   if(U.weg.length){ const w = U.weg.pop(); const i = mondNachId(w.mond);
     if(i >= 0){ if(i === W.aktiv && W.Z){ const Z = W.Z;
-        if(w.same){ const si = Z.m.samen.findIndex(s => s.id === w.same); if(si >= 0){ B.waehle({art: 'same', i: si, mond: Z.m, zelle: Z}, 2); return; } }
+        if(w.same){ const si = Z.m.samen.findIndex(s => s.id === w.same); if(si >= 0){ B.waehle({art: 'same', i: si, mond: Z.m, zelle: Z}, 2); stoffZurueck(w); return; } }
         if(w.keim){ B.waehle({art: 'keim', mond: Z.m, zelle: Z}, 2); return; }
         B.waehle(null); return; }
-      oeffneMond(i, {ohneAufzug: true, waehle: w.same || w.keim, stufe: 2, behalteWeg: true}); return; } }
+      oeffneMond(i, {ohneAufzug: true, waehle: w.same || w.keim, stufe: 2, behalteWeg: true}); stoffZurueck(w); return; } }
   zumNetz();
 }
 let ortText = '', ortVerborgen = null;
@@ -102,9 +102,52 @@ function ortAktualisieren(){
 }
 /* Oben links: mit Herkunft aus einem Link zurück dorthin (feste Adresse), sonst der gemerkte Weg */
 function ortZurueck(){
+  if(B.stoff.offen()){ zurueckAusStoff(); return; }
   if(!U.weg.length && W.von && link.VON[W.von] && U.netT < 0.5){ location.assign(link.VON[W.von].adresse); return; }
   zurueck();
 }
+/* Der Leseraum: hinein aus der Lesefläche, hinaus zurück zur Lesefläche oder den gemerkten Weg zurück */
+function oeffneStoff(sel, opt = {}){ if(!sel || !W.Z) return; if(sel.art === 'same') B.waehle(sel, 2); B.stoff.oeffne({mond: sel.mond, i: sel.i, keim: sel.art === 'keim', ...opt}); merkeOrt(); }
+function zurueckAusStoff(){ const w = U.weg[U.weg.length - 1]; B.stoff.schliesse();
+  if(w && w.ausStoff){ zurueck(); return; }   // über einen Faden gekommen: dorthin zurück, mit Lesestelle
+  if(U.sel) B.waehle(U.sel, 2); merkeOrt(); }
+function stoffZurueck(w){ if(!w || !w.stoff || !W.Z) return; const Z = W.Z, si = Z.m.samen.findIndex(s => s.id === w.stoff.variantId), keim = si < 0 && Z.m.keim.some(v => v.id === w.stoff.variantId);
+  if(si < 0 && !keim) return;
+  B.stoff.oeffne({mond: Z.m, i: si, keim, modus: w.stoff.modus, vergleich: w.stoff.vergleich, stelle: w.stoff.stelle}); merkeOrt(); }
+/* Aus dem Leseraum einer Verwendung folgen: in die andere Fassung an ihre Stelle, der Rückweg führt an die eigene */
+function folgeStoff(variantId, mond, opt){
+  const Z = W.Z; if(!Z) return; const z = B.stoff.zustand(), hier = hierMerken();
+  if(hier){ hier.stoff = z; hier.ausStoff = true; U.weg.push(hier); }
+  B.stoff.schliesse();
+  if(mond && mond.id !== Z.m.id){ const i = mondNachId(mond.id); if(i < 0) return; oeffneMond(i, {ohneAufzug: true, waehle: variantId, stufe: 2, behalteWeg: true}); }
+  const Zn = W.Z, si = Zn.m.samen.findIndex(s => s.id === variantId);
+  if(si >= 0){ B.waehle({art: 'same', i: si, mond: Zn.m, zelle: Zn}, 2); B.stoff.oeffne({mond: Zn.m, i: si, ...opt}); }
+  else if(Zn.m.keim.some(v => v.id === variantId)){ B.waehle({art: 'keim', mond: Zn.m, zelle: Zn}, 2); B.stoff.oeffne({mond: Zn.m, keim: true, ...opt}); }
+  B.zeile(`In „${kurz(Zn.m.titel, 50)}“. Der Rückweg steht oben links.`); merkeOrt();
+}
+/* Der Ort, an dem Ralf gerade ist: im Speicher dieses Tabs nur Kennungen, in der Adresszeile nur lesbare Zahlen */
+const ORT = 'spiralcells-lichtwerk-ort';
+function merkeOrt(){
+  if(WERKSTATT || !W.Z || !W.namen) return; const Z = W.Z, sel = U.sel, z = B.stoff.zustand();
+  const same = sel && sel.art === 'same' && sel.mond === Z.m ? Z.m.samen[sel.i]?.id : null;
+  try{ sessionStorage.setItem(ORT, JSON.stringify({mond: Z.m.id, same, stufe: U.stufe, stoff: z, kelch: U.kelchT > 0.5})); }catch(_){}
+  const fi = same ? Z.m.samen.findIndex(s => s.id === same) + 1 : 0, vi = z && z.vergleich ? Z.m.samen.findIndex(s => s.id === z.vergleich) + 1 : 0;
+  try{ history.replaceState(null, '', link.bau(W.namen[W.aktiv], W.von, {fassung: fi || null, lesen: !!z, stelle: z ? z.stelle : null, vergleich: vi || null})); }catch(_){}
+}
+function ortWiederholen(ziel){
+  const Z = W.Z; if(!Z) return;
+  let o = null; try{ o = JSON.parse(sessionStorage.getItem(ORT) || 'null'); }catch(_){}
+  if(o && o.mond !== Z.m.id) o = null;
+  // Die Adresszeile gewinnt (ein geteilter Link), sonst der gemerkte Ort dieses Tabs
+  const si = ziel && ziel.fassung ? ziel.fassung - 1 : o && o.same ? Z.m.samen.findIndex(s => s.id === o.same) : -1;
+  if(si < 0 || !Z.m.samen[si]) return;
+  Z.sofort(); B.waehle({art: 'same', i: si, mond: Z.m, zelle: Z}, 2);
+  const lesen = ziel && ziel.fassung ? ziel.lesen : !!(o && o.stoff);
+  if(lesen){ const vg = ziel && ziel.vergleich ? Z.m.samen[ziel.vergleich - 1]?.id : o && o.stoff ? o.stoff.vergleich : null;
+    const stelle = ziel && ziel.stelle ? ziel.stelle - 1 : o && o.stoff ? o.stoff.stelle : null;
+    B.stoff.oeffne({mond: Z.m, i: si, modus: vg ? 'vergleich' : 'lesen', vergleich: vg, stelle}); }
+}
+
 /* Einer belegten Beziehung folgen, auch in einen anderen Mond; der Rückweg wird gemerkt */
 function hierMerken(){ const Z = W.Z; if(!Z || !U.sel) return null;
   return {mond: Z.m.id, same: U.sel.art === 'same' ? Z.m.samen[U.sel.i].id : null, keim: U.sel.art === 'keim' ? (Z.m.keim[Z.m.keim.length - 1] || {}).id : null}; }
@@ -190,14 +233,14 @@ async function ralfSicher(){
       () => res(null));
   });
 }
-function einwurf(text, sx, sy){
+function einwurf(text, sx, sy, opt = {}){
   if(!W.B || W.ruht){ B.zeile('SPiRALCELLS schläft gerade. Ablegen geht, sobald es wach ist.'); return; }
   if(U.netT > 0.5 || !W.Z){ B.zeile('Erst einen Mond öffnen, dann darin ablegen.'); return; }
   if(U.siegel){ B.zeile('Erst das offene Siegel beantworten.'); return; }
   const Z = W.Z, m = Z.m;
   // Ablegen: die Ausprägung unter dem Finger. Einfügen (ohne Ort): die gewählte, sonst der Keim.
   const ort = sx != null; if(!ort){ sx = CAM.cssW / 2; sy = CAM.cssH * 0.96; }
-  let si = ort ? B.trefferSame(sx, sy, 22) : -1; if(si < 0 && U.sel && U.sel.art === 'same') si = U.sel.i;
+  let si = opt.zielId ? m.samen.findIndex(s => s.id === opt.zielId) : ort ? B.trefferSame(sx, sy, 22) : -1; if(si < 0 && U.sel && U.sel.art === 'same') si = U.sel.i;
   const zielId = si >= 0 ? m.samen[si].id : null, zielLabel = si >= 0 ? m.samen[si].label : m.keimSatz;
   const start = pointerWorld(sx, sy, CAM.target), ziel = [0, 0, 0];
   if(si >= 0) Z.seedPos(si, ziel); else Z.keimPos(ziel);
@@ -206,13 +249,15 @@ function einwurf(text, sx, sy){
   Z.S.flights.push({x: start[0], y: start[1], z: start[2], tx: ziel[0], ty: ziel[1], tz: ziel[2], t: 0, dur, col: SILVER,
     land: () => { const Zj = W.Z; Zj && Zj.kickAt(ziel); klang.landung(); burst(ziel[0], ziel[1], ziel[2], SILVER, 40, 0.7, 0.9, 0.012); }});
   // Der Ablauf hängt nicht am Bild: auch bei Pause oder neuer Zelle geht die Frage nicht verloren
-  setTimeout(() => einwurfFragen(text, zielId, zielLabel, m.id, ziel), dur * 1000 + 60);
+  setTimeout(() => einwurfFragen(text, zielId, zielLabel, m.id, ziel, opt.gesehen), dur * 1000 + 60);
 }
-async function einwurfFragen(text, zielId, zielLabel, mondId, ziel){
+async function einwurfFragen(text, zielId, zielLabel, mondId, ziel, gesehen){
   const ralf = await ralfSicher(); if(!ralf){ B.zeile('Nichts abgelegt.'); return; }
   const m = W.B.mondVon.get(mondId); if(!m){ B.zeile('Dieser Mond ist gerade nicht da. Nichts abgelegt.'); return; }
-  const rid = schreib.neueKennung(), body = schreib.einwurfKoerper(W.B, m, text, zielId, ralf, rid);
-  const satz = zielId ? `In „${kurz(m.titel, 48)}“ ablegen, als Erweiterung von „${kurz(zielLabel, 56)}“?` : m.keim.length ? `In „${kurz(m.titel, 48)}“ ablegen, zur Ausgangsfrage?` : `In „${kurz(m.titel, 48)}“ ablegen, als eigenen neuen Zweig?`;
+  const rid = schreib.neueKennung(), body = schreib.einwurfKoerper(W.B, m, text, zielId, ralf, rid, gesehen);
+  const anders = (gesehen || []).filter(id => id !== zielId).map(id => W.B.fassungen.get(id)).filter(Boolean);
+  const satz = (zielId ? `In „${kurz(m.titel, 48)}“ ablegen, als Weiterarbeit an „${kurz(zielLabel, 56)}“` : m.keim.length ? `In „${kurz(m.titel, 48)}“ ablegen, zur Ausgangsfrage` : `In „${kurz(m.titel, 48)}“ ablegen, als eigenen neuen Zweig`)
+    + (anders.length ? `, gelesen mit „${kurz(anders[0].label, 40)}“?` : '?');
   const n = text.length.toLocaleString('de-DE');
   B.siegel(satz, kurz(text.replace(/^[#>\s]+/gm, ''), 240), [B.haltKnopf('Ablegen', `${n} Zeichen · halten`, 'gold', 1300, () => einwurfSenden(body, ziel))], () => B.zeile('Nichts abgelegt.'));
 }
@@ -368,7 +413,7 @@ function frame(now){
 }
 
 /* ------------------------------------------------------------- Start */
-B.installiere({oeffneMond, zumNetz, zurZelle, zurueck, ortZurueck, folge, einwurf, status, kanteFragen, formBehalten, insDach, ausDach});
+B.installiere({oeffneMond, zumNetz, zurZelle, zurueck, ortZurueck, folge, einwurf, status, kanteFragen, formBehalten, insDach, ausDach, oeffneStoff, zurueckAusStoff, folgeStoff, merkeOrt});
 /* Ein lesbarer Link: im Netz beginnen und in die Zelle fahren (höchstens 1,5 s; Berührung oder Esc schneidet ab) */
 function linkFahrt(ziel){
   W.von = ziel.von || W.von || null;
@@ -417,6 +462,7 @@ function start(){
       let best = -1, bt = -1; W.B.monde.forEach((m, j) => { if(m.stimmen.length && m.zeitspanne[1] > bt){ bt = m.zeitspanne[1]; best = j; } }); i = best >= 0 ? best : 0; }
     U.netK = 0; oeffneMond(i, {ohneAufzug: WERKSTATT || neu.zahl > 0});
   }
+  if(!WERKSTATT && ort !== 'netz') ortWiederholen(ziel.mond ? ziel : null);
   if(!WERKSTATT){ const satz = neu.zahl ? ankunft.ankunftSatz(neu) : seit ? ankunft.ankunftSatz(neu) + ' ' + zuletztSatz() : zuletztSatz();
     if(satz.trim()){ B.zeile(satz.trim()); W.titelBis = W.wall + 7; } }
   // Der Merker wird erst gesetzt, wenn die Ankunft zu Ende gezeigt ist; ohne Merker war nichts neu

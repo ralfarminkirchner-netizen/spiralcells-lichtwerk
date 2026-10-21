@@ -10,6 +10,7 @@ import {burst} from './zelle.js';
 import {AU, toggle as klangToggle, wake as klangWake, klang} from './klang.js';
 import * as schreib from './schreiben.js';
 import * as formen from './formen.js';
+import * as stoff from './stoff.js';
 
 const $ = s => document.querySelector(s);
 const canvas = $('#gl'), lineEl = $('#line'), markeEl = $('#marke'), leseEl = $('#lese'), siegelEl = $('#siegel'), hintEl = $('#hint'), ortEl = $('#zurueck');
@@ -64,6 +65,7 @@ export function markeFuer(sel){
   const m = sel.mond;
   if(sel.art === 'same'){ const s = m.samen[sel.i]; const teile = [nameVon(W.B.agenten.get(s.fassung.author_id)), datum(s.zeit)];
     if(s.form) teile.push('Form ohne Modell'); else { if(s.modus) teile.push(MODUS_SATZ[s.modus]); if(s.status !== 'entwurf') teile.push(STATUS_SATZ[s.status]); }
+    const her = herkunftSatz(sel); if(her) teile.push(her);
     if(U.stufe < 2 && gleich(U.sel, sel)) teile.push('tippen liest');
     return [kurz(s.label, 96), teile.join(' · ')]; }
   if(sel.art === 'keim') return [m.keimSatz, 'Ausgangsfrage' + (m.keimKristall ? ' · Grundformation' : '') + (m.keim.length > 1 ? ` · ${m.keim.length} Fassungen` : '') + (gleich(U.sel, sel) ? ' · tippen liest' : '')];
@@ -82,6 +84,18 @@ export function markeFuer(sel){
     const teile = [`${f.kanten.length} ${f.kanten.length === 1 ? 'Verbindung' : 'Verbindungen'}`]; if(f.verwendung) teile.push(`${f.verwendung} mit beschriebener Verwendung`);
     if(gleich(U.sel, sel)) teile.push('tippen folgt'); return [satz, teile.join(' · ')]; }
   return ['', ''];
+}
+
+/* Woher eine Ausprägung kommt und wo sie in ihrem Zweig steht: nur, was belegt ist */
+export function herkunftSatz(sel){
+  const Z = sel.zelle || W.Z; if(!Z || !Z.W || Z.m !== sel.mond) return '';
+  const W2 = Z.W, i = sel.i, p = W2.eltern[i], art = W2.art[i], s = sel.mond.samen;
+  const name = j => j >= 0 ? `„${kurz(s[j].label, 34)}“` : '';
+  const zweig = W2.zweige[W2.zweigVon[i]].length, stelle = zweig > 1 ? `${W2.reihe[i]}. von ${zweig} im Zweig` : '';
+  const satz = {kette: '', keim: 'aus der Ausgangsfrage', frei: 'ohne belegte Herkunft', form: `Form von ${name(p)}`,
+    gabel: `fortgesetzt aus ${name(p)}${typeof s[p]?.stimme === 'number' ? ' (' + STIMMEN[s[p].stimme].name + ')' : ''}`, reihe: 'Teil einer Übernahme, keine Entwicklung'}[art] || '';
+  const kinder = W2.kinder[i].length, ab = kinder > 1 ? `${kinder} Fortsetzungen` : '';
+  return [satz, stelle, ab].filter(Boolean).join(' · ');
 }
 
 /* ----------------------------------------------------------- Lesefläche */
@@ -184,6 +198,7 @@ function baueTun(v, sel){
       formen.handgriff(original, m, tun, () => kornAufSchirm(sel)); }
     return;
   }
+  tun.append(stillerKnopf('Ganz lesen', 'Material, Vergleich, Herkunft', () => api.oeffneStoff(sel)));
   const setze = (status, satz) => async () => { await api.status(v, status, satz); };
   if(v.status !== 'grundformation') tun.append(haltKnopf('Kristallisieren', 'halten', 'gold', 1800, setze('grundformation', 'Kristallisiert.')));
   formen.handgriff(v, m, tun, () => kornAufSchirm(sel));
@@ -250,6 +265,7 @@ export function waehle(sel, stufe){
   if(!sel){ verbirgMarke(); schliesseLese(); return; }
   const [t, s] = markeFuer(sel); zeigeMarke(t, s); if(U.stufe < 2) ansage(t + '. ' + s);
   if(U.stufe >= 2 && (sel.art === 'same' || sel.art === 'keim')) oeffneLese(sel); else if(U.lese) schliesseLese(true);
+  if(api && (sel.art === 'same' || sel.art === 'keim')) api.merkeOrt();
 }
 
 /* --------------------------------------------------------------- Treffer */
@@ -328,6 +344,9 @@ function tuerOeffnen(tu){
 export function installiere(a){
   api = a;
   formen.pruefe();
+  stoff.init({ansage, zeile, herkunft: herkunftSatz, merkeOrt: () => api.merkeOrt(), folgeStoff: (id, m, o) => api.folgeStoff(id, m, o), zurueckAusStoff: () => api.zurueckAusStoff(),
+    waehleKorn: si => { const Z = W.Z; if(Z) waehle({art: 'same', i: si, mond: Z.m, zelle: Z}, 2); }, einwurf: (t, o) => api.einwurf(t, null, null, o)});
+  stoff.installiere();
   formen.init({absaetze, kurz, ansage, zeile, haltKnopf, behalten: (v, k) => api.formBehalten(v, k), funke(){ const p = kornWelt(U.sel); if(p) burst(p[0], p[1], p[2], SILVER, 18, 0.3, 0.7, 0.01); }});
   canvas.addEventListener('pointerdown', e => {
     if(U.fahrt){ U.netK = U.netT; U.fahrt = null; }
@@ -370,6 +389,7 @@ export function installiere(a){
   addEventListener('keydown', e => {
     if(U.fahrt){ U.netK = U.netT; U.fahrt = null; if(e.key === 'Escape') return; }
     if(U.formen){ if(U.siegel){ if(e.key === 'Escape'){ e.preventDefault(); zurueck(); } return; } formen.taste(e); return; }
+    if(stoff.offen()){ if(U.siegel){ if(e.key === 'Escape'){ e.preventDefault(); zurueck(); } return; } stoff.taste(e); return; }
     if(e.target.closest && e.target.closest('.halten,.lese,.siegel') && (e.key === ' ' || e.key === 'Enter')) return;
     if(e.target.closest && e.target.closest('.lese') && /^(ArrowUp|ArrowDown|Page|Home|End)/.test(e.key)) return;   // dort scrollen sie
     if(e.metaKey || e.ctrlKey || e.altKey) return;
@@ -395,7 +415,7 @@ export function installiere(a){
   addEventListener('blur', () => { if(U.keyHold){ U.keyHold = false; setHold(false); } if(U.mode === 'hold'){ U.mode = null; setHold(false); } });
 
   // Einwurf: Text einfügen oder ablegen
-  addEventListener('paste', e => { if(U.formen) return; const t = e.clipboardData && e.clipboardData.getData('text/plain'); if(t && t.trim()){ e.preventDefault(); api.einwurf(t, null, null); } });
+  addEventListener('paste', e => { if(U.formen) return; const t = e.clipboardData && e.clipboardData.getData('text/plain'); if(t && t.trim()){ e.preventDefault(); if(!stoff.ablegen(t)) api.einwurf(t, null, null); } });
   addEventListener('dragover', e => { e.preventDefault(); activity(); });
   addEventListener('drop', async e => { e.preventDefault(); if(U.formen) return;
     const dt = e.dataTransfer; let text = '';
@@ -404,7 +424,7 @@ export function installiere(a){
       if(!/^text\/|json|xml|markdown/.test(f.type) && !/\.(md|txt|markdown|json|csv|html?|xml|yaml|yml)$/i.test(f.name)){ zeile('Ablegen geht im Moment nur mit Text.'); return; }
       text = await f.text(); }
     else text = dt.getData('text/plain');
-    if(text && text.trim()) api.einwurf(text, e.clientX, e.clientY); });
+    if(text && text.trim()){ if(!stoff.ablegen(text)) api.einwurf(text, e.clientX, e.clientY); } });
 
   // Ecken
   $('#snd').addEventListener('click', () => { const on = klangToggle(); const b = $('#snd'); b.setAttribute('aria-pressed', on ? 'true' : 'false'); b.setAttribute('aria-label', on ? 'Klang ausschalten' : 'Klang einschalten'); activity(); });
@@ -478,4 +498,4 @@ export function uiFrame(){
   hintEl.classList.toggle('on', W.wall < U.hintUntil && !U.lese && !U.siegel);
   if(W.wall - U.last > 3.2 && !U.paused){ document.body.classList.remove('active'); if(W.wall > 8) document.body.classList.add('dim'); }
 }
-export {klang, AU, burst, SILVER, REIFE};
+export {klang, AU, burst, SILVER, REIFE, stoff};

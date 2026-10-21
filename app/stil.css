@@ -257,3 +257,98 @@ button{font:inherit;color:inherit}
   #line{transition:opacity .6s ease;filter:none;transform:none}
   .lese,.siegel{animation:none}
 }
+
+/* Stoff: der Leseraum im selben Licht. Die Zelle bleibt dahinter als leises Glühen. */
+.im-stoff #gl{filter:brightness(.22) saturate(.6)}
+.im-stoff #line,.im-stoff #hint,.im-stoff .marke,.im-stoff #namen,.im-stoff #tuernamen,.im-stoff #dachnamen,.im-stoff .corner,.im-stoff #zurueck,.im-stoff .mark,.im-stoff #angle,.im-stoff #tage,.im-stoff .lese{opacity:0!important;pointer-events:none;visibility:hidden}
+.im-stoff .siegel{left:50%;z-index:40}
+.stoff{position:fixed;inset:0;z-index:25;display:grid;grid-template-columns:minmax(0,1fr);grid-template-rows:auto auto 1fr auto;
+  background:radial-gradient(ellipse at 30% 20%,rgba(10,8,18,.55),rgba(4,3,10,.82));user-select:text;-webkit-user-select:text}
+.stoff[hidden]{display:none}
+.stoff-kopf{display:grid;grid-template-columns:auto minmax(0,1fr) auto;grid-template-areas:"zurueck wer modus" "zurueck titel modus" "zurueck her modus";column-gap:24px;align-items:start;
+  padding:calc(16px + env(safe-area-inset-top,0px)) max(24px,env(safe-area-inset-right,0px)) 10px max(16px,env(safe-area-inset-left,0px))}
+.stoff-zurueck{grid-area:zurueck;position:static;align-self:start}
+.stoff-wer{grid-area:wer;display:flex;align-items:center;gap:10px;font-size:11px;letter-spacing:.2em;color:var(--ink-soft);padding-top:12px}
+.stoff-punkt{width:9px;height:9px;border-radius:50%;background:currentColor;box-shadow:0 0 10px currentColor}
+.stoff-wann::before{content:"·";margin-right:10px;color:var(--ink-faint)}
+.stoff-titel{grid-area:titel;margin:8px 0 4px;font-weight:400;font-size:clamp(20px,1.3vw + 12px,28px);line-height:1.28;color:var(--whitegold);text-wrap:balance;max-width:52ch}
+.stoff-her{grid-area:her;margin:0;font-size:12px;letter-spacing:.12em;line-height:1.5;color:var(--ink-soft);max-width:80ch}
+.stoff-modus{grid-area:modus;display:flex;gap:6px;padding-top:6px}
+.stoff-knopf{min-height:44px;padding:6px 16px;border:0;border-radius:999px;background:rgba(255,246,224,.05);color:var(--ink-soft);font:inherit;font-size:12px;letter-spacing:.16em;cursor:pointer}
+.stoff-knopf[aria-pressed="true"]{background:rgba(230,236,255,.12);color:var(--whitegold)}
+.stoff-knopf:hover,.stoff-knopf:focus-visible{color:var(--ink)}
+.stoff-knopf:focus-visible{outline:1px solid var(--ink-soft);outline-offset:2px}
+.stoff-knopf.leise{background:none;min-height:36px;padding:4px 10px}
+.stoff-faden{display:flex;flex-direction:column;gap:4px;padding:2px max(24px,env(safe-area-inset-right,0px)) 8px max(24px,env(safe-area-inset-left,0px));overflow-x:auto;scrollbar-width:none}
+.stoff-faden::-webkit-scrollbar{display:none}
+.faden-satz{font-size:10px;letter-spacing:.24em;color:var(--ink-faint)}
+.stoff-faden .strang{display:flex;align-items:flex-start;min-width:min-content}
+.stoff-faden .perle{display:flex;flex-direction:column;align-items:center;gap:4px;min-width:44px;min-height:48px;padding:6px 4px 2px;border:0;background:none;color:var(--ink-soft);font:inherit;font-size:10px;letter-spacing:.1em;cursor:pointer;border-radius:10px;max-width:150px}
+.stoff-faden .perle i{display:block;width:12px;height:12px;border-radius:50%;background:rgba(255,246,224,.32);transition:transform .25s ease}
+.stoff-faden .perle small{font-size:9px;letter-spacing:.06em;color:var(--ink-faint);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:140px}
+.stoff-faden .perle span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:140px}
+.stoff-faden .perle.hier{color:var(--whitegold)}
+.stoff-faden .perle.hier i{background:#e6ecff;box-shadow:0 0 0 2px var(--void),0 0 0 3px #e6ecff,0 0 14px rgba(230,236,255,.5);transform:scale(1.2)}
+.stoff-faden .perle.gegenueber{color:var(--ink)}
+.stoff-faden .perle.gegenueber i{background:none;box-shadow:0 0 0 1.5px var(--whitegold)}
+.stoff-faden .perle.gabelt i{box-shadow:0 0 0 1px rgba(255,246,224,.5),6px -6px 0 -4px rgba(255,246,224,.6)}
+.stoff-faden .perle.herkunft i{background:none;box-shadow:0 0 0 1px var(--ink-soft)}
+.stoff-faden .perle:hover i,.stoff-faden .perle:focus-visible i{transform:scale(1.35)}
+.stoff-faden .perle:focus-visible{outline:1px solid var(--ink-soft);outline-offset:2px}
+.stoff-faden .glied{width:16px;height:1px;margin-top:12px;background:rgba(255,246,224,.22);flex:none}
+.stoff-faden .weitere{gap:2px;padding-top:4px;border-top:1px solid rgba(255,246,224,.06)}
+.stoff-flaeche{overflow-y:auto;overscroll-behavior:contain;padding:8px max(24px,env(safe-area-inset-right,0px)) 40px max(24px,env(safe-area-inset-left,0px));outline:none}
+.stoff-text{max-width:1180px;margin:0 auto}
+.stoff-text .passage{display:grid;grid-template-columns:44px minmax(0,68ch) minmax(0,280px);column-gap:22px;padding:6px 0;border-radius:8px}
+.stoff-text .passage.stelle{background:linear-gradient(90deg,rgba(230,236,255,.06),rgba(230,236,255,0) 70%)}
+.stoff-text .nr{grid-column:1;align-self:start;min-height:32px;min-width:36px;border:0;background:none;color:var(--ink-faint);font-family:var(--f-measure);font-size:11px;cursor:pointer;border-radius:6px;padding-top:6px;text-align:right}
+.stoff-text .passage.stelle .nr{color:#e6ecff}
+.stoff-text .nr:hover,.stoff-text .nr:focus-visible{color:var(--ink)}
+.stoff-text .koerper{grid-column:2;font-family:var(--f-read);font-size:18px;line-height:1.68;color:rgba(255,246,224,.88)}
+.stoff-text .koerper p{margin:0 0 10px}
+.stoff-text .koerper h3,.stoff-text .gleich h3{font-family:var(--f-line);font-weight:400;font-size:14px;letter-spacing:.12em;color:var(--whitegold);margin:18px 0 6px}
+.stoff-text pre{font-family:var(--f-measure);font-size:12.5px;line-height:1.55;white-space:pre-wrap;word-break:break-word;color:rgba(255,246,224,.78);margin:0 0 10px}
+.stoff-text .rand{grid-column:3;display:flex;flex-direction:column;gap:8px;padding-top:4px}
+.notiz{display:flex;flex-direction:column;gap:3px;text-align:left;border:0;background:rgba(255,246,224,.035);border-left:1px solid rgba(255,246,224,.25);padding:8px 10px;border-radius:0 8px 8px 0;color:var(--ink);font:inherit;font-size:12px;line-height:1.45;cursor:pointer}
+.notiz:hover,.notiz:focus-visible{background:rgba(255,246,224,.07)}
+.notiz:focus-visible{outline:1px solid var(--ink-soft)}
+.notiz .art{font-size:10px;letter-spacing:.16em;color:var(--ink-soft)}
+.notiz .ziel{color:var(--whitegold)}
+.notiz .teil,.notiz .zweck{color:var(--ink-soft)}
+.notiz .teil.eigen{color:var(--ink)}
+.notiz .vertraeglich,.notiz .ungefaehr{font-size:10px;letter-spacing:.12em;color:var(--ink-faint)}
+.stoff-text .lose{display:flex;flex-direction:column;gap:8px;max-width:68ch;margin:6px 0 18px 66px}
+.stoff-leise{font-size:12px;letter-spacing:.08em;line-height:1.55;color:var(--ink-soft);max-width:72ch;margin:6px 0 14px}
+.stoff-ende{margin:30px 0 0 66px;font-size:11px;letter-spacing:.2em;color:var(--ink-faint)}
+.stoff-fuss{margin:0;padding:8px 16px calc(10px + env(safe-area-inset-bottom,0px));text-align:center;font-size:11px;letter-spacing:.14em;color:var(--ink-faint)}
+.vergleich-kopf{display:grid;grid-template-columns:1fr 1fr;gap:28px;margin:4px 0 6px}
+.vergleich-kopf .seite{display:flex;flex-direction:column;gap:3px}
+.vergleich-kopf h2{margin:0;font-weight:400;font-size:16px;line-height:1.35;color:var(--whitegold)}
+.vergleich-kopf .klein{font-size:10px;letter-spacing:.18em;color:var(--ink-soft)}
+.vergleich-nav{display:flex;align-items:center;gap:8px;flex-wrap:wrap;position:sticky;top:-8px;z-index:2;padding:8px 0;background:rgba(5,4,11,.92);font-size:12px;letter-spacing:.12em;color:var(--ink-soft)}
+.stoff-text .paar{display:grid;grid-template-columns:1fr 1fr;gap:28px;padding:10px 0;border-top:1px solid rgba(255,246,224,.06);outline:none}
+.stoff-text .paar .zelle p,.stoff-text .paar .zelle pre{font-family:var(--f-read);font-size:16px;line-height:1.62;color:rgba(255,246,224,.86);margin:4px 0}
+.stoff-text .paar .zelle pre{font-family:var(--f-measure);font-size:12px}
+.stoff-text .nr-klein{font-family:var(--f-measure);font-size:10px;color:var(--ink-faint)}
+.stoff-text del{text-decoration:line-through;text-decoration-color:rgba(196,120,106,.85);color:rgba(255,226,214,.9);background:rgba(196,120,106,.12)}
+.stoff-text ins{text-decoration:underline;text-decoration-color:rgba(230,236,255,.8);text-underline-offset:3px;color:#eef2ff;background:rgba(230,236,255,.07)}
+.stoff-text details.gleich{margin:8px 0;padding:4px 0;border-top:1px solid rgba(255,246,224,.06)}
+.stoff-text details.gleich summary{cursor:pointer;font-size:11px;letter-spacing:.16em;color:var(--ink-soft);min-height:32px;display:flex;align-items:center}
+@media (max-width:900px){
+  .stoff-kopf{grid-template-columns:minmax(0,1fr);grid-template-areas:"zurueck" "wer" "titel" "her" "modus";padding-left:max(10px,env(safe-area-inset-left,0px));padding-right:max(12px,env(safe-area-inset-right,0px))}
+  .stoff-wer{padding-top:2px}
+  .stoff-flaeche{padding-left:max(12px,env(safe-area-inset-left,0px));padding-right:max(12px,env(safe-area-inset-right,0px))}
+  .stoff-faden{padding-left:max(12px,env(safe-area-inset-left,0px));padding-right:max(12px,env(safe-area-inset-right,0px))}
+  .stoff-text .passage{grid-template-columns:30px minmax(0,1fr);column-gap:10px}
+  .stoff-text .rand{grid-column:2;padding-top:0}
+  .stoff-text .koerper{font-size:16.5px}
+  .stoff-text .lose,.stoff-ende{margin-left:0}
+  .vergleich-kopf,.stoff-text .paar{grid-template-columns:minmax(0,1fr);gap:8px}
+  .stoff-text .paar .zelle.dort{border-left:1px solid rgba(230,236,255,.25);padding-left:10px}
+}
+@media (prefers-reduced-motion: reduce){ .im-stoff #gl{transition:none} }
+.stoff-text .koerper strong{font-weight:600;color:var(--whitegold)}
+.stoff-text .koerper code{font-family:var(--f-measure);font-size:.86em;color:var(--ink)}
+.stoff-text .koerper .zitat{border-left:1px solid var(--ink-faint);padding-left:14px;color:var(--ink-soft)}
+.stoff-faden{padding-left:max(96px,env(safe-area-inset-left,0px))}
+@media (max-width:900px){ .stoff-faden{padding-left:max(12px,env(safe-area-inset-left,0px))} }

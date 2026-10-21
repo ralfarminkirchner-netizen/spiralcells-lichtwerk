@@ -59,3 +59,27 @@ test('Ordnung: jeder Mond genau einmal, Ungeordnetes bleibt „ohne Dach“', ()
 test('Werkschlüssel ohne Katalogkennung', () => {
   for(const m of B.monde){ const k = werkSchluessel(m.werk); assert.ok(!/appgprj|hosted-sources/.test(k), k); }
 });
+
+test('Zelle und Netz: alle Monde bauen, jede Lage endlich, Punktbudget gehalten', async () => {
+  globalThis.innerWidth = 1200; globalThis.innerHeight = 800;
+  const {Zelle, baueZelle} = await import('../app/js/zelle.js');
+  const {Netz, baueNetz} = await import('../app/js/netz.js');
+  const {setCamera, L, CAM} = await import('../app/js/licht.js');
+  const {U} = await import('../app/js/welt.js');
+  CAM.cssW = 1200; CAM.cssH = 800;
+  let maxPc = 0;
+  for(const m of B.monde){
+    const Z = new Zelle(m, {ohneAufzug: false});
+    for(let k = 0; k < 600; k++) Z.step(1 / 120, false);
+    const o = [0, 0, 0];
+    for(let g = 0; g < Z.G; g++){ Z.kornPos(g, o); assert.ok(o.every(Number.isFinite), m.titel); }
+    for(let i = 0; i < m.samen.length; i++){ Z.seedPos(i, o); assert.ok(o.every(Number.isFinite), m.titel); }
+    setCamera({target: Z.center(), dist: 5, yaw: 0, pitch: 1.4, fov: 0.6, S: Z.S.Sc, shift: 0, shiftX: 0}, 1200, 800);
+    L.pc = 0; baueZelle(Z, U, 3, 1 / 60, 1); maxPc = Math.max(maxPc, L.pc);
+  }
+  assert.ok(maxPc < 40000, 'Punkte je Zelle ' + maxPc);
+  const N = new Netz(B, null);
+  setCamera({target: N.mitte, dist: N.Rm2 * 3, yaw: 0.35, pitch: 0.87, fov: 0.7, S: N.Rm2, shift: 0, shiftX: 0}, 1200, 800);
+  L.pc = 0; baueNetz(N, U, 2, 1, -1, 0); assert.ok(L.pc > 1000 && L.pc < 60000, 'Punkte im Netz ' + L.pc);
+  assert.equal(N.baum.ohne.length, B.monde.length, 'ohne Ordnung steht alles „ohne Dach“');
+});

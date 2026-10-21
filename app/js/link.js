@@ -43,7 +43,11 @@ export function namen(monde){
 /* Den Teil hinter # lesen: nur bekannte Schlüssel, nur Kleinbuchstaben, Ziffern und Striche */
 export function lies(hash){
   const q = new URLSearchParams(String(hash || '').replace(/^#/, ''));
-  const mond = q.get('mond'), von = q.get('von');
-  return {mond: mond && /^[a-z0-9-]{1,90}$/.test(mond) ? mond : null, von: von && Object.prototype.hasOwnProperty.call(VON, von) ? von : null};
+  const mond = q.get('mond'), von = q.get('von'), zahl = k => { const x = q.get(k); return x && /^\d{1,5}$/.test(x) ? Number(x) : null; };
+  return {mond: mond && /^[a-z0-9-]{1,90}$/.test(mond) ? mond : null, von: von && Object.prototype.hasOwnProperty.call(VON, von) ? von : null,
+    fassung: zahl('fassung'), stelle: zahl('stelle'), lesen: q.get('lesen') === '1', vergleich: zahl('vergleich')};
 }
-export const bau = (name, von) => '#mond=' + name + (von && VON[von] ? '&von=' + von : '');
+/* Lesbar bleibt auch die genaue Stelle: die wievielte Fassung im Mond, die wievielte Passage. Nie eine Kennung. */
+export const bau = (name, von, genau) => '#mond=' + name + (von && VON[von] ? '&von=' + von : '')
+  + (genau && genau.fassung ? '&fassung=' + genau.fassung : '') + (genau && genau.lesen ? '&lesen=1' : '')
+  + (genau && genau.vergleich ? '&vergleich=' + genau.vergleich : '') + (genau && genau.stelle != null && genau.lesen ? '&stelle=' + (genau.stelle + 1) : '');
