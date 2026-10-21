@@ -125,9 +125,11 @@ function folgeStoff(variantId, mond, opt){
   if(hier){ hier.stoff = z; hier.ausStoff = true; U.weg.push(hier); }
   B.stoff.schliesse();
   if(mond && mond.id !== Z.m.id){ const i = mondNachId(mond.id); if(i < 0) return; oeffneMond(i, {ohneAufzug: true, waehle: variantId, stufe: 2, behalteWeg: true}); }
-  const Zn = W.Z, si = Zn.m.samen.findIndex(s => s.id === variantId);
-  if(si >= 0){ B.waehle({art: 'same', i: si, mond: Zn.m, zelle: Zn}, 2); B.stoff.oeffne({mond: Zn.m, i: si, ...opt}); }
-  else if(Zn.m.keim.some(v => v.id === variantId)){ B.waehle({art: 'keim', mond: Zn.m, zelle: Zn}, 2); B.stoff.oeffne({mond: Zn.m, keim: true, ...opt}); }
+  const Zn = W.Z, si = Zn.m.samen.findIndex(s => s.id === variantId), keim = si < 0 && Zn.m.keim.some(v => v.id === variantId);
+  if(si >= 0) B.waehle({art: 'same', i: si, mond: Zn.m, zelle: Zn}, 2); else if(keim) B.waehle({art: 'keim', mond: Zn.m, zelle: Zn}, 2);
+  // Erst fliegen, dann lesen: der Weg zwischen den Werken bleibt sichtbar
+  const lesen = () => { if(W.Z !== Zn || B.stoff.offen()) return; if(si >= 0) B.stoff.oeffne({mond: Zn.m, i: si, ...opt}); else if(keim) B.stoff.oeffne({mond: Zn.m, keim: true, ...opt}); merkeOrt(); };
+  if(U.flug) setTimeout(lesen, U.flug.dauer * 0.9); else lesen();
   B.zeile(`In „${kurz(Zn.m.titel, 50)}“. Der Rückweg steht oben links.`); merkeOrt();
 }
 /* Der Ort, an dem Ralf gerade ist: im Speicher dieses Tabs nur Kennungen, in der Adresszeile nur lesbare Zahlen */
