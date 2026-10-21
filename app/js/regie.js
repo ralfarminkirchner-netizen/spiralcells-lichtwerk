@@ -24,6 +24,10 @@ export function regie(U, Z, N, RM){
     tg = [mix(tg[0], nMitte[0], tk), mix(tg[1], nMitte[1], tk), mix(tg[2], nMitte[2], tk)];
     elev = mix(elev, 50 * DEG, sstep(0, 0.8, nk)); fov = mix(fov, 40 * DEG, sstep(0, 0.6, nk)); yaw = mix(yaw, 0.35 + (RM ? 0 : 0.012) * U.netZeit, sstep(0.2, 1, nk));
   }
+  // Flug von einer Zelle zur nächsten: Ziel gleitet, Maßstab atmet weit auf
+  if(U.flug && Z){ const e = eio(clamp((performance.now() - U.flug.t0) / U.flug.dauer, 0, 1)), hoch = Math.sin(Math.PI * e);
+    tg = [mix(U.flug.von[0], tg[0], e), mix(U.flug.von[1], tg[1], e), mix(U.flug.von[2], tg[2], e)];
+    Sv = Math.exp(mix(Math.log(Math.max(0.05, U.flug.S)), Math.log(Math.max(0.05, Sv)), e)) * (1 + 4.5 * hoch); elev = mix(elev, 55 * DEG, hoch); }
   const par = RM ? 0 : 1;
   U.baseElev = elev;
   elev = clamp(elev + U.elevOff - U.py * 0.07 * par, 2 * DEG, 90 * DEG);

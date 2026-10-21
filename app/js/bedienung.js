@@ -350,6 +350,7 @@ export function installiere(a){
   formen.init({absaetze, kurz, ansage, zeile, haltKnopf, behalten: (v, k) => api.formBehalten(v, k), funke(){ const p = kornWelt(U.sel); if(p) burst(p[0], p[1], p[2], SILVER, 18, 0.3, 0.7, 0.01); }});
   canvas.addEventListener('pointerdown', e => {
     if(U.fahrt){ U.netK = U.netT; U.fahrt = null; }
+    U.flug = null;   // Berührung schneidet den Flug ab
     try{ canvas.setPointerCapture(e.pointerId); }catch(_){} U.pp.set(e.pointerId, {x: e.clientX, y: e.clientY}); activity(); klangWake();
     if(U.pp.size === 2){ const [p, q] = [...U.pp.values()]; U.pinch0 = Math.hypot(p.x - q.x, p.y - q.y); U.zoom0 = U.zoom; U.mode = 'pinch'; setHold(false); U.bind = null; return; }
     U.mode = 'press'; U.x0 = U.x = e.clientX; U.y0 = U.y = e.clientY; U.t0 = performance.now();

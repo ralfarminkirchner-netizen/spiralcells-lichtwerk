@@ -52,6 +52,9 @@ function mondNachId(id){ return W.B ? W.B.monde.findIndex(m => m.id === id) : -1
 function oeffneMond(i, opt = {}){
   const m = W.B.monde[i]; if(!m) return;
   if(!opt.behalteWeg) U.weg = [];
+  // Flug: von Zelle zu Zelle zieht die Kamera kurz auf, das Netz zeigt den Weg; reduzierte Bewegung schneidet
+  if(W.Z && W.Z.m !== m && W.Z.m.id && !W.RM && U.netK < 0.3 && opt.flug !== false) U.flug = {von: W.Z.center(), S: W.Z.S.Sc, t0: performance.now(), dauer: 1500};
+  else U.flug = null;
   W.aktiv = i;
   const Z = new Zelle(m, {origin: W.N.pos[i], RM: W.RM, au: klang, ohneAufzug: !!opt.ohneAufzug});
   W.Z = Z; clearSparks(); zuletztMarkieren(Z);
@@ -339,7 +342,9 @@ function draw(rdt){
   M.resize();
   const cam = regie(U, W.Z, W.ruht ? null : W.N, W.RM); setCamera(cam, M.W, M.H);
   L.pc = 0;
-  const visZ = W.Z ? 1 - sstep(0.25, 0.7, U.netK) : 0, visN = W.N && !W.ruht ? sstep(0.05, 0.5, U.netK) : 0;
+  const fk = U.flug ? Math.sin(Math.PI * clamp((performance.now() - U.flug.t0) / U.flug.dauer, 0, 1)) : 0;
+  if(U.flug && performance.now() - U.flug.t0 > U.flug.dauer) U.flug = null;
+  const visZ = W.Z ? (1 - sstep(0.25, 0.7, U.netK)) * (1 - 0.7 * fk) : 0, visN = W.N && !W.ruht ? Math.max(sstep(0.05, 0.5, U.netK), 0.75 * fk) : 0;
   if(W.Z) baueZelle(W.Z, U, W.wall, rdt, visZ);
   if(visN > 0) baueNetz(W.N, U, W.wall, visN, W.aktiv, visZ);
   // Verbinden: ein Faden folgt dem Finger
