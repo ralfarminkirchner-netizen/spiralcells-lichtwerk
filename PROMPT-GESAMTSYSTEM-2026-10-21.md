@@ -15,9 +15,9 @@ füge diese eine Zeile ein:
 „ultracode“ erlaubt dem Chat, viele Prüfer parallel laufen zu lassen. Das kostet mehr Tokens, aber keine bezahlten
 Modellaufrufe außerhalb des Abos. Wenn du das nicht willst, lass das Wort weg.
 
-**Dieser Chat ist der eine.** Den KiN-OS-Auftrag `PROMPT-KIN-OS-EINS.md` hat der Chat „Prompt KIN OS EINS“ in den
-Schritten 1–6 erledigt (Stand 21.10., etwa 13:45). Dieser Chat übernimmt das Ergebnis und baut es nicht neu.
-Schritt 7, die Capacities-Arbeit, ist Teil dieses Auftrags.
+**KiN OS gehört ab jetzt ChatGPT.** Ralf, 21.10.: „Gib das gesamte Projekt ChatGPT ab, der die Arbeit fortsetzt.“
+Die Übergabe dafür liegt hier im Lichtwerk: `PROMPT-CHATGPT-KIN-OS-FORTSETZUNG-2026-10-21.md` (Commit 89b0433).
+Der Gesamtsystem-Chat baut nicht an KiN OS. Er liest es nur als Teil des Systems.
 
 ---
 
@@ -80,6 +80,16 @@ vermischen, zu verdoppeln oder Ralfs Entscheidungen neu zu verhandeln.
    - „Welt betreten soll genauso Möglichkeit sein wie die Zentrale zu betreten.“
    - In `wirktragwerk` durfte jener Chat mit den fremden offenen Änderungen einchecken. Für dich bleibt es bei eigenen
      Pfaden, solange Ralf dir das nicht selbst anders sagt.
+   - **KiN OS gehört ChatGPT.** Ralf hat das auf die Frage des Chats „Prompt KIN OS EINS“ ausdrücklich bejaht („Ja,
+     du“). Du fasst KiN OS nicht an. Dazu gehören:
+     - die Zentrale `wirktragwerk` auf 8894 samt `wirktragwerk-daten`,
+     - der Fork `kin-os`,
+     - die KiN-OS-Stellen im Lichtwerk: der Rückweg in `app/js/link.js` und die Tür „KiN OS“ in
+       `server/lichtwerk_server.py`.
+
+     Was du an KiN OS findest, schreibst du ChatGPT als `WUNSCH-an-chatgpt-kin-os-<thema>.md` in den Lichtwerk-Ordner.
+     Dem Wunsch fügst du den Beleg an beiden Stellen bei. Liegt eine neue Übergabe von ChatGPT vor, liest du sie, bevor
+     du KiN OS in der Systemkarte beschreibst.
 3. **Ralfs Ja vom 20.10.:**
    - Eine Form wird nur durch sein Halten im Lichtwerk eine Fassung unter seinem Namen, mit einem Faden „verweist auf“
      zum Original.
@@ -104,7 +114,8 @@ Alle Projekte liegen unter `/Volumes/ThunderBolt4_2TB/Development/Projects/`, au
     in `main`.
   - Codex' Teil im selben Repo: `app/werkraum.*`, `app/materialraum.*`, `app/js/werkdaten.js`, `app/js/mycel.js`,
     `tests/test_autorenprofile.py`, `tests/werkdaten.test.mjs` und sein Serverteil.
-- **KiN OS = Zentrale:** `wirktragwerk`, 8894, betrieben vom LaunchAgent `net.kreativtragwerk.workbench`. Der Stand
+- **KiN OS = Zentrale (gehört ChatGPT, für dich nur lesen):** `wirktragwerk`, 8894, betrieben vom LaunchAgent
+  `net.kreativtragwerk.workbench`. Der jüngste Stand steht in `PROMPT-CHATGPT-KIN-OS-FORTSETZUNG-2026-10-21.md`. Der Stand
   nach `PROMPT-KIN-OS-EINS.md`, Schritte 1–6, laut Bericht des Chats „Prompt KIN OS EINS“, gegen Git und Ports
   nachgeprüft:
   - **Commits in `wirktragwerk`, Zweig main:**
@@ -306,9 +317,7 @@ Diese Grundsätze ergeben sich aus allem bisher Gesagten. Sie sollen das System 
   - laufende Codex-Automationen (`/Volumes/ThunderBolt4_2TB/HomeData/.codex/automations`),
   - die Writer-Sperre in `lebenserschliessung`,
   - die Cloud-Sitzung an KiNTEGRiTY,
-  - die Sitzung „wirktragwerk-92“. Sie ist am 21.10. gegen 13:45 im Ordner `wirktragwerk` gestartet. Der Chat
-    „Prompt KIN OS EINS“ ändert dort seitdem nichts mehr. Kläre, wer das ist, bevor du in `wirktragwerk` etwas
-    änderst.
+  - ChatGPT an KiN OS. Dort änderst du ohnehin nichts.
 
   Arbeitet jemand am selben Teil, baust du dort nicht. Du sagst es Ralf in einem Satz.
 - Dienste und Ports, PIDs und Startzeiten aufnehmen. Nichts neu starten.
@@ -330,6 +339,7 @@ Diese Grundsätze ergeben sich aus allem bisher Gesagten. Sie sollen das System 
    - In `main` liegen inzwischen zwei Commits des KiN-OS-Chats: 01ac6b5 in `app/js/link.js` und a08e56a in
      `server/lichtwerk_server.py` und `tests/test_datenweg.py`.
    - `git merge-tree` meldete am 21.10. gegen 13:55 keinen Konflikt mit `gewebe`. Prüf das vor dem Merge neu.
+   - Die beiden KiN-OS-Stellen gehören ChatGPT. Der Merge lässt sie unverändert.
    - Fremde, nicht eingecheckte Dateien dort bleiben liegen.
    - Danach prüfst du live auf 8411 nur lesend. Die Ordnung kommt dort über `/ordnung.json`, falls der laufende ältere
      Server `/lichtwerk/ordnung` nicht kennt.
@@ -347,9 +357,10 @@ Code, Daten, Dienst, letzte Commits, offene Dateien, Codex' Sitzungen der letzte
   Fassungen, denselben Vergleich, denselben Rückweg? Oder sind es zwei Ansichten mit verschiedenen Regeln für dasselbe?
 - **Lichtwerk und Lebensspirale:** Haben Licht und Papier dieselbe Umschaltung, dieselben Wörter und denselben
   Arbeitsweg vom Original über Passage, Variante und Ergebnis bis zum Vergleich?
-- **Lichtwerk, SPiRALCELLS und das gebaute KiN OS (8894):** Gibt es einen Weg hinein und einen zurück, mit denselben
-  Formen? Führen der Leistenpunkt SPiRALCELLS, Astras „Welt betreten“ und die Tür im Lichtwerk an dieselbe Stelle?
-  Verweist nirgends mehr etwas auf 8895?
+- **Lichtwerk, SPiRALCELLS und das gebaute KiN OS (8894), nur lesend:** Gibt es einen Weg hinein und einen zurück,
+  mit denselben Formen? Führen der Leistenpunkt SPiRALCELLS, Astras „Welt betreten“ und die Tür im Lichtwerk an
+  dieselbe Stelle? Verweist nirgends mehr etwas auf 8895? Was auf der Seite von KiN OS nicht passt, geht als Wunsch an
+  ChatGPT.
 - **KiNFORMER-Formen, Fassungen in SPiRALCELLS (Faden „verweist auf“) und Formen in KiN:** Ist es an allen drei Orten
   dieselbe Form?
 - **KiNTEGRiTY lokal und PR #1 und PR #2 auf GitHub:** Welcher Stand ist der echte? Widersprechen sich die Zweige?
@@ -398,6 +409,8 @@ Offene Entscheidungen, die du sicher findest:
 
 - Gehört der Phänomenatlas technisch weiter in GANZ SEiN, oder bekommt er wie in der Ordnung einen eigenen Ort?
 - Wird PR #2 gemergt?
+- Wer bringt Capacities voran, du oder ChatGPT? Der Capacities-Vorschlag steht auch in der ChatGPT-Übergabe
+  (Schritt 7). Zwei dürfen nicht gleichzeitig daran arbeiten. Bis Ralf entschieden hat, liest du dazu nur.
 - Legt Ralf einen Capacities-Test-Space und ein Token selbst an?
 - Wer baut die Lebensspirale Licht und Papier, du oder Codex' Automation? Wie wird die Writer-Sperre geteilt?
 - Wandert die Ordnung aus dem Lichtwerk in die Zentrale?
@@ -409,22 +422,16 @@ Mai-Dokumenten.
 
 Die wahrscheinliche Reihenfolge, je nach Karte und Ralfs Antwort:
 
-1. **KiN OS übernehmen, nicht neu bauen.** Die Schritte 1–6 aus `PROMPT-KIN-OS-EINS.md` sind erledigt. Offen ist:
-   - **Wählen ist entschieden:** Ralf bleibt bei seiner Wahl vom 19. Oktober (Fundstück-Wandler → „Zweiter
-     Gebrauch“). Über KiN OS wird nicht neu gewählt, und du schlägst auch keinen neuen Versuch vor. Laut dem Chat
-     „Prompt KIN OS EINS“ steht in KiN genau diese eine Wahl, und seit 11:37 ist dort kein neues Ereignis
-     dazugekommen; geprüft wurde nur lesend.
-   - **Befunde, die der KiN-OS-Chat gesehen, aber nicht behoben hat.** Kläre zuerst, wem der Code gehört. Dann
-     behebst du ihn mit einem Test, oder du schreibst einen Wunsch an den, dem er gehört.
-     - Bei 375 px wird die Startseite nach etwa 6 Sekunden durch die Notizliste 527 px breit (`.note-main`,
-       `aios-visual.css`).
-     - Der Raum Formen rollt bei 375 px seitlich.
-     - Der SPiRALCELLS-Knopf in Astras Welt öffnet 8401 mit `variantId` im Adressfragment. Damit ist eine Kennung
-       sichtbar.
-     - Viele KiN-Werke heißen gleich, etwa „Auftrag zur Textentwicklung“. Deshalb tragen die Namen die Zusätze -2,
-       -3 und so weiter. Das ist kein menschlicher Name. Die Werke brauchen unterscheidbare Namen aus ihrem Inhalt
-       oder ihrer Herkunft.
-   - KiN selbst wird weiter nicht geändert.
+1. **KiN OS: nicht deine Baustelle.** Es gehört ChatGPT. Was dort offen ist, steht in der ChatGPT-Übergabe:
+   - die Kostenfreigabe,
+   - die vier fremden Befunde an der Oberfläche (Notizliste bei 375 px, seitliches Rollen in Formen, eine Kennung im
+     SPiRALCELLS-Knopf der Welt, gleichnamige Werke mit -2 und -3),
+   - die Frage, ob die Welt gleichrangig trägt.
+
+   Du baust daran nichts. Was davon andere Teile berührt, nimmst du in die Systemkarte auf. Für KiN OS schreibst du
+   Wünsche an ChatGPT.
+
+   Ralf bleibt bei seiner Wahl vom 19. Oktober (Fundstück-Wandler → „Zweiter Gebrauch“). Niemand wählt neu.
 2. **Licht und Papier als Systemprinzip:**
    - Im Lichtwerk wird der Leseraum zur Papieransicht über denselben Werken.
    - In der Lebensspirale gelten Codex' sechs Kriterien, in Absprache mit seiner Automation.
@@ -440,7 +447,8 @@ Die wahrscheinliche Reihenfolge, je nach Karte und Ralfs Antwort:
    - Jede Oberfläche bekommt den Manifest-Test aus Leitbild 9.
    - Wo es dein Code ist, behebst du es mit einem Test.
    - Wo der Code Codex gehört, schreibst du einen `WUNSCH-an-codex-<thema>.md`.
-6. **Capacities anwenden:**
+   - Wo es KiN OS ist, schreibst du einen `WUNSCH-an-chatgpt-kin-os-<thema>.md`.
+6. **Capacities anwenden** (nur wenn Ralf entschieden hat, dass du es machst, und nicht ChatGPT):
    - Zuerst bringst du Ralf einen kurzen Vorschlag: was es ihm bringt und was er dafür tun muss.
    - Dann kommt nur ein lesender Probelauf in seinem eigenen Test-Space (`scripts/capacities_probe.py` aus PR #1).
    - Erst danach entsteht ein Spiegel ausgewählter Werke mit Rückweg und Verlustbericht. Die offenen Punkte H1, H3 und
@@ -480,15 +488,17 @@ schreibst einen Eintrag in die Chronik.
    - Codex' Dateien nicht ändern. Dazu gehören die im Lichtwerk, in kintegrity, in lebenserschliessung und in
      astra-neubau.
    - Wünsche an Codex gehen in `WUNSCH-an-codex-<thema>.md`.
+   - KiN OS gehört ChatGPT. Dazu zählen `wirktragwerk`, `wirktragwerk-daten`, `kin-os`, der Rückweg in
+     `app/js/link.js` und die Tür in `server/lichtwerk_server.py`. Dort änderst du nichts. Wünsche gehen in
+     `WUNSCH-an-chatgpt-kin-os-<thema>.md`.
    - Fremde offene Dateien bleiben liegen.
    - Der alte Schreibmodus und `--autorenprofile` werden nicht reaktiviert.
 6. **Git:**
    - `git commit -- <eigene Pfade>`.
    - Kein Push ohne Ralfs Ja, kein Zweigwechsel und kein Stash in geteilten Kopien, kein Reset.
    - Commit-Zeile am Ende: `Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>`.
-7. **Kosten:** keine bezahlten Modellaufrufe ohne Ralfs Ja, auch nicht zum Testen. In der Zentrale schaltet die
-   Datei `wirktragwerk-daten/formen/ki-freigegeben` die bezahlten Aufrufe frei. Du legst sie erst nach Ralfs
-   ausdrücklichem Ja an.
+7. **Kosten:** keine bezahlten Modellaufrufe ohne Ralfs Ja, auch nicht zum Testen. Die Freigabe in der Zentrale
+   (Datei `wirktragwerk-daten/formen/ki-freigegeben`) gehört zu KiN OS und damit nicht dir.
 8. **Zugangsdaten:** nie in Code, Chat oder Oberfläche.
 9. **Oberfläche nach dem Grundmanifest**
    (`/Volumes/ThunderBolt4_2TB/Development/GRUNDMANIFEST-MENSCHLICHE-OBERFLAECHEN.md`, vor UI-Arbeit lesen):
@@ -514,8 +524,9 @@ schreibst einen Eintrag in die Chronik.
 - das Lichtwerk von `gewebe` in Ralfs `main` ist, live lesend geprüft, mit den bestätigten Befunden der zweiten
   Prüfrunde eingearbeitet,
 - Ralf die Systemkarte als Seite hat und seine Entscheidungen getroffen hat,
-- KiN OS weiter **ein** Dienst ist (8894, 8895 aus) und in KiN weiter genau Ralfs eine Wahl vom 19. Oktober steht,
-- 8411 nach Ralfs Ja neu gestartet ist und die Tür „KiN OS“ live auf 8894 zeigt,
+- an KiN OS nichts von dir geändert ist und alles, was dort nicht passt, als Wunsch bei ChatGPT liegt,
+- 8411 nach Ralfs Ja neu gestartet ist und die Tür „KiN OS“ live auf 8894 zeigt (der Neustart von 8411 bleibt Sache
+  des Lichtwerks),
 - Licht und Papier in mindestens einem Teil über demselben Material umschaltbar sind, ohne Kontextverlust, im Browser
   gezeigt,
 - die drei Atlanten als ihre Dächer erreichbar sind, ohne Vermischung,
