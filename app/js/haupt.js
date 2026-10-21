@@ -23,7 +23,7 @@ if(!M){ document.getElementById('nogl').hidden = false; canvas.hidden = true; th
 addEventListener('resize', () => M.resize());
 const angEl = document.getElementById('angle'), tageEl = document.getElementById('tage'), ortEl = document.getElementById('zurueck'), namenEl = document.getElementById('namen');
 for(let i = 0; i < 5; i++){ const s = document.createElement('span'); s.textContent = STIMMEN[i].name; s.style.color = STIMMEN[i].hex; s.style.opacity = '0'; namenEl.append(s); }
-const tuerEl = document.getElementById('tuernamen'), dachEl = document.getElementById('dachnamen'), werkEl = document.getElementById('werknamen');
+const tuerEl = document.getElementById('tuernamen'), dachEl = document.getElementById('dachnamen'), werkEl = document.getElementById('werknamen'), markeEl = document.getElementById('marke');
 /* Im Bezirk: die Namen seiner Werke unter ihren Zellen, die Namen der Bereiche an ihren Ringen; was sich überdeckt, schweigt */
 let werkBezirk = undefined;
 function werkNamen(){
@@ -436,10 +436,15 @@ function ui(cam){
   U.namenAn = namenK > 0.01;
   // Dächer und Mitte tragen im Netz ihren Namen
   if(dachEl && W.N){ const zeig = U.netK > 0.55 && !W.ruht, kids = dachEl.children, nd = W.N.daecher.length;
-    for(let j = 0; j < kids.length; j++){ const el = kids[j], p = j === 0 ? U.mitteSchirm : j <= nd ? U.daecherSchirm[j - 1] : U.ohneSchirm;
+    // Namen, die sich überdecken würden, schweigen; die Marke hat Vorrang (die Mitte zuerst, dann die Dächer)
+    const belegt = [], markeRaum = () => { if(!markeEl.hidden){ const r = markeEl.getBoundingClientRect(); if(r.width) belegt.push({x: r.left, y: r.top, w: r.width, h: r.height}); } };
+    const frei = r => !belegt.some(q => r.x < q.x + q.w + 6 && q.x < r.x + r.w + 6 && r.y < q.y + q.h + 2 && q.y < r.y + r.h + 2);
+    for(let j = 0; j < kids.length; j++){ if(j === 1) markeRaum();   // die Mitte steht immer, dann die Marke, dann die Dächer
+      const el = kids[j], p = j === 0 ? U.mitteSchirm : j <= nd ? U.daecherSchirm[j - 1] : U.ohneSchirm;
       const bz = j === 0 ? 'mitte' : j <= nd ? j - 1 : 'ohne', leise = U.dach != null && bz !== U.dach ? 0.25 : 1;
       if(!zeig || !p || p[2] <= 0){ if(el.style.opacity !== '0') el.style.opacity = '0'; continue; }
       const bw = el.offsetWidth || 80, px = clamp(p[0], 12 + bw / 2, CAM.cssW - 12 - bw / 2);   // Namen bleiben im Bild
+      const rr = {x: px - bw / 2, y: p[1] - 14 - 16, w: bw, h: 16}; if(!frei(rr)){ if(el.style.opacity !== '0') el.style.opacity = '0'; continue; } belegt.push(rr);
       el.style.transform = `translate(${Math.round(px)}px,${Math.round(p[1] - 14)}px) translate(-50%,-100%)`; el.style.opacity = String((clamp((U.netK - 0.55) * 2.5, 0, 0.85) * leise).toFixed(2)); } }
   werkNamen();
   // Türen im Netz tragen leise ihren Namen
