@@ -15,8 +15,9 @@ füge diese eine Zeile ein:
 „ultracode“ erlaubt dem Chat, viele Prüfer parallel laufen zu lassen. Das kostet mehr Tokens, aber keine bezahlten
 Modellaufrufe außerhalb des Abos. Wenn du das nicht willst, lass das Wort weg.
 
-**Dieser Chat ist der eine.** Er enthält den KiN-OS-Auftrag `PROMPT-KIN-OS-EINS.md` als Teil. Gib diesen Auftrag also
-nicht zusätzlich einem zweiten Chat.
+**Dieser Chat ist der eine.** Den KiN-OS-Auftrag `PROMPT-KIN-OS-EINS.md` hat der Chat „Prompt KIN OS EINS“ in den
+Schritten 1–6 erledigt (Stand 21.10., etwa 13:45). Dieser Chat übernimmt das Ergebnis und baut es nicht neu.
+Schritt 7, die Capacities-Arbeit, ist Teil dieses Auftrags.
 
 ---
 
@@ -72,7 +73,13 @@ vermischen, zu verdoppeln oder Ralfs Entscheidungen neu zu verhandeln.
    - Neun Werke sind ohne Dach.
    - Neue Werke ohne Beleg kommen nach „ohne Dach“ und werden Ralf vorgelegt.
 2. **KiN OS ist die Zentrale.** Es gibt eine Instanz: `wirktragwerk`, Port 8894. Der am 20.10. gebaute Fork
-   (`Projects/kin-os`, Port 8895) war falsch und wird zurückgeführt.
+   (`Projects/kin-os`, Port 8895) war falsch. Er ist zurückgeführt, 8895 ist aus, der Ordner bleibt als Archiv.
+   Ralfs Antworten dazu vom 21.10. mittags (berichtet vom Chat „Prompt KIN OS EINS“):
+   - Die Startseite heißt KiN OS. AiHDS OS bleibt als Name zum Umschalten.
+   - Bezahlte Aufrufe im Raum Formen (Verstehen, Beschreiben) bleiben in der Zentrale aus, bis Ralf sie freigibt.
+   - „Welt betreten soll genauso Möglichkeit sein wie die Zentrale zu betreten.“
+   - In `wirktragwerk` durfte jener Chat mit den fremden offenen Änderungen einchecken. Für dich bleibt es bei eigenen
+     Pfaden, solange Ralf dir das nicht selbst anders sagt.
 3. **Ralfs Ja vom 20.10.:**
    - Eine Form wird nur durch sein Halten im Lichtwerk eine Fassung unter seinem Namen, mit einem Faden „verweist auf“
      zum Original.
@@ -97,8 +104,34 @@ Alle Projekte liegen unter `/Volumes/ThunderBolt4_2TB/Development/Projects/`, au
     in `main`.
   - Codex' Teil im selben Repo: `app/werkraum.*`, `app/materialraum.*`, `app/js/werkdaten.js`, `app/js/mycel.js`,
     `tests/test_autorenprofile.py`, `tests/werkdaten.test.mjs` und sein Serverteil.
-- **KiN OS = Zentrale:** `wirktragwerk`, 8894. Der Auftrag dafür ist `spiralcells-lichtwerk/PROMPT-KIN-OS-EINS.md`
-  (Schritte 1–7) und gilt jetzt als dein KiN-OS-Teil.
+- **KiN OS = Zentrale:** `wirktragwerk`, 8894, betrieben vom LaunchAgent `net.kreativtragwerk.workbench`. Der Stand
+  nach `PROMPT-KIN-OS-EINS.md`, Schritte 1–6, laut Bericht des Chats „Prompt KIN OS EINS“, gegen Git und Ports
+  nachgeprüft:
+  - **Commits in `wirktragwerk`, Zweig main:**
+    - cc54604: Ausgangsstand, acht fremde Dateien unverändert,
+    - b833c6f: Leistenpunkt SPiRALCELLS, lesbare Werk- und Formnamen, Kostenschalter,
+    - 16881e0: Astras „Welt betreten“ als Punkt der Leiste,
+    - 43cde45: Die Leiste passt bei 900 px Höhe und wischt bei 375 px,
+    - d7dd889: Leseweg für den Volltext.
+  - **Der Fork:** Im Fork-Git öffnet `kin-os/KIN-OS-STARTEN.command` nur noch 8894 (04a3489).
+  - **Kostenschalter:** Bezahlt wird nur, wenn die Datei `wirktragwerk-daten/formen/ki-freigegeben` existiert. Sie
+    fehlt. Angelegt wird sie erst nach Ralfs Ja, ein Neustart ist dafür nicht nötig.
+  - **Volltext:**
+    - KiN hat mit `GET /api/jobs/<werk>` schon eine reine Leseroute.
+    - Die Zentrale zeigt sie unter `/lesen` (`aios_lesen.py`), ohne Kennung und ohne zu speichern.
+    - In der Welt steht unter „Herkunft“ der Punkt „Ganzen Text lesen“.
+  - **KiN** (`kintegrity`) ist nicht geändert. Gegenüber KiN tritt die Zentrale wieder mit dem Ursprung
+    `http://127.0.0.1:8894` auf.
+  - **Lichtwerk `main`:**
+    - 01ac6b5: Der Rückweg zeigt auf 8894, das ist schon live.
+    - a08e56a: Die Tür „KiN OS“ zeigt auf 8894, und 8895 ist aus dem Verbund genommen. Das wirkt erst nach einem
+      Neustart von 8411, der noch nicht gemacht ist.
+  - **Tests:**
+    - Zentrale: 615 Tests. Rot ist nur der bekannte CSP-Altfehler; der Vault-Test ist wechselhaft und allein grün.
+    - Lichtwerk in der Testkopie: grün.
+  - **Standbilder** bei 1440 px und 375 px liegen in `wirktragwerk/pruefung/kin-os-20261021/`.
+  - **Weiterformen:** Einmal ging es echt über 8894. Dabei entstand genau eine neue Form, „Spiel aus
+    Fundstück-Wandler“.
 - **KiNTEGRiTY / KiN:**
   - Lokal liegt es in `kintegrity`, KiN auf 9040. Es ist nur über
     `wesenswerk-tisch/integrations/betrieb.py backup|start|stop --component kintegrity` zu bedienen.
@@ -272,7 +305,10 @@ Diese Grundsätze ergeben sich aus allem bisher Gesagten. Sie sollen das System 
   - Dateien jünger als 30 Minuten in den Projekten, die nicht deine sind,
   - laufende Codex-Automationen (`/Volumes/ThunderBolt4_2TB/HomeData/.codex/automations`),
   - die Writer-Sperre in `lebenserschliessung`,
-  - die Cloud-Sitzung an KiNTEGRiTY.
+  - die Cloud-Sitzung an KiNTEGRiTY,
+  - die Sitzung „wirktragwerk-92“. Sie ist am 21.10. gegen 13:45 im Ordner `wirktragwerk` gestartet. Der Chat
+    „Prompt KIN OS EINS“ ändert dort seitdem nichts mehr. Kläre, wer das ist, bevor du in `wirktragwerk` etwas
+    änderst.
 
   Arbeitet jemand am selben Teil, baust du dort nicht. Du sagst es Ralf in einem Satz.
 - Dienste und Ports, PIDs und Startzeiten aufnehmen. Nichts neu starten.
@@ -290,11 +326,15 @@ Diese Grundsätze ergeben sich aus allem bisher Gesagten. Sie sollen das System 
    - `/usr/bin/python3 -m unittest discover -s tests`,
    - selbst im Browser auf der Testkette (8418/8419 auf der Kopie `testdaten/kette-gewebe`), am Mac und bei 375 px.
    Werkstattzugang: `?werkstatt` → `window.__spiral`.
-3. Führe `gewebe` mit einem Merge-Commit in `main` von `spiralcells-lichtwerk` zusammen. Fremde, nicht eingecheckte
-   Dateien dort bleiben liegen. Danach prüfst du live auf 8411 nur lesend. Die Ordnung kommt dort über
-   `/ordnung.json`, falls der laufende ältere Server `/lichtwerk/ordnung` nicht kennt.
-4. Die Verbesserung der Serverwarteschlange (`dienst()` mit `request_queue_size=64`) wirkt erst nach einem Neustart
-   von 8411. Diesen Neustart machst du nicht ungefragt.
+3. Führe `gewebe` mit einem Merge-Commit in `main` von `spiralcells-lichtwerk` zusammen.
+   - In `main` liegen inzwischen zwei Commits des KiN-OS-Chats: 01ac6b5 in `app/js/link.js` und a08e56a in
+     `server/lichtwerk_server.py` und `tests/test_datenweg.py`.
+   - `git merge-tree` meldete am 21.10. gegen 13:55 keinen Konflikt mit `gewebe`. Prüf das vor dem Merge neu.
+   - Fremde, nicht eingecheckte Dateien dort bleiben liegen.
+   - Danach prüfst du live auf 8411 nur lesend. Die Ordnung kommt dort über `/ordnung.json`, falls der laufende ältere
+     Server `/lichtwerk/ordnung` nicht kennt.
+4. Ein Neustart von 8411 bringt zwei Dinge live: die Tür „KiN OS“ auf 8894 (a08e56a) und die Serverwarteschlange
+   (`dienst()` mit `request_queue_size=64`). Frag Ralf einmal für beides zusammen und starte nicht ungefragt.
 
 ### 3 · Die neuen Teile gegeneinander prüfen (nur lesen, parallel, jeder Befund gegengeprüft)
 
@@ -307,8 +347,9 @@ Code, Daten, Dienst, letzte Commits, offene Dateien, Codex' Sitzungen der letzte
   Fassungen, denselben Vergleich, denselben Rückweg? Oder sind es zwei Ansichten mit verschiedenen Regeln für dasselbe?
 - **Lichtwerk und Lebensspirale:** Haben Licht und Papier dieselbe Umschaltung, dieselben Wörter und denselben
   Arbeitsweg vom Original über Passage, Variante und Ergebnis bis zum Vergleich?
-- **Lichtwerk und SPiRALCELLS, KiN OS (8894) und der Fork (8895):** Gibt es einen Weg hinein und einen zurück, mit
-  denselben Formen?
+- **Lichtwerk, SPiRALCELLS und das gebaute KiN OS (8894):** Gibt es einen Weg hinein und einen zurück, mit denselben
+  Formen? Führen der Leistenpunkt SPiRALCELLS, Astras „Welt betreten“ und die Tür im Lichtwerk an dieselbe Stelle?
+  Verweist nirgends mehr etwas auf 8895?
 - **KiNFORMER-Formen, Fassungen in SPiRALCELLS (Faden „verweist auf“) und Formen in KiN:** Ist es an allen drei Orten
   dieselbe Form?
 - **KiNTEGRiTY lokal und PR #1 und PR #2 auf GitHub:** Welcher Stand ist der echte? Widersprechen sich die Zweige?
@@ -368,8 +409,21 @@ Mai-Dokumenten.
 
 Die wahrscheinliche Reihenfolge, je nach Karte und Ralfs Antwort:
 
-1. **KiN OS als eine Zentrale:** `PROMPT-KIN-OS-EINS.md`, Schritte 1–6. Der Fork wird zurückgeführt und 8895 ist aus.
-   Aus dem Lichtwerk führt ein Tipp in die richtige Zelle und ein Tipp zurück. KiN selbst wird dafür nicht geändert.
+1. **KiN OS übernehmen, nicht neu bauen.** Die Schritte 1–6 aus `PROMPT-KIN-OS-EINS.md` sind erledigt. Offen ist:
+   - **Ralfs erstes Wählen:** Formen → Fundstück-Wandler → „Wendestelle“ ist wählbar → Ralf bestätigt am Mac binnen
+     90 Sekunden. Das tut nur Ralf. Danach prüfst du nur lesend, dass genau eine neue Wahl in KiN steht. Die letzte
+     vorher war „Zweiter Gebrauch“ vom 19. Oktober.
+   - **Befunde, die der KiN-OS-Chat gesehen, aber nicht behoben hat.** Kläre zuerst, wem der Code gehört. Dann
+     behebst du ihn mit einem Test, oder du schreibst einen Wunsch an den, dem er gehört.
+     - Bei 375 px wird die Startseite nach etwa 6 Sekunden durch die Notizliste 527 px breit (`.note-main`,
+       `aios-visual.css`).
+     - Der Raum Formen rollt bei 375 px seitlich.
+     - Der SPiRALCELLS-Knopf in Astras Welt öffnet 8401 mit `variantId` im Adressfragment. Damit ist eine Kennung
+       sichtbar.
+     - Viele KiN-Werke heißen gleich, etwa „Auftrag zur Textentwicklung“. Deshalb tragen die Namen die Zusätze -2,
+       -3 und so weiter. Das ist kein menschlicher Name. Die Werke brauchen unterscheidbare Namen aus ihrem Inhalt
+       oder ihrer Herkunft.
+   - KiN selbst wird weiter nicht geändert.
 2. **Licht und Papier als Systemprinzip:**
    - Im Lichtwerk wird der Leseraum zur Papieransicht über denselben Werken.
    - In der Lebensspirale gelten Codex' sechs Kriterien, in Absprache mit seiner Automation.
@@ -431,7 +485,9 @@ schreibst einen Eintrag in die Chronik.
    - `git commit -- <eigene Pfade>`.
    - Kein Push ohne Ralfs Ja, kein Zweigwechsel und kein Stash in geteilten Kopien, kein Reset.
    - Commit-Zeile am Ende: `Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>`.
-7. **Kosten:** keine bezahlten Modellaufrufe ohne Ralfs Ja, auch nicht zum Testen.
+7. **Kosten:** keine bezahlten Modellaufrufe ohne Ralfs Ja, auch nicht zum Testen. In der Zentrale schaltet die
+   Datei `wirktragwerk-daten/formen/ki-freigegeben` die bezahlten Aufrufe frei. Du legst sie erst nach Ralfs
+   ausdrücklichem Ja an.
 8. **Zugangsdaten:** nie in Code, Chat oder Oberfläche.
 9. **Oberfläche nach dem Grundmanifest**
    (`/Volumes/ThunderBolt4_2TB/Development/GRUNDMANIFEST-MENSCHLICHE-OBERFLAECHEN.md`, vor UI-Arbeit lesen):
@@ -457,8 +513,9 @@ schreibst einen Eintrag in die Chronik.
 - das Lichtwerk von `gewebe` in Ralfs `main` ist, live lesend geprüft, mit den bestätigten Befunden der zweiten
   Prüfrunde eingearbeitet,
 - Ralf die Systemkarte als Seite hat und seine Entscheidungen getroffen hat,
-- es **einen** Dienst für KiN OS gibt (8894), 8895 aus ist und Ralf mit einem Tipp in der richtigen SPiRALCELLS-Zelle
-  ist und mit einem Tipp zurück,
+- KiN OS weiter **ein** Dienst ist (8894, 8895 aus), Ralf selbst einmal gewählt hat und genau diese eine Wahl in KiN
+  steht,
+- 8411 nach Ralfs Ja neu gestartet ist und die Tür „KiN OS“ live auf 8894 zeigt,
 - Licht und Papier in mindestens einem Teil über demselben Material umschaltbar sind, ohne Kontextverlust, im Browser
   gezeigt,
 - die drei Atlanten als ihre Dächer erreichbar sind, ohne Vermischung,
