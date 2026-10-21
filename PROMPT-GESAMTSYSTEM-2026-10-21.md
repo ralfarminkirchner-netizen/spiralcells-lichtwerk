@@ -410,9 +410,10 @@ Mai-Dokumenten.
 Die wahrscheinliche Reihenfolge, je nach Karte und Ralfs Antwort:
 
 1. **KiN OS übernehmen, nicht neu bauen.** Die Schritte 1–6 aus `PROMPT-KIN-OS-EINS.md` sind erledigt. Offen ist:
-   - **Ralfs erstes Wählen:** Formen → Fundstück-Wandler → „Wendestelle“ ist wählbar → Ralf bestätigt am Mac binnen
-     90 Sekunden. Das tut nur Ralf. Danach prüfst du nur lesend, dass genau eine neue Wahl in KiN steht. Die letzte
-     vorher war „Zweiter Gebrauch“ vom 19. Oktober.
+   - **Wählen ist entschieden:** Ralf bleibt bei seiner Wahl vom 19. Oktober (Fundstück-Wandler → „Zweiter
+     Gebrauch“). Über KiN OS wird nicht neu gewählt, und du schlägst auch keinen neuen Versuch vor. Laut dem Chat
+     „Prompt KIN OS EINS“ steht in KiN genau diese eine Wahl, und seit 11:37 ist dort kein neues Ereignis
+     dazugekommen; geprüft wurde nur lesend.
    - **Befunde, die der KiN-OS-Chat gesehen, aber nicht behoben hat.** Kläre zuerst, wem der Code gehört. Dann
      behebst du ihn mit einem Test, oder du schreibst einen Wunsch an den, dem er gehört.
      - Bei 375 px wird die Startseite nach etwa 6 Sekunden durch die Notizliste 527 px breit (`.note-main`,
@@ -513,8 +514,7 @@ schreibst einen Eintrag in die Chronik.
 - das Lichtwerk von `gewebe` in Ralfs `main` ist, live lesend geprüft, mit den bestätigten Befunden der zweiten
   Prüfrunde eingearbeitet,
 - Ralf die Systemkarte als Seite hat und seine Entscheidungen getroffen hat,
-- KiN OS weiter **ein** Dienst ist (8894, 8895 aus), Ralf selbst einmal gewählt hat und genau diese eine Wahl in KiN
-  steht,
+- KiN OS weiter **ein** Dienst ist (8894, 8895 aus) und in KiN weiter genau Ralfs eine Wahl vom 19. Oktober steht,
 - 8411 nach Ralfs Ja neu gestartet ist und die Tür „KiN OS“ live auf 8894 zeigt,
 - Licht und Papier in mindestens einem Teil über demselben Material umschaltbar sind, ohne Kontextverlust, im Browser
   gezeigt,
