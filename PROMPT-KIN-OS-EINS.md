@@ -132,6 +132,58 @@ Erst wenn 3 grün ist:
 - **Wählen** tut nur Ralf: Er tippt, KiN fragt am Mac, er bestätigt innerhalb von 90 Sekunden. Du führst ihn hin und
   prüfst danach, dass genau eine Wahl in KiN steht.
 
+### 6 · Volltexte aus KiN lesen
+
+Ralf am 21.10.: „Danach den Leseweg für Volltexte bauen.“ Das kommt erst, wenn Wählen über 8894 geht.
+- Nur lesen. Die Zentrale holt den Volltext eines Werks über eine Leseroute, die KiN **schon hat**, und zeigt ihn in
+  KiN OS als Lesefläche ohne Kennungen. Erst im Code von `kintegrity` nachsehen, welche Route das ist, nicht durch Probieren auf 9040.
+- Fehlt in KiN eine passende Leseroute, wird KiN trotzdem nicht geändert. Schreib den Wunsch in
+  `WUNSCH-an-codex-volltext.md` und sag es Ralf in einem Satz.
+- Nichts aus dem Volltext wird gespeichert, weitergeschickt oder an ein Modell gegeben.
+
+### 7 · Material aus der Capacities-Arbeit (später, als Vorschlag)
+
+Eine Cloud-Sitzung hat am 20.10. für Ralf in KiNTEGRiTY gebaut. Das ist **Material**, kein zweiter Auftrag und keine
+zweite Instanz. Es liegt auf GitHub `ralfarminkirchner-netizen/kintegrity`, Zweig `claude/capacities-spiral-cells`,
+als Entwurfs-PR #1. Dieser Zweig ist **nicht** in der lokalen Arbeitskopie `kintegrity`: Nicht auschecken, nicht mergen,
+nur lesen (`git fetch` in einen eigenen Ordner oder auf GitHub ansehen). Zum Einstieg:
+- `docs/CAPACITIES-SPIRALCELLS-2026-10-20.md`: Bauprotokoll mit Architekturentscheidung,
+- `docs/ASTRA-UEBERGABE-CAPACITIES-SPIRALCELLS-20261020.md`: Folgeauftrag, gilt jetzt für dich,
+- `docs/belege/capacities-spiralcells-2026-10-20/GEGENPRUEFUNG.md`: unabhängige Gegenprüfung, Skripte g01–g14.
+
+Was für KiN OS taugen könnte (selbst prüfen, übernehmen statt kopieren):
+1. **Prüfregeln für Beziehungen** (`kin/spiral_cells.py`):
+   - Ähnlichkeit wird nie als Beziehung gespeichert.
+   - Belege stehen wörtlich in der zitierten Zelle.
+   - Es gibt Geltungsstufen von Spur bis Struktur.
+   - Ab „Hypothese“, beim Annehmen und beim Verwerfen bestätigt ein Mensch.
+   - Eine Annahme gilt nur für die geprüfte Fassung.
+   - Herkunft und Gültigkeit werden getrennt geführt.
+   
+   Das passt zu Ralfs Regel, dass Einklang nie vorgetäuscht wird.
+2. **Fünf Linsen** über denselben Daten: Inhalt, Beziehung, Erkenntnis, Entwicklung, Möglichkeit
+   (`web/spiral-cells.js`). Vergleiche sie mit Astras vier Weltsichten und dem Lichtwerk, statt eine vierte Oberfläche zu bauen.
+3. **ZEiTBLiND-Startbestand** (`examples/zeitblind/seed.json`). Die Gegenprüfung (M3) sagt: Die Zelltexte sind meist
+   zusammengesetzt, nicht wörtlich. Nicht als Beleg verwenden.
+4. **Capacities-Adapter** (`kin/capacities.py`):
+   - Er ist nie live geprüft.
+   - Offen sind H1 (Datenfreigabe ist nur Selbstauskunft), H3 (Programmaufrufe gelten als „Mensch“) und H4 (der Export
+     meldet Erfolg trotz Abbruch).
+   - Nichts davon starten, bevor Ralf einen eigenen Test-Space und ein Token angelegt hat. Das Token hinterlegt Ralf selbst
+     lokal (`KIN_CAPACITIES_TOKEN`, `KIN_CAPACITIES_WRITE_SPACE`); du siehst und tippst es nie.
+   - Dann zuerst nur lesend `scripts/capacities_probe.py`.
+5. **Obsidian-Rundweg mit Verlustbericht** (`kin/vault_map.py`):
+   - Die Vault wird nur gelesen.
+   - Offen ist M4: Verluste im Frontmatter werden nicht gemeldet.
+
+Ralfs Grundsätze dazu:
+- Keine Zugangsdaten in Code oder Chat.
+- Capacities nur in einem eigenen Test-Space.
+- Keine Migration, die Obsidian-Vaults bleiben unverändert.
+- `mindlaxy-vault` (Gesundheitsdaten Dritter) und Chat-Exporte sind ausgeschlossen.
+
+Das kommt erst nach den Schritten 1–6. Bring es Ralf als kurzen Vorschlag: was es ihm bringt und was er dafür tun muss.
+
 ## Feste Regeln
 
 1. **Ein Chat.** Merkst du, dass ein anderer Agent in `wirktragwerk`, `kin-os` oder am KiN-OS-Teil des Lichtwerks
@@ -161,6 +213,7 @@ Erst wenn 3 grün ist:
 - es **einen** Dienst für KiN OS gibt (8894) und 8895 aus ist,
 - Ralf KiN OS mit einem Doppelklick öffnet, mit einem Tipp in der richtigen SPiRALCELLS-Zelle ist und mit einem Tipp zurück,
 - Formen, Weiterformen und „Welt betreten“ dort gehen und Ralf selbst einmal gewählt hat,
+- Ralf den Volltext eines Werks in KiN OS lesen kann oder der Wunsch an Codex dafür geschrieben ist,
 - die Tests der Zentrale grün sind, bis auf die benannten fremden Altfehler,
 - keine fremde Datei ungefragt verändert und kein bezahlter Aufruf gelaufen ist,
 - Ralf drei Sätze bekommt: was er jetzt tun kann, was noch nicht gut ist und was er entscheiden muss.
