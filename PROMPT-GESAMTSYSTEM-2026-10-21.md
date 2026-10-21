@@ -93,7 +93,7 @@ Alle Projekte liegen unter `/Volumes/ThunderBolt4_2TB/Development/Projects/`, au
 - **Lichtwerk (Claudes Oberfläche über SPiRALCELLS):**
   - `spiralcells-lichtwerk`, Zweig `main`. Es läuft live auf 8411, dazu der Leseeingang 8420. 8411 liefert `app/`
     direkt von der Platte aus: Jede Änderung dort ist sofort bei Ralf.
-  - Die Weiterentwicklung liegt in `spiralcells-lichtwerk-gewebe`, Zweig `gewebe`, Stand 35c59bc. Sie ist noch nicht
+  - Die Weiterentwicklung liegt in `spiralcells-lichtwerk-gewebe`, Zweig `gewebe`. Der Code steht auf 35c59bc, danach kamen nur Standbilder und Prüfbefunde. Sie ist noch nicht
     in `main`.
   - Codex' Teil im selben Repo: `app/werkraum.*`, `app/materialraum.*`, `app/js/werkdaten.js`, `app/js/mycel.js`,
     `tests/test_autorenprofile.py`, `tests/werkdaten.test.mjs` und sein Serverteil.
@@ -286,7 +286,8 @@ Diese Grundsätze ergeben sich aus allem bisher Gesagten. Sie sollen das System 
    - `WEITERMACHEN-2026-10-21.md`,
    - `BERICHT.md`,
    - `PRUEFRUNDE-2-2026-10-21.md`. Darin stehen die bestätigten Befunde der zweiten unabhängigen Prüfrunde, noch
-     nicht eingearbeitet; der schwerste betrifft zu helle kurze Bündel zwischen Nachbarbezirken.
+     nicht eingearbeitet; der schwerste betrifft zu helle kurze Bündel zwischen Nachbarbezirken. Befunde, deren
+     Gegenprüfung dort als fehlend steht, prüfst du selbst gegen, bevor du sie einarbeitest.
 2. Arbeite die bestätigten Befunde auf `gewebe` ein. Prüfe danach:
    - `node --test tests/*.test.mjs`,
    - `/usr/bin/python3 -m unittest discover -s tests`,
