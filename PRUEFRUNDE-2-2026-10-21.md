@@ -3,9 +3,9 @@
 Nur gelesen, nichts geändert. Jeder Befund wurde von einem eigenen Gegenprüfer zu widerlegen versucht.
 Bestätigt heißt: der Gegenprüfer hielt ihn für echt. Eingearbeitet ist davon noch **nichts**.
 
-**Noch ohne Gegenprüfung beim Schreiben dieser Datei:** gegen:bruch:2, gegen:bruch:4, gegen:bruch:6, gegen:bruch:7, gegen:bruch:8
+**Noch ohne Gegenprüfung beim Schreiben dieser Datei:** gegen:bruch:7, gegen:bruch:8
 
-## Bestätigt (41)
+## Bestätigt (44)
 
 ### bild-netz 1 · Kurze Bündel zwischen Nachbarbezirken brennen als weiße Haken aus und überstrahlen die Mitte
 - **datei:** app/js/netz.js
@@ -550,6 +550,44 @@ Die Einseitigkeit ist also systematisch und kein Sonderfall eines einstimmigen V
 
 **Zum Vorschlag.** Die Winkelmischung (k etwa 0,5–0,65) ist plausibel. Näher am Original wäre statt eines Hash-Winkels ein Spiralwinkel nach Zeitrang (Rang·GOLD), damit die Schichten nicht verrauschen. Am Standbild prüfen.
 
+### bruch 2 · Die Tür „KiN“ liegt auf einem Werk von KiNTEGRiTY
+- **datei:** app/js/netz.js
+- **zeile:** 90
+- **schwere:** mittel
+- **befund:** Die Türen sitzen jetzt auf einem Bogen bei 1,3·Rm außerhalb der Mitte (netz.js:90–91, vorher 0,82·Rm). lage() legt die Dächer aber schon ab Rm + gapDach = Rm + 2,0 (ordnung.js:87, netz.js:53). Die Mitte ist jetzt groß: Rm = 14,35, weil Rm ≥ 0,7 · größtes Dach (ordnung.js:79). Damit liegt der Türbogen bei 18,7, also 2,3 Einheiten tief im Kranz der Dächer. Mit der bestätigten Ordnung liegt KiNTEGRiTY oben. Die Tür „KiN“ steht dadurch im Kreis von KiNTEGRiTY, 0,2 Einheiten neben dem Werk „Die Wörter bleiben. Der Vortrag wird gesucht.“. Fehlbild: Im Überblick liegen Türpunkt und Werk wenige Pixel auseinander, und beide haben einen Trefferradius von 30 px. Ein Tippen trifft zufällig Tür oder Werk; das zweite Tippen auf die Tür öffnet ein neues Fenster. In der Mitte stehen Ring und Name „KiN“ auf den blauen KiNTEGRiTY-Werken, sodass die Tür wie ein Teil dieses Dachs wirkt statt wie ein Organ der Zentrale.
+- **beleg:** Rechnung …/pruefung2/tueren4.mjs und tuer-schirm.mjs (4 Türen wie im Bild). Tür KiN bei (5,5; −17,8): Abstand zur Mitte von KiNTEGRiTY 15,2 < R 16,8. Abstand auf dem Schirm zum Werk: 6 px (1200×800, Überblick), 3 px (375×812), 23 px (in der Mitte). Bild standbilder/gewebe2-03-mitte-innen.jpg oben rechts: „KiN“ mit Ring bei etwa (653,103) direkt unter den blauen KiNTEGRiTY-Lichtern bei (655,80) und (720,75).
+- **vorschlag:** Die Türen innerhalb der Mitte lassen (etwa 0,9·Rm) oder in lage() einen Ring für sie freihalten. Dafür müssen die Dächer erst bei ≥ 1,3·Rm + Abstand beginnen, also gapDach von Rm abhängig machen.
+- **Gegenprüfung:** echt, Schwere mittel: Ich konnte den Befund nicht widerlegen. Er ist belegt, und er kommt erst mit Commit 35c59bc.
+
+1. Code. netz.js:90–91 legt die Türen auf einen Bogen mit Radius 1,3·Rm bei y = 0,05·Rm. Vorher lagen sie bei 0,82·Rm, also innerhalb der Mitte. ordnung.js setzt jetzt Rm = max(3,2; 1,25·mk.R; 0,7·größtes Dach). Die Dächer beginnen bei Rm + gapDach, und gapDach ist 2,0 (netz.js:53). Der Türbogen liegt also im Kranz der Dächer, sobald 0,3·Rm > 2 ist, das heißt bei Rm > 6,7.
+   - Das hängt nicht an den Testdaten. Das drittgrößte Dach liegt immer beim Winkel 0,4 + 2·137,5° ≈ −62°. Das sind nur 28° neben der Mitte des Bogens bei −90°.
+   - Der Kommentar verspricht „an ihrem Rand“. BERICHT.md:16 sagt: „In der Mitte steht die Zentrale mit den Stimmen und den Türen.“ Beides widerspricht der neuen Lage.
+
+2. Nachgerechnet mit eigenem Skript (/private/tmp/claude-501/-Volumes-ThunderBolt4-2TB-Development-Projects-spiralcells-lichtwerk/1d7844bd-f2fa-430c-bed6-f193d9870ad0/scratchpad/pruefung2/widerlegung-kintuer/kintuer.mjs), mit kette-gewebe und kette-claude (beide gleiche Lage):
+   - Rm = 14,35, Türbogen bei 18,65, Dächer ab 16,35.
+   - KiNTEGRiTY liegt bei (15,5; −29,2) mit R = 16,8.
+   - Bei 4 Türen steht „KiN“ bei (5,5; −17,8), 15,2 von der Mitte von KiNTEGRiTY entfernt, also innerhalb von R = 16,8. Sie steht 1,85 Welteinheiten neben „Die Wörter bleiben. Der Vortrag wird gesucht.“
+   - Bei 5 Türen liegen „KiN“ und „Werkraum“ beide im Kreis von KiNTEGRiTY. Fünf Türen gibt es, wenn der Server einen Leseeingang kennt, wie bei Ralfs Lichtwerk (8420).
+
+3. Bild. standbilder/gewebe2-03-mitte-innen.jpg zeigt es oben rechts, vergrößert in /private/tmp/claude-501/-Volumes-ThunderBolt4-2TB-Development-Projects-spiralcells-lichtwerk/1d7844bd-f2fa-430c-bed6-f193d9870ad0/scratchpad/pruefung2/widerlegung-kintuer/mitte-oben-rechts.png. Ring und Name „KiN“ sitzen direkt unter den blauen Lichtern von KiNTEGRiTY, außerhalb des Rings der Mitte. Die Mitte ist genau die Ansicht, in der Ringe und Namen der Türen erscheinen sollen.
+
+4. Tippen. treffer() in bedienung.js:323–332 wählt das Nächste; Tür und Werk haben beide 30 px. Im Überblick liegt die Tür neben dem Werk:
+
+   | Bildschirm | Abstand Tür–Werk | Tippen bis 8 px ums Werk landet auf einer Tür |
+   |---|---|---|
+   | 1200×800 | 6,0 px | 53 von 197 |
+   | 800×600 | 4,5 px | 63 von 197 |
+   | 375×812 | 2,7 px | 93 von 197 |
+
+   Im Überblick ist die Tür nur ein winziger Punkt ohne Ring. Ein fast unsichtbares Ziel nimmt dem Werk also Treffer und Hover-Marke ab. Beim Hover erscheint dann „KiNTEGRiTY · das Gedächtnis“.
+
+Was der Prüfer überzeichnet:
+- Vor dem zweiten Tippen zeigt die Marke den Türnamen und „noch einmal tippen öffnet“. Ein Fenster geht also nicht unbemerkt auf.
+- Auf dem Handy liegen die Werke im Überblick ohnehin dicht. 37 von 89 Werken haben einen Nachbarn unter 6 px, der Median liegt bei 7 px. Der Tippkonflikt fällt darum vor allem am Mac auf. Am Mac haben nur 4 von 89 Werken einen so nahen Nachbarn.
+- Daten werden nicht berührt, und keine harte Regel ist verletzt.
+
+Folgenreich ist es trotzdem. Die Lage widerspricht Ralfs bestätigter Ordnung, nach der die Zentrale als Mitte die Türen trägt und die Dächer darum liegen. Die Ursache ist eine feste Geometrie und kein Zufall der Testdaten. Und sie betrifft genau die Ansicht der Mitte, die die erste Bildkritik aufräumen sollte. Darum bleibt die Schwere mittel.
+
 ### bruch 3 · Im Dach fehlt bei Fensterhöhen unter etwa 745 px der eigene Name
 - **datei:** app/js/haupt.js
 - **zeile:** 498
@@ -577,6 +615,30 @@ Folgen: Beim Eintritt über insDach (haupt.js:128–132) nennt die Zeile unten d
 Betroffen sind gängige Fenster: Laptops mit 1280×800 oder 1366×768 im Browser, das iPad quer und das Handy quer. Darum stufe ich ihn als „mittel“ ein, nicht als „leicht“.
 
 Abhilfe wie vorgeschlagen: Den Namen gegen das echte Rechteck von .mark prüfen, etwa wie markeRaum mit getBoundingClientRect in „belegt“. Oder ihn innen unter den oberen Rand setzen statt ihn zu verschweigen.
+
+### bruch 4 · Das Netzmaß rechnet ohne Perspektive: vordere Bezirke sind unten angeschnitten
+- **datei:** app/js/regie.js
+- **zeile:** 49
+- **schwere:** leicht
+- **befund:** netzMass rechnet orthografisch ((|cv|+R)·sin(elev) + h·cos(elev)). Die Kamera hat aber 40° Öffnung, der nahe (untere) Teil wird also größer abgebildet. Im Überblick am Mac ragt deshalb, je nach Drehung, der vorderste Bezirk 23–82 px aus dem Bild. Sein Name fällt dann an der Untergrenze (cssH − 64) weg, und der vordere Rand liegt im Band der Bildzeile. Am Handy (hochkant) passt das Netz.
+- **beleg:** Rechnung …/pruefung2/rand-pruefen.mjs mit kette-gewebe und ordnung.json. Bei 1200×800: netZeit 0 s SEiN 53 px unter dem Rand; 37 s FASKA 23, SEiN 47, ADHS OS 37 px; 130 s Phänomenatlas 73 px. Bei 1440×900 bis 82 px. namen-handy.mjs: bei 1200×800 schweigt „ADHS OS“ (y0 = 745 > 736). Bild gewebe2-01-netz-ueberblick.jpg: die Hülle von SEiN läuft unten aus dem Bild, „ADHS OS“ (≈500,541) liegt auf der Bildzeile.
+- **vorschlag:** Die Kreise der Bezirke mit der echten Projektion messen (Probe-setCamera plus toScreen), oder die nahe Hälfte mit dem Perspektivfaktor dist/(dist − Tiefe) vergrößern. Alternativ das Ziel leicht nach vorn schieben.
+- **Gegenprüfung:** echt, Schwere mittel: Der Befund lässt sich nicht widerlegen. Die Wirkung ist sogar größer als gemeldet, und am Mac ist es ein Rückschritt gegenüber 26356a7.
+
+Code: app/js/regie.js:49-54 (netzMass) rechnet die Höhe orthografisch: (|cv|+R)·sin(elev) + h·cos(elev), dazu nur 10 % Zugabe. Die Kamera ist aber perspektivisch. Bei fov 40° gilt d = S/tan 20° = 2,75·S. Ein vorderer Rand bei rund 1,19·S Bodenabstand liegt bei 50° Neigung 0,76·S näher an der Kamera. Er wird also um den Faktor 2,75/(2,75−0,76) ≈ 1,38 größer abgebildet und landet bei etwa 1,26 der halben Bildhöhe, also außerhalb. Der hintere Teil schrumpft entsprechend (Faktor ≈ 0,78). Das Bild wird dadurch unsymmetrisch: oben bleibt Luft, unten läuft es über. Die Skripte des Prüfers spiegeln die echte Logik richtig. Sie nutzen setCamera/toScreen aus licht.js, die Bodenringe wie ring() in netz.js:111, die Namensposition toScreen(d.mitte, d.R·0,42) aus netz.js:150 und die Grenze y0 > cssH−64 aus haupt.js:497. Nachgerechnet sind die Zahlen genau so: 1200×800 bei 0 s SEiN 53 px, bei 37 s FASKA 23 / SEiN 47 / ADHS OS 37 px, bei 130 s Phänomenatlas 73 px, bei 1440×900 bis 82 px. „ADHS OS“ schweigt bei 1200×800 (y0 = 745).
+
+Eigene Prüfung über einen ganzen Umlauf (0,012 rad/s, also 524 s), Skript /private/tmp/claude-501/-Volumes-ThunderBolt4-2TB-Development-Projects-spiralcells-lichtwerk/1d7844bd-f2fa-430c-bed6-f193d9870ad0/scratchpad/pruefung2/widerlegung-perspektive/umlauf.mjs:
+- Bei 1200×800 ragt in 66 % des Umlaufs eine Hülle aus dem Bild, höchstens 73 px. Unten reichen die Hüllen bis y = 873, oben bleibt der Abstand bei mindestens 125 px. Das ist die Unsymmetrie der Perspektive.
+- Nicht nur Säume: In 102 von 262 Schritten liegt auch der Mittelpunkt eines Werks unter dem Bildrand, bis 35 px (bei 1920×1080 bis 48 px).
+- Dachnamen fallen unter die Namensgrenze in 66 von 262 Schritten.
+- Beispiel aus welche.mjs: Bei 114 s liegen sechs Phänomenatlas-Werke bei y 776–816 von 800, also unter der Bildzeile und der Klang-Zeile oder schon aus dem Bild. Bei 37 s gilt das für „FUGE + MiNDCEL Codex“ (ADHS OS) bei y = 823.
+- Bei reduzierter Bewegung (RM) steht yaw fest auf dem Wert von 0 s. Dann ist SEiN dauerhaft 53 px angeschnitten.
+
+Vergleich mit der alten regie.js aus 26356a7 (umlauf-vergleich.mjs mit ALT=1), 1200×800: Hülle nur in 18 % des Umlaufs aus dem Bild, höchstens 25 px; kein Werk aus dem Bild; kein Dachname verloren. Der neue Maßstab löst das Handy: 375×812 jetzt 0 % statt 100 % angeschnitten. Am Mac und auf Querformaten (auch 844×390: 66 %) verschlechtert er das Bild aber deutlich.
+
+Bild: gewebe2-01-netz-ueberblick.jpg, aufgehellter Ausschnitt in widerlegung-perspektive/unten.png. Der gestrichelte Saum von SEiN läuft links und rechts bis zur Unterkante, seine untere Rundung fehlt. „ADHS OS“ (~500,541) liegt genau auf der Bildzeile „Die Zentrale in der Mitte, …“. Die Bildzeile blendet sich nicht von selbst aus (bedienung.js:28-32), die Überlagerung bleibt also bestehen.
+
+Die Schwere hebe ich von leicht auf mittel. Grund: Im Überblick, der Hauptansicht des Netzes, liegen zeitweise ganze Werke eines Dachs unter der Bildzeile oder außerhalb des Bildes. Bei reduzierter Bewegung bleibt ein Bezirk dauerhaft angeschnitten. Und es ist eine neue Verschlechterung durch diesen Commit. Mit dem Zoom lässt sich das ausgleichen, und es gehen keine Daten verloren; deshalb nicht schwer. Der Vorschlag passt: die Bezirke mit der echten Projektion messen (Probe-setCamera mit toScreen) oder die nahe Hälfte mit dist/(dist − Tiefe) vergrößern.
 
 ### wege 1 · Nach dem Bündel liegt der Knoten des gewählten Fadens meist außerhalb des Bilds
 - **datei:** app/js/bedienung.js
@@ -1067,6 +1129,33 @@ Beleg: /private/tmp/claude-501/-Volumes-ThunderBolt4-2TB-Development-Projects-sp
 
 **Warum es trotzdem ein Fehler ist:** `ausStoff` wird nur von `rueckSatz` und `zurueckAusStoff` gelesen. In folgeStoff bedeutet die Marke: „Den Leseraum hat der Sprung selbst geöffnet.“ Ohne Teil öffnet der Sprung keinen Leseraum. Die Marke ist dort also falsch gesetzt. Dazu kommt, dass die gesprochene Ansage dem Verhalten widerspricht.
 
+### bruch 6 · Am Handy ist nur die erste Verbindung eines Fadens erreichbar, obwohl die Marke „←/→ wählt“ verspricht
+- **datei:** app/js/bedienung.js
+- **zeile:** 91
+- **schwere:** leicht
+- **befund:** U.fadenK ändert sich nur über die Pfeiltasten (Z. 444–445). Am Touchgerät folgt das zweite Tippen auf einen Faden immer der ersten Verbindung (Z. 364). Ein Tippen auf die Marke wählt den Faden nur erneut aus (Z. 485, else-Zweig). Trotzdem zeigt die Marke auch am Handy „Verbindung 1 von 3 · ←/→ wählt“. Weitere Verbindungen, auch solche mit genannter Stelle, kann man so aus dem Netz am Handy nicht lesen.
+- **beleg:** Fundstellen von fadenK: nur bedienung.js:90, 279, 364, 445, 452. Rechnung …/pruefung2/faden-kanten.mjs: 6 von 30 Fäden haben mehrere Verbindungen. 7 Verbindungen sind nur per Pfeiltaste erreichbar, 2 davon mit Stelle (Durkheim → Radcliffe-Brown mit 3 Verbindungen, „Ein Inhalt“ → Durkheim mit 2). Bild gewebe2-11-faden-marke.jpg: Marke „Verbindung 1 von 3 · ←/→ wählt …“.
+- **vorschlag:** Auf Touchgeräten (W.touch) „←/→ wählt“ weglassen und eine Geste anbieten. Zum Beispiel schaltet ein Tippen auf die Marke eines gewählten Fadens zur nächsten Verbindung, und ein Tippen auf den Knoten folgt.
+- **Gegenprüfung:** echt, Schwere leicht: Der Befund hält im Kern. Die Zahl der betroffenen Verbindungen mit Stelle ist aber zu hoch angesetzt: Es ist eine, nicht zwei.
+
+Code (Stand 35c59bc, alles neu gegenüber 26356a7, dort gab es fadenK noch nicht):
+- U.fadenK wird nur an zwei Stellen gesetzt: in bedienung.js:279 auf 0 zurück, wenn ein anderer Faden gewählt wird, und in bedienung.js:444–445 durch ArrowLeft und ArrowRight.
+- Das zweite Tippen auf den Faden (Z. 364) und die Eingabetaste (Z. 452) lesen fadenK nur aus.
+- Ein Klick auf die Marke (Z. 483–485) fällt für 'faden' in den else-Zweig waehle(s, 2). Weil es derselbe Faden ist, bleibt fadenK unverändert, und für Fäden passiert bei Stufe 2 nichts weiter.
+- Z. 91 hängt „ · ←/→ wählt“ ohne Prüfung auf W.touch an. W.touch gibt es (haupt.js:588, pointer: coarse), es wird aber nur in Z. 224 benutzt.
+- Am Handy steht also eine Anweisung in der Marke, die man dort nicht ausführen kann. Das Bild gewebe2-11-faden-marke.jpg ist die Mac-Ansicht (800×600). Für das Handy folgt der Befund aus dem Code, nicht aus einem Bild.
+
+Nachgerechnet mit widerlegung-fadenk/endpunkte.mjs gegen kette-gewebe und kette-claude, beide gleich: 6 von 30 Fäden haben mehrere Verbindungen, 7 Verbindungen haben k>0. Ob eine davon trotzdem erreichbar ist, habe ich daran geprüft, wo folgeFaden(k=0) ankommt (haupt.js:202–213). Dort öffnet der Leseraum, und dessen verwendungen(v) (stoff.js:65–69, 331–334) zeigt alle Verwendungen dieser Fassung als Randnotizen.
+- Durkheim → Radcliffe-Brown: k=1 (mit Stelle) geht in dieselbe Radcliffe-Brown-Quellfassung wie k=0. Am Handy erscheint sie also nach dem Folgen als Randnotiz an ihrer Stelle im Leseraum. Das widerlegt diesen Teil des Belegs. k=2 (ohne Verwendung) betrifft dieselbe Fassung und steht in deren Faden-Liste der Lesefläche (bedienung.js:182).
+- „Ein Inhalt, viele Verwendungen“ → Durkheim: k=1 (mit Stelle, Prüfbefund → Durkheim-Quellfassung) betrifft die Fassung nicht, an der k=0 ankommt („Zusammenhalt · geänderte Prämisse · Code…“). Vom Faden aus ist diese Stelle am Handy nicht lesbar. Man findet sie nur auf Umwegen, indem man die Prüfbefund-Fassung oder die Durkheim-Quellfassung selbst sucht und dort den Leseraum öffnet.
+- Bei den übrigen vier Fäden ohne Verwendung (FASKA Eigenraum → MOONFiNGERS, FASKA Eigenraum → FASKA Varianten · Vergleich, MOONFiNGERS → Mooncells, Radcliffe-Brown → Durkheim) führt k=1 jeweils zu einer anderen Fassung als k=0. Auch die erreicht man nur über das Werk.
+
+Fehlbild: Am Handy steht „Verbindung 1 von 3 · ←/→ wählt“. Die versprochene Wahl gibt es dort nicht, und die zweite Verbindung von „Ein Inhalt“ → Durkheim mit ihrer Stelle lässt sich aus dem Netz nicht lesen.
+
+Warum nur leicht: Gegenüber 26356a7 geht am Handy nichts verloren, denn vorher folgte man immer der ersten Verbindung. Betroffen ist eine neue Funktion, die nur über die Tastatur geht, dazu eine irreführende Anweisung. Eine Fehlhandlung mit Folgen löst das nicht aus.
+
+Ein Nebenfund an derselben Stelle: Die Ansage in bedienung.js:373 („F zeigt die anderen …“) richtet sich ebenfalls nur an Tastaturnutzer. Sie ist aber nur für Screenreader hörbar, nicht sichtbar.
+
 ### ehrlich 1 · Faden-Marke verspricht „tippen liest die Stelle“, obwohl der Teil im Wortlaut gar nicht steht
 - **datei:** app/js/bedienung.js
 - **zeile:** 94
@@ -1406,7 +1495,7 @@ Die Werkstattszene `netz` ruft genau `oeffneMond` und dann `zumNetz` auf (`haupt
 
 Nicht nachgerechnet habe ich den Wortlaut „FASKA: 23 Werke in 4 Bereichen.“ Für den Befund ist er unerheblich.
 
-## Verworfen oder ungeprüft (18)
+## Verworfen oder ungeprüft (15)
 
 ### leistung 1 · Leseraum: kandidaten() rechnet bei buchlangen Fassungen bis zu 26 volle Passagenabgleiche in einem Klick
 - **datei:** app/js/stoff.js
@@ -1756,33 +1845,6 @@ Vom Vorschlag fällt document.fonts.ready weg, denn es gibt keine Webfonts. stil
 Nebenbei, nicht Teil dieses Befunds: In umhaengen (stoff.js:103–105) wird scrollTop gleich nach baue() zurückgesetzt, also bevor randFliessen im nächsten Frame die Zeilen über der Leseposition kürzt. Das könnte nach einem Auffrischen einen kleinen Sprung geben.
 
 Skript: /private/tmp/claude-501/-Volumes-ThunderBolt4-2TB-Development-Projects-spiralcells-lichtwerk/1d7844bd-f2fa-430c-bed6-f193d9870ad0/scratchpad/pruefung2/widerlegung-randfluss/rand10.mjs (Messung: profil.py im selben Ordner).
-
-### bruch 2 · Die Tür „KiN“ liegt auf einem Werk von KiNTEGRiTY
-- **datei:** app/js/netz.js
-- **zeile:** 90
-- **schwere:** mittel
-- **befund:** Die Türen sitzen jetzt auf einem Bogen bei 1,3·Rm außerhalb der Mitte (netz.js:90–91, vorher 0,82·Rm). lage() legt die Dächer aber schon ab Rm + gapDach = Rm + 2,0 (ordnung.js:87, netz.js:53). Die Mitte ist jetzt groß: Rm = 14,35, weil Rm ≥ 0,7 · größtes Dach (ordnung.js:79). Damit liegt der Türbogen bei 18,7, also 2,3 Einheiten tief im Kranz der Dächer. Mit der bestätigten Ordnung liegt KiNTEGRiTY oben. Die Tür „KiN“ steht dadurch im Kreis von KiNTEGRiTY, 0,2 Einheiten neben dem Werk „Die Wörter bleiben. Der Vortrag wird gesucht.“. Fehlbild: Im Überblick liegen Türpunkt und Werk wenige Pixel auseinander, und beide haben einen Trefferradius von 30 px. Ein Tippen trifft zufällig Tür oder Werk; das zweite Tippen auf die Tür öffnet ein neues Fenster. In der Mitte stehen Ring und Name „KiN“ auf den blauen KiNTEGRiTY-Werken, sodass die Tür wie ein Teil dieses Dachs wirkt statt wie ein Organ der Zentrale.
-- **beleg:** Rechnung …/pruefung2/tueren4.mjs und tuer-schirm.mjs (4 Türen wie im Bild). Tür KiN bei (5,5; −17,8): Abstand zur Mitte von KiNTEGRiTY 15,2 < R 16,8. Abstand auf dem Schirm zum Werk: 6 px (1200×800, Überblick), 3 px (375×812), 23 px (in der Mitte). Bild standbilder/gewebe2-03-mitte-innen.jpg oben rechts: „KiN“ mit Ring bei etwa (653,103) direkt unter den blauen KiNTEGRiTY-Lichtern bei (655,80) und (720,75).
-- **vorschlag:** Die Türen innerhalb der Mitte lassen (etwa 0,9·Rm) oder in lage() einen Ring für sie freihalten. Dafür müssen die Dächer erst bei ≥ 1,3·Rm + Abstand beginnen, also gapDach von Rm abhängig machen.
-- **Gegenprüfung:** fehlt noch
-
-### bruch 4 · Das Netzmaß rechnet ohne Perspektive: vordere Bezirke sind unten angeschnitten
-- **datei:** app/js/regie.js
-- **zeile:** 49
-- **schwere:** leicht
-- **befund:** netzMass rechnet orthografisch ((|cv|+R)·sin(elev) + h·cos(elev)). Die Kamera hat aber 40° Öffnung, der nahe (untere) Teil wird also größer abgebildet. Im Überblick am Mac ragt deshalb, je nach Drehung, der vorderste Bezirk 23–82 px aus dem Bild. Sein Name fällt dann an der Untergrenze (cssH − 64) weg, und der vordere Rand liegt im Band der Bildzeile. Am Handy (hochkant) passt das Netz.
-- **beleg:** Rechnung …/pruefung2/rand-pruefen.mjs mit kette-gewebe und ordnung.json. Bei 1200×800: netZeit 0 s SEiN 53 px unter dem Rand; 37 s FASKA 23, SEiN 47, ADHS OS 37 px; 130 s Phänomenatlas 73 px. Bei 1440×900 bis 82 px. namen-handy.mjs: bei 1200×800 schweigt „ADHS OS“ (y0 = 745 > 736). Bild gewebe2-01-netz-ueberblick.jpg: die Hülle von SEiN läuft unten aus dem Bild, „ADHS OS“ (≈500,541) liegt auf der Bildzeile.
-- **vorschlag:** Die Kreise der Bezirke mit der echten Projektion messen (Probe-setCamera plus toScreen), oder die nahe Hälfte mit dem Perspektivfaktor dist/(dist − Tiefe) vergrößern. Alternativ das Ziel leicht nach vorn schieben.
-- **Gegenprüfung:** fehlt noch
-
-### bruch 6 · Am Handy ist nur die erste Verbindung eines Fadens erreichbar, obwohl die Marke „←/→ wählt“ verspricht
-- **datei:** app/js/bedienung.js
-- **zeile:** 91
-- **schwere:** leicht
-- **befund:** U.fadenK ändert sich nur über die Pfeiltasten (Z. 444–445). Am Touchgerät folgt das zweite Tippen auf einen Faden immer der ersten Verbindung (Z. 364). Ein Tippen auf die Marke wählt den Faden nur erneut aus (Z. 485, else-Zweig). Trotzdem zeigt die Marke auch am Handy „Verbindung 1 von 3 · ←/→ wählt“. Weitere Verbindungen, auch solche mit genannter Stelle, kann man so aus dem Netz am Handy nicht lesen.
-- **beleg:** Fundstellen von fadenK: nur bedienung.js:90, 279, 364, 445, 452. Rechnung …/pruefung2/faden-kanten.mjs: 6 von 30 Fäden haben mehrere Verbindungen. 7 Verbindungen sind nur per Pfeiltaste erreichbar, 2 davon mit Stelle (Durkheim → Radcliffe-Brown mit 3 Verbindungen, „Ein Inhalt“ → Durkheim mit 2). Bild gewebe2-11-faden-marke.jpg: Marke „Verbindung 1 von 3 · ←/→ wählt …“.
-- **vorschlag:** Auf Touchgeräten (W.touch) „←/→ wählt“ weglassen und eine Geste anbieten. Zum Beispiel schaltet ein Tippen auf die Marke eines gewählten Fadens zur nächsten Verbindung, und ein Tippen auf den Knoten folgt.
-- **Gegenprüfung:** fehlt noch
 
 ### bruch 7 · Der Stimmenkranz im Netz kreist auch bei reduzierter Bewegung, jetzt über die ganze Mitte
 - **datei:** app/js/netz.js
