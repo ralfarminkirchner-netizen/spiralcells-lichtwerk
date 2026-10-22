@@ -66,13 +66,17 @@ export function zeigeMarke(titel, satz, knoepfe){ markeEl.querySelector('.marke-
   markeEl.hidden = false; markeW = markeEl.offsetWidth || 200; }
 /* An einem gewählten Werk mit Alsformen: zwei leise Wege, auch ohne Tastatur */
 function alsKnoepfe(sel){
-  const A = W.N && W.N.als; if(!A || !sel || sel.art !== 'mond' || U.netK < 0.5 || !A.hat(sel.i)) return null;
+  const A = W.N && W.N.als, hier = A && sel && U.als && U.als.gi === sel.i ? U.als.fokus : null;
+  if(!A || !sel || sel.art !== 'mond' || U.netK < 0.5 || (!A.hat(sel.i) && !hier)) return null;
   const k = (text, fokus) => { const b = document.createElement('button'); b.type = 'button'; b.className = 'marke-knopf'; b.textContent = text;
-    b.addEventListener('pointerdown', e => e.stopPropagation()); b.addEventListener('click', e => { e.stopPropagation(); api.alsFokus(sel.i, fokus); }); return b; };
-  const hier = U.als && U.als.gi === sel.i ? U.als.fokus : null, out = [];
+    b.addEventListener('pointerdown', e => e.stopPropagation()); b.addEventListener('click', e => { e.stopPropagation(); typeof fokus === 'function' ? fokus() : api.alsFokus(sel.i, fokus); }); return b; };
+  const out = [];
   if(A.proGegenstand.has(sel.i) && hier !== 'mond') out.push(k('Zusammenhänge zeigen', 'mond'));
   if((A.entstehung.has(sel.i) || A.proKontext.has(sel.i)) && hier !== 'planet') out.push(k('Als Planet: Entstehung', 'planet'));
   if(hier && !A.proGegenstand.has(sel.i) && hier !== 'mond') out.push(k('Als Mond', 'mond'));
+  // Im Blick auf den Gegenstand: ihn in einen weiteren Zusammenhang stellen oder seine Entstehung belegen (immer mit Halten)
+  if(hier === 'mond') out.push(k('In einen Zusammenhang stellen …', () => api.teilnahmeWaehlen(sel.i)));
+  if(hier === 'planet') out.push(k('Spur eintragen …', () => api.spurFragen(sel.i, {})));
   return out; }
 export function verbirgMarke(){ markeEl.hidden = true; }
 let markeW = 200;
@@ -321,6 +325,7 @@ function oeffneLeseAls(sel){
     if(hier !== t.gegenstand + ':mond') tun.append(stilleWahl('Alle Zusammenhänge', 'der Gegenstand als Mond', () => { schliesseLese(true); api.alsFokus(t.gegenstand, 'mond'); }));
     if(hier !== t.kontext + ':planet') tun.append(stilleWahl('Der Zusammenhang als Planet', 'was um ihn kreist, woraus er wurde', () => { schliesseLese(true); api.alsFokus(t.kontext, 'planet'); }));
     if(q.knopf) tun.append(q.knopf);
+    if(t.stand !== 'withdrawn') tun.append(stilleWahl('Zurücknehmen …', 'mit Grund; die Teilnahme bleibt als Asche', () => { schliesseLese(true); api.teilnahmeZurueck(t); }));
     zeilen = [['Teilnahme', t.id], ['Gegenstand', gm.id], ['Zusammenhang', km.id], ['Fassung', t.roh.variant_id], ['Bindung', t.roh.version_binding], ['Rolle (gespeichert)', t.roh.role], ['Eintragungen', t.kette.map(x => `${x.id} (${x.status}, ${x.created_at})`).join(' → ')]];
     rohText = JSON.stringify(t.kette, null, 2);
   } else {
@@ -341,6 +346,7 @@ function oeffneLeseAls(sel){
     html = teile.join('');
     if(!(U.als && U.als.gi === s.werk && U.als.fokus === 'planet')) tun.append(stilleWahl('Die ganze Entstehung', 'das Werk als Planet', () => { schliesseLese(true); api.alsFokus(s.werk, 'planet'); }));
     if(q.knopf) tun.append(q.knopf);
+    tun.append(stilleWahl('Gegenbefund eintragen …', 'widerspricht dieser Spur, löscht sie nicht', () => { schliesseLese(true); api.spurFragen(s.werk, {art: 'counterevidence', widerspricht: s}); }));
     zeilen = [['Spur', s.id], ['Werk', wm.id], ['Art (gespeichert)', s.roh.kind], ['Status', s.roh.status], ['Fassungen', (s.roh.variant_ids || []).join(', ') || '—'],
       ['Ereigniszeit', s.roh.event_time || '—'], ['aufgezeichnet', s.roh.recorded_at], ['gedeutet', s.roh.interpretation_time || '—'], ['widerspricht', (s.roh.contradicts_event_ids || []).join(', ') || '—']];
     rohText = JSON.stringify(s.roh, null, 2);
@@ -369,7 +375,24 @@ export function siegel(satz, vorschau, knoepfe, lassen){
   const w = siegelEl.querySelector('.siegel-wahl'); w.innerHTML = ''; knoepfe.forEach(k => w.append(k));
   const l = siegelEl.querySelector('.siegel-lassen'); l.onclick = () => { schliesseSiegel(); lassen && lassen(); };
   siegelEl.hidden = false; U.siegel = {lassen}; zeile(''); verbirgMarke();
-  setTimeout(() => { const f = w.querySelector('button'); f && f.focus({preventScroll: true}); }, 60);
+  setTimeout(() => { const f = w.querySelector('textarea, input') || w.querySelector('button'); f && f.focus({preventScroll: true}); }, 60);
+}
+/* Ein leises Feld im Siegel: Begründung, Titel, Text. Die Beschriftung bleibt sichtbar, nicht nur als Platzhalter */
+export function siegelFeld(beschriftung, mehrzeilig, wert = ''){
+  const l = document.createElement('label'); l.className = 'siegel-feld';
+  const f = document.createElement(mehrzeilig ? 'textarea' : 'input'); if(!mehrzeilig) f.type = 'text'; else f.rows = 3;
+  f.value = wert; f.maxLength = mehrzeilig ? 4000 : 180;
+  // Tippen und Einfügen gehören dem Feld: kein Tastenweg im Bild, kein Einwurf aus der Zwischenablage. Escape lässt das Siegel.
+  f.addEventListener('keydown', e => { if(e.key !== 'Escape') e.stopPropagation(); }); f.addEventListener('paste', e => e.stopPropagation());
+  const s = document.createElement('span'); s.textContent = beschriftung; l.append(s, f); return {el: l, wert: () => f.value.trim()};
+}
+/* Eine Wahl unter mehreren (Rolle, Spurart): eine ist gewählt, die Auswahl bleibt sichtbar */
+export function siegelWahl(optionen, start){
+  const el = document.createElement('div'); el.className = 'siegel-optionen'; el.setAttribute('role', 'radiogroup'); let gewaehlt = start ?? null;
+  for(const [wert, text] of optionen){ const b = document.createElement('button'); b.type = 'button'; b.className = 'siegel-option'; b.textContent = text;
+    b.setAttribute('role', 'radio'); b.setAttribute('aria-checked', String(wert === gewaehlt));
+    b.addEventListener('click', () => { gewaehlt = wert; el.querySelectorAll('.siegel-option').forEach(x => x.setAttribute('aria-checked', String(x === b))); }); el.append(b); }
+  return {el, wert: () => gewaehlt};
 }
 export function stoppeHalten(wurzel){ (wurzel || document).querySelectorAll('.halten.drueckt').forEach(b => b.dispatchEvent(new Event('pointercancel'))); }
 export function schliesseSiegel(){ stoppeHalten(siegelEl); const innen = siegelEl.contains(document.activeElement) || document.activeElement === document.body; siegelEl.hidden = true; U.siegel = null;
@@ -463,6 +486,7 @@ function tippen(sx, sy){
   }
   if(t.art === 'kopf'){ U.solo = U.solo === t.i ? -1 : t.i; zeile(U.solo >= 0 ? `${STIMMEN[t.i].name} allein: ihr Zweig durch alle Schichten.` : (U.netK > 0.5 ? netzSatz(W.B) : mondSatz(Z && Z.m))); return; }
   if(t.art === 'tuer'){ if(gleich(U.sel, t)){ tuerOeffnen(W.N.tueren[t.i]); return; } waehle(t, 1); return; }
+  if(t.art === 'mond' && U.teilnahme && t.i !== U.teilnahme.gegenstand){ const g = U.teilnahme.gegenstand; U.teilnahme = null; api.teilnahmeFragen(g, t.i); return; }
   if(t.art === 'mond'){ if(gleich(U.sel, t)){ api.oeffneMond(t.i, {}); return; } waehle(t, 1); return; }
   if(t.art === 'dach'){ if(gleich(U.sel, t)){ api.insDach(t.i); return; } waehle(t, 1); return; }
   if(t.art === 'mitte' || t.art === 'ohne'){ if(gleich(U.sel, t)){ api.insDach(t.art); return; } waehle(t, 1); return; }
@@ -552,6 +576,7 @@ export function installiere(a){
     else if(k === '?'){ U.hintUntil = W.wall + 8; hintEl.textContent = 'S Seite · N Netz · A Zusammenhänge · P Planet · W Werkraum · 1–5 eine Stimme · ⌘V legt ab · Halten verbindet · Esc zurück'; }
     else if(k === 'Enter' && U.waehlen && U.sel && (U.sel.art === 'same' || U.sel.art === 'keim')){ const w = U.waehlen, nach = U.sel.art === 'same' ? U.sel.mond.samen[U.sel.i].id : U.sel.mond.keim[U.sel.mond.keim.length - 1].id;
       U.waehlen = null; if(nach !== w.von && U.sel.mond.id === w.mondId) api.kanteFragen(w.von, nach); else zeile('Nichts verbunden.'); }
+    else if(k === 'Enter' && U.teilnahme && U.sel && U.sel.art === 'mond' && U.sel.i !== U.teilnahme.gegenstand){ const g = U.teilnahme.gegenstand; U.teilnahme = null; api.teilnahmeFragen(g, U.sel.i); }
     else if(k === 'Enter'){ if(U.sel){ const s = U.sel;
       if(s.art === 'mond') api.oeffneMond(s.i, {}); else if(s.art === 'dach') api.insDach(s.i); else if(s.art === 'mitte' || s.art === 'ohne') api.insDach(s.art);
       else if(s.art === 'faden'){ const k = U.fadenK || 0; waehle(null); api.folgeFaden(s.i, k); }
@@ -614,6 +639,7 @@ export function zurueck(){
   clearTimeout(U.lesenUhr);
   if(U.siegel){ const l = U.siegel.lassen; schliesseSiegel(); l && l(); return; }
   if(U.waehlen){ U.waehlen = null; zeile(mondSatz(W.Z && W.Z.m)); return; }
+  if(U.teilnahme){ U.teilnahme = null; zeile('Nichts eingetragen.'); return; }
   if(U.lese){ schliesseLese(true); U.stufe = 1; return; }
   if(U.sel){ waehle(null); return; }
   if(U.solo >= 0){ U.solo = -1; return; }

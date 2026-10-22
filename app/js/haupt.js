@@ -16,7 +16,8 @@ import * as schreib from './schreiben.js';
 import * as ankunft from './ankunft.js';
 import * as link from './link.js';
 import {baueAlsformen, fokusZiel} from './verschraenkung.js';
-import {mondBlickSatz, planetBlickSatz} from './alsformen.js';
+import {mondBlickSatz, planetBlickSatz, ART} from './alsformen.js';
+import {bindeVaultquellen} from './vault-quellen.js';
 
 const canvas = document.getElementById('gl');
 const MQ = matchMedia('(prefers-reduced-motion: reduce)');
@@ -110,7 +111,8 @@ const RUHEMOND = {id: '', titel: 'SPiRALCELLS ruht', samen: [], keim: [], stimme
 
 async function laden(){
   const [{daten, stand}, umg, ord] = await Promise.all([schreib.lesenMitStand('/lichtwerk/graph'), schreib.lesen('/lichtwerk/umgebung').catch(() => []), schreib.lesen('/lichtwerk/ordnung').catch(() => schreib.lesen('/ordnung.json')).catch(() => null)]);   // ein noch laufender älterer Server kennt nur die Datei
-  W.ordnung = ord; W.B = bestand(daten); W.N = netzBauen(W.B); W.umgebung = umg; W.N.tueren = umg.filter(u => u.adresse); W.stand = stand; dachNamen();
+  // Vault-Quellen vor der Projektion binden: nur flüchtige Reader-Bindung, der gespeicherte Verweis bleibt
+  W.ordnung = ord; W.B = bestand(await bindeVaultquellen(daten, schreib.lesen)); W.N = netzBauen(W.B); W.umgebung = umg; W.N.tueren = umg.filter(u => u.adresse); W.stand = stand; dachNamen();
   W.namen = link.namen(W.B.monde); W.geladen = Date.now(); W.N.neu = W.neuMonde || null; zuletztMerken();
   W.ruht = false; document.body.classList.remove('ruht'); tuerNamen();
 }
@@ -137,7 +139,7 @@ function oeffneMond(i, opt = {}){
   W.aktiv = i; U.als = null;
   const Z = new Zelle(m, {origin: W.N.pos[i], RM: W.RM, au: klang, ohneAufzug: !!opt.ohneAufzug});
   W.Z = Z; clearSparks(); zuletztMarkieren(Z);
-  U.netDir = -1; U.netT = 0; U.kelchT = 0; U.zoom = 1; U.yawOff = 0; U.elevOff = 0; U.solo = -1; U.waehlen = null; U.bind = null;
+  U.netDir = -1; U.netT = 0; U.kelchT = 0; U.zoom = 1; U.yawOff = 0; U.elevOff = 0; U.solo = -1; U.waehlen = null; U.teilnahme = null; U.bind = null;
   document.getElementById('seite').setAttribute('aria-pressed', 'false');
   B.waehle(null);
   if(opt.waehle){ const si = m.samen.findIndex(s => s.id === opt.waehle);
@@ -260,16 +262,18 @@ function folgeFaden(fi, k = 0){
   clearTimeout(U.lesenUhr); U.lesenUhr = setTimeout(lesen, W.RM ? 0 : 1300);   // erst ankommen, dann lesen
   B.zeile(wo ? `In „${kurz(Zn.m.titel, 50)}“, an der Stelle, die der Faden nennt.` : `In „${kurz(Zn.m.titel, 50)}“. Den genannten Teil gibt es so nicht im Wortlaut.`); ortAktualisieren();
 }
-/* Der Ort, an dem Ralf gerade ist: im Speicher dieses Tabs nur Kennungen, in der Adresszeile nur lesbare Zahlen */
+/* Der Ort, an dem Ralf gerade ist: im Speicher dieses Tabs nur Kennungen, in der Adresszeile nur lesbare Fassungsnamen */
 const ORT = 'spiralcells-lichtwerk-ort';
 function merkeOrt(){
   if(WERKSTATT || !W.Z || !W.namen) return; const Z = W.Z, sel = U.sel, z = B.stoff.zustand();
   const same = sel && sel.art === 'same' && sel.mond === Z.m ? Z.m.samen[sel.i]?.id : null;
   try{ sessionStorage.setItem(ORT, JSON.stringify({mond: Z.m.id, same, stufe: U.stufe, stoff: z, kelch: U.kelchT > 0.5})); }catch(_){}
-  const frage = !!(z && Z.m.keim.some(v => v.id === z.variantId)), lesend = z ? Z.m.samen.findIndex(s => s.id === z.variantId) + 1 : 0;
-  const fi = lesend || (same ? Z.m.samen.findIndex(s => s.id === same) + 1 : 0);
-  const vi = z && z.modus === 'vergleich' && z.vergleich && z.vergleich !== z.variantId ? Z.m.samen.findIndex(s => s.id === z.vergleich) + 1 : 0;
-  try{ history.replaceState(null, '', link.bau(W.namen[W.aktiv], W.von, {fassung: frage ? null : fi || null, frage, lesen: !!z, stelle: z ? z.stelle : null, vergleich: vi || null})); }catch(_){}
+  // Der Link nennt die tatsächlich gewählte Fassung über ihren stabilen Namen, nie über ihre Listenposition.
+  // Eine Frage behält ihre Fassung: auch eine ältere offene Frage bleibt dieselbe.
+  const namen = link.fassungsnamen(Z.m), frage = !!(z && Z.m.keim.some(v => v.id === z.variantId));
+  const fassung = namen.get(z ? z.variantId : same) || null;
+  const vergleich = z && z.modus === 'vergleich' && z.vergleich && z.vergleich !== z.variantId ? namen.get(z.vergleich) || null : null;
+  try{ history.replaceState(null, '', link.bau(W.namen[W.aktiv], W.von, {fassung, frage, lesen: !!z, stelle: z ? z.stelle : null, vergleich, als: U.als?.fokus})); }catch(_){}
 }
 function ortWiederholen(ziel){
   const Z = W.Z; if(!Z) return;
@@ -277,16 +281,20 @@ function ortWiederholen(ziel){
   if(o && o.mond !== Z.m.id) o = null;
   // Die Adresszeile gewinnt (ein geteilter Link), sonst der gemerkte Ort dieses Tabs; beides wird nie vermischt
   const ausLink = !!(ziel && (ziel.fassung || ziel.frage));
-  if(ausLink && ziel.frage){ if(!Z.m.keim.length) return; Z.sofort(); B.waehle({art: 'keim', mond: Z.m, zelle: Z}, 2);
-    if(ziel.lesen) B.stoff.oeffne({mond: Z.m, keim: true, stelle: ziel.stelle ? ziel.stelle - 1 : null}); return; }
+  // Fassung und Vergleich über ihren stabilen Namen auflösen; ein mehrdeutiger oder fremder Name trifft nichts
+  const gewaehlt = ausLink && ziel.fassung ? link.fassung(Z.m, ziel.fassung) : null;
+  if(ausLink && ziel.fassung && !gewaehlt){ B.zeile('Diese Fassung ist in diesem Werk nicht eindeutig zu finden.'); return; }
+  const istFrage = gewaehlt ? Z.m.keim.some(v => v.id === gewaehlt.id) : ausLink && ziel.frage;
+  if(ausLink && istFrage){ if(!Z.m.keim.length) return; Z.sofort(); B.waehle({art: 'keim', mond: Z.m, zelle: Z}, 2);
+    if(ziel.lesen) B.stoff.oeffne({mond: Z.m, ...(gewaehlt ? {variantId: gewaehlt.id} : {keim: true}), stelle: ziel.stelle ? ziel.stelle - 1 : null}); return; }
   if(!ausLink && o && o.stoff && Z.m.keim.some(v => v.id === o.stoff.variantId)){ Z.sofort(); B.waehle({art: 'keim', mond: Z.m, zelle: Z}, 2);
     B.stoff.oeffne({mond: Z.m, variantId: o.stoff.variantId, modus: o.stoff.modus, vergleich: o.stoff.vergleich, stelle: o.stoff.stelle}); return; }
-  const si = ausLink ? ziel.fassung - 1 : o && o.same ? Z.m.samen.findIndex(s => s.id === o.same) : -1;
+  const si = ausLink ? Z.m.samen.findIndex(s => s.id === gewaehlt.id) : o && o.same ? Z.m.samen.findIndex(s => s.id === o.same) : -1;
   if(si < 0 || !Z.m.samen[si]) return;
   Z.sofort(); B.waehle({art: 'same', i: si, mond: Z.m, zelle: Z}, 2);
   const passt = o && o.stoff && o.stoff.variantId === Z.m.samen[si].id ? o.stoff : null;   // gemerkter Leseraum nur zur selben Fassung
   const lesen = ausLink ? ziel.lesen : !!passt;
-  if(lesen){ const vg = ausLink ? (ziel.vergleich ? Z.m.samen[ziel.vergleich - 1]?.id : null) : passt.modus === 'vergleich' ? passt.vergleich : null;
+  if(lesen){ const vg = ausLink ? (ziel.vergleich ? link.fassung(Z.m, ziel.vergleich)?.id || null : null) : passt.modus === 'vergleich' ? passt.vergleich : null;
     const stelle = ausLink ? (ziel.stelle ? ziel.stelle - 1 : null) : passt.stelle;
     B.stoff.oeffne({mond: Z.m, i: si, modus: vg ? 'vergleich' : 'lesen', vergleich: vg, stelle}); }
 }
@@ -308,7 +316,7 @@ function folge(variantId, mond){
 }
 
 /* ------------------------------------------------- Lebendig: neue Stände */
-const beschaeftigt = () => U.lese || U.siegel || U.waehlen || U.bind || U.mode || U.paar || (W.Z && W.Z.S.aufzug) || document.querySelector('.halten.drueckt');
+const beschaeftigt = () => U.lese || U.siegel || U.waehlen || U.teilnahme || U.bind || U.mode || U.paar || (W.Z && W.Z.S.aufzug) || document.querySelector('.halten.drueckt');
 async function nachsehen(){
   try{
     const st = await schreib.lesen('/lichtwerk/stand');
@@ -322,7 +330,7 @@ async function nachsehen(){
 let erneuernLauf = Promise.resolve(), erneuernAktiv = 0;
 function erneuern(von, opt = {}){ erneuernAktiv++; const p = erneuernLauf.then(() => erneuernJetzt(von, opt)).finally(() => { erneuernAktiv--; }); erneuernLauf = p.catch(() => {}); return p; }
 async function erneuernJetzt(von, opt){
-  const {daten, stand} = await schreib.lesenMitStand('/lichtwerk/graph');
+  const {daten: roh, stand} = await schreib.lesenMitStand('/lichtwerk/graph'), daten = await bindeVaultquellen(roh, schreib.lesen);
   // Auffrischen aus dem Hintergrund wartet, solange gelesen, gehalten oder gesiegelt wird; eigene Schreibvorgänge (explizit) nicht
   if(!opt.explizit && beschaeftigt()){ W.neuesWartet = true; return; }
   W.neuesWartet = false;
@@ -436,6 +444,75 @@ async function kanteFragen(von, nach){
     catch(e){ B.zeile(ablehnung(e) + ' Nichts verbunden.'); } });
   B.siegel(`„${kurz(a.label, 60)}“ … „${kurz(b.label, 60)}“`, 'Wie bezieht sich die erste auf die zweite? Nichts wird zusammengeführt.',
     [knopf('verweist-auf', 'verweist auf'), knopf('erweitert', 'erweitert'), knopf('widerspricht', 'widerspricht')], () => { U.paar = null; B.zeile('Nichts verbunden.'); });
+}
+
+/* Alsformen halten: Teilnahme, Rücknahme und Entstehungsbeleg über die vorhandenen Mooncells-Verträge, nur in Ralfs Namen.
+   Diese Belege haben keine Wiederholungskennung: Ist unklar, ob gespeichert wurde, wird zuerst neu gelesen, nie still wiederholt. */
+const ROLLEN = [['source', 'Quelle'], ['material', 'Material'], ['work', 'Werk'], ['instrument', 'Instrument'], ['counterexample', 'Gegenbeispiel']];
+// Gebunden wird fest die jüngste vorhandene Fassung des Gegenstands; das Siegel nennt sie, bevor gehalten wird
+function juengsteFassung(m){ return [...m.samen.map(s => s.fassung), ...m.keim].filter(Boolean)
+  .sort((a, b) => (Date.parse(b.created_at) || 0) - (Date.parse(a.created_at) || 0))[0] || null; }
+async function belegSenden(senden, satz, danach){
+  B.schliesseSiegel(); B.zeile('Wird eingetragen …');
+  try{ await senden(); }
+  catch(e){
+    if(e instanceof schreib.Abgelehnt){ B.zeile(e.message + ' Nichts eingetragen.'); return; }
+    try{ await erneuern(null, {explizit: true}); }catch(_){}
+    danach && danach(); B.zeile('Ob das gespeichert wurde, ist unklar. Der Bestand ist neu gelesen: sieh nach, bevor du noch einmal einträgst.'); return; }
+  try{ await erneuern(null, {explizit: true}); }catch(_){}
+  danach && danach(); B.zeile(satz);
+}
+const zumGegenstand = (id, fokus) => () => { const i = mondNachId(id); if(i >= 0) alsFokus(i, fokus); };
+/* Erst den Zusammenhang wählen (Tippen, oder Pfeile und Eingabe), dann Rolle und Begründung im Siegel */
+function teilnahmeWaehlen(gi){
+  const m = W.B && W.B.monde[gi]; if(!m || W.ruht) return;
+  if(!juengsteFassung(m)){ B.zeile(`„${kurz(m.titel, 50)}“ hat noch keine Fassung, die teilnehmen könnte.`); return; }
+  ausAls(); U.teilnahme = {gegenstand: gi}; B.verbirgMarke();
+  const satz = `Wähle den Zusammenhang, in dem „${kurz(m.titel, 50)}“ teilnehmen soll.`;
+  B.zeile(satz); B.ansage(satz + ' Tippen, oder Pfeile und Eingabe. Escape bricht ab.');
+}
+async function teilnahmeFragen(gi, ki){
+  const gm = W.B.monde[gi], km = W.B.monde[ki]; if(!gm || !km) return;
+  const ralf = await ralfSicher(); if(!ralf){ B.zeile('Nichts eingetragen.'); return; }
+  const v = juengsteFassung(gm); if(!v){ B.zeile('Ohne Fassung gibt es keine Teilnahme. Nichts eingetragen.'); return; }
+  const rolle = B.siegelWahl(ROLLEN, null), grund = B.siegelFeld('Warum es hier teilnimmt', true);
+  B.siegel(`„${kurz(gm.titel, 48)}“ in „${kurz(km.titel, 48)}“ teilnehmen lassen?`,
+    `Fest gebunden an die Fassung „${kurz(v.label || 'Unbenannte Fassung', 60)}“. Der Gegenstand bleibt derselbe, einmal gespeichert.`,
+    [rolle.el, grund.el, B.haltKnopf('Teilnahme eintragen', 'in deinem Namen · halten', '', 1300, () => {
+      if(!rolle.wert() || !grund.wert()){ B.zeile('Erst eine Rolle wählen und kurz begründen.'); return; }
+      belegSenden(() => schreib.teilnahmeAblegen({work_id: gm.id, context_work_id: km.id, variant_id: v.id, version_binding: 'pinned',
+        role: rolle.wert(), reason: grund.wert(), author_id: ralf.id, status: 'active'}),
+        `Eingetragen. „${kurz(gm.titel, 40)}“ kreist jetzt auch in „${kurz(km.titel, 40)}“.`, zumGegenstand(gm.id, 'mond')); })],
+    () => B.zeile('Nichts eingetragen.'));
+}
+async function teilnahmeZurueck(t){
+  const gm = W.B.monde[t.gegenstand], km = W.B.monde[t.kontext]; if(!gm || !km) return;
+  const ralf = await ralfSicher(); if(!ralf){ B.zeile('Nichts zurückgenommen.'); return; }
+  const grund = B.siegelFeld('Warum sie zurückgenommen wird', true);
+  B.siegel(`„${kurz(gm.titel, 48)}“ als ${t.rolle} in „${kurz(km.titel, 48)}“ zurücknehmen?`,
+    'Die Teilnahme bleibt mit ihrer ursprünglichen Begründung als Asche sichtbar. Gelöscht wird nichts.',
+    [grund.el, B.haltKnopf('Zurücknehmen', 'in deinem Namen · halten', '', 1500, () => {
+      if(!grund.wert()){ B.zeile('Ohne Grund wird nichts zurückgenommen.'); return; }
+      belegSenden(() => schreib.teilnahmeZuruecknehmen(t.id, {author_id: ralf.id, reason: grund.wert()}),
+        'Zurückgenommen. Die Teilnahme bleibt als Asche sichtbar.', zumGegenstand(gm.id, 'mond')); })],
+    () => B.zeile('Nichts zurückgenommen.'));
+}
+/* Eine Spur in der Entstehung: Aufgezeichnet wird jetzt; eine unbekannte Ereigniszeit bleibt offen und wird nie zurückdatiert */
+async function spurFragen(wi, opt = {}){
+  const wm = W.B && W.B.monde[wi]; if(!wm || W.ruht) return;
+  const ralf = await ralfSicher(); if(!ralf){ B.zeile('Nichts eingetragen.'); return; }
+  const gegen = opt.widerspricht || null, art = B.siegelWahl(Object.entries(ART), opt.art || null);
+  const titel = B.siegelFeld('Titel', false), text = B.siegelFeld('Was belegt ist', true), wann = B.siegelFeld('Wann es geschah (Jahr-Monat-Tag, leer, wenn unbekannt)', false);
+  B.siegel(gegen ? `Gegenbefund zu „${kurz(gegen.titel, 48)}“ eintragen?` : `Eine Spur in der Entstehung von „${kurz(wm.titel, 48)}“ eintragen?`,
+    gegen ? 'Die widersprochene Spur bleibt stehen; beide werden sichtbar verbunden.' : 'Aufgezeichnet wird jetzt. Eine unbekannte Ereigniszeit bleibt offen.',
+    [art.el, titel.el, text.el, wann.el, B.haltKnopf('Spur eintragen', 'in deinem Namen · halten', '', 1300, () => {
+      if(!art.wert() || !titel.wert() || !text.wert()){ B.zeile('Erst Art, Titel und das Belegte angeben.'); return; }
+      if(wann.wert() && !/^\d{4}-\d{2}-\d{2}$/.test(wann.wert())){ B.zeile('Die Zeit bitte als Jahr-Monat-Tag, etwa 2026-10-22, oder leer lassen.'); return; }
+      const body = {work_id: wm.id, title: titel.wert(), body: text.wert(), kind: art.wert(), author_id: ralf.id, status: 'documented'};
+      if(wann.wert()) body.event_time = wann.wert();
+      if(gegen) body.contradicts_event_ids = [gegen.id];
+      belegSenden(() => schreib.entstehungAblegen(body), 'Eingetragen. Die Spur steht jetzt in der Entstehung.', zumGegenstand(wm.id, 'planet')); })],
+    () => B.zeile('Nichts eingetragen.'));
 }
 
 /* Eine Form behalten: erst Ralfs Eintrag, dann der Server; ein Licht fliegt zurück ans Original */
@@ -579,7 +656,8 @@ function frame(now){
 }
 
 /* ------------------------------------------------------------- Start */
-B.installiere({oeffneMond, zumNetz, zurZelle, zurueck, ortZurueck, folge, einwurf, status, kanteFragen, formBehalten, insDach, ausDach, oeffneStoff, zurueckAusStoff, folgeStoff, folgeFaden, merkeOrt, rueckSatz, alsFokus, ausAls, alsOeffne});
+B.installiere({oeffneMond, zumNetz, zurZelle, zurueck, ortZurueck, folge, einwurf, status, kanteFragen, formBehalten, insDach, ausDach, oeffneStoff, zurueckAusStoff, folgeStoff, folgeFaden, merkeOrt, rueckSatz, alsFokus, ausAls, alsOeffne,
+  teilnahmeWaehlen, teilnahmeFragen, teilnahmeZurueck, spurFragen});
 /* Ein lesbarer Link: im Netz beginnen und in die Zelle fahren (höchstens 1,5 s; Berührung oder Esc schneidet ab) */
 function linkFahrt(ziel){
   W.von = ziel.von || W.von || null;

@@ -107,7 +107,7 @@ test('Originalstelle: nur ein geprüfter Weg in die Lebensspirale, an die genann
   assert.equal(quellAdresse({...ref, source_id: '2026-10-22@rev_1#10-16@0123456789abcdef'}, karte), null, 'die Passage muss genau passen');
   assert.equal(quellAdresse({...ref, locator: 'http://127.0.0.1:53450/?stelle=' + encodeURIComponent(JSON.stringify(stelle))}, karte), null);
   assert.equal(quellAdresse({system: 'web', kind: 'x', source_id: 'y', locator: 'javascript:alert(1)'}, karte), null);
-  assert.equal(quellAdresse({system: 'web', kind: 'x', source_id: 'y', locator: 'https://example.org/a'}, karte), 'https://example.org/a');
+  assert.equal(quellAdresse({system: 'web', kind: 'x', source_id: 'y', locator: 'https://example.org/a'}, karte, B.fassungen.get(karte)), null, 'eine fremde Adresse ist keine gebundene Originalstelle');
   const gebunden = {...ref, locator: locator + '&fassung=' + uuid(999)};
   assert.equal(quellFassung(gebunden, [uuid(310), uuid(320)], B.fassungen), null, 'ist die genannte Fassung nicht dabei, gibt es keinen Ersatz');
   assert.equal(quellFassung(ref, [uuid(320)], B.fassungen), uuid(320));
