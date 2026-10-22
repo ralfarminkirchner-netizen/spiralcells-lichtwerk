@@ -8,9 +8,12 @@ Lesen geht durch. Schreiben nur über die vorgesehenen Wege und standardmäßig 
     POST /api/variants/{id}/status Kristallisieren und andere Statuswechsel
     POST /api/edges                zwei Ausprägungen verbinden (ohne Dopplung)
     POST /api/agents               einmalig Ralfs eigener Eintrag (human)
+    POST /api/participations       Teilnahme einer Fassung an einem Werk
+    POST /api/participations/{id}/withdraw  Teilnahme nachvollziehbar zurücknehmen
+    POST /api/emergence-events     einen Entstehungsbeleg ablegen
 
 Alles andere wird abgewiesen. Nur Standardbibliothek, nur 127.0.0.1.
-Mit --autorenprofile dürfen Fassungen unter vorhandenen Urheberprofilen abgelegt
+Mit --autorenprofile dürfen Fassungen und Belege unter vorhandenen Urheberprofilen abgelegt
 werden. Das benennt die Urheberschaft des Materials und führt kein Modell aus.
 
 Mit --leseeingang 8420 öffnet derselbe Prozess einen zweiten Eingang, der nur liest.
@@ -52,6 +55,13 @@ KANTEN = {"verweist-auf", "erweitert", "widerspricht"}
 EINWURF_FELDER = {"work_id", "worktree_id", "new_worktree", "derived_from", "source_variant_id",
                   "request_id", "label", "content", "notes", "author_id", "contribution"}
 KANTEN_FELDER = {"edge_type", "from_variant_id", "to_variant_id", "note", "author_id"}
+TEILNAHME_FELDER = {"work_id", "context_work_id", "variant_id", "version_binding", "role",
+                   "reason", "author_id", "source_ref", "status", "supersedes_id", "validity"}
+RUECKNAHME_FELDER = {"author_id", "reason"}
+ENTSTEHUNG_FELDER = {"work_id", "title", "body", "kind", "author_id", "variant_ids", "source_ref",
+                    "event_time", "interpretation_time", "conditions", "contradicts_event_ids", "status"}
+BELEG_UNKLAR = ("Ob der Beleg gespeichert wurde, ist gerade unklar. "
+                "Bitte lade den Bestand neu, bevor du erneut speicherst.")
 LESEN = {"/api/graph", "/api/health", "/api/agents"}
 UMGEBUNG = [  # nur Lebenszeichen; TiSCH (9030) wird nie angefragt, er kostet Geld
     {"name": "KiN OS", "satz": "KiN OS · die Zentrale", "port": 8894, "pfad": "/api/aios/runtime"},
@@ -670,7 +680,8 @@ class Lichtwerk(BaseHTTPRequestHandler):
     def do_POST(self):
         try:
             self._schutz(True)
-            pfad = urlsplit(self.path).path
+            teile = urlsplit(self.path)
+            pfad = teile.path
             if pfad == "/api/variant-branches":
                 body = self._body()
                 with _schreib_lock:
@@ -684,6 +695,12 @@ class Lichtwerk(BaseHTTPRequestHandler):
                 self._kante(self._body(20_000))
             elif pfad == "/api/agents":
                 self._ralf(self._body(10_000))
+            elif pfad in ("/api/participations", "/api/emergence-events") or re.fullmatch(
+                    r"/api/participations/" + ID + r"/withdraw", pfad):
+                # Nur der vollständige lokale Weg, keine URL-, Query- oder Pfadumschreibung.
+                if self.path != pfad:
+                    raise Fehler(400, "Dieser Belegweg braucht eine eindeutige Adresse.")
+                self._beleg(pfad, self._body(100_000))
             elif pfad == "/lichtwerk/formen/vorschau":
                 self._vorschau(self._body(10_000))
             elif pfad == "/lichtwerk/formen/behalten" and self.behalten:
@@ -704,6 +721,57 @@ class Lichtwerk(BaseHTTPRequestHandler):
 
     def _nicht(self):
         self._json(403, {"satz": "Dieser Weg ist im Lichtwerk nicht vorgesehen."})
+
+    def _beleg(self, pfad: str, body) -> None:
+        """Nur vorhandene Mooncells-Verträge; kein eigener Bestand und kein Wiederholen.
+
+        Quellen-, Fassungs- und Ablösungsregeln prüft der kanonische Writer. Die
+        externe Writer-Sperre für Bestandsarbeit bleibt zusätzlich erforderlich.
+        """
+        if pfad == "/api/participations":
+            felder = TEILNAHME_FELDER
+            pflicht = {"work_id", "context_work_id", "variant_id", "role", "reason", "author_id"}
+        elif pfad == "/api/emergence-events":
+            felder = ENTSTEHUNG_FELDER
+            pflicht = {"work_id", "title", "body", "kind", "author_id"}
+        elif re.fullmatch(r"/api/participations/" + ID + r"/withdraw", pfad):
+            felder = pflicht = RUECKNAHME_FELDER
+        else:
+            raise Fehler(403, "Dieser Belegweg ist im Lichtwerk nicht vorgesehen.")
+        if not isinstance(body, dict) or not set(body) <= felder or any(
+                not isinstance(body.get(k), str) or not body[k].strip() for k in pflicht):
+            raise Fehler(400, "Dieser Beleg ist unvollständig oder enthält fremde Teile.")
+        if pfad == "/api/participations":
+            # Rücknahme muss durch den atomaren, unveränderlichen Mooncells-Weg gehen.
+            if body.get("status", "proposed") not in ("active", "proposed"):
+                raise Fehler(400, "Bitte nimm eine Teilnahme über ihren Rücknahmeweg zurück.")
+            if body.get("version_binding", "pinned") not in ("pinned", "latest"):
+                raise Fehler(400, "Diese Fassungsbindung kennt das Lichtwerk nicht.")
+        if self.autorenprofile:
+            if not self._ist_autorprofil(body["author_id"]):
+                raise Fehler(403, "Das ausgewählte Urheberprofil ist nicht vorhanden.")
+        elif not self._ist_mensch(body["author_id"]):
+            raise Fehler(403, "Das Lichtwerk schreibt nur in Ralfs eigenem Namen.")
+        try:
+            status, roh = self._oben("POST", pfad, body)
+        except Fehler as f:
+            if f.status == 503:
+                raise Fehler(503, BELEG_UNKLAR) from f
+            raise
+        if status >= 500 or status == 408:
+            raise Fehler(503, BELEG_UNKLAR)
+        if 200 <= status < 300:
+            try:
+                beleg = json.loads(roh.decode("utf-8"))
+            except (UnicodeDecodeError, json.JSONDecodeError):
+                beleg = None
+            if status != 201 or not isinstance(beleg, dict) or not isinstance(beleg.get("id"), str) or not beleg["id"]:
+                raise Fehler(503, BELEG_UNKLAR)
+            self._weiter(status, roh)
+        else:
+            # Mooncells-Fehlerdetails können interne Kennungen und Quellenpfade tragen.
+            raise Fehler(status if 400 <= status < 500 else 502,
+                         "Das wurde nicht angenommen. Bitte prüfe Werk, Fassung, Quelle und Urheberschaft.")
 
     def _einwurf(self, body) -> None:
         if not isinstance(body, dict) or not set(body) <= EINWURF_FELDER:

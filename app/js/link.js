@@ -89,23 +89,37 @@ export function fassung(mond, slug){
 const slugname = value => typeof value === 'string' && /^[a-z0-9-]{1,90}$/.test(value);
 // Datumszusätze sind lesbarer Kontext, keine lange technische Kennung.
 // Deshalb die Wörter getrennt prüfen; rohe UUIDs bleiben ausdrücklich ungültig.
-const fassungsname = value => slugname(value) &&
+const fassungsname = value => slugname(value) && /[a-z]/.test(value) &&
   !/[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}/i.test(value) &&
   human(value.replace(/-/g, ' '), '') === value.replace(/-/g, ' ');
-/* Den Teil hinter # lesen: nur bekannte Schlüssel, nur Kleinbuchstaben, Ziffern und Striche */
+/* Den Teil hinter # lesen: bekannte Schlüssel jeweils höchstens einmal.
+   `stelle` ist die sichtbare, einsbasierte Passage aus materialParagraphs,
+   kein Zeichenoffset der Originalquelle. Ohne Parameter bleiben alte Defaults. */
 export function lies(hash){
   const q = new URLSearchParams(String(hash || '').replace(/^#/, ''));
-  const mond = q.get('mond'), von = q.get('von');
+  const einzeln = key => q.getAll(key).length === 1 ? q.get(key) : null;
+  const mond = einzeln('mond'), von = einzeln('von');
   const aus = {mond: slugname(mond) ? mond : null, von: von && Object.prototype.hasOwnProperty.call(VON, von) ? von : null};
-  if(q.has('fassung')) aus.fassung = q.getAll('fassung').length === 1 && fassungsname(q.get('fassung')) ? q.get('fassung') : null;
-  if(q.has('blick')) aus.blick = q.getAll('blick').length === 1 && q.get('blick') === 'geschichte' ? 'geschichte' : null;
+  for(const key of ['fassung', 'vergleich']) if(q.has(key)) aus[key] = fassungsname(einzeln(key)) ? einzeln(key) : null;
+  if(q.has('blick')) aus.blick = einzeln('blick') === 'geschichte' ? 'geschichte' : null;
+  for(const key of ['lesen', 'frage']) if(q.has(key)) aus[key] = einzeln(key) === '1' ? true : null;
+  if(q.has('als')) aus.als = ['mond', 'planet'].includes(einzeln('als')) ? einzeln('als') : null;
+  if(q.has('stelle')) aus.stelle = /^[1-9]\d{0,4}$/.test(einzeln('stelle') || '') ? Number(einzeln('stelle')) : null;
   return aus;
 }
+/* Der Caller übergibt die nullbasierte Lesestelle aus stoff.zustand().
+   Beim Öffnen wird lies(...).stelle wieder um eins vermindert. Lesen,
+   Frage und Alsform wählen die Ansicht; nur der Fassungsname bindet Identität. */
 export function bau(name, von, option = {}){
   if(!slugname(name)) return '';
   const q = new URLSearchParams({mond: name});
   if(von && Object.prototype.hasOwnProperty.call(VON, von)) q.set('von', von);
   if(fassungsname(option?.fassung)) q.set('fassung', option.fassung);
   if(option?.blick === 'geschichte') q.set('blick', 'geschichte');
+  if(option?.frage === true) q.set('frage', '1');
+  if(option?.lesen === true) q.set('lesen', '1');
+  if(fassungsname(option?.vergleich)) q.set('vergleich', option.vergleich);
+  if(option?.lesen === true && Number.isInteger(option.stelle) && option.stelle >= 0 && option.stelle < 99999) q.set('stelle', String(option.stelle + 1));
+  if(['mond', 'planet'].includes(option?.als)) q.set('als', option.als);
   return '#' + q;
 }

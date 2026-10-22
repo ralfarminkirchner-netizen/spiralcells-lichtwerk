@@ -53,3 +53,25 @@ test('Nicht registrierte oder fehlende Quellen erhalten keinen Ersatzlink',async
   const r=await bindeVaultquellen({variants:[v]},async()=>{throw new Error('Nicht registriert');});
   assert.equal(r.variants[0],v); assert.equal(ursprung(r.variants[0]),null);
 });
+
+for(const fehler of ['nicht erreichbar','abweichende Revision']){
+  test(`Eine erfolglose Vault-Lesung kann später wieder gebunden werden: ${fehler}`,async()=>{
+    const v={...variante(),source_ref:{...variante().source_ref,locator:`/registered/vault/${fehler}.md`}};
+    let anfragen=0;
+    const lesen=async()=>{
+      anfragen++;
+      if(anfragen===1){
+        if(fehler==='nicht erreichbar') throw new Error('Reader ruht');
+        return {...antwort(),source:{...antwort().source,source_revision_id:'c'.repeat(64)}};
+      }
+      return antwort();
+    };
+    const erster=await bindeVaultquellen({variants:[v]},lesen);
+    assert.equal(anfragen,1,'Kein automatischer Wiederholungsversuch');
+    assert.equal(ursprung(erster.variants[0]),null);
+    const zweiter=await bindeVaultquellen({variants:[v]},lesen);
+    assert.equal(anfragen,2);
+    assert.ok(ursprung(zweiter.variants[0]));
+    assert.equal(v.reader_source,undefined,'Originalbestand bleibt unverändert');
+  });
+}

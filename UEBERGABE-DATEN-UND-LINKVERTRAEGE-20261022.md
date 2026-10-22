@@ -4,13 +4,35 @@
 
 ## Zuständigkeit und gesicherter Stand
 
-Claude übernimmt Gestalt und Raum, die Zusammenführung mit `alsformen` sowie Konflikte in gemeinsamen Dateien. Ralf entscheidet nach Ansicht der Varianten. Dieser Zweig enthält ausschließlich lesende Daten-/Linkverträge und Tests. Er trifft keine Gestaltungs- oder Veröffentlichungsentscheidung. KiNTEGRiTY und seine Ausführer bleiben bei der gesonderten Codex-WORK-Sitzung.
+Claude übernimmt Gestalt und Raum, die Zusammenführung mit `alsformen` sowie Konflikte in gemeinsamen Dateien. Ralf entscheidet nach Ansicht der Varianten. Dieser Zweig enthält Daten-/Linkverträge, begrenzte Anschlüsse an bestehende Mooncells-Schreibwege und Tests. Er trifft keine Gestaltungs- oder Veröffentlichungsentscheidung. KiNTEGRiTY und seine Ausführer bleiben bei der gesonderten Codex-WORK-Sitzung.
 
 - Arbeitskopie: `/Volumes/ThunderBolt4_2TB/Development/Projects/spiralcells-lichtwerk-vertraege`
 - Zweig: `codex/lichtwege`, Ausgangspunkt `f9f399ae7643b75d0802a9e28f8069acc4ee9ac5`
-- Vertragscommit: `2256c69` (acht Dateien)
+- Erster Vertragscommit: `2256c69` (acht Dateien); die folgende Fortsetzung ergänzt diesen Stand.
 - Der kanonische Live-Checkout bleibt unbereinigt erhalten. Kein Merge, Reset oder Commit seiner fremden Änderungen wurde ausgeführt.
 - `haupt.js`, `bedienung.js`, `stil.css` und `lichtwege.js` gehören nicht zu diesem Commit. Die dort vor der Absprache entstandene Codex-Gestalt bleibt ein gesonderter, unangenommener Vergleichsstand. Codex verändert diese Gestalt nach der Absprache nicht weiter.
+
+## Fortsetzung: aktueller Zusammenführungsstand und ergänzte Verträge
+
+Am 22.10.2026 erneut am tatsächlichen Bestand geprüft: Der kanonische Lichtwerk-Checkout steht auf `f9f399a`, Claudes Alsformen-Checkout auf `57eb632`, jeweils mit erhaltenen fremden Änderungen. Keiner der beiden HEADs enthält `2256c69`. Im kanonischen Arbeitsbestand ist eine Vault-Bindung vorhanden; in Claudes Alsformen-Aufrufern fehlt sie weiterhin. Dort werden Fassung und Vergleich noch über Listenpositionen aufgelöst. Beide Server enthalten noch keinen Teilnahme-Proxy. An den geprüften Ports 8401, 9040, 9062, 53450, 8418 und 8419 lief kein Listener. Historische Laufzeitangaben sind damit keine aktuelle Startanleitung.
+
+Im Vertragszweig tatsächlich ergänzt und isoliert geprüft:
+
+- `quelle.js` erhält Claudes bestehende öffentliche Funktionen. Ein Quellenrückweg braucht dieselbe vorhandene Fassung, Quelle, Revision und genaue Passage. Fremde URLs und mehrdeutige Fassungen ergeben keinen Ersatzrückweg.
+- `link.js` erhält `als`, `lesen`, `stelle`, `frage` und `vergleich`. Fassung und Vergleich verwenden denselben stabilen lesbaren Fassungsnamen; numerische Listenpositionen und doppelte Parameter werden verworfen. Der Aufrufer übergibt `stelle` nullbasiert, der Link speichert sie einsbasiert.
+- Server und `schreiben.js` erhalten ausschließlich die bestehenden Mooncells-Wege `POST /api/participations`, `POST /api/participations/{id}/withdraw` und `POST /api/emergence-events`. Feldgrenzen und vorhandene Urheberprofile werden geprüft; Rücknahmen gehen über den eigenen unveränderlichen Writer-Weg. Keine Wiederholung bei unklarem Speichererfolg: zuerst Bestand neu lesen. Der reine Leseeingang bleibt schreibgesperrt.
+- Eine vorübergehend fehlgeschlagene oder revisionsfremde Vault-Antwort bleibt nicht im Cache hängen. Erst der nächste ausdrückliche Bestandslesevorgang fragt erneut; die ursprüngliche Quellenreferenz bleibt erhalten.
+
+Technische Ausführung dieser Fortsetzung: Startprüfung freigegeben; über `extern-dev run` genau die sechs betroffenen Node-Testdateien und die beiden isolierten Python-Testdateien ausgeführt. Ergebnis: **35 Node-Tests und 14 Python-Tests bestanden**. Die HTTP-Gegenseiten sind dabei ersetzt; keine Bestandswrites, Provider-Aufrufe oder Dienste wurden ausgeführt. Frühere Bedienläufe wurden nicht wiederholt.
+
+Konkrete Anschlüsse bei Claudes Zusammenführung:
+
+1. Am ersten Graphlesen und beim erneuten Bestandslesen vor `bestand(...)` jeweils `await bindeVaultquellen(daten, schreib.lesen)` ausführen; den begrenzten Reader-Proxy aus diesem Server übernehmen.
+2. Den vorhandenen Quellentür-Aufrufer mit diesem `quelle.js` verbinden. Dessen Import `zusammenhang.js` fehlt im aktuellen Alsformen-Checkout und muss gemeinsam mit `vault-quellen.js` und dem Server-Vertrag übernommen werden. Ein einzelner Adaptertausch reicht nicht. Gespeicherte Quellenbindung bleibt von der Gestalt unabhängig.
+3. Tatsächlich gewählte Fassungen einschließlich Frage und Vergleich beim Linkbau mit `fassungsnamen(mond).get(id)` benennen und beim Öffnen mit `fassung(mond, slug)` auflösen. Keine Auflösung mit `samen[n - 1]`; `frage` darf eine ausdrücklich gebundene Fassung nicht übergehen. `merkeOrt` erhält `als: U.als?.fokus`; die Lesestelle wird beim Öffnen um eins vermindert.
+4. Die vorhandenen räumlichen Teilnahme-/Entstehungsaktionen mit den drei neuen Schreibmethoden verbinden. Vor jedem echten Bestandslauf muss gemäß `mooncells/docs/ALSFORMEN-UND-ENTSTEHUNG-20261022.md:83` die exklusive Sperre `lebenserschliessung/checkpoints/writer.lock` tatsächlich allein gehalten und ihr Besitzer geprüft sein. Der beizubehaltende Marker `STOP_WORKER` ist davon getrennt und kein Sperrnachweis. Die Proxy-Routen erwerben diese externe Sperre nicht selbst. Marker-, Besitzer- und Sperrzustand wurden in dieser Fortsetzung nicht neu geprüft; es gab keinen Bestandswrite. Diese Fortsetzung erteilt keinen neuen Bestandswrite-Auftrag.
+
+Die vereinte sichtbare Prüfung bleibt bis zu dieser Zusammenführung offen. Sie muss am vorhandenen leuchtenden Raum mit echtem Material Quellenrückweg, Fassung/Vergleich, Speichern soweit autorisiert, Wiederöffnen und Rückkehr zeigen. Weder diese isolierten Tests noch frühere Bedienprüfungen belegen diesen vereinten Weg oder menschliche Annahme.
 
 ## Anschlussstellen
 
@@ -29,7 +51,7 @@ const gebunden = await bindeVaultquellen(daten, schreib.lesen);
 W.B = bestand(gebunden);
 ```
 
-Claude entscheidet über die Einbindung in seine vorhandenen `quelle.js`-/Alsformen-Wege. Der Vertragszweig enthält den visuellen Aufrufer absichtlich nicht.
+Claude übernimmt die Einbindung in seine vorhandenen Alsformen-Wege. Der Vertragszweig enthält den kompatiblen Quellenadapter, weiterhin keinen visuellen Aufrufer.
 
 `server/lichtwerk_server.py` stellt den fest auf den lokalen Reader begrenzten GET-Proxy `/lichtwerk/vault-source?path=…&content_sha256=…` bereit, auch am reinen Leseeingang. Kein freier Zielhost, Import oder Schreibaufruf.
 

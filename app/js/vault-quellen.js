@@ -16,7 +16,12 @@ export async function bindeVaultquellen(daten, lesen){
     }
     const r = await antworten.get(key);
     if(!r || r.source_ref?.content_sha256 !== ref.content_sha256
-      || r.source?.source_revision_id !== ref.content_sha256) return v;
+      || r.source?.source_revision_id !== ref.content_sha256){
+      // Ein vorübergehend ruhender Reader ist keine dauerhafte Quellenlücke.
+      // Erst die nächste ausdrücklich angeforderte Graph-Lesung versucht erneut.
+      antworten.delete(key);
+      return v;
+    }
     return {...v, reader_source:{...r, vault_path:ref.locator}};
   }));
   return {...daten, variants};

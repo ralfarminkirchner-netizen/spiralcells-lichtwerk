@@ -1,21 +1,26 @@
 /* =====================================================================
-   SCHREIBEN — die drei vorgesehenen Wege, immer erst nach Bestätigung im Bild:
+   SCHREIBEN — die vorgesehenen Wege, immer erst nach Bestätigung im Bild:
    Einwurf → POST /api/variant-branches (mit fester request_id, bei Wiederholung dieselbe)
    Kristallisieren → POST /api/variants/{id}/status
    Verbinden → POST /api/edges
    Dazu einmalig Ralfs eigener Eintrag (POST /api/agents), nur nach seinem Halten,
    und Behalten einer Form (POST /lichtwerk/formen/behalten): der Server formt neu und legt ab.
+   Teilnahme, Rücknahme und Entstehungsbeleg nutzen die vorhandenen Mooncells-Verträge.
+   Diese Belege haben keine Wiederholungskennung: bei unklarer Antwort zuerst neu lesen.
    ===================================================================== */
 
 export class Ruhe extends Error {}
 export class Abgelehnt extends Error { constructor(satz, status){ super(satz); this.status = status; } }
 
-async function senden(pfad, body){
+const BELEG_UNKLAR = 'Ob der Beleg gespeichert wurde, ist gerade unklar. Bitte lade den Bestand neu, bevor du erneut speicherst.';
+
+async function senden(pfad, body, unklar = null){
   let r;
   try{ r = await fetch(pfad, {method: 'POST', headers: {'Content-Type': 'application/json', 'Accept': 'application/json'}, body: JSON.stringify(body), cache: 'no-store'}); }
-  catch(e){ throw new Ruhe('Nicht angekommen.'); }
+  catch(e){ throw new Ruhe(unklar || 'Nicht angekommen.'); }
   let daten = null; try{ daten = await r.json(); }catch(e){}
-  if(r.status === 503) throw new Ruhe((daten && daten.satz) || 'SPiRALCELLS ruht gerade.');
+  if(r.status === 503) throw new Ruhe((daten && daten.satz) || unklar || 'SPiRALCELLS ruht gerade.');
+  if(unklar && ((r.ok && (!daten || typeof daten !== 'object' || typeof daten.id !== 'string' || !daten.id)) || r.status >= 500 || r.status === 408)) throw new Ruhe(unklar);
   if(!r.ok) throw new Abgelehnt((daten && (daten.satz || (typeof daten.detail === 'string' ? daten.detail : ''))) || 'Das wurde nicht angenommen.', r.status);
   return daten;
 }
@@ -76,4 +81,7 @@ export const ablegen = body => senden('/api/variant-branches', body);
 export const statusSetzen = (id, status) => senden('/api/variants/' + encodeURIComponent(id) + '/status', {status});
 export const verbinden = (von, nach, typ, ralf) => senden('/api/edges', {edge_type: typ, from_variant_id: von, to_variant_id: nach, note: 'Von Ralf im Lichtwerk verbunden.', author_id: ralf.id});
 export const formBehalten = (id, richtung) => senden('/lichtwerk/formen/behalten', {auspraegung: id, richtung});
+export const teilnahmeAblegen = body => senden('/api/participations', body, BELEG_UNKLAR);
+export const teilnahmeZuruecknehmen = (id, body) => senden('/api/participations/' + encodeURIComponent(id) + '/withdraw', body, BELEG_UNKLAR);
+export const entstehungAblegen = body => senden('/api/emergence-events', body, BELEG_UNKLAR);
 export const ralfAnlegen = () => senden('/api/agents', {handle: 'Ralf', agent_type: 'human', description: 'Ralf, letzte Instanz. Angelegt im SPiRALCELLS-Lichtwerk auf eigenes Halten.'});
