@@ -38,7 +38,7 @@ import urllib.error
 import urllib.request
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
-from urllib.parse import parse_qs, urlsplit
+from urllib.parse import parse_qs, urlsplit, urlencode
 
 HIER = os.path.dirname(os.path.abspath(__file__))
 WURZEL = os.path.dirname(HIER)
@@ -513,6 +513,32 @@ class Lichtwerk(BaseHTTPRequestHandler):
             raise Fehler(400, "Der Eintrag ist nicht lesbar.")
 
     # ------------------------------------------------------ SPiRALCELLS-Weg
+    def _vault_source(self, query: str):
+        """Fixed read-only Reader route; no client-supplied host or import."""
+        args = parse_qs(query, keep_blank_values=True)
+        if (len(query) > 16000 or set(args) != {"path", "content_sha256"}
+                or any(len(v) != 1 for v in args.values())
+                or not args["path"][0].startswith("/") or len(args["path"][0]) > 4096
+                or "\x00" in args["path"][0]
+                or not re.fullmatch(r"[0-9a-f]{64}", args["content_sha256"][0])):
+            raise Fehler(400, "Diese Vault-Fundstelle ist nicht vollständig bezeichnet.")
+        url = "http://127.0.0.1:53450/api/research-vault-source?" + urlencode({k: v[0] for k, v in args.items()})
+        try:
+            with urllib.request.urlopen(url, timeout=4) as response:
+                raw = response.read(512_001)
+            if len(raw) > 512_000:
+                raise ValueError()
+            result = json.loads(raw)
+            if (not isinstance(result, dict) or not isinstance(result.get("source_ref"), dict)
+                    or result["source_ref"].get("content_sha256") != args["content_sha256"][0]
+                    or result.get("vault_path") != args["path"][0]):
+                raise ValueError()
+            return result
+        except urllib.error.HTTPError:
+            raise Fehler(400, "Die gespeicherte Vault-Fassung ist nicht eindeutig erreichbar.")
+        except (OSError, ValueError, TypeError):
+            raise Fehler(503, "Der vorhandene Vault-Lesezugang ist gerade nicht erreichbar.")
+
     def _oben(self, methode: str, pfad: str, obj=None, zeit: float = 8.0):
         daten = None if obj is None else json.dumps(obj, ensure_ascii=False).encode("utf-8")
         req = urllib.request.Request(self.upstream + pfad, data=daten, method=methode,
@@ -577,6 +603,8 @@ class Lichtwerk(BaseHTTPRequestHandler):
                     self._json(200, {**health, "lichtwerk": {
                         "capabilities": {"authorSelection": bool(self.autorenprofile)}
                     }})
+            elif pfad == "/lichtwerk/vault-source":
+                self._json(200, self._vault_source(teile.query))
             elif pfad in LESEN:
                 self._weiter(*self._oben("GET", pfad))
             elif pfad == "/lichtwerk/graph":   # Graph und sein Stand aus derselben Antwort
@@ -979,7 +1007,7 @@ class Leseeingang(Lichtwerk):
     autorenprofile = False
     behalten = False
     leseeingang = None
-    DURCH = {"/api/graph", "/api/agents", "/lichtwerk/graph", "/lichtwerk/stand", "/lichtwerk/monde", "/lichtwerk/neu"}
+    DURCH = {"/api/graph", "/api/agents", "/lichtwerk/graph", "/lichtwerk/stand", "/lichtwerk/monde", "/lichtwerk/neu", "/lichtwerk/vault-source"}
     SATZ = "Hier wird nur gelesen. Schreiben geht im Lichtwerk selbst, mit Halten."
 
     def do_GET(self):
