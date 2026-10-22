@@ -23,9 +23,35 @@ Ralfs Gedanke vom 22.10. wird im Lichtwerk wörtlich genommen: Werke sind Planet
 - **Links.** `#mond=…&als=mond` und `#mond=…&als=planet` sind lesbare Links ohne Kennung.
 - **Tastatur.** A, P, Pfeile durch Gegenstand, Erscheinungen und Spuren, Escape hinaus. Am Handy führen zwei leise Wege an der Marke („Zusammenhänge zeigen →“, „Als Planet: Entstehung →“).
 
-## Nur lesen
+## Halten im Licht (seit der Zusammenführung, 22.10. abends)
 
-Das Lichtwerk schreibt hier nichts. Teilnahmen anlegen oder zurücknehmen geht weiter über SPiRALCELLS, die Formulare von Codex auf 8401. Ein Halten-Weg im Licht wäre der nächste Schritt; er braucht einen eigenen Schreibweg im Lichtwerk-Server (`/api/participations`, `/withdraw`) nur in Ralfs Namen. Er ist nicht gebaut.
+Codex' Vertragszweig `codex/lichtwege` ist in `alsformen` zusammengeführt (Merge `e000ebc`, Aufrufer `002d3dd`). Damit schreibt das Lichtwerk über die vorhandenen Mooncells-Wege, nur in Ralfs Namen und immer erst nach Halten:
+
+- **Im Blick als Mond:** „In einen Zusammenhang stellen …“. Dann ein Werk antippen (oder Pfeile und Eingabe), Rolle wählen und kurz begründen. Gebunden wird fest die jüngste Fassung des Gegenstands; das Siegel nennt sie vorher.
+- **Lesefläche einer Teilnahme:** „Zurücknehmen …“ mit Grund. Die Teilnahme bleibt mit ihrer ursprünglichen Begründung als Asche stehen.
+- **Im Blick als Planet:** „Spur eintragen …“ (Art, Titel, Belegtes, Ereigniszeit nur wenn bekannt). In der Lesefläche einer Spur steht „Gegenbefund eintragen …“; die widersprochene Spur bleibt stehen.
+- Ist unklar, ob gespeichert wurde, liest das Lichtwerk den Bestand neu und wiederholt nichts still.
+- Fassung, Vergleich und Frage stehen im Link über ihren stabilen Namen, nie über eine Listenposition. Eine Frage behält ihre gewählte Fassung.
+- Vault-Quellen werden beim Laden und Erneuern gebunden, bevor das Bild entsteht.
+
+Neue Schreibvorgänge am echten Bestand brauchen weiterhin die geprüfte exklusive Writer-Sperre (`lebenserschliessung/checkpoints/writer.lock`); `STOP_WORKER` ersetzt sie nicht.
+
+## Geprüft nach der Zusammenführung (22.10. abends, Testkette)
+
+- Tests: Node **92/92**, Python **67/67** (über `extern-dev run`, ohne API-Schlüssel).
+- Testkette: Kopie des echten Bestands in `testdaten/kette-zusammen/` auf 8419, Lichtwerk dieses Zweigs auf 8418, Reader auf 53450. Echter Bestand vorher und nachher `dafee2be…`.
+- Sichtbar, mit echtem Material („Mooncells · Gemeinsame Gegenstände · Originalgedanke“):
+  - Fassung gewählt, Vergleich gewählt; die Adresse trägt beide Fassungsnamen.
+  - Neu geladen: Fassung und Vergleichspartner gehen wieder auf.
+  - Als Planet: sieben Spuren, Lesefläche der Originalspur, der Weg „Gebundene Originalstelle öffnen ↗“ führt in den Reader an Quelle, Revision und genaue Passage. Der Reader hat die Quelle mit derselben Revision geliefert.
+  - In der Kopie: Teilnahme eingetragen (neuer Mond „als Material“), zurückgenommen (Kette aktiv → zurückgenommen), Spur „Erprobung“ mit offener Ereigniszeit eingetragen. Für diese Prüfung entstand in der Kopie der Eintrag „Ralf“; im echten Bestand nicht.
+  - 375 px: das Spur-Siegel bleibt im Bild und scrollt in sich, kein waagerechter Überlauf.
+
+## Offen nach der Zusammenführung
+
+- **Fassung im Reader:** Der Reader holt die Fassung fest von Mooncells auf 8401 und lehnt eine Kopie dort als fremden Datenbestand ab. Den kanonischen Mooncells-Dienst mit dem echten Bestand habe ich nicht gestartet (Codex' Dienst, Schreibweg ohne geprüfte Sperre). Quelle, Revision und Passage sind belegt; die Anzeige der gebundenen Fassung im Reader ist es in diesem Stand nicht.
+- Der gezeigte Rückweg fand die Originalstelle erst, nachdem `quellTuer` auch die Fassung berücksichtigt, die die gespeicherte Quelle selbst nennt. Bei der Spur „Originalgedanke · gleiche Gegenstände …“ ist das eine andere Fassung als die beiden, die die Spur aufzählt.
+- Ralfs Ansicht beider Stände (8411 Codex, 8418 Claude) und seine Entscheidung, was live geht.
 
 ## Geprüft (22.10., Testkette)
 

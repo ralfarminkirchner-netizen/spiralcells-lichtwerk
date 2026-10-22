@@ -293,6 +293,9 @@ function wegZeile(art, text, tun){ const li = document.createElement('li'), b = 
 /* Die Tür zur gebundenen Originalstelle; ohne geprüften Weg nur der ehrliche Satz */
 function quellTuer(ref, ids){
   if(!ref) return {knopf: null, satz: ''};
+  // Nennt die gespeicherte Quelle selbst eine Fassung, gehört sie zu den Kandidaten; quellFassung prüft sie wie jede andere
+  let genannt = null; try{ genannt = new URL(ref.locator).searchParams.get('fassung'); }catch(_){}
+  if(genannt && W.B.fassungen.has(genannt)) ids = [...new Set([...ids, genannt])];
   const vid = quellFassung(ref, ids, W.B.fassungen), url = vid ? quellAdresse(ref, vid, W.B.fassungen.get(vid)) : null;
   if(!url) return {knopf: null, satz: 'Die Quellenbindung ist gespeichert. Ein geprüfter Weg zur Originalstelle ist dafür nicht hinterlegt.'};
   const a = document.createElement('a'); a.className = 'halten still'; a.href = url; a.target = '_blank'; a.rel = 'noopener noreferrer';
