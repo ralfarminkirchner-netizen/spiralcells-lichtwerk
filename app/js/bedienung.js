@@ -11,6 +11,9 @@ import {AU, toggle as klangToggle, wake as klangWake, klang} from './klang.js';
 import * as schreib from './schreiben.js';
 import * as formen from './formen.js';
 import * as stoff from './stoff.js';
+import {teilnahmeMarke, spurMarke, alsSatz, zellSatz, STAND_SATZ} from './alsformen.js';
+import {quellAdresse, quellFassung, quellName} from './quelle.js';
+import {werkFarbe} from './verschraenkung.js';
 
 const $ = s => document.querySelector(s);
 const canvas = $('#gl'), lineEl = $('#line'), markeEl = $('#marke'), leseEl = $('#lese'), siegelEl = $('#siegel'), hintEl = $('#hint'), ortEl = $('#zurueck');
@@ -32,6 +35,10 @@ export function zeile(text){
   lineTimer = setTimeout(() => { lineEl.textContent = text; lineEl.classList.add('on'); }, W.RM ? 0 : 420);
 }
 export function mondSatz(m){
+  const grund = mondSatzGrund(m), A = W.N && W.N.als, i = m && W.B ? W.B.monde.indexOf(m) : -1, als = A && i >= 0 ? zellSatz(A, i) : '';
+  return als ? grund + ' ' + als : grund;
+}
+function mondSatzGrund(m){
   if(!m) return '';
   if(m.reife === 'kanonisch') return 'Von Ralf kristallisiert. Jede Ausprägung hat ihre Lücke.';
   if(m.traumfeld) return m.samen.length ? 'Material ohne Stimmen. Ein ruhiges Feld.' : 'Ein Keim ohne Ausprägungen. Ein ruhiges Feld.';
@@ -54,7 +61,19 @@ export function netzSatz(B){
 }
 
 /* ---------------------------------------------------------------- Marke */
-export function zeigeMarke(titel, satz){ markeEl.querySelector('.marke-titel').textContent = titel; markeEl.querySelector('.marke-satz').textContent = satz; markeEl.hidden = false; markeW = markeEl.offsetWidth || 200; }
+export function zeigeMarke(titel, satz, knoepfe){ markeEl.querySelector('.marke-titel').textContent = titel; markeEl.querySelector('.marke-satz').textContent = satz;
+  const tun = markeEl.querySelector('.marke-tun'); if(tun){ tun.innerHTML = ''; for(const k of knoepfe || []) tun.append(k); tun.hidden = !(knoepfe && knoepfe.length); }
+  markeEl.hidden = false; markeW = markeEl.offsetWidth || 200; }
+/* An einem gewählten Werk mit Alsformen: zwei leise Wege, auch ohne Tastatur */
+function alsKnoepfe(sel){
+  const A = W.N && W.N.als; if(!A || !sel || sel.art !== 'mond' || U.netK < 0.5 || !A.hat(sel.i)) return null;
+  const k = (text, fokus) => { const b = document.createElement('button'); b.type = 'button'; b.className = 'marke-knopf'; b.textContent = text;
+    b.addEventListener('pointerdown', e => e.stopPropagation()); b.addEventListener('click', e => { e.stopPropagation(); api.alsFokus(sel.i, fokus); }); return b; };
+  const hier = U.als && U.als.gi === sel.i ? U.als.fokus : null, out = [];
+  if(A.proGegenstand.has(sel.i) && hier !== 'mond') out.push(k('Zusammenhänge zeigen', 'mond'));
+  if((A.entstehung.has(sel.i) || A.proKontext.has(sel.i)) && hier !== 'planet') out.push(k('Als Planet: Entstehung', 'planet'));
+  if(hier && !A.proGegenstand.has(sel.i) && hier !== 'mond') out.push(k('Als Mond', 'mond'));
+  return out; }
 export function verbirgMarke(){ markeEl.hidden = true; }
 let markeW = 200;
 export function setzeMarke(sx, sy){
@@ -75,8 +94,11 @@ export function markeFuer(sel){
   if(sel.art === 'kopf'){ const v = STIMMEN[sel.i]; return [v.name, `${v.rolle} · ${v.schrift} · tippen zeigt ihre Spur allein`]; }
   if(sel.art === 'mond'){ const nv = m.stimmen.length;
     const teile = [nv ? `${Zahlwort(nv)} ${nv === 1 ? 'Stimme' : 'Stimmen'}` : 'ohne Stimmen', `${m.samen.length + m.keim.length} ${m.samen.length + m.keim.length === 1 ? 'Ausprägung' : 'Ausprägungen'}`, m.reife];
+    const A = W.N && W.N.als; if(A && A.hat(sel.i)) teile.push(alsSatz(A, sel.i));
     if(gleich(U.sel, sel)) teile.push('tippen öffnet');
     return [m.titel, teile.join(' · ')]; }
+  if(sel.art === 'echo' && W.N && W.N.als && W.N.als.teilnahmen[sel.i]){ const [t, s] = teilnahmeMarke(W.N.als, W.B, sel.i); return [t, s + (gleich(U.sel, sel) && U.stufe < 2 ? ' · tippen liest' : '')]; }
+  if(sel.art === 'spur' && W.N && W.N.als && W.N.als.spuren[sel.i]){ const [t, s] = spurMarke(W.N.als, sel.i); return [t, s + (gleich(U.sel, sel) && U.stufe < 2 ? ' · tippen liest' : '')]; }
   if(sel.art === 'tuer'){ const t = W.N.tueren[sel.i]; return [t.satz, t.wach ? 'wach · noch einmal tippen öffnet' : 'ruht gerade']; }
   if(sel.art === 'mitte'){ const b = W.N.baum, n = W.N.werkeIn('mitte').length; return [b.mitte.name || 'Zentrale', [`die Mitte · ${n} ${n === 1 ? 'Werk' : 'Werke'} · ${b.daecher.length} ${b.daecher.length === 1 ? 'Dach' : 'Dächer'} darum`, gleich(U.sel, sel) ? 'tippen fährt hinein' : ''].filter(Boolean).join(' · ')]; }
   if(sel.art === 'ohne'){ const n = W.N.werkeIn('ohne').length; return ['ohne Dach', [`${n} ${n === 1 ? 'Werk' : 'Werke'}, noch keinem Dach belegt zugeordnet`, gleich(U.sel, sel) ? 'tippen fährt hinein' : ''].filter(Boolean).join(' · ')]; }
@@ -257,6 +279,85 @@ export function schliesseLese(behalteAuswahl){
   if(!behalteAuswahl){ U.stufe = U.sel ? 1 : 0; }
 }
 
+/* ------------------------------------------------- Lesefläche: Alsformen
+   Eine Teilnahme oder eine Spur der Entstehung, im selben Licht wie eine Ausprägung.
+   Nur lesen: gebundene Fassungen, Zusammenhang, Gegenstand und die Originalstelle sind Wege, keine Schalter. */
+const hexAus = c => '#' + c.map(x => Math.round(Math.pow(clamp(x, 0, 1), 1 / 2.2) * 255).toString(16).padStart(2, '0')).join('');
+const SPUR_FARBE = {origin: '#fff1d6', counterevidence: '#c4786a', interpretation: '#e6ecff', gap: '#d8cfc0'};
+function wegZeile(art, text, tun){ const li = document.createElement('li'), b = document.createElement('button'); b.type = 'button';
+  b.innerHTML = `<span class="art">${esc(art)}</span>${esc(text)}`; b.addEventListener('click', tun); li.append(b); return li; }
+/* Die Tür zur gebundenen Originalstelle; ohne geprüften Weg nur der ehrliche Satz */
+function quellTuer(ref, ids){
+  if(!ref) return {knopf: null, satz: ''};
+  const vid = quellFassung(ref, ids, W.B.fassungen), url = vid ? quellAdresse(ref, vid, W.B.fassungen.get(vid)) : null;
+  if(!url) return {knopf: null, satz: 'Die Quellenbindung ist gespeichert. Ein geprüfter Weg zur Originalstelle ist dafür nicht hinterlegt.'};
+  const a = document.createElement('a'); a.className = 'halten still'; a.href = url; a.target = '_blank'; a.rel = 'noopener noreferrer';
+  a.innerHTML = `<span>Gebundene Originalstelle öffnen ↗<small>${esc(quellName(ref))}, genaue Passage und Fassung</small></span>`; return {knopf: a, satz: ''}; }
+function stilleWahl(text, unter, tun){ const b = document.createElement('button'); b.type = 'button'; b.className = 'halten still'; b.innerHTML = `<span>${roh(text)}${unter ? `<small>${roh(unter)}</small>` : ''}</span>`; b.addEventListener('click', tun); return b; }
+function mondDerFassung(v){ const id = W.B.werkVon(v.id); return id ? W.B.monde.findIndex(m => m.id === id) : -1; }
+function oeffneLeseAls(sel){
+  const A = W.N && W.N.als; if(!A) return;
+  const key = sel.art + ':' + sel.i, gleicheStelle = !leseEl.hidden && leseV === key, scroll = leseEl.scrollTop, fokusInnen = leseEl.contains(document.activeElement);
+  const ul = leseEl.querySelector('.lese-faeden'), tun = leseEl.querySelector('.lese-tun'); stoppeHalten(tun);
+  let wer = '', html = '', zeilen = [], rohText = '', titel = '';
+  if(sel.art === 'echo'){
+    const t = A.teilnahmen[sel.i]; if(!t) return; const gm = W.B.monde[t.gegenstand], km = W.B.monde[t.kontext];
+    ul.innerHTML = ''; tun.innerHTML = ''; leseV = key; wer = 'Teilnahme'; titel = `„${kurz(gm.titel, 110)}“ als ${t.rolle}`;
+    leseEl.querySelector('.lese-punkt').style.color = t.stand === 'withdrawn' ? '#c4786a' : hexAus(werkFarbe(W.N, t.gegenstand));
+    leseEl.querySelector('.lese-wann').textContent = datum(t.wann);
+    leseEl.querySelector('.lese-art').textContent = [`in „${kurz(km.titel, 80)}“`, STAND_SATZ[t.stand], t.fassung ? (t.bindung === 'latest' ? 'jeweils aktuelle Fassung' : 'fest an eine Fassung gebunden') : 'ohne lesbare Fassung'].join(' · ');
+    ul.append(wegZeile('der Gegenstand', `„${kurz(gm.titel, 80)}“`, () => api.alsOeffne(t.gegenstand, null)));
+    ul.append(wegZeile('der Zusammenhang', `„${kurz(km.titel, 80)}“`, () => api.alsOeffne(t.kontext, null)));
+    if(t.fassung){ const fm = mondDerFassung(t.fassung); ul.append(wegZeile(t.bindung === 'latest' ? 'jeweils aktuelle Fassung' : 'gebundene Fassung', `„${kurz(t.fassung.label || 'Unbenannte Fassung', 80)}“`, () => { if(fm >= 0) api.alsOeffne(fm, t.fassung.id); })); }
+    const teile = [];
+    if(t.stand === 'withdrawn' && t.ruecknahme) teile.push(`<p><strong>Zurückgenommen</strong> am ${esc(datum(t.ruecknahme.wann))}, eingetragen von ${esc(t.ruecknahme.wer)}.</p>`, absaetze(t.ruecknahme.grund), '<h3>Ursprüngliche Begründung</h3>');
+    teile.push(absaetze(t.grund));
+    if(t.gueltig) teile.push(`<p class="zitat">Gilt: ${esc(t.gueltig)}</p>`);
+    if(t.abgeloest) teile.push(`<p class="leise">Diese Eintragung löst eine frühere vom ${esc(datum(t.abgeloest))} ab. Beide bleiben erhalten.</p>`);
+    teile.push(`<p class="leise">Eingetragen von ${esc(t.wer)}${t.modell ? ' als Modellbeitrag. Eine menschliche Bestätigung folgt daraus nicht.' : '.'} Die Rolle gilt in diesem Zusammenhang; der Gegenstand bleibt derselbe, einmal gespeichert.</p>`);
+    const q = quellTuer(t.quelle, t.fassung ? [t.fassung.id] : []); if(q.satz) teile.push(`<p class="leise">${esc(q.satz)}</p>`);
+    html = teile.join('');
+    const hier = U.als ? U.als.gi + ':' + U.als.fokus : '';
+    if(hier !== t.gegenstand + ':mond') tun.append(stilleWahl('Alle Zusammenhänge', 'der Gegenstand als Mond', () => { schliesseLese(true); api.alsFokus(t.gegenstand, 'mond'); }));
+    if(hier !== t.kontext + ':planet') tun.append(stilleWahl('Der Zusammenhang als Planet', 'was um ihn kreist, woraus er wurde', () => { schliesseLese(true); api.alsFokus(t.kontext, 'planet'); }));
+    if(q.knopf) tun.append(q.knopf);
+    zeilen = [['Teilnahme', t.id], ['Gegenstand', gm.id], ['Zusammenhang', km.id], ['Fassung', t.roh.variant_id], ['Bindung', t.roh.version_binding], ['Rolle (gespeichert)', t.roh.role], ['Eintragungen', t.kette.map(x => `${x.id} (${x.status}, ${x.created_at})`).join(' → ')]];
+    rohText = JSON.stringify(t.kette, null, 2);
+  } else {
+    const s = A.spuren[sel.i]; if(!s) return; const wm = W.B.monde[s.werk];
+    ul.innerHTML = ''; tun.innerHTML = ''; leseV = key; wer = 'Entstehung'; titel = s.titel;
+    leseEl.querySelector('.lese-punkt').style.color = SPUR_FARBE[s.art] || '#fff6e0';
+    leseEl.querySelector('.lese-wann').textContent = 'aufgezeichnet ' + s.aufgezeichnet.satz;
+    leseEl.querySelector('.lese-art').textContent = [s.artWort, `in „${kurz(wm.titel, 70)}“`, s.stand === 'documented' ? 'dokumentiert' : 'vorgeschlagen, nicht bestätigt'].join(' · ');
+    for(const f of s.fassungen){ const fm = mondDerFassung(f); ul.append(wegZeile(fm >= 0 && fm !== s.werk ? `Fassung in „${kurz(W.B.monde[fm].titel, 34)}“` : 'gebundene Fassung', `„${kurz(f.label || 'Unbenannte Fassung', 80)}“`, () => { if(fm >= 0) api.alsOeffne(fm, f.id); })); }
+    for(const j of s.widerspricht) ul.append(wegZeile('widerspricht', `„${kurz(A.spuren[j].titel, 80)}“`, () => waehle({art: 'spur', i: j}, 2)));
+    for(const j of s.widersprochen) ul.append(wegZeile('widersprochen von', `„${kurz(A.spuren[j].titel, 80)}“`, () => waehle({art: 'spur', i: j}, 2)));
+    const teile = [absaetze(s.text), '<h3>Drei Zeiten</h3>',
+      `<p>Ereigniszeit: ${s.ereignis.art === 'offen' ? 'offen. Eine spätere Eintragung datiert das Geschehen nicht zurück.' : esc(s.ereignis.satz)}</p>`,
+      `<p>Aufgezeichnet: ${esc(s.aufgezeichnet.satz)}</p>`, `<p>Gedeutet: ${s.gedeutet.art === 'offen' ? 'keine eigene Deutungszeit' : esc(s.gedeutet.satz)}</p>`];
+    if(s.bedingungen.length) teile.push('<h3>Bedingungen</h3>', ...s.bedingungen.map(b => `<p>· ${zier(b)}</p>`));
+    teile.push(`<p class="leise">Eingetragen von ${esc(s.wer)}${s.modell ? ' als Modellbeitrag. Eine menschliche Bestätigung folgt daraus nicht.' : '.'} Die Spur dokumentiert; sie behauptet keinen zwangsläufigen Verlauf.</p>`);
+    const q = quellTuer(s.quelle, s.fassungen.map(f => f.id)); if(q.satz) teile.push(`<p class="leise">${esc(q.satz)}</p>`);
+    html = teile.join('');
+    if(!(U.als && U.als.gi === s.werk && U.als.fokus === 'planet')) tun.append(stilleWahl('Die ganze Entstehung', 'das Werk als Planet', () => { schliesseLese(true); api.alsFokus(s.werk, 'planet'); }));
+    if(q.knopf) tun.append(q.knopf);
+    zeilen = [['Spur', s.id], ['Werk', wm.id], ['Art (gespeichert)', s.roh.kind], ['Status', s.roh.status], ['Fassungen', (s.roh.variant_ids || []).join(', ') || '—'],
+      ['Ereigniszeit', s.roh.event_time || '—'], ['aufgezeichnet', s.roh.recorded_at], ['gedeutet', s.roh.interpretation_time || '—'], ['widerspricht', (s.roh.contradicts_event_ids || []).join(', ') || '—']];
+    rohText = JSON.stringify(s.roh, null, 2);
+  }
+  leseEl.querySelector('.lese-wer').textContent = wer;
+  leseEl.querySelector('.lese-titel').textContent = titel;
+  leseEl.querySelector('.lese-text').innerHTML = html;
+  const det = leseEl.querySelector('.technik'); det.open = false;   // Technische Details: geschlossen, öffnen nie von selbst
+  det.querySelector('.technik-liste').innerHTML = zeilen.map(([k, w]) => `<dt>${roh(k)}</dt><dd>${roh(w)}</dd>`).join('');
+  det.querySelector('.technik-roh').textContent = rohText;
+  leseEl.hidden = false; U.lese = true; document.body.classList.add('lesend');
+  leseEl.scrollTop = gleicheStelle ? scroll : 0;
+  if(!gleicheStelle || fokusInnen) leseEl.focus({preventScroll: true});
+  verbirgMarke();
+  if(!gleicheStelle) ansage(`${wer}: ${titel}. Lesefläche offen, Escape schließt.`);
+}
+
 /* Ansage für Screenreader: was gerade gewählt ist */
 const ansageEl = $('#ansage');
 export function ansage(t){ if(ansageEl){ ansageEl.textContent = ''; setTimeout(() => { ansageEl.textContent = t; }, 30); } }
@@ -283,8 +384,10 @@ export function waehle(sel, stufe){
     for(const f of m.faeden){ if(f.von === id && idx.has(f.nach)) set.add(idx.get(f.nach)); if(f.nach === id && idx.has(f.von)) set.add(idx.get(f.von)); }
     U.linkedSeeds = set; }
   if(!sel){ verbirgMarke(); schliesseLese(); return; }
-  const [t, s] = markeFuer(sel); zeigeMarke(t, s); if(U.stufe < 2) ansage(t + '. ' + s);
-  if(U.stufe >= 2 && (sel.art === 'same' || sel.art === 'keim')) oeffneLese(sel); else if(U.lese) schliesseLese(true);
+  const [t, s] = markeFuer(sel); zeigeMarke(t, s, alsKnoepfe(sel)); if(U.stufe < 2) ansage(t + '. ' + s);
+  if(U.stufe >= 2 && (sel.art === 'same' || sel.art === 'keim')) oeffneLese(sel);
+  else if(U.stufe >= 2 && (sel.art === 'echo' || sel.art === 'spur')) oeffneLeseAls(sel);
+  else if(U.lese) schliesseLese(true);
   if(api && (sel.art === 'same' || sel.art === 'keim')) api.merkeOrt();
 }
 
@@ -327,6 +430,8 @@ export function treffer(sx, sy){
     U.tueren.forEach((h, i) => nimm(h, 30, {art: 'tuer', i}));
     U.monde.forEach((h, i) => nimm(h, 30, {art: 'mond', i, mond: W.B.monde[i]}));
     U.knoten.forEach((h, i) => nimm(h, 26, {art: 'faden', i}));
+    U.echos.forEach((h, i) => nimm(h, 26, {art: 'echo', i}));   // ein Gegenstand an einem anderen Werk
+    U.spuren.forEach((h, i) => nimm(h, 26, {art: 'spur', i}));   // eine Spur der Entstehung
     if(U.dach == null) U.buendelKnoten.forEach((h, i) => nimm(h, 28, {art: 'buendel', i}));
     if(U.dach == null){ U.daecherSchirm.forEach((h, i) => nimm(h, 46, {art: 'dach', i})); nimm(U.mitteSchirm, 46, {art: 'mitte'}); nimm(U.ohneSchirm, 46, {art: 'ohne'}); }
     const k = trefferKopf(sx, sy); if(k >= 0) kand.push([0.6, {art: 'kopf', i: k}]);
@@ -444,7 +549,7 @@ export function installiere(a){
     else if((k === 'ArrowRight' || k === 'ArrowLeft') && U.sel && U.sel.art === 'faden' && W.N && W.N.faeden[U.sel.i].kanten.length > 1){ e.preventDefault();   // durch die Verbindungen eines Bündels
       const n = W.N.faeden[U.sel.i].kanten.length; U.fadenK = ((U.fadenK || 0) + (k === 'ArrowRight' ? 1 : -1) + n) % n; const [t, s] = markeFuer(U.sel); zeigeMarke(t, s); ansage(t + '. ' + s); }
     else if(k === 'ArrowRight' || k === 'ArrowLeft'){ e.preventDefault(); schritt(k === 'ArrowRight' ? 1 : -1); }
-    else if(k === '?'){ U.hintUntil = W.wall + 8; hintEl.textContent = 'S Seite · N Netz · W Werkraum · 1–5 eine Stimme · ⌘V legt ab · Halten verbindet · Esc zurück'; }
+    else if(k === '?'){ U.hintUntil = W.wall + 8; hintEl.textContent = 'S Seite · N Netz · A Zusammenhänge · P Planet · W Werkraum · 1–5 eine Stimme · ⌘V legt ab · Halten verbindet · Esc zurück'; }
     else if(k === 'Enter' && U.waehlen && U.sel && (U.sel.art === 'same' || U.sel.art === 'keim')){ const w = U.waehlen, nach = U.sel.art === 'same' ? U.sel.mond.samen[U.sel.i].id : U.sel.mond.keim[U.sel.mond.keim.length - 1].id;
       U.waehlen = null; if(nach !== w.von && U.sel.mond.id === w.mondId) api.kanteFragen(w.von, nach); else zeile('Nichts verbunden.'); }
     else if(k === 'Enter'){ if(U.sel){ const s = U.sel;
@@ -455,6 +560,11 @@ export function installiere(a){
     else if((k === 'f' || k === 'F') && U.netK > 0.5 && W.N && W.N.faeden.length){   // Fäden zwischen Werken, einer nach dem anderen
       const n = W.N.faeden.length; let i = U.sel && U.sel.art === 'faden' ? U.sel.i + (e.shiftKey ? -1 : 1) : 0; i = (i + n) % n;
       waehle({art: 'faden', i}, 1); const [t, s] = markeFuer(U.sel); ansage(`Faden ${i + 1} von ${n}: ${t}. ${s}`); }
+    else if((k === 'a' || k === 'A') && W.N && W.N.als){ const A = W.N.als, i = alsZielVon(U.sel);   // Alsformen: der Gegenstand in allen Zusammenhängen
+      if(i < 0) zeile('Erst einen Gegenstand wählen.'); else if(A.proGegenstand.has(i)) api.alsFokus(i, 'mond'); else if(A.hat(i)) api.alsFokus(i, 'planet');
+      else zeile('Dieser Gegenstand nimmt noch an keinem anderen Zusammenhang teil.'); }
+    else if((k === 'p' || k === 'P') && W.N && W.N.als){ const i = U.als ? U.als.gi : alsZielVon(U.sel);   // Planet ⇄ Mond: derselbe Gegenstand, ein anderer Blick
+      if(i < 0) zeile('Erst ein Werk wählen.'); else api.alsFokus(i, U.als && U.als.gi === i && U.als.fokus === 'planet' ? 'mond' : 'planet'); }
     else if(k === 'ArrowUp'){ U.elevOff = clamp(U.elevOff + 0.08, 2 * DEG - U.baseElev, 90 * DEG - U.baseElev); }
     else if(k === 'ArrowDown'){ U.elevOff = clamp(U.elevOff - 0.08, 2 * DEG - U.baseElev, 90 * DEG - U.baseElev); }
     else if((k === 'h' || k === 'H') && !U.keyHold){ U.keyHold = true; setHold(true, CAM.cssW / 2, CAM.cssH / 2); }
@@ -510,7 +620,18 @@ export function zurueck(){
   if(U.kelchT > 0.5){ seite(); return; }
   api.zurueck();
 }
+/* Welches Werk eine Wahl meint: der Mond selbst, der Gegenstand einer Erscheinung, das Werk einer Spur; in der Zelle das offene */
+function alsZielVon(sel){
+  const A = W.N && W.N.als; if(!A) return -1;
+  if(sel && sel.art === 'mond') return sel.i; if(sel && sel.art === 'echo' && A.teilnahmen[sel.i]) return A.teilnahmen[sel.i].gegenstand;
+  if(sel && sel.art === 'spur' && A.spuren[sel.i]) return A.spuren[sel.i].werk;
+  return U.netK < 0.5 && W.Z && W.aktiv >= 0 ? W.aktiv : -1; }
 function schritt(d){
+  if(U.netK > 0.5 && U.als && W.N && W.N.als){   // im Blick auf einen Gegenstand: er selbst, seine Erscheinungen, seine Spuren
+    const A = W.N.als, gi = U.als.gi;
+    const ring = [{art: 'mond', i: gi, mond: W.B.monde[gi]}, ...A.teilnahmen.map((t, i) => t.gegenstand === gi || t.kontext === gi ? {art: 'echo', i} : null).filter(Boolean), ...(A.entstehung.get(gi) || []).map(i => ({art: 'spur', i}))];
+    let j = U.sel ? ring.findIndex(r => gleich(r, U.sel)) : -1; j = j < 0 ? (d > 0 ? 0 : ring.length - 1) : ((j + d) % ring.length + ring.length) % ring.length;
+    waehle(ring[j], U.lese && ring[j].art !== 'mond' ? 2 : 1); if(!U.lese){ const [t, s] = markeFuer(U.sel); ansage(t + '. ' + s); } return; }
   if(U.netK > 0.5){
     if(U.dach == null && W.N.daecher.length){   // die Mitte, die Dächer und „ohne Dach“
       const ring = [{art: 'mitte'}, ...W.N.daecher.map((_, i) => ({art: 'dach', i})), ...(W.N.L.ohne ? [{art: 'ohne'}] : [])], n = ring.length;
@@ -530,7 +651,7 @@ function schritt(d){
 let hoverT = 0;
 function hoverPruefen(sx, sy){ const now = performance.now(); if(now - hoverT < 60) return; hoverT = now;
   const t = treffer(sx, sy); U.hover = t; canvas.classList.toggle('zeigt', !!t);
-  if(!U.sel && !U.namenAn && !U.siegel && t && (t.art === 'mond' || t.art === 'tuer' || t.art === 'same' || t.art === 'keim' || t.art === 'kopf' || t.art === 'dach' || t.art === 'mitte' || t.art === 'ohne' || t.art === 'faden' || t.art === 'buendel')){ const [a, b] = markeFuer(t); zeigeMarke(a, b); U.hoverMarke = true; }
+  if(!U.sel && !U.namenAn && !U.siegel && t && (t.art === 'mond' || t.art === 'tuer' || t.art === 'same' || t.art === 'keim' || t.art === 'kopf' || t.art === 'dach' || t.art === 'mitte' || t.art === 'ohne' || t.art === 'faden' || t.art === 'buendel' || t.art === 'echo' || t.art === 'spur')){ const [a, b] = markeFuer(t); zeigeMarke(a, b); U.hoverMarke = true; }
   else if(!U.sel && U.hoverMarke){ verbirgMarke(); U.hoverMarke = false; } }
 
 /* Lage der Marke und der leisen Anzeigen, jedes Bild */
@@ -546,6 +667,8 @@ export function uiFrame(){
     else if(sel.art === 'ohne'){ p = U.ohneSchirm; }
     else if(sel.art === 'faden'){ p = U.knoten[sel.i]; }
     else if(sel.art === 'buendel'){ p = U.buendelKnoten[sel.i]; }
+    else if(sel.art === 'echo'){ p = U.echos[sel.i]; }
+    else if(sel.art === 'spur'){ p = U.spuren[sel.i]; }
     else if(sel.art === 'kopf'){ p = (U.netK > 0.6 ? U.bigHeads : U.heads)[sel.i]; }
     if(p && p[2] > 0) setzeMarke(p[0], p[1]); }
   hintEl.classList.toggle('on', W.wall < U.hintUntil && !U.lese && !U.siegel);

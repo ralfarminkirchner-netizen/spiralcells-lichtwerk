@@ -211,7 +211,8 @@ class Datenweg(unittest.TestCase):
     def test_02_graph_wird_unveraendert_durchgereicht(self):
         g = self.graph()
         self.assertEqual({k: len(v) for k, v in g.items()},
-                         {"agents": 8, "works": 88, "worktrees": 142, "variants": 566, "edges": 118, "findings": 19})
+                         {"agents": 8, "works": 88, "worktrees": 142, "variants": 566, "edges": 118, "findings": 19,
+                          "participations": 0, "emergence_events": 0})   # SPiRALCELLS liefert seit 22.10. auch Teilnahmen und Entstehungsspuren
 
     def test_03_fremde_adresse_und_fremde_seite_abgewiesen(self):
         s, a, _ = self.req("GET", "/api/graph", kopf={"Host": "evil.example:8416"})

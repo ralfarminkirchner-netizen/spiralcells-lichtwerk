@@ -14,6 +14,7 @@ import {VOICES, fibSphere} from './zelle.js';
 import {MENSCH} from './daten.js';
 import {wuchs, rangRadien} from './wuchs.js';
 import {ordne, lage} from './ordnung.js';
+import {alsformen} from './alsformen.js';
 
 const MEM2 = fibSphere(4200), MEMD = fibSphere(900);
 const SEEDC = VOICES.map(v => v.c);
@@ -81,6 +82,7 @@ export class Netz {
       if(!x){ x = {von: a, nach: b, faeden: [], kanten: 0, verwendung: 0, typen: new Map()}; bm.set(k, x); this.buendel.push(x); }
       x.faeden.push(fi); x.kanten += f.kanten.length; x.verwendung += f.verwendung; x.typen.set(f.typ, (x.typen.get(f.typ) || 0) + f.kanten.length); });
     for(const x of this.buendel) x.typ = [...x.typen].sort((p, q) => q[1] - p[1])[0][0];
+    this.als = alsformen(B);   // derselbe Gegenstand in mehreren Zusammenhängen, und wie etwas entstand
     this.stimmAnteil = VOICES.map((_, i) => B.monde.filter(m => m.stimmen.includes(i)).length);
     const mx = Math.max(1, ...this.stimmAnteil); this.stimmAnteil = this.stimmAnteil.map(x => x / mx);
     this.tueren = [];
@@ -129,17 +131,18 @@ export function baueNetz(N, U, wall, vis, aktiv, aktivDetail){
   const hov = U.hover && U.hover.art === 'mond' ? U.hover.i : -1, imDach = U.dach;   // null, 'mitte', 'ohne' oder ein Dach
   const hovD = U.hover && U.hover.art === 'dach' ? U.hover.i : -1, selD = U.sel && U.sel.art === 'dach' ? U.sel.i : -1;
   const selM = U.sel && U.sel.art === 'mond' ? U.sel.i : -1, anders = imDach != null ? 0.22 : 1;   // was nicht im betretenen Bezirk liegt, tritt zurück
+  const fokus = U.als && U.als.set ? U.als.set : null, still = fokus ? 0.3 : 1;   // im Blick auf einen Gegenstand tritt alles andere zurück
   // Mitte: die Zentrale, ein warmer Kern mit eigener Hülle, heller als jedes Dach
   const Lm = N.L.mitte, puls = U.RM ? 0.85 : 0.75 + 0.25 * Math.sin(wall * 0.9), hovM = U.hover && U.hover.art === 'mitte', anM = hovM || (U.sel && U.sel.art === 'mitte');
-  const hellM = imDach === 'mitte' ? 1.2 : imDach != null ? anders : 1;
-  P(0, 0, 0, Math.min(Lm.R * 0.12, 1.1), KEIMC[0], KEIMC[1], KEIMC[2], 0.8 * vis * puls * (anM ? 1.5 : 1));
+  const hellM = (imDach === 'mitte' ? 1.2 : imDach != null ? anders : 1) * still;
+  P(0, 0, 0, Math.min(Lm.R * 0.12, 1.1), KEIMC[0], KEIMC[1], KEIMC[2], 0.8 * vis * puls * (anM ? 1.5 : 1) * still);
   P(0, 0, 0, Lm.R * 0.7, KEIMC[0], KEIMC[1], KEIMC[2], 0.09 * vis * hellM * (imDach === 'mitte' ? 0.5 : 1));
   P(0, 0, 0, Lm.R * 1.6, KEIMC[0], KEIMC[1], KEIMC[2], 0.06 * vis * hellM * (imDach === 'mitte' ? 0.5 : 1));
   ring([0, -0.05, 0], Lm.R, KEIMC, (anM ? 0.9 : 0.6) * vis * hellM, 0.09, 1);
   huelle([0, 0, 0], Lm.R, 0.42, WG, (anM ? 0.9 : 0.55) * vis * (imDach === 'mitte' ? 0.35 : hellM), MEMD, cx, cyy, cz, imDach === 'mitte');
   U.mitteSchirm = imDach === 'mitte' ? amRing([0, 0, 0], Lm.R * 1.04, false, 0) : amRing([0, 0, 0], Lm.R * 1.02, true, 0);   // im Überblick unter dem Rand, nie über den Werken; in der Mitte oben
   // Dächer: je eine Hülle, die am Saum leuchtet; der Boden nur, wenn man auf sie zeigt oder in ihr steht
-  for(let j = 0; j < N.daecher.length; j++){ const d = N.daecher[j], drin = j === imDach, hell = drin ? 1 : imDach != null ? anders : 1, an = j === hovD || j === selD;
+  for(let j = 0; j < N.daecher.length; j++){ const d = N.daecher[j], drin = j === imDach, hell = (drin ? 1 : imDach != null ? anders : 1) * still, an = j === hovD || j === selD;
     const c = an ? mixc(WG, SILVER, 0.4) : WG;
     P(d.mitte[0], 0, d.mitte[2], d.R * 1.4, d.farbe[0], d.farbe[1], d.farbe[2], 0.012 * vis * hell * (an ? 1.8 : 1) * (drin ? 0.5 : 1));
     if(an || drin) ring([d.mitte[0], -0.05, d.mitte[2]], d.R, c, (an ? 0.6 : 0.35) * vis, 0.11, 1);
@@ -158,12 +161,13 @@ export function baueNetz(N, U, wall, vis, aktiv, aktivDetail){
     const bz = N.bezirk(n), dachHell = imDach == null ? 1 : bz === imDach ? 1.15 : 0.25;
     const dc = Math.hypot(o[0] - cx, o[1] - cyy, o[2] - cz), near = sstep(CAM.S * 0.03, CAM.S * 0.3, dc);
     let a = vis * fade * (self ? 1 : near) * dachHell;
+    if(fokus) a *= fokus.has(n) ? 1.2 : 0.14;
     if(soloAny) a *= m.stimmen.includes(U.solo) ? 1.3 : 0.18;
     if(material){ P(o[0], o[1], o[2], 0.16, DUSTC[0], DUSTC[1], DUSTC[2], a * 0.9); P(o[0], o[1], o[2], 0.5, DUSTC[0], DUSTC[1], DUSTC[2], a * 0.05);
       if(hov === n || self) screenRing(o, 0.35, WG, 0.4 * vis); U.monde[n] = toScreen(o[0], o[1], o[2]); continue; }
     // Viele Punkte auf kleinem Raum brennen aus: die Helligkeit je Punkt sinkt mit ihrer Zahl, groß heißt weit, nicht grell
     const lit = (m.traumfeld ? 1.4 : 2.2) * (hov === n ? 1.5 : 1) * (self ? 1.3 : 1) * Math.pow(Math.min(1, 16 / Math.max(1, k)), 0.7);
-    if(k){ let r = 0, g = 0, b = 0; for(let p = 0; p < k; p++){ r += pts[p * 6 + 3]; g += pts[p * 6 + 4]; b += pts[p * 6 + 5]; } P(o[0], o[1] + N.rM[n] * 0.15, o[2], N.rM[n] * 2.0, r / k, g / k, b / k, a * (m.traumfeld ? 0.14 : m.stimmen.length ? 0.35 : 0.24)); }
+    if(k){ let r = 0, g = 0, b = 0; for(let p = 0; p < k; p++){ r += pts[p * 6 + 3]; g += pts[p * 6 + 4]; b += pts[p * 6 + 5]; } P(o[0], o[1] + N.rM[n] * 0.15, o[2], N.rM[n] * 2.0, r / k, g / k, b / k, a * (m.traumfeld ? 0.14 : m.stimmen.length ? 0.35 : 0.24) * (fokus ? 0.4 : 1)); }   // im Blick: der Schein tritt zurück, die Gestalt bleibt
     else P(o[0], o[1], o[2], 0.7, KEIMC[0], KEIMC[1], KEIMC[2], a * 0.1);   // eine Knospe: nur die Ausgangsfassung, warm und klein
     const sz = 0.17 * Math.max(0.7, N.rM[n]);
     for(let p = 0; p < k; p++) P(o[0] + pts[p * 6], o[1] + pts[p * 6 + 1], o[2] + pts[p * 6 + 2], sz, pts[p * 6 + 3], pts[p * 6 + 4], pts[p * 6 + 5], a * lit * (U.RM ? 0.9 : 0.8 + 0.2 * Math.sin(wall * 0.7 + p * 0.37 + n)));
@@ -190,7 +194,7 @@ export function baueNetz(N, U, wall, vis, aktiv, aktivDetail){
     const zeig = anF || hovF || beteiligt || (imDach != null && (f.bzVon === imDach || f.bzNach === imDach));
     if(!zeig){ U.knoten[fi] = null; continue; }
     const st = STIL[f.typ] || STIL['verweist-auf'];
-    const al = vis * (st.a + 0.04 * Math.min(6, f.kanten.length)) * (soloAny ? 0.3 : 1) * (anF || hovF ? 1.8 : beteiligt ? 1.3 : wahl ? 0.25 : 1);
+    const al = vis * (st.a + 0.04 * Math.min(6, f.kanten.length)) * (soloAny ? 0.3 : 1) * (anF || hovF ? 1.8 : beteiligt ? 1.3 : wahl ? 0.25 : 1) * (fokus ? (fokus.has(f.von) && fokus.has(f.nach) ? (U.als.fokus === 'planet' ? 0.22 : 0.45) : 0.05) : 1);   // im Blick auf Alsformen treten auch die Materialfäden zurück
     const pt = fadenWeg(N, f, A, Bp);
     const d = Math.hypot(A[0] - Bp[0], A[2] - Bp[2]), n = Math.round(clamp(d * 5, 18, 140));
     for(let s = 1; s < n; s++){ const t = s / n; if(st.luecke && t > 0.44 && t < 0.56) continue; if(st.strich && (s % 4 === 0)) continue;
@@ -207,7 +211,7 @@ export function baueNetz(N, U, wall, vis, aktiv, aktivDetail){
   if(imDach == null){ const bz = Math.max(0.16, CAM.S * 0.006);
     for(let bi = 0; bi < N.buendel.length; bi++){ const x = N.buendel[bi], za = N.bezirkZiel(x.von), zb = N.bezirkZiel(x.nach); if(!za || !zb) continue;
       const st = STIL[x.typ] || STIL['verweist-auf'], an = U.sel && U.sel.art === 'buendel' && U.sel.i === bi, ho = U.hover && U.hover.art === 'buendel' && U.hover.i === bi;
-      const al = vis * (st.a + 0.03 * Math.min(8, x.kanten)) * (soloAny ? 0.3 : 1) * (an || ho ? 1.8 : wahl ? 0.35 : 1);
+      const al = vis * (st.a + 0.03 * Math.min(8, x.kanten)) * (soloAny ? 0.3 : 1) * (an || ho ? 1.8 : wahl ? 0.35 : 1) * (fokus ? 0.2 : 1);
       const pt = bogen(za.mitte, za.R, zb.mitte, zb.R), d = Math.hypot(za.mitte[0] - zb.mitte[0], za.mitte[2] - zb.mitte[2]), n = Math.round(clamp(d * 3, 20, 120));
       const dicke = bz * (1 + 0.1 * Math.min(8, x.kanten));
       for(let s = 0; s <= n; s++){ const t = s / n; if(st.luecke && t > 0.44 && t < 0.56) continue; const q = pt(t); P(q[0], q[1], q[2], dicke, st.c[0], st.c[1], st.c[2], al * (0.5 + 0.6 * t)); }
@@ -220,17 +224,17 @@ export function baueNetz(N, U, wall, vis, aktiv, aktivDetail){
   for(let k = 0; k < MEM2.length / 3; k++){ const ux = MEM2[k * 3], uy = MEM2[k * 3 + 1], uz = MEM2[k * 3 + 2];
     const x = ux * Rm2, y = uy * Rm2 * 0.45, z = uz * Rm2;
     const vx = cx - x, vy = cyy - y, vz = cz - z, vl = Math.hypot(vx, vy, vz) || 1, fres = Math.pow(1 - Math.abs((ux * vx + uy * vy * 0.45 + uz * vz) / vl), 4.0);
-    const lum = fres * vis * 0.32 * (imDach != null ? 0.15 : 1); P(x, y, z, Rm2 * 0.0035, WG[0] * lum, WG[1] * lum * 0.97, WG[2] * lum * 0.98, 0.7); }
+    const lum = fres * vis * 0.32 * (imDach != null || fokus ? 0.15 : 1); P(x, y, z, Rm2 * 0.0035, WG[0] * lum, WG[1] * lum * 0.97, WG[2] * lum * 0.98, 0.7); }
   // Die fünf Stimmen als Kranz um die Mitte, mit kurzen Spuren
   const kopf = Math.min(N.L.mitte.R * 0.07, 0.65);
-  for(let i = 0; i < 5; i++){ const c = mixc(VOICES[i].c, WG, 0.35), al = vis * (0.25 + 0.75 * N.stimmAnteil[i]) * U.soloA[i] * (imDach != null && imDach !== 'mitte' ? anders : 1);
+  for(let i = 0; i < 5; i++){ const c = mixc(VOICES[i].c, WG, 0.35), al = vis * (0.25 + 0.75 * N.stimmAnteil[i]) * U.soloA[i] * (imDach != null && imDach !== 'mitte' ? anders : 1) * still;
     for(let k = 0; k < 30; k++){ bigHead(N, i, wall - k * 0.018, TMP); const age = k / 30; P(TMP[0], TMP[1], TMP[2], kopf * mix(0.35, 0.08, age), c[0], c[1], c[2], Math.pow(1 - age, 1.5) * al * 0.5); }
     bigHead(N, i, wall, TMP); P(TMP[0], TMP[1], TMP[2], kopf, c[0], c[1], c[2], 2.0 * al);
     U.bigHeads[i] = toScreen(TMP[0], TMP[1], TMP[2]); }
   // Türen in den Verbund: stille Punkte auf dem Bogen über der Mitte; Ring erst, wenn man auf sie zeigt oder in der Mitte steht
   for(let i = 0; i < N.tueren.length; i++){ const t = N.tueren[i]; N.tuerPos(i, TMP); const wach = t.wach === true;
     const c = wach ? KEIMC : DUSTC, pu = wach ? 0.75 + 0.25 * Math.sin(wall * 1.3 + i) * (U.RM ? 0 : 1) : 0.35, h = U.hover && U.hover.art === 'tuer' && U.hover.i === i;
-    const hellT = imDach == null || imDach === 'mitte' ? 1 : anders;
+    const hellT = (imDach == null || imDach === 'mitte' ? 1 : anders) * still;
     P(TMP[0], TMP[1], TMP[2], Math.min(N.L.mitte.R * 0.04, 0.4), c[0], c[1], c[2], vis * pu * (h ? 2.2 : 1.1) * hellT);
     if(h || imDach === 'mitte') screenRing([TMP[0], TMP[1], TMP[2]], Math.min(N.L.mitte.R * 0.07, 0.7), wach ? SILVER : DUSTC, vis * (h ? 0.6 : 0.3));   // Gold bleibt Ralfs Kristallisieren
     U.tueren[i] = toScreen(TMP[0], TMP[1], TMP[2]); }

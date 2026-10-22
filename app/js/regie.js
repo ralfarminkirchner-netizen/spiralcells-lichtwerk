@@ -14,9 +14,13 @@ export function regie(U, Z, N, RM){
   if(Z && U.lese && !portrait) tg = [tg[0], tg[1], tg[2]];
   // Netz
   if(N){
-    // Im Netz: das Ganze, oder ein Dach nah (U.dachK blendet weich hinüber)
-    const d = U.dach != null && N.bezirkZiel ? N.bezirkZiel(U.dach) : null;
-    if(d) U.dachZiel = d; const dz = U.dachZiel, dk = dz ? (RM ? Math.round(U.dachK) : eio(U.dachK)) : 0;
+    // Im Netz: das Ganze, ein Dach nah oder ein Gegenstand mit seinen Zusammenhängen (U.dachK blendet weich hinüber)
+    const d = U.als && U.als.ziel ? U.als.ziel : U.dach != null && N.bezirkZiel ? N.bezirkZiel(U.dach) : null;
+    // Von einem Blick zum nächsten (Mond ⇄ Planet, Dach ⇄ Gegenstand) gleitet das Ziel, statt zu springen
+    if(d){ const g = U.dachGlatt, k = RM || !g || U.dachK < 0.05 ? 1 : 0.075;
+      U.dachGlatt = g && k < 1 ? {mitte: [mix(g.mitte[0], d.mitte[0], k), mix(g.mitte[1], d.mitte[1], k), mix(g.mitte[2], d.mitte[2], k)], R: Math.exp(mix(Math.log(g.R), Math.log(d.R), k))} : {mitte: [...d.mitte], R: d.R};
+      U.dachZiel = U.dachGlatt; }
+    const dz = U.dachZiel, dk = dz ? (RM ? Math.round(U.dachK) : eio(U.dachK)) : 0;
     const nMitte = dz ? [mix(N.mitte[0], dz.mitte[0], dk), mix(N.mitte[1], dz.mitte[1], dk), mix(N.mitte[2], dz.mitte[2], dk)] : N.mitte;
     // Die Zentrale bleibt in der Bildmitte; der Maßstab misst, was alle Bezirke wirklich brauchen. Am Handy steht die lange Achse hochkant
     const yawN = 0.35 + (portrait && hochkant(N, asp) ? Math.PI / 2 : 0) + (RM ? 0 : 0.012) * U.netZeit;

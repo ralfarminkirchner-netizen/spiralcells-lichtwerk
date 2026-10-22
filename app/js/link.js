@@ -1,6 +1,7 @@
 /* =====================================================================
    LINK — ein lesbarer Weg in eine Zelle und wieder hinaus (Etappe 5).
    /#mond=zentrale-material-bekommt-form&von=sternwerft
+   /#mond=…&als=mond   der Gegenstand in allen Zusammenhängen; &als=planet: das Werk mit seiner Entstehung
    Der kurze Name gehört immer dem ältesten Mond dieses Titels; ein späterer
    bekommt seinen Eingangstag (…-19-okt), am selben Tag dazu die Uhrzeit.
    So bleiben alte Links heil. Keine Kennung in der Adresszeile.
@@ -45,9 +46,11 @@ export function lies(hash){
   const q = new URLSearchParams(String(hash || '').replace(/^#/, ''));
   const mond = q.get('mond'), von = q.get('von'), zahl = k => { const x = q.get(k); return x && /^\d{1,5}$/.test(x) ? Number(x) : null; };
   return {mond: mond && /^[a-z0-9-]{1,90}$/.test(mond) ? mond : null, von: von && Object.prototype.hasOwnProperty.call(VON, von) ? von : null,
-    fassung: zahl('fassung'), stelle: zahl('stelle'), lesen: q.get('lesen') === '1', vergleich: zahl('vergleich'), frage: q.get('frage') === '1'};
+    fassung: zahl('fassung'), stelle: zahl('stelle'), lesen: q.get('lesen') === '1', vergleich: zahl('vergleich'), frage: q.get('frage') === '1',
+    als: q.get('als') === 'mond' || q.get('als') === 'planet' ? q.get('als') : null};
 }
 /* Lesbar bleibt auch die genaue Stelle: die wievielte Fassung im Mond, die wievielte Passage. Nie eine Kennung. */
 export const bau = (name, von, genau) => '#mond=' + name + (von && VON[von] ? '&von=' + von : '')
   + (genau && genau.frage ? '&frage=1' : genau && genau.fassung ? '&fassung=' + genau.fassung : '') + (genau && genau.lesen ? '&lesen=1' : '')
-  + (genau && genau.vergleich ? '&vergleich=' + genau.vergleich : '') + (genau && genau.stelle != null && genau.lesen ? '&stelle=' + (genau.stelle + 1) : '');
+  + (genau && genau.vergleich ? '&vergleich=' + genau.vergleich : '') + (genau && genau.stelle != null && genau.lesen ? '&stelle=' + (genau.stelle + 1) : '')
+  + (genau && (genau.als === 'mond' || genau.als === 'planet') ? '&als=' + genau.als : '');

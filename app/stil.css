@@ -428,3 +428,26 @@ button{font:inherit;color:inherit}
   .stoff-kopf{grid-template-columns:minmax(0,1fr) auto}
   .stoff-zurueck{max-width:100%;min-width:0}
 }
+
+/* Alsformen: leise Wege an der Marke, Schilder an Erscheinungen und Spuren, die Lesefläche einer Teilnahme */
+.marke-tun{display:flex;flex-wrap:wrap;gap:0 16px;margin-top:4px}
+.marke-knopf{background:none;border:0;padding:8px 0;min-height:36px;color:var(--ink-soft);font-size:11px;letter-spacing:.2em;cursor:pointer;text-align:left;transition:color .3s ease}
+.marke-knopf::after{content:" →";letter-spacing:0}
+.marke-knopf:hover,.marke-knopf:focus-visible{color:var(--whitegold)}
+.marke-knopf:focus-visible{outline:1px solid var(--ink-soft);outline-offset:2px;border-radius:4px}
+#alsnamen{position:fixed;inset:0;pointer-events:none}
+#alsnamen .als-schild{position:absolute;left:0;top:0;display:block;white-space:nowrap;will-change:transform;transition:opacity .6s ease;opacity:0;
+  text-shadow:0 0 14px rgba(4,3,10,.98),0 0 3px rgba(4,3,10,.9)}
+#alsnamen b{display:block;font-weight:400;font-size:11px;letter-spacing:.2em;color:rgba(230,236,255,.92)}
+#alsnamen small{display:block;margin-top:2px;font-size:10px;letter-spacing:.14em;color:var(--ink-soft)}
+#alsnamen small:empty{display:none}
+#alsnamen .werk b{letter-spacing:.08em;color:var(--ink)}
+#alsnamen .spur b{color:var(--ink)}
+.im-stoff #alsnamen{opacity:0!important}
+.formend #alsnamen{opacity:0!important}
+.lese-text .leise{color:var(--ink-soft);font-family:var(--f-line);font-size:13px;letter-spacing:.03em;line-height:1.55}
+a.halten{text-decoration:none}
+@media (max-width:760px){
+  .marke-knopf{min-height:40px}
+  #alsnamen b{font-size:10px;letter-spacing:.14em}
+}

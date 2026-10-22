@@ -15,6 +15,8 @@ import * as B from './bedienung.js';
 import * as schreib from './schreiben.js';
 import * as ankunft from './ankunft.js';
 import * as link from './link.js';
+import {baueAlsformen, fokusZiel} from './verschraenkung.js';
+import {mondBlickSatz, planetBlickSatz} from './alsformen.js';
 
 const canvas = document.getElementById('gl');
 const MQ = matchMedia('(prefers-reduced-motion: reduce)');
@@ -25,6 +27,29 @@ addEventListener('resize', () => M.resize());
 const angEl = document.getElementById('angle'), tageEl = document.getElementById('tage'), ortEl = document.getElementById('zurueck'), namenEl = document.getElementById('namen');
 for(let i = 0; i < 5; i++){ const s = document.createElement('span'); s.textContent = STIMMEN[i].name; s.style.color = STIMMEN[i].hex; s.style.opacity = '0'; namenEl.append(s); }
 const tuerEl = document.getElementById('tuernamen'), dachEl = document.getElementById('dachnamen'), werkEl = document.getElementById('werknamen'), markeEl = document.getElementById('marke');
+const alsEl = document.getElementById('alsnamen');
+/* Alsformen: leise Schilder an den Erscheinungen (Rolle), an den Spuren (Art, Zeit) und an den beteiligten Werken.
+   Sie nehmen nur freien Platz; was sich überdeckt, schweigt. */
+const alsSpans = new Map();
+function alsNamen(belegt){
+  if(!alsEl) return; const zeig = W.N && U.netK > 0.6 && !W.ruht, liste = zeig ? U.alsSchilder.slice() : [];
+  const markiert = U.sel && U.sel.art === 'mond' && !markeEl.hidden ? U.sel.i : -1;   // was die Marke schon nennt, bekommt kein zweites Schild
+  if(zeig && U.als && U.als.set) for(const i of U.als.set){ const p = U.monde[i]; if(!p || i === markiert) continue;
+    liste.push({art: 'werk', i, p, titel: kurz(W.B.monde[i].titel, 34), unter: i === U.als.gi ? (U.als.fokus === 'planet' ? 'als Planet' : 'der Gegenstand · einmal gespeichert') : '', prio: i === U.als.gi ? 0.2 : 0.5, unterWerk: true}); }
+  liste.sort((a, b) => a.prio - b.prio);
+  const da = new Set();
+  for(const s of liste){ const k = s.art + ':' + s.i; if(da.has(k)) continue; da.add(k); let el = alsSpans.get(k);
+    if(!el){ el = document.createElement('span'); el.className = 'als-schild ' + s.art; el.innerHTML = '<b></b><small></small>'; alsEl.append(el); alsSpans.set(k, el); }
+    if(el.firstChild.textContent !== s.titel) el.firstChild.textContent = s.titel; if(el.lastChild.textContent !== s.unter) el.lastChild.textContent = s.unter;
+    const p = s.p; if(!p || p[2] <= 0){ el.style.opacity = '0'; continue; } const w = el.offsetWidth || 80, h = s.unter ? 28 : 15;
+    const lagen = s.unterWerk ? [[0, 18], [0, -h - 18], [1, -h / 2], [-1, -h / 2]] : [[1, -h / 2], [-1, -h / 2], [0, 14], [0, -h - 14]];
+    let gesetzt = false;
+    for(const [dx, dy] of lagen){ const x = clamp(dx === 0 ? p[0] - w / 2 : dx > 0 ? p[0] + 16 : p[0] - w - 16, 8, CAM.cssW - w - 8), y = p[1] + dy, r = {x, y, w, h};
+      if(y < 56 || y > CAM.cssH - 70 || belegt.some(q => r.x < q.x + q.w + 6 && q.x < r.x + r.w + 6 && r.y < q.y + q.h + 2 && q.y < r.y + r.h + 2)) continue;
+      belegt.push(r); el.style.transform = `translate(${Math.round(x)}px,${Math.round(y)}px)`; el.style.opacity = String(clamp((U.netK - 0.6) * 2.5, 0, 1) * (s.prio < 1 ? 0.92 : 0.78)); gesetzt = true; break; }
+    if(!gesetzt) el.style.opacity = '0'; }
+  for(const [k, el] of alsSpans) if(!da.has(k)){ el.remove(); alsSpans.delete(k); }
+}
 /* Im Bezirk: die Namen seiner Werke unter ihren Zellen, die Namen der Bereiche innen am oberen Rand ihres Rings.
    Im Dach steht der Werkname ohne den Namen des Dachs („FASKA Lernpfade“ heißt dort „Lernpfade“). Was sich überdeckt, weicht aus, sonst schweigt es */
 let werkBezirk = undefined;
@@ -109,7 +134,7 @@ function oeffneMond(i, opt = {}){
   // Flug: von Zelle zu Zelle zieht die Kamera kurz auf, das Netz zeigt den Weg; reduzierte Bewegung schneidet
   if(W.Z && W.Z.m !== m && W.Z.m.id && !W.RM && U.netK < 0.3 && opt.flug !== false) U.flug = {von: W.Z.center(), S: W.Z.S.Sc, t0: performance.now(), dauer: 1500};
   else U.flug = null;
-  W.aktiv = i;
+  W.aktiv = i; U.als = null;
   const Z = new Zelle(m, {origin: W.N.pos[i], RM: W.RM, au: klang, ohneAufzug: !!opt.ohneAufzug});
   W.Z = Z; clearSparks(); zuletztMarkieren(Z);
   U.netDir = -1; U.netT = 0; U.kelchT = 0; U.zoom = 1; U.yawOff = 0; U.elevOff = 0; U.solo = -1; U.waehlen = null; U.bind = null;
@@ -125,15 +150,39 @@ function oeffneMond(i, opt = {}){
   ortAktualisieren();
 }
 /* In ein Dach hinein und wieder hinaus: die Kamera fährt, die anderen Dächer treten zurück */
-function insDach(j){ if(!W.N || !W.N.bezirkZiel(j)) return; U.dach = j; B.waehle(null);
+function insDach(j){ if(!W.N || !W.N.bezirkZiel(j)) return; U.dach = j; U.als = null; B.waehle(null);
   const n = W.N.werkeIn(j).length, wort = `${n} ${n === 1 ? 'Werk' : 'Werke'}`;
   const satz = j === 'mitte' ? `${W.N.baum.mitte.name}: ${wort} in der Mitte.` : j === 'ohne' ? `Ohne Dach: ${wort}, noch keinem Dach zugeordnet.`
     : `${W.N.daecher[j].name}: ${wort} in ${W.N.daecher[j].bereiche.length} ${W.N.daecher[j].bereiche.length === 1 ? 'Bereich' : 'Bereichen'}.`;
   B.zeile(satz); B.ansage(satz + ' Pfeile wählen ein Werk, Escape führt hinaus.'); }
+/* Alsformen: ein Gegenstand mit allen Zusammenhängen, in denen er teilnimmt (als Mond),
+   oder ein Werk mit seiner Entstehung und dem, was um es kreist (als Planet).
+   Derselbe Gegenstand, dasselbe Licht: es wechseln nur Blick und Rolle, nie Identität oder Fassung. */
+function alsFokus(i, fokus = 'mond'){
+  if(!W.N || !W.B || !W.B.monde[i] || W.ruht) return;
+  if(U.netT < 0.5) zumNetz();
+  const A = W.N.als, m = W.B.monde[i], warPlanet = U.als && U.als.gi === i && U.als.fokus !== fokus;
+  U.dach = null; U.als = {id: m.id, gi: i, fokus, set: fokus === 'planet' ? A.umPlanet(i) : A.beteiligte(i), ziel: fokusZiel(W.N, A, i, fokus)};
+  B.waehle({art: 'mond', i, mond: m}, 1);
+  const satz = fokus === 'planet' ? planetBlickSatz(A, i, m.titel) : mondBlickSatz(A, i, m.titel);
+  B.zeile(satz); B.ansage(satz + (warPlanet ? '' : ' P wechselt zwischen Mond und Planet, Pfeile wählen, Escape führt hinaus.'));
+  if(W.namen && W.namen[i] && !WERKSTATT) try{ history.replaceState(null, '', link.bau(W.namen[i], W.von, {als: fokus})); }catch(_){}
+}
+function ausAls(){ if(!U.als) return false; const i = U.als.gi; U.als = null;
+  if(W.B.monde[i]) B.waehle({art: 'mond', i, mond: W.B.monde[i]}, 1); B.zeile(B.netzSatz(W.B));
+  if(W.namen && W.aktiv >= 0 && !WERKSTATT) try{ history.replaceState(null, '', link.bau(W.namen[W.aktiv], W.von)); }catch(_){}
+  return true; }
+/* Aus den Alsformen in eine Zelle (auf Wunsch an eine gebundene Fassung); der Rückweg führt in denselben Blick zurück */
+function alsOeffne(i, variantId){ if(!W.B || !W.B.monde[i]) return;
+  const dahin = {netz: true, dach: U.dach, als: U.als ? {id: U.als.id, fokus: U.als.fokus} : null};
+  B.schliesseLese(true); oeffneMond(i, variantId ? {waehle: variantId, stufe: 2} : {}); U.weg.push(dahin); ortAktualisieren(); }
+/* Nach neuem Bestand: der Blick bleibt beim selben Gegenstand, auch wenn sich die Reihenfolge verschoben hat */
+function alsAuffrischen(){ if(!U.als || !W.N) return; const i = mondNachId(U.als.id); if(i < 0){ U.als = null; return; }
+  U.als = {...U.als, gi: i, set: U.als.fokus === 'planet' ? W.N.als.umPlanet(i) : W.N.als.beteiligte(i), ziel: fokusZiel(W.N, W.N.als, i, U.als.fokus)}; }
 function ausDach(){ if(U.dach == null) return false; const j = U.dach; U.dach = null; B.waehle(j === 'mitte' ? {art: 'mitte'} : j === 'ohne' ? {art: 'ohne'} : {art: 'dach', i: j}, 1); B.zeile(B.netzSatz(W.B)); return true; }
 function zumNetz(){
   if(!W.B || W.ruht) return;
-  clearTimeout(U.lesenUhr); if(B.stoff.offen()) B.stoff.schliesse();
+  clearTimeout(U.lesenUhr); if(B.stoff.offen()) B.stoff.schliesse(); U.als = null;
   B.waehle(null); U.netDir = 1; U.netT = 1; U.kelchT = 0; U.zoom = 1; U.elevOff = 0; U.yawOff = 0; U.waehlen = null;
   U.dach = W.aktiv >= 0 && W.N && W.N.baum.daecher.length ? W.N.bezirk(W.aktiv) : null;   // zurück in den Bezirk, aus dem du kamst
   if(W.aktiv >= 0) B.waehle({art: 'mond', i: W.aktiv, mond: W.B.monde[W.aktiv]}, 1);   // Rückweg: der Mond, aus dem du kamst, bleibt markiert
@@ -142,8 +191,9 @@ function zumNetz(){
 function zurZelle(){ if(!W.Z || W.ruht) return; U.netDir = -1; U.netT = 0; B.waehle(null); B.zeile(B.mondSatz(W.Z.m)); ortAktualisieren(); }
 /* Rückweg: zuerst den gemerkten Weg zurück (auch innerhalb des Monds), sonst ins Netz */
 function zurueck(){
-  if(U.netT > 0.5){ if(ausDach()) return; if(W.Z && W.aktiv >= 0) zurZelle(); return; }
+  if(U.netT > 0.5){ if(ausAls()) return; if(ausDach()) return; if(W.Z && W.aktiv >= 0) zurZelle(); return; }
   if(U.weg.length && U.weg[U.weg.length - 1].netz){ const w = U.weg.pop(); zumNetz(); U.dach = w.dach;   // zurück an den Faden, dem du gefolgt bist
+    if(w.als){ const i = mondNachId(w.als.id); if(i >= 0){ alsFokus(i, w.als.fokus); return; } }   // oder in den Blick auf den Gegenstand
     if(W.N && W.N.faeden[w.faden]){ B.waehle({art: 'faden', i: w.faden}, 1); const [t, s] = B.markeFuer(U.sel); B.ansage('Zurück im Netz. ' + t + '. ' + s); } return; }
   if(U.weg.length){ const w = U.weg.pop(); const i = mondNachId(w.mond);
     if(i >= 0){ if(i === W.aktiv && W.Z){ const Z = W.Z;
@@ -158,7 +208,7 @@ function ortAktualisieren(){
   const inZelle = U.netT < 0.5 && !!W.Z && !W.ruht;
   if(ortVerborgen !== !inZelle){ ortVerborgen = !inZelle; ortEl.hidden = ortVerborgen; }
   const w = U.weg[U.weg.length - 1]; let t = W.von && link.VON[W.von] ? link.VON[W.von].satz : 'Netz der Werke';
-  if(w && w.netz) t = 'zurück zum Faden im Netz';
+  if(w && w.netz) t = w.als ? 'zurück zu den Zusammenhängen' : w.faden != null ? 'zurück zum Faden im Netz' : 'zurück ins Netz';
   else if(w && W.B){ const wm = W.B.mondVon.get(w.mond);
     if(wm && W.Z && wm.id !== W.Z.m.id) t = `zurück zu „${kurz(wm.titel, 42)}“`;
     else if(wm){ const f = w.same ? W.B.fassungen.get(w.same) : null; t = `zurück zu „${kurz(f ? f.label : wm.keimSatz, 42)}“`; } }
@@ -172,7 +222,7 @@ function ortZurueck(){
 }
 /* Der Leseraum: hinein aus der Lesefläche, hinaus zurück zur Lesefläche oder den gemerkten Weg zurück */
 function oeffneStoff(sel, opt = {}){ if(!sel || !W.Z) return; if(sel.art === 'same') B.waehle(sel, 2); B.stoff.oeffne({mond: sel.mond, i: sel.i, keim: sel.art === 'keim', ...opt}); merkeOrt(); }
-function rueckSatz(){ const w = U.weg[U.weg.length - 1]; if(!w || !w.ausStoff || !W.B) return 'zur Zelle'; if(w.netz) return 'zurück zum Faden im Netz';
+function rueckSatz(){ const w = U.weg[U.weg.length - 1]; if(!w || !w.ausStoff || !W.B) return 'zur Zelle'; if(w.netz) return w.als ? 'zurück zu den Zusammenhängen' : 'zurück zum Faden im Netz';
   const f = w.stoff && W.B.fassungen.get(w.stoff.variantId); return f ? `zurück zu „${kurz(f.label, 40)}“` : 'zurück'; }
 function zurueckAusStoff(){ const w = U.weg[U.weg.length - 1]; clearTimeout(U.lesenUhr); B.stoff.schliesse();
   if(w && w.ausStoff){ zurueck(); return; }   // über einen Faden gekommen: dorthin zurück, mit Lesestelle
@@ -279,7 +329,8 @@ async function erneuernJetzt(von, opt){
   const alt = W.Z, altId = alt && alt.m.id, altSel = U.sel, altSelId = altSel && altSel.art === 'same' ? alt.m.samen[altSel.i]?.id : null, stufe = U.stufe;
   const altB = W.B; W.B = bestand(daten); W.stand = stand;
   const tueren = W.N ? W.N.tueren : []; W.N = netzBauen(W.B); W.N.tueren = tueren; W.N.neu = W.neuMonde || null; W.namen = link.namen(W.B.monde); dachNamen();
-  zuletztMerken();
+  zuletztMerken(); alsAuffrischen();
+  if(U.sel && (U.sel.art === 'echo' || U.sel.art === 'spur')) B.waehle(null);   // die Zählung der Erscheinungen kann sich verschoben haben
   if(!alt || !altId){ return; }
   const i = mondNachId(altId); if(i < 0) return;
   W.aktiv = i; const m = W.B.monde[i];
@@ -415,7 +466,8 @@ function advance(rdt){
   U.netK += (U.netT - U.netK) * (1 - Math.exp(-rdt / (U.fahrt ? 0.28 : W.RM ? 0.12 : 1.5)));
   if(U.fahrt && (performance.now() > U.fahrt.bis || Math.abs(U.netT - U.netK) < 0.003)){ U.netK = U.netT; U.fahrt = null; }
   U.kelchK += (U.kelchT - U.kelchK) * (1 - Math.exp(-rdt / (W.RM ? 0.12 : 1.1)));
-  U.dachK += ((U.dach != null ? 1 : 0) - U.dachK) * (1 - Math.exp(-rdt / (W.RM ? 0.1 : 0.7)));
+  U.dachK += ((U.dach != null || U.als ? 1 : 0) - U.dachK) * (1 - Math.exp(-rdt / (W.RM ? 0.1 : 0.7)));
+  U.alsK += ((U.als ? 1 : 0) - U.alsK) * (1 - Math.exp(-rdt / (W.RM ? 0.1 : 0.7)));
   U.leseK += ((U.lese ? 1 : 0) - U.leseK) * k;
   U.kelchZeit += U.kelchK > 0.5 ? rdt : 0; U.netZeit += rdt;
   if(W.Z) W.Z.RM = W.RM; U.RM = W.RM;
@@ -437,6 +489,7 @@ function draw(rdt){
   const visZ = W.Z ? (1 - sstep(0.25, 0.7, U.netK)) * (1 - 0.7 * fk) : 0, visN = W.N && !W.ruht ? Math.max(sstep(0.05, 0.5, U.netK), 0.75 * fk) : 0;
   if(W.Z) baueZelle(W.Z, U, W.wall, rdt, visZ);
   if(visN > 0) baueNetz(W.N, U, W.wall, visN, W.aktiv, visZ);
+  if(visN > 0 && W.N.als) baueAlsformen(W.N, W.N.als, U, W.wall, visN, W.RM); else { U.echos.fill(null); U.spuren.fill(null); U.alsSchilder.length = 0; }
   // Verbinden: ein Faden folgt dem Finger
   if(U.bind && W.Z){ const A = [0, 0, 0]; W.Z.seedPos(U.bind.von, A); const Bp = pointerWorld(U.bind.x, U.bind.y, CAM.target);
     if(U.bind.ziel >= 0) W.Z.seedPos(U.bind.ziel, Bp);
@@ -491,16 +544,17 @@ function ui(cam){
     const frei = r => !belegt.some(q => r.x < q.x + q.w + 6 && q.x < r.x + r.w + 6 && r.y < q.y + q.h + 2 && q.y < r.y + r.h + 2);
     const bezirkVon = j => j === 0 ? 'mitte' : j <= nd ? j - 1 : 'ohne';
     const setze = j => { const el = kids[j], p = j === 0 ? U.mitteSchirm : j <= nd ? U.daecherSchirm[j - 1] : U.ohneSchirm;
-      const leise = U.dach != null && bezirkVon(j) !== U.dach ? 0.25 : 1;
+      const leise = U.als || (U.dach != null && bezirkVon(j) !== U.dach) ? 0.25 : 1;
       if(!zeig || !p || p[2] <= 0){ if(el.style.opacity !== '0') el.style.opacity = '0'; return; }
       const bw = el.offsetWidth || 80, px = clamp(p[0], 12 + bw / 2, CAM.cssW - 12 - bw / 2);   // Namen bleiben im Bild
       const unter = j === 0 && U.dach !== 'mitte', y0 = unter ? p[1] + 10 : p[1] - 14 - 16;   // der Name der Mitte steht im Überblick unter ihrem Rand, nicht auf ihrem Inhalt
       const rr = {x: px - bw / 2, y: y0, w: bw, h: 16}; if(!frei(rr) || y0 < 60 || y0 > CAM.cssH - 64){ if(el.style.opacity !== '0') el.style.opacity = '0'; return; } belegt.push(rr);   // nie unter dem Titel oder der Zeile
       el.style.transform = unter ? `translate(${Math.round(px)}px,${Math.round(p[1] + 10)}px) translate(-50%,0)` : `translate(${Math.round(px)}px,${Math.round(p[1] - 14)}px) translate(-50%,-100%)`; el.style.opacity = String((clamp((U.netK - 0.55) * 2.5, 0, 0.85) * leise).toFixed(2)); };
-    if(U.dach == null){ for(let j = 0; j < kids.length; j++){ if(j === 1) markeRaum(); setze(j); } werkNamen(belegt); }
-    else { const hier = [...kids].map((_, j) => j).filter(j => bezirkVon(j) === U.dach); hier.forEach(setze); markeRaum(); werkNamen(belegt);
+    if(U.als){ markeRaum(); alsNamen(belegt); for(let j = 0; j < kids.length; j++) setze(j); }   // im Blick auf einen Gegenstand zuerst seine Schilder
+    else if(U.dach == null){ for(let j = 0; j < kids.length; j++){ if(j === 1) markeRaum(); setze(j); } werkNamen(belegt); alsNamen(belegt); }
+    else { const hier = [...kids].map((_, j) => j).filter(j => bezirkVon(j) === U.dach); hier.forEach(setze); markeRaum(); werkNamen(belegt); alsNamen(belegt);
       for(let j = 0; j < kids.length; j++) if(!hier.includes(j)) setze(j); } }
-  else werkNamen(belegt);
+  else { werkNamen(belegt); alsNamen(belegt); }
   // Türen tragen ihren Namen, wenn man auf sie zeigt oder in der Mitte steht; auch sie nehmen nur freien Platz
   const zeigTueren = W.N && U.netK > 0.6;
   for(let j = 0; j < tuerEl.children.length; j++){ const el = tuerEl.children[j], p = U.tueren[j], an = U.dach === 'mitte' || (U.hover && U.hover.art === 'tuer' && U.hover.i === j) || (U.sel && U.sel.art === 'tuer' && U.sel.i === j);
@@ -525,7 +579,7 @@ function frame(now){
 }
 
 /* ------------------------------------------------------------- Start */
-B.installiere({oeffneMond, zumNetz, zurZelle, zurueck, ortZurueck, folge, einwurf, status, kanteFragen, formBehalten, insDach, ausDach, oeffneStoff, zurueckAusStoff, folgeStoff, folgeFaden, merkeOrt, rueckSatz});
+B.installiere({oeffneMond, zumNetz, zurZelle, zurueck, ortZurueck, folge, einwurf, status, kanteFragen, formBehalten, insDach, ausDach, oeffneStoff, zurueckAusStoff, folgeStoff, folgeFaden, merkeOrt, rueckSatz, alsFokus, ausAls, alsOeffne});
 /* Ein lesbarer Link: im Netz beginnen und in die Zelle fahren (höchstens 1,5 s; Berührung oder Esc schneidet ab) */
 function linkFahrt(ziel){
   W.von = ziel.von || W.von || null;
@@ -533,10 +587,12 @@ function linkFahrt(ziel){
   U.netK = 1; U.netT = 1;
   if(i < 0){ zumNetz(); try{ history.replaceState(null, '', W.von ? '#von=' + W.von : location.pathname); }catch(e){} return 'netz'; }   // unbekannter Name: still ins Netz
   oeffneMond(i, {ohneAufzug: true});
+  if(ziel.als){ alsFokus(i, ziel.als); U.netK = 1; return 'als'; }   // ein Link in die Alsformen: gleich im Netz, beim Gegenstand
   if(W.RM) U.netK = 0; else U.fahrt = {bis: performance.now() + 1500};
   return 'zelle';
 }
 addEventListener('hashchange', () => { const ziel = link.lies(location.hash); if(!W.B || W.ruht || !ziel.mond) return;
+  if(ziel.als){ const i = W.namen ? W.namen.indexOf(ziel.mond) : -1; if(i >= 0 && !(U.als && U.als.gi === i && U.als.fokus === ziel.als)){ if(W.aktiv !== i) oeffneMond(i, {ohneAufzug: true, flug: false}); alsFokus(i, ziel.als); } return; }
   if(!W.namen || W.namen[W.aktiv] !== ziel.mond){ if(linkFahrt(ziel) === 'zelle') ortWiederholen(ziel); }
   else if(ziel.fassung || ziel.frage){ if(B.stoff.offen()) B.stoff.schliesse(); ortWiederholen(ziel); } });
 /* Die letzten Einträge, immer: ein leiser Ring im Netz und an ihren Körnern in der Zelle, damit das Bild nie leer ist */
@@ -576,8 +632,8 @@ function start(){
       let best = -1, bt = -1; W.B.monde.forEach((m, j) => { if(m.stimmen.length && m.zeitspanne[1] > bt){ bt = m.zeitspanne[1]; best = j; } }); i = best >= 0 ? best : 0; }
     U.netK = 0; oeffneMond(i, {ohneAufzug: WERKSTATT || neu.zahl > 0});
   }
-  if(!WERKSTATT && ort !== 'netz') ortWiederholen(ziel.mond ? ziel : null);
-  if(!WERKSTATT){ const satz = neu.zahl ? ankunft.ankunftSatz(neu) : seit ? ankunft.ankunftSatz(neu) + ' ' + zuletztSatz() : zuletztSatz();
+  if(!WERKSTATT && ort !== 'netz' && ort !== 'als') ortWiederholen(ziel.mond ? ziel : null);
+  if(!WERKSTATT && ort !== 'als'){ const satz = neu.zahl ? ankunft.ankunftSatz(neu) : seit ? ankunft.ankunftSatz(neu) + ' ' + zuletztSatz() : zuletztSatz();   // ein Link in die Alsformen behält seinen eigenen Satz
     if(satz.trim()){ B.zeile(satz.trim()); W.titelBis = W.wall + 7; } }
   // Der Merker wird erst gesetzt, wenn die Ankunft zu Ende gezeigt ist; ohne Merker war nichts neu
   const hier = ort !== 'netz' && W.Z && neu.monde.get(W.Z.m.id), dauer = neu.zahl && hier ? einflug(W.Z, hier) : 0;
@@ -608,8 +664,10 @@ function szene(){
 if(WERKSTATT) window.__spiral = {U, W, B, schreib,
   oeffne(titel, opt = {}){ const i = W.B.monde.findIndex(m => m.titel.startsWith(titel)); if(i >= 0) oeffneMond(i, opt); return i; },
   netz: zumNetz, zelle: zurZelle, zurueck,
+  als(titel, fokus = 'mond'){ const i = W.B.monde.findIndex(m => m.titel.startsWith(titel)); if(i >= 0) alsFokus(i, fokus); return i; },
+  waehleAls(art, i, stufe){ B.waehle({art, i}, stufe || 1); },
   kelch(on){ U.kelchT = on ? 1 : 0; }, sofort(){ W.Z && W.Z.sofort(); },
-  laufe(sek){ const n = Math.round(sek * 60); for(let j = 0; j < n; j++) advance(1 / 60); draw(1 / 60); },
+  laufe(sek){ const n = Math.round(sek * 60); for(let j = 0; j < n; j++){ advance(1 / 60); if(U.als) draw(1 / 60); } draw(1 / 60); },   // im Blick gleitet die Kamera Bild für Bild
   waehle(i, stufe){ const Z = W.Z; if(i === 'keim') B.waehle({art: 'keim', mond: Z.m, zelle: Z}, stufe || 1); else if(i == null) B.waehle(null); else B.waehle({art: 'same', i, mond: Z.m, zelle: Z}, stufe || 1); },
   waehleMond(titel){ const i = W.B.monde.findIndex(m => m.titel.startsWith(titel)); B.waehle({art: 'mond', i, mond: W.B.monde[i]}, 1); return i; },
   async bild(name){ draw(1 / 60); const daten = canvas.toDataURL('image/jpeg', 0.9);

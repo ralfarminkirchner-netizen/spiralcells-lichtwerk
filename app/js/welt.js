@@ -8,6 +8,7 @@ export const U = {
   kelchT: 0, kelchK: 0, netT: 0, netK: 0, netDir: 1, kelchZeit: 0, netZeit: 0,
   sel: null, stufe: 0, hover: null, lese: false, leseK: 0, reading: false, linkedSeeds: null,
   bind: null, siegel: null, weg: [], hinted: false, hintUntil: -1, pressW: null, pressSeed: -1, waehlen: null,
+  als: null, alsK: 0, echos: [], spuren: [], alsSchilder: [],   // Alsformen: der Blick auf einen Gegenstand (als Mond) oder ein Werk (als Planet)
   pointerWorldAt(tgt){ return pointerWorld((this.px + 0.5) * innerWidth, (this.py + 0.5) * innerHeight, tgt); },
 };
 export const W = {B: null, N: null, Z: null, aktiv: -1, RM: false, wall: 0, ruht: false, stand: null, umgebung: []};
