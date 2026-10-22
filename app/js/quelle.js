@@ -1,47 +1,55 @@
-/* =====================================================================
-   QUELLE — der Weg zur gebundenen Originalstelle in der Lebensspirale (LiFESPiRAL).
-   Dieselbe Prüfung wie in SPiRALCELLS (server/static/source-links.js): die Tür ist an die
-   aufgezeichnete Quelle, ihre Revision, die genaue Passage und die tatsächliche Fassung
-   gebunden. Es wird keine Ersatzquelle und kein bloßer Tageseinstieg gebaut; passt etwas
-   nicht, gibt es keinen Link, nur den ehrlichen Satz, dass die Bindung gespeichert ist.
-   Rechnet nur. Läuft im Browser und in Node.
-   ===================================================================== */
-const LEBEN = new Set(['lebensspirale', 'lifespiral', 'lebenserschliessung']);
-const identitaet = ref => ref && [ref.system, ref.kind, ref.source_id].every(v => typeof v === 'string' && v)
-  ? JSON.stringify([ref.system, ref.kind, ref.source_id, ref.content_sha256 || null]) : null;
+/* Lesender Anschluss für Claudes bestehende Alsformen-Quellentür.
+   Die öffentlichen Signaturen bleiben erhalten. Nur eine vorhandene Fassung
+   derselben Quelle darf den bereits geprüften Reader-Rückweg verwenden. */
+import {ursprung} from './zusammenhang.js';
 
-/* Die Fassung, an die eine Quelle gebunden ist: die im Link genannte, wenn sie dazugehört, sonst die erste bekannte */
+const LEBEN = new Set(['lebensspirale', 'lifespiral', 'lebenserschliessung']);
+const system = ref => typeof ref?.system === 'string' ? ref.system.toLowerCase() : '';
+const hash = value => typeof value === 'string' && /^[0-9a-f]{64}$/.test(value);
+
+function selbeQuelle(a, b){
+  if(!a || !b || !system(a) || system(a) !== system(b)) return false;
+  if(a.kind !== b.kind || a.source_id !== b.source_id || a.content_sha256 !== b.content_sha256) return false;
+  if(system(a) === 'vault') return typeof a.locator === 'string' && a.locator.startsWith('/')
+    && a.locator === b.locator && hash(a.content_sha256);
+  return LEBEN.has(system(a)) && typeof a.kind === 'string' && !!a.kind.trim()
+    && typeof a.source_id === 'string' && !!a.source_id;
+}
+
+function gleicheAdresse(a, b){
+  if(!a || !b) return false;
+  const links = [new URL(a), new URL(b)];
+  for(const link of links) link.searchParams.sort();
+  return links[0].href === links[1].href;
+}
+
+/* Die explizit genannte oder genau eine passende, vorhandene Fassung.
+   Weder eine fremde Fassung noch die Reihenfolge ersetzt eine fehlende Bindung. */
 export function quellFassung(ref, ids, fassungen){
-  const bekannt = (ids || []).filter(id => fassungen.has(id)); let gebunden = null;
-  try{ gebunden = new URL(ref && ref.locator).searchParams.get('fassung'); }catch(_){}
-  return gebunden ? bekannt.find(id => id === gebunden) || null : bekannt[0] || null;
+  if(!Array.isArray(ids) || typeof fassungen?.get !== 'function') return null;
+  const passend = [...new Set(ids)].filter(id => quellAdresse(ref, id, fassungen.get(id)));
+  let gebunden = null;
+  try{
+    const namen = new URL(ref?.locator).searchParams.getAll('fassung');
+    if(namen.length > 1) return null;
+    gebunden = namen[0] || null;
+  }catch(_){ /* Vault-Verweise behalten ihren ursprünglichen Dateipfad. */ }
+  return gebunden ? passend.find(id => id === gebunden) || null : passend.length === 1 ? passend[0] : null;
 }
 
 export function quellAdresse(ref, fassungId, fassung){
   try{
-    const ziel = new URL(ref && ref.locator);
-    if(!['http:', 'https:'].includes(ziel.protocol) || ziel.username || ziel.password || ['9030', '9031'].includes(ziel.port)) return null;
-    const leben = LEBEN.has(String(ref.system).toLowerCase()) || ziel.port === '53450';
-    if(!leben) return ziel.href;
-    if(ziel.protocol !== 'http:' || !['127.0.0.1', 'localhost'].includes(ziel.hostname) || ziel.port !== '53450' || ziel.pathname !== '/') return null;
-    if(ziel.searchParams.getAll('quelle').length !== 1 || ziel.searchParams.getAll('stelle').length !== 1 || ziel.searchParams.getAll('fassung').length > 1) return null;
-    if(typeof fassungId !== 'string' || !/^[A-Za-z0-9_-]{1,200}$/.test(fassungId)) return null;
-    const vorher = ziel.searchParams.get('fassung');
-    if(vorher && vorher !== fassungId && !(fassung && fassung.id === fassungId && identitaet(ref) && identitaet(fassung.source_ref) === identitaet(ref))) return null;
-    const q = JSON.parse(ziel.searchParams.get('quelle')), st = JSON.parse(ziel.searchParams.get('stelle'));
-    if(!q || !['chronology', 'research'].includes(q.kind) || typeof q.key !== 'string' || !q.key || q.key.length > 4000 || q.key.includes('#') || q.offset !== 0) return null;
-    if(typeof q.source_revision_id !== 'string' || !/^[A-Za-z0-9_-]{1,200}$/.test(q.source_revision_id)) return null;
-    if(q.kind === 'research' && (!/^[0-9a-f]{64}$/.test(q.key) || !/^[0-9a-f]{64}$/.test(q.source_revision_id))) return null;
-    if(!st || !Number.isSafeInteger(st.start) || !Number.isSafeInteger(st.end) || st.start < 0 || st.end <= st.start || typeof st.quote !== 'string' || !st.quote || st.end - st.start !== st.quote.length) return null;
-    const vor = q.key + '@' + q.source_revision_id + '#';
-    if(typeof ref.source_id !== 'string' || !ref.source_id.startsWith(vor)) return null;
-    const span = ref.source_id.slice(vor.length).match(/^(?:o(\d+):)?(\d+)-(\d+)@([0-9a-f]{16})$/);
-    if(!span || Number(span[1] || 0) !== q.offset || Number(span[2]) !== st.start || Number(span[3]) !== st.end) return null;
-    ziel.searchParams.set('fassung', fassungId);
-    return ziel.href;
+    if(!fassung || fassung.id !== fassungId || !selbeQuelle(ref, fassung.source_ref)) return null;
+    const adresse = ursprung(fassung);
+    // Auch die vom Aufrufer verwendete Referenz muss dieselbe Revision und
+    // Passage binden. Nur der Fassungsparameter wird durch die echte Fassung ersetzt.
+    const angefragt = ursprung({...fassung, source_ref:ref});
+    return gleicheAdresse(adresse, angefragt) ? adresse : null;
   }catch(_){ return null; }
 }
-/* Woher der Link führt, in Worten (ohne Kennung) */
+
+/* Menschlich lesbare Herkunft; Pfade, Kennungen und Hashes bleiben in den Daten. */
 export function quellName(ref){
-  try{ const z = new URL(ref.locator); return z.port === '53450' || LEBEN.has(String(ref.system).toLowerCase()) ? 'in der Lebensspirale' : 'an der Quelle'; }catch(_){ return 'an der Quelle'; }
+  if(system(ref) === 'vault') return 'aus dem Vault';
+  return LEBEN.has(system(ref)) ? 'in der Lebensspirale' : 'an der Quelle';
 }

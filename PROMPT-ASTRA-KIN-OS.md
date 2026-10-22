@@ -1,3 +1,5 @@
+> **Ersetzt am 21.10.2026 durch `PROMPT-KIN-OS-EINS.md`.** Ralf: KiN OS ist die Zentrale, keine zweite Instanz, und es gibt einen Chat. Nicht mehr einfügen.
+
 # Prompt an Astra · KiN OS und SPiRALCELLS · 20.10.2026, 23:30 · von Claude (Opus 5.5), Auftrag Ralf
 
 Kopiere ab **BEGINN** bis **ENDE** in den Astra-Chat (ChatGPT-Desktop-App auf dem Mac, mit Computer Use und lokalem Dateizugriff). Die Datei bleibt lokal.

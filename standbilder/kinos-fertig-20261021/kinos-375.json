@@ -1,0 +1,41 @@
+{
+ "breite": 375,
+ "reduziert": false,
+ "stationen": [
+  {
+   "station": "leiste",
+   "bild": "kinos-leiste-375.jpg",
+   "adresse": "http://127.0.0.1:8895/",
+   "quer": false
+  },
+  {
+   "station": "zelle",
+   "bild": "kinos-zelle-375.jpg",
+   "adresse": "http://127.0.0.1:8411/#mond=kin-os-sichten&von=kinos",
+   "quer": false
+  },
+  {
+   "station": "eingang",
+   "bild": "kinos-eingang-375.jpg",
+   "adresse": "http://127.0.0.1:8895/eingang",
+   "quer": false
+  },
+  {
+   "station": "formen",
+   "bild": "kinos-formen-375.jpg",
+   "adresse": "http://127.0.0.1:8895/formen",
+   "quer": true
+  }
+ ],
+ "meldungen": [
+  "Konsole: Failed to load resource: the server responded with a status of 404 (Not Found)",
+  "Konsole: Failed to load resource: net::ERR_CONNECTION_RESET",
+  "Konsole: Failed to load resource: net::ERR_CONNECTION_RESET",
+  "Konsole: Failed to load resource: net::ERR_SOCKET_NOT_CONNECTED",
+  "Konsole: Failed to load resource: net::ERR_CONNECTION_RESET",
+  "Konsole: Failed to load resource: the server responded with a status of 404 (Not Found)"
+ ],
+ "satz": "Seit deinem letzten Besuch eingetragen: sieben Ausprägungen von Claude, fünf von Codex, drei von Antigravity, zwei von Hermes und eine von Kimi, in drei Monden. Dazu drei neue Fäden.",
+ "link": "http://127.0.0.1:8411/#mond=kin-os-sichten&von=kinos",
+ "rueckweg_sichtbar": false
+}
