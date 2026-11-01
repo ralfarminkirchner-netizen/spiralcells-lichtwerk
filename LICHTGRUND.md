@@ -25,3 +25,7 @@ Eigene Variante, abgezweigt von Alsformen (22.10.). Andere Zweige und Arbeitskop
 ## Schritt 4: Garten (Ralfs Idee, 01.11.)
 - Die Länge der Spirale zeigt, wie viel in einem Werk schon entstanden ist (Fassungen und Textmenge).
 - Im Netz schaltet Taste B oder der Pflanzenknopf zwischen Kosmos und Garten um. Dieselben Werke bleiben am selben Ort; die Spirale steigt als Pflanze auf, die Bezirke werden Beete, die gespeicherten Beziehungen laufen als Mycel unter dem Boden. Am Inhalt ändert sich nichts.
+
+## Schritt 5: Pflanzenform aus der Abstammung (Ralfs Wahl, 01.11.)
+- Kette: Ranke. Gabel: Seitentrieb in Richtung ihres Fächers. Einzelne Fassung: Keimling. Fassungen ohne belegte Herkunft und Übernahmereihen: Büschel, jede einzeln aus dem Boden.
+- Im Bestand vom 30.10. sind von den Werken mit Fassungen 72 einzeln, 14 lose, 8 kurz, 3 verzweigt und 1 Kette.

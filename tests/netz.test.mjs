@@ -39,5 +39,11 @@ test('Garten: dieselben Werke am selben Ort; wer mehr Arbeit trägt, hat die lä
   assert.ok(arbeit(m(1)) < arbeit(m(10)) && arbeit(m(10)) < arbeit(m(100)));
   const voll = B.monde.findIndex(x => x.samen.length > 20), klein = B.monde.findIndex((x, i) => x.samen.length === 1 && !N.baum.material.has(i));
   assert.ok(N.mini[voll].H > N.mini[klein].H);
-  for(let i = 0; i < N.N; i++){ assert.equal(N.mini[i].ptsH.length, N.mini[i].pts.length / 6); assert.equal(N.mini[i].stielH.length, N.mini[i].stiel.length / 6); }
+  for(let i = 0; i < N.N; i++) assert.equal(N.mini[i].ptsG.length / 3, N.mini[i].pts.length / 6);
+});
+test('Pflanze: die Form folgt der Abstammung; ohne belegte Herkunft kein Stängel von Fassung zu Fassung', async () => {
+  const {wuchs} = await import('../app/js/wuchs.js');
+  const verzweigt = B.monde.findIndex((m, i) => m.samen.length > 3 && !N.baum.material.has(i) && [...wuchs(m).kinder].some(k => k.length > 1 && k.every(x => wuchs(m).art[x] !== 'reihe')));
+  if(verzweigt >= 0){ const P = N.mini[verzweigt].ptsG; let weit = 0; for(let p = 0; p < P.length / 3; p++) weit = Math.max(weit, Math.hypot(P[p * 3], P[p * 3 + 2])); assert.ok(weit > 0); }
+  for(let i = 0; i < N.N; i++){ const m = N.mini[i]; for(let p = 0; p < m.ptsG.length / 3; p++) assert.ok(Number.isFinite(m.ptsG[p * 3 + 1]) && m.ptsG[p * 3 + 1] > 0); }
 });
