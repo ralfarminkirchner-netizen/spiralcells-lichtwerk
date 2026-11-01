@@ -117,6 +117,13 @@ Ralf: Unreal später, erst alles andere selbst. Ziel bleibt Kino als Mac-App; da
 - Fäden: ein Werk antippen zeigt seine gespeicherten Beziehungen als Bogen und nennt ihre Zahl, Farbe nach Richtung. In der Galaxie bleiben sie stehen, während die Planeten weiterlaufen.
 - `werkzeuge/neu/server_lesen.py`: nur lesender Dienst hinter Passwort für Railway. Nicht veröffentlicht: Ralfs Railway-Anmeldung fehlt, die Frage ist vertagt.
 
+## Schritt 19: Alle Welten überarbeitet (Ralf, 01.11.)
+- Überall: Bildstimmung mit warmen Lichtern, kühlen Schatten und Randabdunklung, Glühen nur bei wirklich Hellem, kräftigeres Sonnenlicht, grünerer Boden mit weniger sichtbarer Kachel.
+- Dorf: heller Putz, schmalere Wege, Bäume und Büsche im Ort, Wildblumen. Campus: durchgehende Glasfassaden mit feinen Bändern, flache Sockel, See. Büro: Bauten doppelt so hoch, Autos, Straßenbäume, kühlerer Gehweg.
+- Garten: Blüten aus Blättern statt Kugeln, Beete aus Erde, kleinere Blätter. Kosmos: je Bereich und Werk ein Lichtschein in den Hüllen. Galaxie: Kern nicht mehr ausgebrannt. Innen: Holzboden und Putz.
+- Bäume, Blumen, Autos, See sind Grund und tragen nichts. Das Büro zeigt Höhe jetzt doppelt, das Verhältnis der Werke bleibt.
+- Offen: Campus und Büro bleiben künstlich, Dachformen wirken aufgesetzt. Bauten im Dorf bleiben grob. Kosmos bleibt der schwächste. Kein echtes Handy; Railway offen; Unreal ohne Bild.
+
 ## Prüfstand 01.11.
 - Geprüft im Browser bei 1280 x 800 und 390 x 844, auf der Datenkopie: alle Ansichten, Morph in Einzelbildern, Wähler, Textfassung, Werk öffnen und zurück. 60 Bilder je Sekunde am Mac (Grafik des Macs, nicht auf einem echten Handy). 0 schwarze Starts von 12. Bilder: `Development/Artifacts/lichtwerk-vergleich-20261101/lichtgrund/garten4` und `garten5`.
 - Offen: Laufende Bewegung nur in Standbildern beurteilt, nicht als Film. Nicht auf einem echten Handy geprüft. Namen überlappen teils die Marke. Die Innenräume sind noch schlichte Kisten: kein Glas, keine Möbel außer Tisch und Stuhl. Viele Werke haben nur eine Fassung, ihr Gebäude ist also einstöckig mit einem Tisch; das ist der Bestand.

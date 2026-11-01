@@ -74603,9 +74603,9 @@ function wuchs(m, opt = {}) {
     const lage2 = knoten.length > 20 && knoten.filter((k2) => art[k2] === "reihe").length > 20 ? reihenLage(knoten, a0, a1) : faecherLage(knoten, a0, a1);
     for (const k2 of knoten) {
       let [b0, b1] = lage2.get(k2);
-      const rand2 = knoten.length > 1 && art[k2] !== "reihe" ? (b1 - b0) * 0.04 : 0, c = (b0 + b1) / 2;
-      b0 += rand2;
-      b1 -= rand2;
+      const rand3 = knoten.length > 1 && art[k2] !== "reihe" ? (b1 - b0) * 0.04 : 0, c = (b0 + b1) / 2;
+      b0 += rand3;
+      b1 -= rand3;
       if (b1 - b0 > MAXF) {
         b0 = c - MAXF / 2;
         b1 = c + MAXF / 2;
@@ -75383,11 +75383,11 @@ function galaxie(N4, arbeit2) {
   } };
 }
 function sterne(R2, zahl, seed = 1) {
-  const v3 = new Float32Array(zahl * 8), H = (i, k2) => hash(i * 1.31 + k2 * 7.77 + seed), warm = lin("#ffdfb0"), blau = lin("#a9c8ff"), rosa = lin("#ff9fc0");
+  const v3 = new Float32Array(zahl * 8), H = (i, k2) => hash(i * 1.31 + k2 * 7.77 + seed), warm2 = lin("#ffdfb0"), blau = lin("#a9c8ff"), rosa = lin("#ff9fc0");
   for (let i = 0; i < zahl; i++) {
     const u2 = H(i, 1), arm = i % 2, kern = H(i, 9) < 0.2, r2 = kern ? R2 * 0.24 * Math.pow(H(i, 2), 0.7) : R2 * (0.12 + 1.25 * Math.sqrt(u2)), wurf = Math.pow(H(i, 3), 2) * (H(i, 4) < 0.5 ? -1 : 1) * 0.55 * (kern ? 3 : 1), a2 = Math.log(1 + r2 / (R2 * 0.11)) * 2.25 + arm * Math.PI + wurf, dick = (kern ? Math.sqrt(Math.max(0, (R2 * 0.24) ** 2 - r2 * r2)) * 0.55 : R2 * 0.022) * (H(i, 5) - 0.5) * 2;
-    const f2 = kern || H(i, 6) < 0.25 ? warm : H(i, 7) < 0.92 ? blau : rosa, hell = (kern ? 0.32 : 0.2) * (0.35 + 1.3 * Math.pow(H(i, 8), 3)) * clamp3(1.5 - r2 / (R2 * 1.2), 0.12, 1);
-    v3.set([Math.cos(a2) * r2, dick, Math.sin(a2) * r2, R2 * 16e-4 * (0.5 + H(i, 10)), f2[0], f2[1], f2[2], hell], i * 8);
+    const f2 = kern || H(i, 6) < 0.25 ? warm2 : H(i, 7) < 0.92 ? blau : rosa, hell2 = (kern ? 0.32 : 0.2) * (0.35 + 1.3 * Math.pow(H(i, 8), 3)) * clamp3(1.5 - r2 / (R2 * 1.2), 0.12, 1);
+    v3.set([Math.cos(a2) * r2, dick, Math.sin(a2) * r2, R2 * 16e-4 * (0.5 + H(i, 10)), f2[0], f2[1], f2[2], hell2], i * 8);
   }
   return v3;
 }
@@ -75475,8 +75475,8 @@ function miniWuchs(m, rM, seed) {
   const hn = Math.round(clamp3(rM * 26, 40, 96)), p3 = hash(seed * 1.3) * TAU, p5 = hash(seed * 2.1) * TAU, haut = [];
   for (let j2 = 0; j2 < hn; j2++) {
     const a2 = j2 / hn * TAU, r2 = rM * (1 + Math.sin(a2 * 3 + p3) * 0.036 + Math.cos(a2 * 5 + p5) * 0.016);
-    let u2 = (a2 / Math.PI - 1.01) / 0.7, hell = u2 >= 0 && u2 <= 1 ? Math.sin(Math.PI * u2) : 0;
-    haut.push(r2 * Math.cos(a2), r2 * Math.sin(a2) * 0.94, hell);
+    let u2 = (a2 / Math.PI - 1.01) / 0.7, hell2 = u2 >= 0 && u2 <= 1 ? Math.sin(Math.PI * u2) : 0;
+    haut.push(r2 * Math.cos(a2), r2 * Math.sin(a2) * 0.94, hell2);
   }
   return { ar: w, korn, pts: new Float32Array(pts), ptsG: new Float32Array(ptsG), stiel: new Float32Array(stiel), stengel: G.stengel, haut: new Float32Array(haut), H, plan: n2 ? { lage: G.lage, W: W2, lose: Array.from({ length: n2 }, (_2, i) => W2.art[i] === "frei" || W2.art[i] === "reihe"), tiefste: Math.max(...W2.tiefe) } : null };
 }
@@ -75523,8 +75523,8 @@ var Netz = class {
     }));
     this.kreise = [{ x: 0, z: 0, R: this.L.mitte.R, h: this.L.mitte.R * 0.42 }, ...this.daecher.map((d2) => ({ x: d2.mitte[0], z: d2.mitte[2], R: d2.R, h: d2.R * 0.38 }))];
     if (this.L.ohne) this.kreise.push({ x: this.L.ohne.mitte[0], z: this.L.ohne.mitte[2], R: this.L.ohne.R, h: 0.5 });
-    const rand2 = (a2, s) => Math.max(...this.kreise.map((k2) => s * k2[a2] + k2.R));
-    this.mitte = [(rand2("x", 1) - rand2("x", -1)) / 2, 0, (rand2("z", 1) - rand2("z", -1)) / 2];
+    const rand3 = (a2, s) => Math.max(...this.kreise.map((k2) => s * k2[a2] + k2.R));
+    this.mitte = [(rand3("x", 1) - rand3("x", -1)) / 2, 0, (rand3("z", 1) - rand3("z", -1)) / 2];
     const juengst = /* @__PURE__ */ new Map();
     B3.monde.forEach((m, i) => {
       if (this.baum.material.has(i)) return;
@@ -75813,8 +75813,8 @@ async function lesenMitStand(pfad) {
 }
 
 // bauwerke.js
-var WEISS = [0.93, 0.89, 0.8];
-var LEHM = [0.85, 0.74, 0.58];
+var WEISS = [1, 0.97, 0.9];
+var LEHM = [1, 0.88, 0.7];
 var STEIN = [0.72, 0.69, 0.64];
 var KALK = [0.97, 0.95, 0.9];
 var ROT = [0.72, 0.28, 0.2];
@@ -75966,7 +75966,7 @@ function bauwerk(bau2, fkt, H) {
     }
     case "post": {
       sockel();
-      const o2 = korpus(bau2, x, y0, z2, yaw, b2, t2, stock, 1.1, "putz", KALK, false, 0);
+      const o2 = korpus(bau2, x, y0, z2, yaw, b2, t2, stock, 1.1, "putz", KALK, true, 0);
       satteldach(bau2, x, o2, z2, yaw, b2, t2, b2 * 0.5, dc, KALK);
       tuer(bau2, x, y0, z2, yaw, se, t2, GELB);
       if (se) {
@@ -76073,8 +76073,8 @@ function bauwerk(bau2, fkt, H) {
     }
     case "bibliothek": {
       sockel();
-      const o2 = korpus(bau2, x, y0, z2, yaw, b2 * 1.1, t2 * 1.05, stock.length > 1 ? stock : stock, 1.5, "stein", [0.62, 0.55, 0.48], false, 0);
-      satteldach(bau2, x, o2, z2, yaw, b2 * 1.1, t2 * 1.05, b2 * 0.85, [0.3, 0.32, 0.38], [0.62, 0.55, 0.48]);
+      const o2 = korpus(bau2, x, y0, z2, yaw, b2 * 1.1, t2 * 1.05, stock.length > 1 ? stock : stock, 1.5, "stein", [0.9, 0.82, 0.72], false, 0);
+      satteldach(bau2, x, o2, z2, yaw, b2 * 1.1, t2 * 1.05, b2 * 0.85, [0.42, 0.45, 0.52], [0.9, 0.82, 0.72]);
       tuer(bau2, x, y0, z2, yaw, se, t2 * 1.05, ROT, 0.5, 1.1);
       break;
     }
@@ -76089,7 +76089,7 @@ function bauwerk(bau2, fkt, H) {
     }
     case "kaffeehaus": {
       sockel(STEIN, 0.5);
-      const o2 = korpus(bau2, x, y0, z2, yaw, b2, t2, stock, 1.05, "putz", ROSA, false, 0);
+      const o2 = korpus(bau2, x, y0, z2, yaw, b2, t2, stock, 1.05, "putz", ROSA, true, 0);
       satteldach(bau2, x, o2, z2, yaw, b2, t2, b2 * 0.45, dc, ROSA);
       if (se) {
         const v3 = [-se[0], -se[1]], m = [x + v3[0] * (t2 / 2 + 0.4), z2 + v3[1] * (t2 / 2 + 0.4)];
@@ -76365,7 +76365,7 @@ function ortsplan(N4, hoehe2) {
         seitenLauf[a2] = l + r2 + 0.5;
       });
       const lang = Math.max(...seitenLauf);
-      wege.push({ punkte: [P3(mitteS, 0), P3(mitteS, sg * lang)], breit: 1.5 });
+      wege.push({ punkte: [P3(mitteS, 0), P3(mitteS, sg * lang)], breit: 1.1 });
       aussen = Math.max(aussen, Math.hypot(mitteS, lang) + tiefe2);
       s = mitteS + tiefe2 + 1.6;
     });
@@ -76375,7 +76375,7 @@ function ortsplan(N4, hoehe2) {
       s += i % 2 ? r2 * 2 + 0.6 : 0;
     });
     haupt.push(P3(s + 1, 0));
-    wege.push({ punkte: haupt, breit: 2.5, dach: j2 });
+    wege.push({ punkte: haupt, breit: 1.9, dach: j2 });
     aussen = Math.max(aussen, s + 3);
     const m = P3(s * 0.62, 0);
     mitten.set(j2, m);
@@ -76385,7 +76385,7 @@ function ortsplan(N4, hoehe2) {
   wege.push({ punkte: Array.from({ length: 97 }, (_2, i) => {
     const a2 = i / 96 * Math.PI * 2, w = RF + Math.sin(a2 * 5) * 1.6;
     return [Math.cos(a2) * w, Math.sin(a2) * w];
-  }), breit: 1.2 });
+  }), breit: 0.9 });
   stoecke.forEach((n2, i) => {
     const a2 = i / stoecke.length * Math.PI * 2 + 0.2, w = RF + Math.sin(a2 * 5) * 1.6 + 1.3;
     stelle(n2, Math.cos(a2) * w, Math.sin(a2) * w, Math.cos(a2), Math.sin(a2));
@@ -76698,7 +76698,7 @@ var hdr = await new HDRLoader().setDataType(FloatType).loadAsync(NEU + "himmel.h
 hdr.mapping = EquirectangularReflectionMapping;
 scene.environment = hdr;
 scene.background = hdr;
-scene.environmentIntensity = 0.42;
+scene.environmentIntensity = 0.55;
 scene.backgroundIntensity = 0.9;
 var sonneU = 0.5;
 var sonneV = 0.25;
@@ -76719,7 +76719,7 @@ var sonneV = 0.25;
 var sw = (sonneU - 0.5) * Math.PI * 2;
 var shoch = clamp3((0.5 - Math.min(sonneV, 1 - sonneV)) * Math.PI, 0.16, 0.7);
 var sonneD = new Vector3(Math.cos(sw) * Math.cos(shoch), Math.sin(shoch), Math.sin(sw) * Math.cos(shoch));
-var sonne = new DirectionalLight(16763034, 6.5);
+var sonne = new DirectionalLight(16764830, 7.5);
 var SD = LG.R * 1.25;
 sonne.position.copy(sonneD).multiplyScalar(E * 2);
 sonne.castShadow = true;
@@ -76764,9 +76764,9 @@ scene.fog = NEBEL;
   kt.colorSpace = NoColorSpace;
   kt.generateMipmaps = true;
   kt.minFilter = LinearMipmapLinearFilter;
-  const xz = positionWorld.xz, t2 = (s, f4) => texture(s, xz.mul(f4)), maske = texture(kt, xz.div(2 * E).add(0.5)), makro = t2(gras.farbe, 0.011).g.mul(1.6), rand2 = t2(wald.farbe, 0.9).r.mul(0.5);
-  const steil = smoothstep2(0.92, 0.72, normalWorld.y), stra\u00DFe = smoothstep2(0.35, 0.62, maske.r.add(rand2.sub(0.25).mul(0.5))), platz = smoothstep2(0.3, 0.6, maske.b.add(rand2.sub(0.25).mul(0.5))), feld = smoothstep2(0.35, 0.6, maske.g), stein = stra\u00DFe.max(platz);
-  const grundF = mix(t2(gras.farbe, 0.09).rgb.mul(vec3(0.82, 0.92, 0.6)), t2(wald.farbe, 0.23).rgb, makro.mul(0.5).clamp(0, 1)).mul(makro.add(0.55)), f1 = mix(grundF, t2(acker.farbe, 0.26).rgb, steil.mul(0.8)), f2 = mix(f1, t2(acker.farbe, 0.5).rgb.mul(0.72), feld), f3 = mix(f2, t2(weg.farbe, 0.42).rgb.mul(vec3(1.05, 0.98, 0.88)), stein);
+  const xz = positionWorld.xz, t2 = (s, f4) => texture(s, xz.mul(f4)), maske = texture(kt, xz.div(2 * E).add(0.5)), makro = t2(gras.farbe, 73e-4).g.mul(1.1).add(t2(wald.farbe, 0.031).g.mul(0.7)), rand3 = t2(wald.farbe, 0.9).r.mul(0.5);
+  const steil = smoothstep2(0.92, 0.72, normalWorld.y), stra\u00DFe = smoothstep2(0.35, 0.62, maske.r.add(rand3.sub(0.25).mul(0.5))), platz = smoothstep2(0.3, 0.6, maske.b.add(rand3.sub(0.25).mul(0.5))), feld = smoothstep2(0.35, 0.6, maske.g), stein = stra\u00DFe.max(platz);
+  const grundF = mix(t2(gras.farbe, 0.09).rgb.mul(vec3(0.62, 0.9, 0.4)), t2(wald.farbe, 0.23).rgb, makro.mul(0.5).clamp(0, 1)).mul(makro.add(0.55)), f1 = mix(grundF, t2(acker.farbe, 0.26).rgb, steil.mul(0.8)), f2 = mix(f1, t2(acker.farbe, 0.5).rgb.mul(0.72), feld), f3 = mix(f2, t2(weg.farbe, 0.42).rgb.mul(vec3(1.05, 0.98, 0.88)), stein);
   const n1 = mix(t2(gras.normal, 0.09).rgb, t2(acker.normal, 0.5).rgb, feld), n2 = mix(n1, t2(weg.normal, 0.42).rgb, stein);
   const mb = new MeshStandardNodeMaterial();
   mb.colorNode = f3;
@@ -76833,7 +76833,7 @@ B2.monde.forEach((m, n2) => {
     }
   });
 }
-var MAT = { putz: pbr("clay_plaster", 0.5), holz: pbr("weathered_brown_planks", 0.8, { color: 6965808 }), stein: pbr("cobblestone_floor_04", 0.7, { color: 11049608 }), dach: pbr("clay_roof_tiles_02", 0.7), rahmen: new MeshStandardMaterial({ color: 2759698, roughness: 0.8, vertexColors: true }), bunt: new MeshStandardMaterial({ roughness: 0.6, vertexColors: true }), metall: new MeshStandardMaterial({ metalness: 0.75, roughness: 0.38, vertexColors: true }) };
+var MAT = { putz: pbr("painted_plaster_wall", 0.45), holz: pbr("weathered_brown_planks", 0.8, { color: 6965808 }), stein: pbr("cobblestone_floor_04", 0.7, { color: 11049608 }), dach: pbr("clay_roof_tiles_02", 0.7), rahmen: new MeshStandardMaterial({ color: 2759698, roughness: 0.8, vertexColors: true }), bunt: new MeshStandardMaterial({ roughness: 0.6, vertexColors: true }), metall: new MeshStandardMaterial({ metalness: 0.75, roughness: 0.38, vertexColors: true }) };
 for (const a2 of Object.keys(MAT)) {
   const g = bau.fertig(a2, mergeGeometries);
   if (!g) continue;
@@ -76912,6 +76912,25 @@ async function streue(datei, zahl, rMin, rMax, gr, schatten, abstand = 1.4, wo =
   }
   return orte.length;
 }
+function wildblumen() {
+  const zn = klein2 ? 1200 : 4200, or2 = [], Fb = [[0.95, 0.85, 0.3], [0.95, 0.95, 0.9], [0.75, 0.45, 0.8], [0.95, 0.45, 0.35], [0.45, 0.6, 0.95]];
+  let v3 = 0;
+  while (or2.length < zn && v3++ < zn * 8) {
+    const r2 = Math.sqrt(hash(v3 * 3.17)) * LG.R * 1.2, w = hash(v3 * 5.3) * 6.2832, x = Math.cos(w) * r2, z2 = Math.sin(w) * r2;
+    if (hash(Math.floor(x / 3) * 7 + Math.floor(z2 / 3) * 13) < 0.55 || !istFrei(x, z2)) continue;
+    or2.push([x, hoehe(x, z2) + 0.14, z2, Fb[v3 % 5], 0.05 + 0.05 * hash(v3)]);
+  }
+  const I = new InstancedMesh(new IcosahedronGeometry(1, 0), new MeshStandardMaterial({ roughness: 0.7 }), or2.length), M = new Matrix4(), c = new Color();
+  or2.forEach((o2, i) => {
+    M.makeScale(o2[4], o2[4] * 0.6, o2[4]);
+    M.setPosition(o2[0], o2[1], o2[2]);
+    I.setMatrixAt(i, M);
+    c.setRGB(...o2[3]);
+    I.setColorAt(i, c);
+  });
+  dorf.add(I);
+  return or2.length;
+}
 sage("Das Dorf entsteht. B\xE4ume und Gras kommen dazu.");
 var R = LG.R;
 var ST = await Promise.all([
@@ -76919,7 +76938,10 @@ var ST = await Promise.all([
   streue(baum("Pine Medium", 11), klein2 ? 35 : 90, R * 1.15, R * 3.4, 9, true, 3),
   streue(baum("Oak Medium", 23), klein2 ? 20 : 55, R * 0.45, R * 2.4, 6.5, true, 2.6),
   streue(baum("Aspen Medium", 37), klein2 ? 15 : 40, R * 0.5, R * 2.6, 7, true, 2.6),
-  streue("shrub_02", klein2 ? 80 : 220, R * 0.15, R * 2.2, 0.9, true, 1),
+  streue(baum("Oak Small", 61), klein2 ? 14 : 34, LG.platz + 4, R * 0.95, 4.2, true, 1.2),
+  streue(baum("Bush 2", 63), klein2 ? 60 : 160, LG.platz + 2, R * 1.1, 1.3, true, 0.3),
+  streue("shrub_02", klein2 ? 80 : 200, R * 0.15, R * 2.2, 0.9, true, 0.4),
+  wildblumen(),
   streue("boulder_01", 8, R * 0.3, R * 2.5, 0.7, true, 1),
   streue("grass_medium_01", klein2 ? 300 : 1e3, 0, R * 1.5, 0.45, false, 0.2)
 ]);
@@ -76974,7 +76996,7 @@ function galaxieScheibe(Rg) {
   for (let j2 = 0; j2 < S2; j2++) for (let i = 0; i < S2; i++) {
     const px3 = (i / S2 - 0.5) * 2 * W2, pz2 = (j2 / S2 - 0.5) * 2 * W2, r2 = Math.hypot(px3, pz2), a2 = Math.atan2(pz2, px3), q2 = r2 / Rg;
     if (q2 > 1.7) continue;
-    const d2 = (a2 - ARM(r2)) % Math.PI, ab = Math.abs(d2 < 0 ? d2 + Math.PI : d2) / Math.PI, m2 = Math.min(ab, 1 - ab) * 2, weit = 0.3 + 0.2 * q2, arm = Math.exp(-m2 * m2 / (weit * weit)), n2 = fbm2(px3 / Rg * 7 + 9, pz2 / Rg * 7), n22 = fbm2(px3 / Rg * 22, pz2 / Rg * 22 + 5), staub = Math.exp(-((m2 - weit * 0.9) ** 2) / 0.012) * smooth01(q2 * 4) * (0.3 + n22), scheibe = Math.exp(-q2 * 2.1), kern = Math.exp(-Math.pow(q2 / 0.16, 1.1)), h2 = scheibe * (0.2 + 0.72 * arm * (0.4 + n2)) * (1 - 0.75 * Math.min(1, staub)) * smooth01((1.7 - q2) * 3), jung = arm * smooth01(q2 * 3), rot = h2 * (0.62 - 0.2 * jung) + kern * 1.5, gr = h2 * (0.62 - 0.04 * jung) + kern * 1.18, bl = h2 * (0.68 + 0.5 * jung) + kern * 0.72, kl = Math.pow(n22, 6) * 7 * arm * scheibe, o2 = (j2 * S2 + i) * 4;
+    const d2 = (a2 - ARM(r2)) % Math.PI, ab = Math.abs(d2 < 0 ? d2 + Math.PI : d2) / Math.PI, m2 = Math.min(ab, 1 - ab) * 2, weit = 0.3 + 0.2 * q2, arm = Math.exp(-m2 * m2 / (weit * weit)), n2 = fbm2(px3 / Rg * 7 + 9, pz2 / Rg * 7), n22 = fbm2(px3 / Rg * 22, pz2 / Rg * 22 + 5), staub = Math.exp(-((m2 - weit * 0.9) ** 2) / 0.012) * smooth01(q2 * 4) * (0.3 + n22), scheibe = Math.exp(-q2 * 2.1), kern = Math.exp(-Math.pow(q2 / 0.16, 1.1)), h2 = scheibe * (0.2 + 0.72 * arm * (0.4 + n2)) * (1 - 0.75 * Math.min(1, staub)) * smooth01((1.7 - q2) * 3), jung = arm * smooth01(q2 * 3), rot = h2 * (0.62 - 0.2 * jung) + kern * 0.62, gr = h2 * (0.62 - 0.04 * jung) + kern * 0.46, bl = h2 * (0.68 + 0.5 * jung) + kern * 0.27, kl = Math.pow(n22, 6) * 7 * arm * scheibe, o2 = (j2 * S2 + i) * 4;
     im.data[o2] = Math.min(255, 255 * (rot + kl));
     im.data[o2 + 1] = Math.min(255, 255 * (gr + kl * 0.35));
     im.data[o2 + 2] = Math.min(255, 255 * (bl + kl * 0.6));
@@ -76997,11 +77019,11 @@ function baueGalaxie() {
   const G = new Group(), D = galaxie(N3, arbeit), pl = D.planeten, Rg = N3.L.R, S0 = new Group();
   G.add(S0);
   S0.add(galaxieScheibe(Rg));
-  const punkte = (d2, gr, hell) => {
+  const punkte = (d2, gr, hell2) => {
     const g = new BufferGeometry(), n2 = d2.length / 8, p2 = new Float32Array(n2 * 3), c = new Float32Array(n2 * 3);
     for (let i = 0; i < n2; i++) {
       p2.set([d2[i * 8], d2[i * 8 + 1], d2[i * 8 + 2]], i * 3);
-      const a2 = d2[i * 8 + 7] * hell;
+      const a2 = d2[i * 8 + 7] * hell2;
       c.set([d2[i * 8 + 4] * a2, d2[i * 8 + 5] * a2, d2[i * 8 + 6] * a2], i * 3);
     }
     g.setAttribute("position", new BufferAttribute(p2, 3));
@@ -77009,15 +77031,15 @@ function baueGalaxie() {
     return new Points(g, new PointsMaterial({ vertexColors: true, size: gr, sizeAttenuation: false, transparent: true, blending: AdditiveBlending, depthWrite: false, fog: false }));
   };
   {
-    const zn = klein2 ? 6e4 : 2e5, sd = new Float32Array(zn * 8), warm = [1, 0.86, 0.68], blau = [0.66, 0.78, 1], gauss = (i) => {
+    const zn = klein2 ? 6e4 : 2e5, sd = new Float32Array(zn * 8), warm2 = [1, 0.86, 0.68], blau = [0.66, 0.78, 1], gauss = (i) => {
       const u2 = Math.max(1e-5, hash(i * 1.37)), v3 = hash(i * 2.11);
       return Math.sqrt(-2 * Math.log(u2)) * Math.cos(6.2832 * v3);
     };
     for (let i = 0; i < zn; i++) {
-      const kern = hash(i * 4.1) < 0.22, r2 = kern ? Math.abs(gauss(i + 5)) * Rg * 0.14 : -Math.log(1 - hash(i * 3.3) * 0.985) * Rg * 0.42, arm = i % 2 ? Math.PI : 0, a0 = Math.log(1 + r2 / (Rg * 0.11)) * 2.25 + arm, a2 = kern ? hash(i * 6.7) * 6.2832 : a0 + gauss(i + 9) * (0.26 + 0.2 * Math.min(1.5, r2 / Rg)), y = gauss(i + 13) * (kern ? Rg * 0.06 : Rg * 0.012), jung = !kern && hash(i * 8.1) < 0.65, f2 = jung ? blau : warm, h2 = (0.25 + 1.4 * Math.pow(hash(i * 9.9), 4)) * Math.exp(-r2 / (Rg * 1.1));
+      const kern = hash(i * 4.1) < 0.22, r2 = kern ? Math.abs(gauss(i + 5)) * Rg * 0.14 : -Math.log(1 - hash(i * 3.3) * 0.985) * Rg * 0.42, arm = i % 2 ? Math.PI : 0, a0 = Math.log(1 + r2 / (Rg * 0.11)) * 2.25 + arm, a2 = kern ? hash(i * 6.7) * 6.2832 : a0 + gauss(i + 9) * (0.26 + 0.2 * Math.min(1.5, r2 / Rg)), y = gauss(i + 13) * (kern ? Rg * 0.06 : Rg * 0.012), jung = !kern && hash(i * 8.1) < 0.65, f2 = jung ? blau : warm2, h2 = (0.25 + 1.4 * Math.pow(hash(i * 9.9), 4)) * Math.exp(-r2 / (Rg * 1.1));
       sd.set([Math.cos(a2) * r2, y, Math.sin(a2) * r2, 0, f2[0], f2[1], f2[2], h2], i * 8);
     }
-    S0.add(punkte(sd, 1, 1.5));
+    S0.add(punkte(sd, 1, 0.8));
   }
   {
     const ff = sterne(Rg * 14, klein2 ? 3e3 : 8e3, 5);
@@ -77165,12 +77187,12 @@ function baueStadt(stil) {
   const G = new Group(), P3 = bauplan(N3, stil), hier = orteFuer(N3, stil), kz2 = P3.kisten, fz = P3.fenster, bue = stil === "buero", ks = [], fs = [];
   for (let i = 0; i < kz2.length; i += KISTE) ks.push(i);
   for (let i = 0; i < fz.length; i += FENSTER) fs.push(i);
-  const fm = new MeshStandardNodeMaterial(), hF = bue ? 0.9 : 1.25, band = smoothstep2(0.86, 0.93, positionWorld.y.div(hF).fract()), pf = smoothstep2(0.9, 0.95, positionWorld.x.add(positionWorld.z).div(0.62).fract()), wand = band.max(pf), glas = bue ? vec3(0.1, 0.13, 0.16) : vec3(0.07, 0.15, 0.2), rahmen = bue ? vec3(0.62, 0.6, 0.56) : vec3(0.72, 0.74, 0.76);
+  const HS = bue ? 2 : 1, fm = new MeshStandardNodeMaterial(), hF = bue ? 0.9 : 1.25, band = smoothstep2(0.93, 0.96, positionWorld.y.div(hF * HS).fract()), pf = smoothstep2(0.95, 0.975, positionWorld.x.add(positionWorld.z).div(0.8).fract()), wand = band.max(pf), glas = bue ? vec3(0.13, 0.17, 0.2) : vec3(0.1, 0.22, 0.27), rahmen = bue ? vec3(0.42, 0.42, 0.42) : vec3(0.5, 0.52, 0.54);
   fm.colorNode = mix(glas, rahmen, wand);
   fm.metalnessNode = mix(float(0.95), float(0.2), wand);
-  fm.roughnessNode = mix(float(0.06), float(0.55), wand);
+  fm.roughnessNode = mix(float(0.04), float(0.5), wand);
   const kI = instanzen(new BoxGeometry(1, 1, 1), fm, ks, (i, m, c) => {
-    const sy = kz2[i + 5], y = kz2[i + 3] + sy / 2 + 0.25;
+    const sy = kz2[i + 5] * HS, y = kz2[i + 3] * HS + sy / 2 + 0.12;
     EU.set(0, kz2[i + 7], 0);
     Q.setFromEuler(EU);
     m.compose(V2.set(kz2[i], y, kz2[i + 1]), Q, V1.set(kz2[i + 4], sy, kz2[i + 6]));
@@ -77182,10 +77204,10 @@ function baueStadt(stil) {
   {
     const oben = /* @__PURE__ */ new Map();
     for (const i of ks) {
-      const n2 = kz2[i + 12], y = kz2[i + 3] + kz2[i + 5];
+      const n2 = kz2[i + 12], y = (kz2[i + 3] + kz2[i + 5]) * HS;
       if (y > (oben.get(n2) ?? 0)) oben.set(n2, y);
     }
-    const ART2 = { sternwarte: "kuppel", kapelle: "kuppel", museum: "kuppel", bibliothek: "kuppel", musik: "trommel", saal: "trommel", turnhalle: "trommel", kaffeehaus: "trommel", aussicht: "spitze", rathaus: "spitze", maerchen: "spitze", schreibstube: "spitze", schule: "gruen", spielhof: "gruen", heilhaus: "gruen", werkstatt: "schlot", garage: "schlot", druckerei: "schlot", bastel: "schlot" }, F2 = { kuppel: new SphereGeometry(1, 24, 12, 0, Math.PI * 2, 0, Math.PI / 2), trommel: new CylinderGeometry(1, 1, 0.7, 28), spitze: new ConeGeometry(1, 2.6, 4), gruen: new BoxGeometry(1.5, 0.22, 1.5), schlot: new CylinderGeometry(0.16, 0.22, 2, 10) }, M = { kuppel: new MeshStandardMaterial({ color: 12174024, metalness: 0.85, roughness: 0.3 }), trommel: new MeshStandardMaterial({ color: 14208960, roughness: 0.6 }), spitze: new MeshStandardMaterial({ color: 6262656, metalness: 0.8, roughness: 0.4 }), gruen: new MeshStandardMaterial({ color: 5208632, roughness: 0.95 }), schlot: new MeshStandardMaterial({ color: 8011828, roughness: 0.8 }) }, gr = /* @__PURE__ */ new Map();
+    const ART2 = { sternwarte: "kuppel", kapelle: "kuppel", museum: "kuppel", bibliothek: "kuppel", musik: "trommel", saal: "trommel", turnhalle: "trommel", kaffeehaus: "trommel", aussicht: "spitze", rathaus: "spitze", maerchen: "spitze", schreibstube: "spitze", schule: "gruen", spielhof: "gruen", heilhaus: "gruen", werkstatt: "schlot", garage: "schlot", druckerei: "schlot", bastel: "schlot" }, F2 = { kuppel: new SphereGeometry(1, 24, 12, 0, Math.PI * 2, 0, Math.PI / 2), trommel: new CylinderGeometry(1, 1, 0.7, 28), spitze: new ConeGeometry(1, 2.6, 4), gruen: new BoxGeometry(1.5, 0.22, 1.5), schlot: new CylinderGeometry(0.16, 0.22, 2, 10) }, M = { kuppel: new MeshStandardMaterial({ color: 9411232, metalness: 0.5, roughness: 0.55 }), trommel: new MeshStandardMaterial({ color: 14208960, roughness: 0.6 }), spitze: new MeshStandardMaterial({ color: 6262656, metalness: 0.8, roughness: 0.4 }), gruen: new MeshStandardMaterial({ color: 5208632, roughness: 0.95 }), schlot: new MeshStandardMaterial({ color: 8011828, roughness: 0.8 }) }, gr = /* @__PURE__ */ new Map();
     for (const [n2, y] of oben) {
       if (N3.baum.material.has(n2)) continue;
       const a2 = ART2[funktionVon(N3, n2)];
@@ -77195,7 +77217,7 @@ function baueStadt(stil) {
     for (const [a2, li] of gr) {
       const I = instanzen(F2[a2], M[a2], li, ([n2, y], m, c) => {
         const p2 = hier.pos[n2], h2 = a2 === "trommel" ? 0.35 : a2 === "spitze" ? 0.72 : a2 === "schlot" ? 1 : a2 === "gruen" ? 0.11 : 0;
-        m.compose(V2.set(p2[0], y + 0.25 + h2, p2[2]), Q.setFromEuler(EU.set(0, a2 === "spitze" ? 0.785 : 0, 0)), V1.setScalar(a2 === "schlot" ? 1 : a2 === "spitze" ? br * 0.55 : br));
+        m.compose(V2.set(p2[0], y + 0.12 + h2, p2[2]), Q.setFromEuler(EU.set(0, a2 === "spitze" ? 0.785 : 0, 0)), V1.setScalar(a2 === "schlot" ? 1 : a2 === "spitze" ? br * 0.55 : br));
         c.setRGB(1, 1, 1);
       });
       I.castShadow = true;
@@ -77208,9 +77230,9 @@ function baueStadt(stil) {
   B2.monde.forEach((m, n2) => {
     if (!N3.baum.material.has(n2)) sockel.push(hier.pos[n2]);
   });
-  const sI = instanzen(new BoxGeometry(1, 1, 1), new MeshStandardMaterial({ color: 11578016, roughness: 0.9 }), sockel, (p2, m, c) => {
-    const w = bue ? 5.6 : 5;
-    m.compose(V2.set(p2[0], 0.12, p2[2]), Q.identity(), V1.set(w, 0.24, bue ? 4.2 : w));
+  const sI = instanzen(new BoxGeometry(1, 1, 1), new MeshStandardMaterial({ color: 10262414, roughness: 0.95 }), sockel, (p2, m, c) => {
+    const w = bue ? 5.8 : 4.6;
+    m.compose(V2.set(p2[0], 0.06, p2[2]), Q.identity(), V1.set(w, 0.12, bue ? 4.4 : w));
     c.setRGB(1, 1, 1);
   });
   sI.receiveShadow = true;
@@ -77219,8 +77241,8 @@ function baueStadt(stil) {
     const liegt = Math.hypot(fz[i + 4], fz[i + 5]) < 0.01;
     EU.set(liegt ? -Math.PI / 2 : 0, Math.atan2(fz[i + 4], fz[i + 5]), 0);
     Q.setFromEuler(EU);
-    m.compose(V2.set(fz[i], fz[i + 3] + 0.27, fz[i + 1]), Q, V1.set(fz[i + 6], fz[i + 7], 1));
-    c.setRGB(fz[i + 8] * 3, fz[i + 9] * 3, fz[i + 10] * 3);
+    m.compose(V2.set(fz[i], fz[i + 3] * HS + 0.14, fz[i + 1]), Q, V1.set(fz[i + 6], fz[i + 7] * HS * 0.8, 1));
+    c.setRGB(fz[i + 8] * 2.4, fz[i + 9] * 2.4, fz[i + 10] * 2.4);
   }));
   let breite = 0;
   for (const p2 of hier.pos) breite = Math.max(breite, Math.abs(p2[0]), Math.abs(p2[2]));
@@ -77287,7 +77309,7 @@ function baueStadt(stil) {
   kt.anisotropy = 16;
   kt.colorSpace = NoColorSpace;
   const asph = stoff("aerial_asphalt_01"), gras = stoff("aerial_grass_rock"), weg = stoff("anti_slip_concrete"), xz = positionWorld.xz, t2 = (s, f2) => texture(s, xz.mul(f2)), ma = texture(kt, xz.div(2 * EE2).add(0.5)), inn = smoothstep2(EE2 * 0.98, EE2 * 0.9, xz.x.abs().max(xz.y.abs())), st = smoothstep2(0.35, 0.6, ma.r).mul(inn), mk = smoothstep2(0.3, 0.6, ma.g).mul(inn), bm = new MeshStandardNodeMaterial();
-  bm.colorNode = bue ? mix(mix(t2(weg.farbe, 0.3).rgb.mul(0.8), t2(asph.farbe, 0.2).rgb.mul(0.42), st), vec3(0.85, 0.82, 0.7), mk) : mix(t2(gras.farbe, 0.12).rgb.mul(vec3(0.55, 0.85, 0.42)).mul(t2(gras.farbe, 0.012).g.mul(1.5).add(0.5)), t2(weg.farbe, 0.5).rgb, st);
+  bm.colorNode = bue ? mix(mix(t2(weg.farbe, 0.3).rgb.mul(vec3(0.5, 0.52, 0.54)), t2(asph.farbe, 0.2).rgb.mul(0.42), st), vec3(0.85, 0.82, 0.7), mk) : mix(t2(gras.farbe, 0.12).rgb.mul(vec3(0.55, 0.85, 0.42)).mul(t2(gras.farbe, 0.012).g.mul(1.5).add(0.5)), t2(weg.farbe, 0.5).rgb, st);
   bm.roughnessNode = float(0.9);
   bm.metalnessNode = float(0);
   bm.normalNode = normalMap(bue ? mix(t2(weg.normal, 0.3).rgb, t2(asph.normal, 0.2).rgb, st) : mix(t2(gras.normal, 0.12).rgb, t2(weg.normal, 0.5).rgb, st), vec2(1));
@@ -77300,12 +77322,36 @@ function baueStadt(stil) {
     if (i < 0 || j2 < 0 || i >= cv.width || j2 >= cv.width) return true;
     return true;
   }, belegt = hier.pos.map((p2) => ({ x: p2[0], z: p2[2] })), rmn = bue ? breite * 1.25 : 2;
-  const baeume = bue ? [[baum("Oak Small", 41), 30, breite * 1.2, breite * 2.2, 5]] : [[baum("Oak Medium", 23), klein2 ? 25 : 60, 3, breite * 2.2, 6], [baum("Aspen Medium", 37), klein2 ? 20 : 50, 3, breite * 2.4, 7], [baum("Pine Medium", 11), klein2 ? 15 : 40, breite * 1.1, breite * 3, 9]];
+  const baeume = bue ? [[baum("Oak Small", 41), klein2 ? 40 : 110, 3, breite * 2.2, 4.5]] : [[baum("Oak Medium", 23), klein2 ? 25 : 60, 3, breite * 2.2, 6], [baum("Aspen Medium", 37), klein2 ? 20 : 50, 3, breite * 2.4, 7], [baum("Pine Medium", 11), klein2 ? 15 : 40, breite * 1.1, breite * 3, 9]];
   for (const [a2, zz, r0, r1, gr] of baeume) streue(a2, zz, r0, r1, gr, true, 3.5, { gruppe: G, belegt, frei });
+  if (bue) {
+    const reihen = [...new Set(hier.pos.map((p2) => Math.round(p2[2] * 10) / 10))], autos = [];
+    reihen.forEach((r2, i) => {
+      for (let k2 = 0; k2 < 7; k2++) autos.push([(hash(i * 3 + k2 * 7.7) - 0.5) * EE2 * 1.7, r2 + 3.4 + (k2 % 2 ? 0.75 : -0.75), k2 % 2, [[0.75, 0.75, 0.78], [0.12, 0.13, 0.15], [0.6, 0.12, 0.1], [0.14, 0.25, 0.5]][(i + k2) % 4]]);
+    });
+    const au = new BoxGeometry(1.7, 0.42, 0.72);
+    au.translate(0, 0.32, 0);
+    const da = new BoxGeometry(0.9, 0.3, 0.64);
+    da.translate(-0.05, 0.66, 0);
+    const am = new MeshPhysicalMaterial({ metalness: 0.7, roughness: 0.28, clearcoat: 1 });
+    for (const g of [au, da]) {
+      const I = instanzen(g, am, autos, (a2, m, c) => {
+        m.makeTranslation(a2[0], 0, a2[1]);
+        c.setRGB(...a2[3]);
+      });
+      I.castShadow = true;
+      G.add(I);
+    }
+  } else {
+    const see = new Mesh(new CircleGeometry(breite * 0.2, 64), new MeshPhysicalMaterial({ color: 2114124, metalness: 0.9, roughness: 0.06 }));
+    see.rotation.x = -Math.PI / 2;
+    see.position.set(breite * 0.45, 0.05, breite * 0.5);
+    G.add(see);
+  }
   G.userData = { mitten: (j2) => {
     const m = hier.mitten ? hier.mitten.get(j2) : null, d2 = N3.daecher[j2];
     return m ? [m[0], 9, m[1]] : [d2.mitte[0], 9, d2.mitte[2]];
-  }, mitte: hier.mitten && hier.mitten.get("mitte") ? [hier.mitten.get("mitte")[0], 9, hier.mitten.get("mitte")[1]] : [0, 9, 0], haeuser: B2.monde.map((m, n2) => ({ n: n2, x: hier.pos[n2][0], y: 2, z: hier.pos[n2][2], titel: m.titel, zahl: m.samen.length, mat: N3.baum.material.has(n2) })), blick: bue ? [breite * 0.55, breite * 0.4, breite * 1.05] : [breite * 0.5, breite * 0.32, breite * 0.8], ziel: [0, 3, 0], max: breite * 5, sonne: true, nebel: 0.25 };
+  }, mitte: hier.mitten && hier.mitten.get("mitte") ? [hier.mitten.get("mitte")[0], 9, hier.mitten.get("mitte")[1]] : [0, 9, 0], haeuser: B2.monde.map((m, n2) => ({ n: n2, x: hier.pos[n2][0], y: 2, z: hier.pos[n2][2], titel: m.titel, zahl: m.samen.length, mat: N3.baum.material.has(n2) })), blick: bue ? [breite * 0.4, breite * 0.2, breite * 0.82] : [breite * 0.55, breite * 0.26, breite * 0.85], ziel: bue ? [0, 4, breite * 0.25] : [0, 5, 0], max: breite * 5, sonne: true, nebel: 0.25 };
   return G;
 }
 function baueGarten() {
@@ -77313,11 +77359,21 @@ function baueGarten() {
   bM.receiveShadow = true;
   G.add(bM);
   {
+    const erde = stoff("brown_mud_dry"), beet = new CircleGeometry(1, 28);
+    beet.rotateX(-Math.PI / 2);
+    G.add(instanzen(beet, new MeshStandardMaterial({ map: erde.farbe, normalMap: erde.normal, color: 8022616, roughness: 1 }), B2.monde.map((m, n2) => n2).filter((n2) => !N3.baum.material.has(n2) && B2.monde[n2].samen.length), (n2, m, c) => {
+      const p2 = N3.pos[n2], r2 = N3.rM[n2] * 0.95;
+      m.compose(V2.set(p2[0], hoehe(p2[0], p2[2]) + 0.05, p2[2]), Q.identity(), V1.set(r2, 1, r2));
+      c.setRGB(1, 1, 1);
+    }));
+  }
+  {
     const bel = N3.pos.map((p2) => ({ x: p2[0], z: p2[2] })), Rn2 = N3.L.R, wo = { gruppe: G, belegt: bel, frei: () => true, boden: true };
-    streue(baum("Oak Large", 51), klein2 ? 20 : 45, Rn2 * 0.5, Rn2 * 2.6, 13, true, 2.5, wo);
-    streue(baum("Ash Medium", 53), klein2 ? 20 : 45, Rn2 * 0.4, Rn2 * 2.6, 9, true, 2.5, wo);
+    streue(baum("Oak Large", 51), klein2 ? 20 : 45, Rn2 * 1, Rn2 * 2.6, 13, true, 2.5, wo);
+    streue(baum("Ash Medium", 53), klein2 ? 20 : 45, Rn2 * 0.9, Rn2 * 2.6, 9, true, 2.5, wo);
     streue(baum("Bush 1", 55), klein2 ? 80 : 200, Rn2 * 0.1, Rn2 * 1.6, 1.8, true, 0.8, wo);
-    streue("grass_medium_01", klein2 ? 400 : 1400, 0, Rn2 * 1.2, 0.5, false, -1.5, wo);
+    streue("grass_medium_01", klein2 ? 500 : 1800, 0, Rn2 * 1.3, 0.55, false, -1.5, wo);
+    streue(baum("Bush 3", 57), klein2 ? 60 : 160, Rn2 * 0.3, Rn2 * 1.5, 1.2, true, 0.6, wo);
   }
   const stiele = [], blaetter = [], kugeln = [];
   for (const w of pflanzen(N3).werke) {
@@ -77339,7 +77395,7 @@ function baueGarten() {
       V3.subVectors(V2, V1);
       const l = V3.length() || 1e-3;
       Q.setFromUnitVectors(hoch, V3.divideScalar(l));
-      const r2 = Math.max(0.03, s.br * 1.1);
+      const r2 = Math.max(0.025, s.br * 0.75);
       m.compose(V1, Q, new Vector3(r2, l, r2));
       c.setRGB(s.c[0], s.c[1], s.c[2]);
     });
@@ -77358,16 +77414,32 @@ function baueGarten() {
       V3.set(s.b[0], s.b[1], s.b[2]);
       const l = V3.length() || 0.1;
       Q.setFromUnitVectors(hoch, V3.divideScalar(l));
-      m.compose(V1, Q, new Vector3(Math.max(s.br * 2.4, l * 0.9), l * 1.5, 1));
+      m.compose(V1, Q, new Vector3(Math.max(s.br * 1.5, l * 0.5), l * 0.95, 1));
       c.setRGB(s.c[0] * 1.3, s.c[1] * 1.3, s.c[2] * 1.3);
     });
     S2.castShadow = true;
     G.add(S2);
   }
+  const bluete = (() => {
+    const li = [];
+    for (let i = 0; i < 6; i++) {
+      const f2 = new ShapeGeometry(form, 6);
+      f2.translate(0, 0.06, 0);
+      f2.scale(0.6, 0.85, 1);
+      f2.rotateX(-1.05);
+      f2.rotateY(i / 6 * 6.2832);
+      li.push(f2);
+    }
+    const herz = new IcosahedronGeometry(0.16, 1).toNonIndexed();
+    return mergeGeometries([...li.map((g) => g.index ? g.toNonIndexed() : g).map((g) => {
+      g.deleteAttribute("uv");
+      return g;
+    }), (herz.deleteAttribute("uv"), herz)]);
+  })();
   if (kugeln.length) {
-    const S2 = instanzen(new IcosahedronGeometry(1, 2), new MeshStandardMaterial({ roughness: 0.4, emissiveIntensity: 0 }), kugeln, (s, m, c) => {
-      m.compose(V1.set(s.a[0] + s.ox, s.a[1] + s.ty, s.a[2] + s.oz), Q.identity(), V2.setScalar(s.br * 0.95));
-      c.setRGB(s.c[0] * 1.6, s.c[1] * 1.6, s.c[2] * 1.6);
+    const S2 = instanzen(bluete, new MeshStandardMaterial({ roughness: 0.55, side: DoubleSide }), kugeln, (s, m, c) => {
+      m.compose(V1.set(s.a[0] + s.ox, s.a[1] + s.ty, s.a[2] + s.oz), Q.identity(), V2.setScalar(s.br * 1.5));
+      c.setRGB(s.c[0] * 1.15, s.c[1] * 1.15, s.c[2] * 1.15);
     });
     S2.castShadow = true;
     G.add(S2);
@@ -77376,7 +77448,7 @@ function baueGarten() {
   G.userData = { mitten: (j2) => {
     const d2 = N3.daecher[j2];
     return [d2.mitte[0], hoehe(d2.mitte[0], d2.mitte[2]) + 5, d2.mitte[2]];
-  }, mitte: [0, hoehe(0, 0) + 4, 0], haeuser: B2.monde.map((m, n2) => ({ n: n2, x: N3.pos[n2][0], y: hoehe(N3.pos[n2][0], N3.pos[n2][2]) + 1, z: N3.pos[n2][2], titel: m.titel, zahl: m.samen.length, mat: N3.baum.material.has(n2) })), blick: [Rn * 0.32, hoehe(0, 0) + Rn * 0.2, Rn * 0.62], ziel: [0, hoehe(0, 0) + 1, 0], max: Rn * 5, sonne: true, nebel: 0.5 };
+  }, mitte: [0, hoehe(0, 0) + 4, 0], haeuser: B2.monde.map((m, n2) => ({ n: n2, x: N3.pos[n2][0], y: hoehe(N3.pos[n2][0], N3.pos[n2][2]) + 1, z: N3.pos[n2][2], titel: m.titel, zahl: m.samen.length, mat: N3.baum.material.has(n2) })), blick: [Rn * 0.26, hoehe(0, 0) + Rn * 0.14, Rn * 0.5], ziel: [0, hoehe(0, 0) + 1, 0], max: Rn * 5, sonne: true, nebel: 0.5 };
   return G;
 }
 function baueKosmos() {
@@ -77386,8 +77458,8 @@ function baueKosmos() {
     for (let i = 0; i < pts.length; i += 6) p2.push([q2[0] + pts[i], (q2[1] || 0) + pts[i + 1] + 0.1, q2[2] + pts[i + 2], pts[i + 3], pts[i + 4], pts[i + 5]]);
   });
   G.add(instanzen(new IcosahedronGeometry(1, 1), new MeshBasicMaterial({ fog: false }), p2, (k2, m, c) => {
-    m.compose(V2.set(k2[0], k2[1], k2[2]), Q.identity(), V1.setScalar(0.085));
-    c.setRGB(k2[3] * 3.2, k2[4] * 3.2, k2[5] * 3.2);
+    m.compose(V2.set(k2[0], k2[1], k2[2]), Q.identity(), V1.setScalar(0.11));
+    c.setRGB(k2[3] * 4, k2[4] * 4, k2[5] * 4);
   }));
   const huelle = (x, z2, r2, f2) => {
     const m = new MeshPhysicalNodeMaterial({ transparent: true, depthWrite: false, side: DoubleSide, fog: false });
@@ -77395,12 +77467,22 @@ function baueKosmos() {
     k2.scale.y = 0.4;
     k2.position.set(x, 0, z2);
     m.colorNode = vec3(f2[0], f2[1], f2[2]);
-    m.opacityNode = float(1).sub(normalView.z.abs()).pow(5).mul(0.3);
+    m.opacityNode = float(1).sub(normalView.z.abs()).pow(6).mul(0.22);
     m.emissiveNode = vec3(f2[0], f2[1], f2[2]).mul(float(1).sub(normalView.z.abs()).pow(5)).mul(1.1);
     m.roughnessNode = float(0.3);
     return k2;
   };
-  N3.daecher.forEach((d2) => G.add(huelle(d2.mitte[0], d2.mitte[2], d2.R, d2.farbe.map((c) => c * 0.6 + 0.3))));
+  N3.daecher.forEach((d2) => {
+    const f2 = d2.farbe.map((c) => c * 0.7 + 0.25);
+    G.add(huelle(d2.mitte[0], d2.mitte[2], d2.R, f2), schein(d2.mitte[0], 0, d2.mitte[2], d2.R * 2.5, f2, 0.1));
+    for (const b2 of d2.bereiche) G.add(schein(b2.mitte[0], 0.1, b2.mitte[2], b2.R * 2.1, f2, 0.16));
+  });
+  B2.monde.forEach((m, n2) => {
+    if (N3.baum.material.has(n2) || !m.samen.length) return;
+    const q2 = N3.pos[n2], c = N3.mini[n2].pts;
+    const f2 = c.length ? [c[3], c[4], c[5]] : [1, 1, 1];
+    G.add(schein(q2[0], 0.15, q2[2], N3.rM[n2] * 2.6, f2, 0.32));
+  });
   G.add(huelle(0, 0, N3.L.mitte.R, [1, 0.8, 0.5]), schein(0, 0.2, 0, N3.L.mitte.R * 1.8, [1, 0.75, 0.45], 0.4));
   const st = sterne(N3.L.R * 7, klein2 ? 8e3 : 26e3, 3), gp = new BufferGeometry(), pp = new Float32Array(st.length / 8 * 3);
   for (let i = 0; i < st.length / 8; i++) {
@@ -77413,7 +77495,7 @@ function baueKosmos() {
   G.userData = { mitten: (j2) => {
     const d2 = N3.daecher[j2];
     return [d2.mitte[0], d2.R * 0.45, d2.mitte[2]];
-  }, mitte: [0, N3.L.mitte.R * 0.5, 0], haeuser: B2.monde.map((m, n2) => ({ n: n2, x: N3.pos[n2][0], y: 0, z: N3.pos[n2][2], titel: m.titel, zahl: m.samen.length, mat: N3.baum.material.has(n2) })), blick: [Rn * 0.5, Rn * 1.3, Rn * 1.5], ziel: [0, 0, 0], max: Rn * 5, fern: true };
+  }, mitte: [0, N3.L.mitte.R * 0.5, 0], haeuser: B2.monde.map((m, n2) => ({ n: n2, x: N3.pos[n2][0], y: 0, z: N3.pos[n2][2], titel: m.titel, zahl: m.samen.length, mat: N3.baum.material.has(n2) })), blick: [Rn * 0.3, Rn * 0.8, Rn * 1.25], ziel: [0, 0, 0], max: Rn * 5, fern: true };
   return G;
 }
 var szene = pass(scene, camera);
@@ -77429,7 +77511,13 @@ var mitAO = fb.mul(vec4(vec3(aoP.getTextureNode().r), 1));
 var Pipe = RenderPipeline || PostProcessing;
 var pipe = new Pipe(renderer);
 var blum = bloom(mitAO, 0.38, 0.55, 0.95);
-pipe.outputNode = mitAO.add(blum);
+var rand2 = screenUV.sub(0.5).length().mul(1.25);
+var vign = float(1).sub(smoothstep2(0.42, 1.05, rand2).mul(0.42));
+var gemischt = mitAO.add(blum).rgb;
+var hell = gemischt.dot(vec3(0.3, 0.59, 0.11));
+var satt = mix(vec3(hell), gemischt, 1.14);
+var warm = mix(satt.mul(vec3(0.94, 0.97, 1.06)), satt.mul(vec3(1.05, 1, 0.93)), smoothstep2(0, 1, hell));
+pipe.outputNode = vec4(warm.mul(vign), 1);
 var ctl = new OrbitControls(camera, canvas);
 ctl.enableDamping = true;
 ctl.dampingFactor = 0.07;
@@ -77486,6 +77574,7 @@ function geheZu(k2) {
   NEBEL.density = 22e-4 / Math.max(1, LG.R / 40) * (u2.nebel ?? 1);
   sonne.visible = !fern;
   blum.strength.value = W2.glut;
+  blum.threshold.value = fern ? 0.95 : 2.2;
   aoP.radius.value = fern ? 0.01 : 1.1;
   ctl.maxPolarAngle = fern ? Math.PI * 0.9 : 1.48;
   ctl.maxDistance = u2.max;
@@ -77579,6 +77668,18 @@ function stockZeigen() {
   zeigeSatz(`Stockwerk ${haus.stock + 1} von ${pl.reihen.length}: ${e2.von === e2.bis ? t2(e2.von) : t2(e2.von) + " bis " + t2(e2.bis)}`, `${e2.zahl} ${e2.zahl === 1 ? "Fassung" : "Fassungen"}. Tippen nennt sie, noch einmal tippen liest sie.`);
   leiste2.querySelector(".wo").textContent = `${haus.stock + 1} / ${pl.reihen.length}`;
 }
+var innenStoff = /* @__PURE__ */ (() => {
+  let m = null;
+  return () => {
+    if (m) return m;
+    const h2 = stoff("wood_floor"), w = stoff("painted_plaster_wall"), xz = positionWorld.xz.mul(0.35), wxy = positionWorld.xy.add(positionWorld.zz).mul(0.3), oben = smoothstep2(0.5, 0.8, normalWorld.y.abs());
+    m = new MeshStandardNodeMaterial();
+    m.colorNode = mix(texture(w.farbe, wxy).rgb.mul(1.2), texture(h2.farbe, xz).rgb.mul(1.5), oben);
+    m.roughnessNode = float(0.68);
+    m.metalnessNode = float(0);
+    return m;
+  };
+})();
 function hinein(n2) {
   const stil = weltKey, o2 = [0, 0, 0], pl = innenPlan(N3, n2, stil, o2), G = new Group(), kk = pl.kisten, nach = /* @__PURE__ */ new Map();
   haus.plan = pl;
@@ -77598,7 +77699,7 @@ function hinein(n2) {
       Q.setFromEuler(EU);
       m.compose(V2.set(kk[i], kk[i + 3] + sy / 2, kk[i + 1]), Q, V1.set(kk[i + 4], sy, kk[i + 11] === 4 ? kk[i + 4] : kk[i + 6]));
       c.setRGB(kk[i + 8] * 1.5, kk[i + 9] * 1.5, kk[i + 10] * 1.5);
-    }, mat = new MeshStandardMaterial({ roughness: 0.72 });
+    }, mat = innenStoff();
     for (const [g, l] of [[kiste, tr], [walze, ru]]) if (l.length) {
       const I = instanzen(g, mat, l, setze);
       I.castShadow = true;
@@ -77606,7 +77707,7 @@ function hinein(n2) {
       I.userData.stock = k2;
       G.add(I);
     }
-    const licht = new PointLight(16767400, 65, pl.R * 4, 1.2);
+    const licht = new PointLight(16767400, 75, pl.R * 4, 1.2);
     licht.position.set(pl.cx || 0, k2 * pl.HOEHE + 2.6, 0);
     licht.userData.stock = k2;
     G.add(licht);
@@ -77647,7 +77748,7 @@ function hinaus() {
   v3.welt.visible = true;
   scene.background = v3.bg;
   scene.environment = v3.env;
-  scene.environmentIntensity = 0.42;
+  scene.environmentIntensity = 0.55;
   scene.fog = v3.fog;
   sonne.visible = v3.sonne;
   camera.position.copy(v3.pos);
