@@ -174,21 +174,23 @@ button{font:inherit;color:inherit}
 #ansichten button:hover,#ansichten button:focus-visible{background:rgba(255,246,224,.08);color:var(--ink)}
 #ansichten button[aria-pressed="true"]{color:var(--ink);background:rgba(255,246,224,.12)}
 #ansichten kbd{font:inherit;font-size:11px;opacity:.55}
-#textgrund{position:fixed;inset:0;z-index:40;background:#0c0b0a;color:#d8d3c6;overflow:auto;padding:24px clamp(14px,4vw,48px) 90px;font:13px/1.55 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;outline:0;-webkit-overflow-scrolling:touch}
+#textgrund{position:fixed;inset:0;z-index:40;color-scheme:light;background:#fff;color:#000;overflow:auto;padding:12px;font:15px/1.4 monospace;outline:0;-webkit-overflow-scrolling:touch}
 #textgrund[hidden]{display:none}
-#textgrund h1{font:inherit;font-weight:700;margin:0 0 2px}
-#textgrund p{margin:0 0 2px;white-space:pre-wrap}
-#textgrund details{margin:0}
-#textgrund summary{cursor:pointer;list-style:none;padding:3px 0;overflow-wrap:anywhere}
+#textgrund h1{font:inherit;margin:0}
+#textgrund p{margin:0;white-space:pre-wrap;overflow-wrap:anywhere}
+#textgrund summary{cursor:pointer;list-style:none;overflow-wrap:anywhere;padding:2px 0}
 #textgrund summary::-webkit-details-marker{display:none}
-#textgrund summary::before{content:"▸ "}
-#textgrund details[open]>summary::before{content:"▾ "}
-#textgrund .b{font-weight:700}
-#textgrund .e{padding-left:2ch}
-#textgrund .z{white-space:pre-wrap;overflow-wrap:anywhere;color:#b9b4a7}
-#textgrund button{all:unset;cursor:pointer;text-decoration:underline;text-underline-offset:3px;padding:6px 4px 6px 0;display:inline-block}
-#textgrund button:focus-visible,#textgrund summary:focus-visible{outline:1px solid #d8d3c6}
-#textgrund .zu{position:fixed;top:10px;right:14px;background:#0c0b0a;padding:6px 10px}
+#textgrund summary::before{content:"[+] "}
+#textgrund details[open]>summary::before{content:"[-] "}
+#textgrund .e{padding-left:4ch}
+#textgrund button{all:unset;cursor:pointer;padding:2px 0;display:inline-block}
+#textgrund button::before{content:"["}#textgrund button::after{content:"]"}
+#textgrund button:focus-visible,#textgrund summary:focus-visible{outline:1px dotted #000}
+#innenschilder span{position:fixed;left:0;top:0;pointer-events:none;color:var(--ink);font-size:12px;letter-spacing:.1em;text-shadow:0 1px 3px #000,0 0 8px #000;white-space:nowrap}
+#etagen{position:fixed;left:50%;translate:-50% 0;top:calc(14px + env(safe-area-inset-top,0px));display:flex;gap:4px;z-index:25;background:rgba(8,7,12,.72);border:1px solid rgba(255,246,224,.14);border-radius:10px;padding:4px}
+#etagen[hidden]{display:none}
+#etagen button{all:unset;cursor:pointer;min-width:44px;min-height:40px;display:flex;align-items:center;justify-content:center;padding:0 10px;color:var(--ink);font-size:14px;border-radius:6px;white-space:nowrap}
+#etagen button:hover,#etagen button:focus-visible{background:rgba(255,246,224,.1)}
 .imnetz #spiralknopf{display:none}
 #gartenknopf[aria-pressed="true"]{color:var(--ink)}
 #ansichtknopf svg,#seite svg,#spiralknopf svg,#netzknopf svg{width:22px;height:22px;display:block}
@@ -489,3 +491,5 @@ a.halten{text-decoration:none}
   .marke-knopf{min-height:40px}
   #alsnamen b{font-size:10px;letter-spacing:.14em}
 }
+
+.imhaus #dachnamen,.imhaus #namen,.imhaus .marke,.imhaus .hint,.imhaus #hint{opacity:0!important;pointer-events:none}

@@ -54,6 +54,17 @@ Eigene Variante, abgezweigt von Alsformen (22.10.). Andere Zweige und Arbeitskop
 - Taste T, `textfassung.js` (Inhalt), `textgrund.js` (Anzeige): die ganze Logik nur aus Text und Zeichen, aufklappbar. Bezirke, Bereiche, Werke mit Arbeitsbalken, Stimmen, Reife und Wuchs, jede Fassung mit Abstammung als Einrückung, jede gespeicherte Beziehung mit Richtung. Eine Tafel nennt, was einander in allen Ansichten entspricht. Keine Kennungen.
 - Der Pflanzenknopf öffnet jetzt einen Wähler für alle acht Ansichten, weil einzelne Knöpfe am Handy nicht mehr passen.
 
+## Schritt 11: Der Mechanismus wird übertragen, nicht das Bild (Ralf, 01.11.)
+Ralf: Keine optische 1:1-Übertragung und kein Morph, sondern dasselbe Prinzip darunter, in jeder Welt frei gestaltet. Die Werke fliegen darum nicht mehr von Ansicht zu Ansicht. Jede Welt entsteht in ihrer eigenen Gestalt.
+
+Mechanismus, in jeder Welt gleich: unten das Älteste, oben das Jüngste. Verzweigung nur, wo sie belegt ist. Jede Stimme hat ihren Bereich. Jede Fassung ist genau ein Ding. Mehr Arbeit heißt mehr Länge oder Höhe.
+
+- Garten: Die Art folgt der Abstammung. Verzweigt = Baum mit Stamm und Ästen, lange Kette = Ranke, kurz oder einzeln = Blume, ohne belegte Herkunft = Blumenwiese. Eine Fassung ist genau ein Blatt, eine Blüte (obenauf) oder eine Frucht (Grundformation). Gelände ohne Scheiben und Ränder.
+- Campus: Türme, die sich mit jeder Etage weiterdrehen. Büro: gerade Riegel im Straßenraster, ein Dach je Straße. Etage = Zeitabschnitt, ihre Zahl = Arbeit.
+- Hineinzoomen in Campus und Büro: Gebäude antippen zeigt den Schnitt durch alle Etagen, Etage antippen oder Pfeil auf und ab zeigt die Etage von oben. Abteilung = Stimme, auf jeder Etage an derselben Stelle. Schreibtisch = Fassung, Karteistapel = ihre Textmenge, Faden von Tisch zu Tisch = belegte Abstammung, Wendeltreppe = die Spirale. Campus rund um ein Atrium, Büro als Riegel mit Buchten. Tisch antippen nennt die Fassung, nochmal tippen öffnet sie zum Lesen. Escape führt Stufe für Stufe hinaus.
+- Text: weißes Blatt, Schreibmaschinenschrift, keine Farbe, keine Fläche. Nur `[+]` und `[-]`.
+- Korrektur: die Stufe „echter Morph“ aus Schritt 7 gilt nicht mehr, ebenso die Beete aus Schritt 7 und die Tische als Werke aus Schritt 9. Dorf und Galaxie sind erst teilweise frei gestaltet.
+
 ## Prüfstand 01.11.
-- Geprüft im Browser bei 1280 x 800 und 390 x 844, auf der Datenkopie: alle Ansichten, Morph in Einzelbildern, Wähler, Textfassung, Werk öffnen und zurück. 60 Bilder je Sekunde am Mac (Grafik des Macs, nicht auf einem echten Handy). 0 schwarze Starts von 12. Bilder: `Development/Artifacts/lichtwerk-vergleich-20261101/lichtgrund/garten4`.
-- Offen: Laufende Bewegung nur in Standbildern beurteilt, nicht als Film. Nicht auf einem echten Handy geprüft. Viele Namen überlappen weiter die Marke. Die Hauptzweige haben nichts davon. In der Galaxie sind Bahnen sehr großer Werke (FASKA) noch dichte Schläuche statt einzelner Spiralen. Die Beete sind groß und oft leer, weil 72 Werke nur eine Fassung haben; das ist der Bestand.
+- Geprüft im Browser bei 1280 x 800 und 390 x 844, auf der Datenkopie: alle Ansichten, Morph in Einzelbildern, Wähler, Textfassung, Werk öffnen und zurück. 60 Bilder je Sekunde am Mac (Grafik des Macs, nicht auf einem echten Handy). 0 schwarze Starts von 12. Bilder: `Development/Artifacts/lichtwerk-vergleich-20261101/lichtgrund/garten4` und `garten5`.
+- Offen: Laufende Bewegung nur in Standbildern beurteilt, nicht als Film. Nicht auf einem echten Handy geprüft. Namen überlappen teils die Marke. In der Galaxie sind Bahnen sehr großer Werke (FASKA) noch dichte Schläuche. Die Innenräume sind noch schlichte Kisten: kein Glas, keine Möbel außer Tisch und Stuhl. Viele Werke haben nur eine Fassung, ihr Gebäude ist also einstöckig mit einem Tisch; das ist der Bestand.

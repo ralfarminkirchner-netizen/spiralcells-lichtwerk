@@ -8,17 +8,17 @@ globalThis.innerWidth = 1200; globalThis.innerHeight = 800;
 const B = bestand(JSON.parse(readFileSync('testdaten/kette-claude/state.json', 'utf8')));
 const O = JSON.parse(readFileSync('app/ordnung.json', 'utf8'));
 const {Netz, arbeit} = await import('../app/js/netz.js');
-const {pflanzen, BLATT, FELD} = await import('../app/js/gelaende.js');
+const {pflanzen, BLATT, BLUETE, FRUCHT, FELD} = await import('../app/js/gelaende.js');
 const {galaxie, mondOrt, planetOrt, FLUG} = await import('../app/js/mondbahn.js');
 const N = new Netz(B, O), material = N.baum.material.size, fassungen = B.monde.reduce((a, m, i) => a + (N.baum.material.has(i) ? 0 : m.samen.length), 0);   // Lesematerial zeigt sich als eines, wie im Kosmos
 
-test('Landschaft: jede Fassung genau ein Blatt, plus je ein liegendes Blatt fürs Lesematerial', () => {
+test('Garten: jede Fassung genau ein Organ (Blatt, Blüte oder Frucht), plus je ein liegendes Blatt fürs Lesematerial', () => {
   const P = pflanzen(N); assert.equal(P.blaetter, fassungen); assert.equal(P.werke.length, B.monde.length);
-  let z = 0; for(const w of P.werke) for(let i = 0; i < w.I.length; i += FELD) if(w.I[i + 7] === BLATT) z++;
+  let z = 0; for(const w of P.werke) for(let i = 0; i < w.I.length; i += FELD) if([BLATT, BLUETE, FRUCHT].includes(w.I[i + 7])) z++;
   assert.equal(z, fassungen + material);
 });
 test('Landschaft: ein Beet mit mehr Arbeit liegt nicht tiefer; Bezirke sind eben, die Lichtung bleibt eine Mulde', () => {
-  const f = N.land.flaechen, d = f.slice(0, -1); for(const b of d) assert.ok(Math.abs(N.land.y(b.x, b.z) - b.h) < 1e-6);
+  const f = N.land.flaechen, d = f.slice(0, -1); for(const b of d) assert.ok(Math.abs(N.land.y(b.x, b.z) - b.h) < N.L.R * 0.08);
   assert.ok(N.land.y(0, 0) < Math.max(...d.map(b => b.h)));
 });
 test('Galaxie: jedes Werk ein Planet, jede Fassung ein Mond', () => {
@@ -47,4 +47,9 @@ test('Textfassung: jedes Werk und jede Fassung steht da, keine Kennung', async (
   const T = alsText(N, FADEN_SATZ, arbeit), W = T.bezirke.flatMap(b => b.werke), Z = W.flatMap(w => w.fassungen);
   assert.equal(W.length, B.monde.length); assert.equal(Z.length, fassungen);
   const alles = JSON.stringify(T); for(const m of B.monde) for(const s of m.samen) assert.ok(!alles.includes(s.id), 'keine Kennung einer Fassung');
+});
+
+test('Gebäude innen: jede Fassung genau ein Schreibtisch, Etagen aufsteigend nach Zeit', async () => {
+  const {innenPlan} = await import('../app/js/innen.js'), {etagen} = await import('../app/js/anlage.js');
+  for(const stil of ['campus', 'buero']) B.monde.forEach((m, n) => { if(N.baum.material.has(n) || !m.samen.length) return; const P = innenPlan(N, n, stil, [0, 0, 0]); assert.equal(P.tische.length, m.samen.length, m.titel); const E = etagen(m, 0.8); for(let k = 1; k < E.length; k++) assert.ok(E[k].von >= E[k - 1].bis); });
 });

@@ -10,7 +10,8 @@ import {Zelle, baueZelle, DT, updSparks, drawSparks, clearSparks, burst, spark} 
 import {Netz, baueNetz} from './netz.js';
 import {zeichneLandschaft} from './garten.js';
 import {zeichneGalaxie} from './galaxie.js';
-import {zeichneSiedlung} from './siedlung.js';
+import {zeichneSiedlung, zeichneInnen} from './siedlung.js';
+import {innenLichter} from './innen.js';
 import {arbeit} from './netz.js';
 import {regie} from './regie.js';
 import {U, W} from './welt.js';
@@ -555,6 +556,7 @@ function advance(rdt){
     // Vom einen Ort zum anderen: erst sinkt der alte Bau, dann steht der neue auf
     const dB = rdt / (W.RM ? 0.1 : 2.2); if(U.stil !== U.stilZiel){ U.bauK = Math.max(0, U.bauK - dB * 1.6); if(U.bauK <= 0) U.stil = U.stilZiel; } else if(U.stil && U.landK > 0.4) U.bauK = Math.min(1, U.bauK + dB);
     const zi = U.stil === 'dorf' ? 0 : U.stil === 'campus' ? 1 : U.stil === 'buero' ? 2 : -1; for(let a = 0; a < 3; a++) U.art[a] += ((a === zi ? 1 : 0) - U.art[a]) * (1 - Math.exp(-rdt / (W.RM ? 0.05 : 0.8)));
+    U.innenK += (U.innenT - U.innenK) * (1 - Math.exp(-rdt / (W.RM ? 0.05 : 0.75))); if(U.innen && U.innenT === 0 && U.innenK < 0.01){ U.innen = null; U.innenK = 0; document.body.classList.remove('imhaus'); B.innenSchilder && B.innenSchilder(); }
     if(U.galK <= 0) U.galZeit = 0; else if(W.RM) U.galZeit = 0; else if(!U.paused) U.galZeit += rdt; }
   U.dachK += ((U.dach != null || U.als ? 1 : 0) - U.dachK) * (1 - Math.exp(-rdt / (W.RM ? 0.1 : 0.7)));
   U.alsK += ((U.als ? 1 : 0) - U.alsK) * (1 - Math.exp(-rdt / (W.RM ? 0.1 : 0.7)));
@@ -579,8 +581,10 @@ function draw(rdt){
   if(U.flug && performance.now() - U.flug.t0 > U.flug.dauer) U.flug = null;
   const visZ = W.Z ? (1 - sstep(0.25, 0.7, U.netK)) * (1 - 0.7 * fk) : 0, visN = W.N && !W.ruht ? Math.max(sstep(0.05, 0.5, U.netK), 0.75 * fk) : 0;
   if(W.Z) baueZelle(W.Z, U, W.wall, rdt, visZ);
-  if(visN > 0) baueNetz(W.N, U, W.wall, visN, W.aktiv, visZ);
-  if(visN > 0 && W.N.als) baueAlsformen(W.N, W.N.als, U, W.wall, visN, W.RM); else { U.echos.fill(null); U.spuren.fill(null); U.alsSchilder.length = 0; }
+  const innE = U.innen ? (W.RM ? Math.round(U.innenK) : eio(U.innenK)) : 0, draussen = 1 - sstep(0.25, 0.6, innE), drinnen = sstep(0.5, 0.85, innE) * visN;
+  if(visN > 0) baueNetz(W.N, U, W.wall, visN * draussen, W.aktiv, visZ);
+  if(drinnen > 0.01) innenLichter(P, screenRing, U.innen, drinnen);
+  if(visN * draussen > 0.003 && W.N.als) baueAlsformen(W.N, W.N.als, U, W.wall, visN * draussen, W.RM); else { U.echos.fill(null); U.spuren.fill(null); U.alsSchilder.length = 0; }
   // Verbinden: ein Faden folgt dem Finger
   if(U.bind && W.Z){ const A = [0, 0, 0]; W.Z.seedPos(U.bind.von, A); const Bp = pointerWorld(U.bind.x, U.bind.y, CAM.target);
     if(U.bind.ziel >= 0) W.Z.seedPos(U.bind.ziel, Bp);
@@ -595,9 +599,10 @@ function draw(rdt){
   const Z = W.Z, still = Z && Z.S.still > 0 ? 1 : 0, lockGlow = Z ? Math.max(0, 1 - (Z.S.clock - Z.S.lockT) / 1.2) * (W.RM ? 0.3 : 1) : 0;
   const lz = W.RM ? Math.round(U.landK) : eio(U.landK);
   const gz = W.RM ? Math.round(U.galK) : eio(U.galK);
-  M.vorPunkte = (gl, ENC) => { zeichneLandschaft(gl, W.N, U, M, W.wall, visN, lz, ENC, {bau: U.stil ? U.bauK : 0, art: U.art, siedlung: U.stil && U.bauK > 0.002 ? (tR, S, fern, kuehl) => zeichneSiedlung(gl, W.N, U, M, U.stil, U.bauK, lz, visN, ENC, tR, S, fern, kuehl, W.wall) : null}); zeichneGalaxie(gl, W.N, U, M, arbeit, visN, gz, ENC, U.galZeit); };
-  M.render(W.wall, {neb: 0.4 * (1 - lz * visN), thr: 0.5 + (0.6 + 0.8 * U.art[2]) * lz * visN, par: [U.yawOff * 0.15, U.elevOff * 0.12], still: W.RM,
+  M.vorPunkte = (gl, ENC) => { zeichneLandschaft(gl, W.N, U, M, W.wall, visN, lz, ENC, {aussen: draussen, bau: U.stil ? U.bauK : 0, art: U.art, siedlung: U.stil && U.bauK > 0.002 && draussen > 0.003 ? (tR, S, fern, kuehl) => zeichneSiedlung(gl, W.N, U, M, U.stil, U.bauK, lz, visN * draussen, ENC, tR, S, fern, kuehl, W.wall) : null}); zeichneInnen(gl, W.N, U, M, drinnen, ENC, null, null); zeichneGalaxie(gl, W.N, U, M, arbeit, visN, gz, ENC, U.galZeit); };
+  M.render(W.wall, {neb: 0.4 * (1 - lz * visN), thr: 0.5 + (0.6 + 0.8 * Math.max(U.art[2], drinnen)) * Math.max(lz * visN, drinnen), par: [U.yawOff * 0.15, U.elevOff * 0.12], still: W.RM,
     bloom: 0.32 * (1 - 0.6 * U.art[2]) + (Z ? (0.42 * Z.S.lk * (1 - sstep(4, 10, Z.S.clock - Z.S.lockT)) + 0.1 * Z.S.lk + 0.12 * Z.S.C) * (1 - U.netK) : 0) + 0.6 * lockGlow, exp: (1.05 + 0.08 * (Z ? Z.S.hold : 0)) * (still ? 0.62 : 1)});
+  B.innenSchilder && B.innenSchilder();
   ui(cam);
   klangFrame(W.ruht ? null : Z, U, [0, 0, 0, 0], U.netK);
 }

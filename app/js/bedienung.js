@@ -3,6 +3,7 @@
    Ziehen dreht, Halten verbindet, ⌘V oder Ablegen wirft Material ein.
    Jede folgenreiche Handlung braucht ein Halten im Bild. Keine Formulare.
    ===================================================================== */
+import {innenPlan, ABTEILUNG} from './innen.js';
 import {zeichneText} from './textgrund.js';
 import {clamp, sstep, DEG, CAM, toScreen, pointerWorld, SILVER} from './licht.js';
 import {U, W} from './welt.js';
@@ -472,6 +473,8 @@ const gleich = (a, b) => !!(a && b && a.art === b.art && (a.art === 'same' ? a.m
 
 /* ----------------------------------------------------------------- Tippen */
 function tippen(sx, sy){
+  if(U.innen && U.innenT > 0 && U.netT > 0.5){ innenTippen(sx, sy); return; }
+  { const q = treffer(sx, sy); if(q && q.art === 'mond' && (U.stil === 'campus' || U.stil === 'buero') && U.bauK > 0.5 && !W.N.baum.material.has(q.i)){ hineingehen(q.i); return; } }
   const Z = W.Z; let t = treffer(sx, sy);
   // Die gewählte Ausprägung gewinnt im Umkreis von 28 px: die zweite Berührung muss nicht pixelgenau sein
   if(U.sel && U.sel.art === 'same' && Z && U.sel.mond.id === Z.m.id && (!t || t.art === 'same')){ const p = [0, 0, 0]; Z.seedPos(U.sel.i, p); const s = toScreen(p[0], p[1], p[2]);
@@ -557,7 +560,7 @@ export function installiere(a){
     const f = Math.exp(e.deltaY * 0.0012);
     if(U.netK > 0.6 && f < 1){ const mo = trefferMond(e.clientX, e.clientY); if(mo >= 0 && U.zoom * f < 0.55){ U.zoom = 1; api.oeffneMond(mo, {}); return; } }
     zoomAuf(U.zoom * f); }, {passive: false});
-  canvas.addEventListener('dblclick', e => { const t = treffer(e.clientX, e.clientY); if(t && t.art === 'mond') api.oeffneMond(t.i, {}); });
+  canvas.addEventListener('dblclick', e => { if(U.innen || ((U.stil === 'campus' || U.stil === 'buero') && U.bauK > 0.5)) return; const t = treffer(e.clientX, e.clientY); if(t && t.art === 'mond') api.oeffneMond(t.i, {}); });
 
   addEventListener('keydown', e => {
     if(U.fahrt){ U.netK = U.netT; U.fahrt = null; if(e.key === 'Escape') return; }
@@ -568,6 +571,7 @@ export function installiere(a){
     if(e.metaKey || e.ctrlKey || e.altKey) return;
     const k = e.key; klangWake();
     if(k === 'Escape'){ zurueck(); }
+    else if(U.innen && U.innenT > 0 && U.netT > 0.5 && (k === 'ArrowUp' || k === 'ArrowDown')){ e.preventDefault(); etageSchritt(k === 'ArrowUp' ? 1 : -1); }
     else if(k === ' '){ e.preventDefault(); U.paused = !U.paused; zeile(U.paused ? 'Angehalten.' : ''); }
     else if(k >= '1' && k <= '5'){ const i = +k - 1; U.solo = U.solo === i ? -1 : i; ansage(U.solo >= 0 ? `${STIMMEN[i].name} allein.` : 'Alle Stimmen.'); }
     else if(k === '0'){ U.solo = -1; }
@@ -622,6 +626,9 @@ export function installiere(a){
     else text = dt.getData('text/plain');
     if(text && text.trim()){ if(!stoff.ablegen(text)) api.einwurf(text, e.clientX, e.clientY); } });
 
+  // Im Gebäude
+  $('#etage-hoch').addEventListener('click', () => { etageSchritt(1); activity(); }); $('#etage-runter').addEventListener('click', () => { etageSchritt(-1); activity(); }); $('#etage-raus').addEventListener('click', () => { zurueck(); activity(); });
+  B_schilder();
   // Ecken
   $('#snd').addEventListener('click', () => { const on = klangToggle(); const b = $('#snd'); b.setAttribute('aria-pressed', on ? 'true' : 'false'); b.setAttribute('aria-label', on ? 'Klang ausschalten' : 'Klang einschalten'); activity(); });
   $('#seite').addEventListener('click', () => { seite(); activity(); });
@@ -648,8 +655,8 @@ function zoomAuf(z){
   U.zoom = clamp(z, 0.35, 2.6);
 }
 /* Dieselben Werke, andere Darstellung. Am Bestand ändert sich nichts */
-const ANSICHT = {kosmos: () => netzSatz(W.B), licht: () => 'Lichtansicht: dieselben Werke, die Spirale steigt als Pflanze aus Licht auf.', garten: () => 'Derselbe Bestand als Landschaft: Beete sind Dächer, Blätter sind Fassungen, das Mycel sind die Verbindungen.', galaxie: () => 'Derselbe Bestand als Galaxie: Planeten sind Werke, Monde sind Fassungen. Die Galaxie dreht sich und fliegt, darum werden ihre Bahnen Spiralen.',
-  dorf: () => 'Derselbe Bestand als Dorf: Häuser sind Werke, jedes helle Fenster eine Fassung, die Wege sind die Verbindungen.', campus: () => 'Derselbe Bestand als Campus: Gebäude sind Werke, ihre Höhe ist die Arbeit, jedes helle Fenster eine Fassung.', buero: () => 'Derselbe Bestand als Büro: Tische sind Werke, Blätter sind Fassungen, der Stapel ist die Arbeit, Abteilungen sind Dächer.'};
+const ANSICHT = {kosmos: () => netzSatz(W.B), licht: () => 'Lichtansicht: dieselben Werke, die Spirale steigt als Pflanze aus Licht auf.', garten: () => 'Derselbe Mechanismus als Garten: Bäume und Ranken wachsen aus der Abstammung, Blätter, Blüten und Früchte sind Fassungen, das Mycel sind die Verbindungen.', galaxie: () => 'Derselbe Bestand als Galaxie: Planeten sind Werke, Monde sind Fassungen. Die Galaxie dreht sich und fliegt, darum werden ihre Bahnen Spiralen.',
+  dorf: () => 'Derselbe Bestand als Dorf: Häuser sind Werke, jedes helle Fenster eine Fassung, die Wege sind die Verbindungen.', campus: () => 'Derselbe Mechanismus als Campus: jeder Turm ein Werk, jede Etage ein Zeitabschnitt, jedes helle Fenster eine Fassung. Tippe auf ein Gebäude und geh hinein.', buero: () => 'Derselbe Mechanismus als Bürokomplex: Riegel an Straßen, unten das Älteste, oben das Jüngste. Tippe auf ein Gebäude und geh hinein.'};
 function ansicht(a){ if(U.netT < 0.5 && a !== 'text') return;
   if(a === 'text'){ textfassung(!U.imText); return; } if(U.imText) textfassung(false);
   U.ansicht = U.ansicht === a ? 'kosmos' : a; const v = U.ansicht, ort = v === 'dorf' || v === 'campus' || v === 'buero';
@@ -657,6 +664,17 @@ function ansicht(a){ if(U.netT < 0.5 && a !== 'text') return;
   wahlZeigen(); zeile(ANSICHT[v]()); }
 function wahlZeigen(){ document.querySelectorAll('#ansichten button').forEach(b => { b.setAttribute('aria-pressed', (U.imText ? b.dataset.a === 'text' : b.dataset.a === U.ansicht) ? 'true' : 'false'); }); }
 function textfassung(an){ U.imText = an; const el = $('#textgrund'); el.hidden = !an; if(an){ zeichneText(el, W.N, i => { textfassung(false); api.oeffneMond(i, {}); }, () => textfassung(false)); el.focus({preventScroll: true}); } else canvas.focus({preventScroll: true}); wahlZeigen(); }
+/* In ein Gebäude hinein: das Ganze im Schnitt, dann Etage für Etage */
+function hineingehen(n){ const o = W.N.ort[n]; U.innen = {n, stil: U.stil, etage: -1, wahl: null, plan: innenPlan(W.N, n, U.stil, [o[0], 0, o[2]])}; U.innenT = 1; U.sel = null; document.body.classList.add('imhaus'); $('#etagen').hidden = false; etageSagen(); }
+function hinausgehen(){ U.innenT = 0; $('#etagen').hidden = true; zeile(ANSICHT[U.ansicht]()); }
+function etageSetzen(k){ const I = U.innen; I.etage = k; I.wahl = null; etageSagen(); }
+function etageSchritt(d){ const I = U.innen, max = I.plan.reihen.length - 1; etageSetzen(I.etage < 0 ? (d > 0 ? 0 : max) : Math.max(0, Math.min(max, I.etage + d))); }
+function etageSagen(){ const I = U.innen, m = W.B.monde[I.n], max = I.plan.reihen.length; if(!m.samen.length){ zeile(`${m.titel}: noch leer. Es gibt nur die Ausgangsfassung, darum steht hier kein Schreibtisch.`); return; } if(I.etage < 0){ zeile(`${m.titel}: ${max} ${max === 1 ? 'Etage' : 'Etagen'}, unten das Älteste. In der Mitte die Treppe, je Stimme eine Abteilung. Tippe auf eine Etage.`); return; }
+  const r = I.plan.reihen[I.etage], t = x => x && x !== 'ohne Datum' ? new Date(x).toLocaleDateString('de-DE', {day: 'numeric', month: 'long'}) : 'ohne Datum'; zeile(`Etage ${I.etage + 1} von ${max}: ${r.von === r.bis ? t(r.von) : t(r.von) + ' bis ' + t(r.bis)}, ${r.zahl} ${r.zahl === 1 ? 'Schreibtisch' : 'Schreibtische'}. Ein Tisch ist eine Fassung, der Stapel ihre Textmenge.`); }
+function innenTippen(sx, sy){ const I = U.innen, pl = I.plan; if(I.etage < 0){ let b = -1, bd = Infinity; pl.reihen.forEach((r, k) => { const s = toScreen(pl.o[0], r.y + 1, pl.o[2]), d = Math.abs(s[1] - sy); if(d < bd){ bd = d; b = k; } }); if(b >= 0) etageSetzen(b); return; }
+  let t = null, bd = 44 * 44; for(const x of pl.tische){ if(x.k !== I.etage) continue; const s = toScreen(x.x, x.y, x.z), d = (s[0] - sx) ** 2 + (s[1] - sy) ** 2; if(d < bd){ bd = d; t = x; } }
+  if(!t){ I.wahl = null; etageSagen(); return; } const m = W.B.monde[I.n], sa = m.samen[t.i];
+  if(I.wahl === t.i){ api.oeffneMond(I.n, {waehle: sa.id, stufe: 2}); return; } I.wahl = t.i; zeile(`${sa.label || 'Fassung'} · ${(sa.laenge || 0).toLocaleString('de-DE')} Zeichen · noch einmal tippen zum Lesen.`); }
 function spirale(){ if(U.netT > 0.5) return; U.spiralT = U.spiralT > 0.5 ? 0 : 1;
   const b = $('#spiralknopf'); b.setAttribute('aria-pressed', U.spiralT > 0.5 ? 'true' : 'false'); b.setAttribute('aria-label', U.spiralT > 0.5 ? 'Als Wuchs zeigen' : 'Als Spirale zeigen');
   const m = W.Z && W.Z.m;
@@ -664,9 +682,13 @@ function spirale(){ if(U.netT > 0.5) return; U.spiralT = U.spiralT > 0.5 ? 0 : 1
 function seite(){ if(U.netT > 0.5) return; U.kelchT = U.kelchT > 0.5 ? 0 : 1; U.elevOff = 0;
   const b = $('#seite'); b.setAttribute('aria-pressed', U.kelchT > 0.5 ? 'true' : 'false'); b.setAttribute('aria-label', U.kelchT > 0.5 ? 'Von oben: das Werk' : 'Von der Seite: Geschichte');
   zeile(U.kelchT > 0.5 ? 'Von der Seite: die Geschichte. Unten der Keim, oben das Jüngste.' : mondSatz(W.Z && W.Z.m)); }
+function B_schilder(){ const host = $('#innenschilder'); schilderMalen = () => { const I = U.innen, an = I && U.innenK > 0.7 && U.innenT > 0; if(!an){ if(host.childElementCount) host.innerHTML = ''; host._f = null; return; } const pl = I.plan, modus = I.etage < 0 ? 'ganz' : 'etage' + I.etage, liste = I.etage < 0 ? pl.reihen.map((r, k) => ({t: `${k + 1}`, x: pl.o[0] + pl.R * 1.12, y: r.y + 1.2, z: pl.o[2]})) : pl.schilder.map(s => ({t: s.name, x: pl.o[0] + s.x, y: I.etage * pl.HOEHE + 1.4, z: pl.o[2] + s.z})); if(host._f !== modus){ host._f = modus; host.innerHTML = ''; for(const q of liste){ const e = document.createElement('span'); e.textContent = q.t; host.append(e); } } liste.forEach((q, j) => { const s = toScreen(q.x, q.y, q.z), e = host.children[j]; if(e){ e.style.opacity = s[2] > 0 ? '.9' : '0'; e.style.transform = `translate(${Math.round(s[0])}px,${Math.round(s[1])}px) translate(-50%,-50%)`; } }); }; }
+let schilderMalen = () => {};
+export const innenSchilder = () => schilderMalen();
 export function zurueck(){
   clearTimeout(U.lesenUhr);
   if(U.imText){ textfassung(false); return; }
+  if(U.innen && U.innenT > 0 && U.netT > 0.5){ if(U.innen.wahl != null){ U.innen.wahl = null; etageSagen(); return; } if(U.innen.etage >= 0){ etageSetzen(-1); return; } hinausgehen(); return; }
   if(U.siegel){ const l = U.siegel.lassen; schliesseSiegel(); l && l(); return; }
   if(U.waehlen){ U.waehlen = null; zeile(mondSatz(W.Z && W.Z.m)); return; }
   if(U.teilnahme){ U.teilnahme = null; zeile('Nichts eingetragen.'); return; }

@@ -18,20 +18,22 @@ export function wuchsWort(m, plan){ const n = m.samen.length; if(!n || !plan) re
 
 export const LEGENDE = [
   ['Stimmen', STIMMEN.map((s, i) => `${STIMMZEICHEN[i]} ${s.name}`).concat(`${RALF} Ralf`, `${QUELLE} Quelle`).join(' · ')],
-  ['Abstammung', '├─ und Einrückung: folgt auf der Fassung darüber. ·  am Anfang: ohne belegte Herkunft.'],
+  ['Abstammung', 'Einrückung: folgt auf der Fassung darüber. Ein Punkt am Anfang: ohne belegte Herkunft.'],
   ['Arbeit', '█░ wie viel in einem Werk entstanden ist (Fassungen und Textmenge). Das ist die Länge der Spirale.'],
   ['Beziehung', '→ geht von diesem Werk aus, ← kommt hier an. Nur gespeicherte Beziehungen.'],
   ['Reife', 'frisch, wachsend, gereift, kanonisch: so steht es im Bestand.'],
 ];
 export const ENTSPRECHUNG = [
-  ['Text', 'Bilder: Kosmos · Garten · Galaxie · Dorf · Campus · Büro'],
-  ['Mitte', 'Zentrale · Lichtung · Kern · Marktplatz · Innenhof · Empfang'],
-  ['Dach', 'Hülle · Beet · Sonne · Viertel · Bauabschnitt · Abteilung'],
-  ['ohne Dach', 'offener Raum · Wildwiese · freie Planeten · Streusiedlung · freies Gelände · Flur'],
-  ['Werk', 'Zelle · Pflanze · Planet · Haus · Gebäude · Tisch'],
-  ['Fassung', 'Korn · Blatt · Mond · Fenster · Fenster · Blatt Papier'],
-  ['Arbeit', 'Spirale · Höhe · Bahnspirale · Höhe · Höhe · Stapel'],
-  ['Beziehung', 'Faden · Mycel · Lichtbrücke · Weg · Weg · Linie am Boden'],
+  ['Text', 'Kosmos · Garten · Galaxie · Dorf · Campus und Büro'],
+  ['Mitte', 'Zentrale · Lichtung · Kern · Marktplatz · Innenhof'],
+  ['Dach', 'Hülle · Hain · Sonne · Viertel · Bauabschnitt oder Straße'],
+  ['Werk', 'Zelle · Baum, Blume, Ranke oder Wiese · Planet · Haus · Gebäude'],
+  ['Zeit, von unten', 'Windung · Höhe am Stamm · Umlauf · Stockwerk · Etage'],
+  ['Stimme', 'Speiche · Farbe · Farbe · Licht im Fenster · Abteilung'],
+  ['Fassung', 'Korn · Blatt, Blüte oder Frucht · Mond · Fenster · Schreibtisch'],
+  ['Textmenge', 'Helle · Größe · Bahnlänge · Fenster · Karteistapel'],
+  ['Abstammung', 'Einrückung hier · Ast · Spur · Anbau · Faden von Tisch zu Tisch'],
+  ['Beziehung', 'Faden · Mycel · Lichtbrücke · Weg · Gang'],
 ];
 
 export function alsText(N, FADEN_SATZ, arbeit){
