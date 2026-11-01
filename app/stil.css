@@ -17,6 +17,8 @@
 html,body{height:100%;margin:0;background:var(--void);color:var(--ink);overflow:hidden}
 body{font-family:var(--f-line);-webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none}
 #gl{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none;cursor:default;outline:none}
+#garten{position:fixed;inset:0;width:100%;height:100%;display:none;pointer-events:none}
+.imgarten #namen,.imgarten #dachnamen,.imgarten #zeile{text-shadow:0 1px 3px rgba(10,8,3,.9),0 0 10px rgba(10,8,3,.6)}
 #gl.zeigt{cursor:pointer}
 #gl:focus-visible{box-shadow:inset 0 0 0 1px var(--ink-faint)}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);clip-path:inset(50%);white-space:nowrap}

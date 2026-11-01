@@ -46,7 +46,7 @@ export function arbeit(m){ const zeichen = m.samen.reduce((a, s) => a + Math.max
    als Spirale, die Stimme als Farbe, Gabeln etwas neben der Bahn. Die Länge der Spirale zeigt, wie viel schon entstanden ist.
    Die Spirale ist Anordnung, kein Beleg für Abstammung. Im Garten steigt dieselbe Spirale als Pflanze auf: jedes Korn hat seine Höhe. */
 function miniWuchs(m, rM, seed){
-  const n = m.samen.length, W = n ? wuchs(m) : null, w = arbeit(m), turns = 0.45 + 2.6 * w, weite = 0.3 + 0.5 * w, H = rM * (1.2 + 4.2 * w);
+  const n = m.samen.length, W = n ? wuchs(m) : null, w = arbeit(m), turns = 0.45 + 2.6 * w, weite = 0.3 + 0.5 * w, H = rM * (2.2 + 6.5 * w);
   const bahn = t => { const a = -Math.PI * 0.73 + t * TAU * turns, r = rM * (0.07 + weite * Math.pow(t, 0.8)); return [r * Math.cos(a), r * Math.sin(a), a]; };
   const schritt = Math.max(1, Math.ceil(n / 160)), pts = [], stiel = [];
   const G = n ? pflanze(m, W, rM, H) : {lage: new Float32Array(0), stengel: new Float32Array(0)}, ptsG = [];
@@ -62,7 +62,7 @@ function miniWuchs(m, rM, seed){
   const hn = Math.round(clamp(rM * 26, 40, 96)), p3 = hash(seed * 1.3) * TAU, p5 = hash(seed * 2.1) * TAU, haut = [];
   for(let j = 0; j < hn; j++){ const a = j / hn * TAU, r = rM * (1 + Math.sin(a * 3 + p3) * 0.036 + Math.cos(a * 5 + p5) * 0.016);
     let u = (a / Math.PI - 1.01) / 0.7, hell = u >= 0 && u <= 1 ? Math.sin(Math.PI * u) : 0; haut.push(r * Math.cos(a), r * Math.sin(a) * 0.94, hell); }
-  return {pts: new Float32Array(pts), ptsG: new Float32Array(ptsG), stiel: new Float32Array(stiel), stengel: G.stengel, haut: new Float32Array(haut), H};
+  return {pts: new Float32Array(pts), ptsG: new Float32Array(ptsG), stiel: new Float32Array(stiel), stengel: G.stengel, haut: new Float32Array(haut), H, plan: n ? {lage: G.lage, W, lose: Array.from({length: n}, (_, i) => W.art[i] === 'frei' || W.art[i] === 'reihe'), tiefste: Math.max(...W.tiefe)} : null};
 }
 /* Die Mischfarbe einer Reihe von Werken: so leuchtet ein Dach, wenn es leuchtet */
 function mischFarbe(mini, werke){ let r = 0, g = 0, b = 0, n = 0;
@@ -81,7 +81,7 @@ export class Netz {
     for(const i of this.baum.material.keys()) this.rM[i] = 0.32;
     this.L = lage(this.baum, this.rM.map(r => r * 1.1), {gapWerk: 0.3, gapBereich: 0.35, gapDach: 1.4});
     this.pos = this.L.pos.map((p, i) => [p[0], (hash(i * 3.7) - 0.5) * 0.25, p[2]]);
-    this.mini = B.monde.map((m, i) => this.baum.material.has(i) ? {pts: new Float32Array(0), ptsG: new Float32Array(0), stiel: new Float32Array(0), stengel: new Float32Array(0), haut: new Float32Array(0), H: 0} : miniWuchs(m, this.rM[i], i + 1));
+    this.mini = B.monde.map((m, i) => this.baum.material.has(i) ? {pts: new Float32Array(0), ptsG: new Float32Array(0), stiel: new Float32Array(0), stengel: new Float32Array(0), haut: new Float32Array(0), H: 0, plan: null} : miniWuchs(m, this.rM[i], i + 1));
     this.R2 = this.L.R; this.H2 = 0; this.mitte = [0, 0, 0]; this.Rm2 = this.L.R * 1.06;
     // Dächer und Bereiche mit Namen und der Mischfarbe ihrer Werke
     this.daecher = this.baum.daecher.map((d, j) => ({...d, ...this.L.daecher[j], farbe: mischFarbe(this.mini, d.bereiche.flatMap(b => b.werke)),

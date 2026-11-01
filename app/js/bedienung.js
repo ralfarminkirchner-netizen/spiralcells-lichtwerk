@@ -641,7 +641,7 @@ function zoomAuf(z){
 }
 function garten(){ if(U.netT < 0.5) return; U.gartenT = U.gartenT > 0.5 ? 0 : 1;
   const b = $('#gartenknopf'); b.setAttribute('aria-pressed', U.gartenT > 0.5 ? 'true' : 'false'); b.setAttribute('aria-label', U.gartenT > 0.5 ? 'Als Kosmos zeigen' : 'Als Garten zeigen');
-  zeile(U.gartenT > 0.5 ? 'Derselbe Bestand als Garten: Was viel gewachsen ist, steht hoch. Unter dem Boden die Verbindungen.' : netzSatz(W.B)); }
+  zeile(U.gartenT > 0.5 ? 'Derselbe Bestand als Garten: Blätter sind Fassungen, das Mycel sind die Verbindungen.' : netzSatz(W.B)); }
 function spirale(){ if(U.netT > 0.5) return; U.spiralT = U.spiralT > 0.5 ? 0 : 1;
   const b = $('#spiralknopf'); b.setAttribute('aria-pressed', U.spiralT > 0.5 ? 'true' : 'false'); b.setAttribute('aria-label', U.spiralT > 0.5 ? 'Als Wuchs zeigen' : 'Als Spirale zeigen');
   const m = W.Z && W.Z.m;

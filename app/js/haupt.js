@@ -8,6 +8,7 @@ import {materialParagraphs} from './materialraum.js';
 import {bestand, STIMMEN, kurz, menschlich, QUELLE} from './daten.js';
 import {Zelle, baueZelle, DT, updSparks, drawSparks, clearSparks, burst, spark} from './zelle.js';
 import {Netz, baueNetz} from './netz.js';
+import {zeichneGarten} from './garten.js';
 import {regie} from './regie.js';
 import {U, W} from './welt.js';
 import {klang, klangFrame, AU} from './klang.js';
@@ -584,6 +585,7 @@ function draw(rdt){
   const Z = W.Z, still = Z && Z.S.still > 0 ? 1 : 0, lockGlow = Z ? Math.max(0, 1 - (Z.S.clock - Z.S.lockT) / 1.2) * (W.RM ? 0.3 : 1) : 0;
   M.render(W.wall, {neb: 0.4, thr: 0.5, par: [U.yawOff * 0.15, U.elevOff * 0.12], still: W.RM,
     bloom: 0.32 + (Z ? (0.42 * Z.S.lk * (1 - sstep(4, 10, Z.S.clock - Z.S.lockT)) + 0.1 * Z.S.lk + 0.12 * Z.S.C) * (1 - U.netK) : 0) + 0.6 * lockGlow, exp: (1.05 + 0.08 * (Z ? Z.S.hold : 0)) * (still ? 0.62 : 1)});
+  if(W.N) zeichneGarten(W.N, U, W.wall);
   ui(cam);
   klangFrame(W.ruht ? null : Z, U, [0, 0, 0, 0], U.netK);
 }
