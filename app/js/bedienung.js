@@ -474,7 +474,7 @@ const gleich = (a, b) => !!(a && b && a.art === b.art && (a.art === 'same' ? a.m
 /* ----------------------------------------------------------------- Tippen */
 function tippen(sx, sy){
   if(U.innen && U.innenT > 0 && U.netT > 0.5){ innenTippen(sx, sy); return; }
-  { const q = treffer(sx, sy); if(q && q.art === 'mond' && (U.stil === 'campus' || U.stil === 'buero') && U.bauK > 0.5 && !W.N.baum.material.has(q.i)){ hineingehen(q.i); return; } }
+  { const q = treffer(sx, sy); if(q && q.art === 'mond' && U.stil && U.bauK > 0.5 && !W.N.baum.material.has(q.i)){ hineingehen(q.i); return; } }
   const Z = W.Z; let t = treffer(sx, sy);
   // Die gewählte Ausprägung gewinnt im Umkreis von 28 px: die zweite Berührung muss nicht pixelgenau sein
   if(U.sel && U.sel.art === 'same' && Z && U.sel.mond.id === Z.m.id && (!t || t.art === 'same')){ const p = [0, 0, 0]; Z.seedPos(U.sel.i, p); const s = toScreen(p[0], p[1], p[2]);
@@ -560,7 +560,7 @@ export function installiere(a){
     const f = Math.exp(e.deltaY * 0.0012);
     if(U.netK > 0.6 && f < 1){ const mo = trefferMond(e.clientX, e.clientY); if(mo >= 0 && U.zoom * f < 0.55){ U.zoom = 1; api.oeffneMond(mo, {}); return; } }
     zoomAuf(U.zoom * f); }, {passive: false});
-  canvas.addEventListener('dblclick', e => { if(U.innen || ((U.stil === 'campus' || U.stil === 'buero') && U.bauK > 0.5)) return; const t = treffer(e.clientX, e.clientY); if(t && t.art === 'mond') api.oeffneMond(t.i, {}); });
+  canvas.addEventListener('dblclick', e => { if(U.innen || (U.stil && U.bauK > 0.5)) return; const t = treffer(e.clientX, e.clientY); if(t && t.art === 'mond') api.oeffneMond(t.i, {}); });
 
   addEventListener('keydown', e => {
     if(U.fahrt){ U.netK = U.netT; U.fahrt = null; if(e.key === 'Escape') return; }
@@ -655,8 +655,8 @@ function zoomAuf(z){
   U.zoom = clamp(z, 0.35, 2.6);
 }
 /* Dieselben Werke, andere Darstellung. Am Bestand ändert sich nichts */
-const ANSICHT = {kosmos: () => netzSatz(W.B), licht: () => 'Lichtansicht: dieselben Werke, die Spirale steigt als Pflanze aus Licht auf.', garten: () => 'Derselbe Mechanismus als Garten: Bäume und Ranken wachsen aus der Abstammung, Blätter, Blüten und Früchte sind Fassungen, das Mycel sind die Verbindungen.', galaxie: () => 'Derselbe Bestand als Galaxie: Planeten sind Werke, Monde sind Fassungen. Die Galaxie dreht sich und fliegt, darum werden ihre Bahnen Spiralen.',
-  dorf: () => 'Derselbe Bestand als Dorf: Häuser sind Werke, jedes helle Fenster eine Fassung, die Wege sind die Verbindungen.', campus: () => 'Derselbe Mechanismus als Campus: jeder Turm ein Werk, jede Etage ein Zeitabschnitt, jedes helle Fenster eine Fassung. Tippe auf ein Gebäude und geh hinein.', buero: () => 'Derselbe Mechanismus als Bürokomplex: Riegel an Straßen, unten das Älteste, oben das Jüngste. Tippe auf ein Gebäude und geh hinein.'};
+const ANSICHT = {kosmos: () => netzSatz(W.B), licht: () => 'Lichtansicht: dieselben Werke, die Spirale steigt als Pflanze aus Licht auf.', garten: () => 'Derselbe Mechanismus als Garten: Bäume und Ranken wachsen aus der Abstammung, Blätter, Blüten und Früchte sind Fassungen, das Mycel sind die Verbindungen.', galaxie: () => 'Derselbe Mechanismus als Galaxie: Sonne = Dach, Spirale = Werk, jedes Lichtstück eine Fassung, unten die älteste.',
+  dorf: () => 'Derselbe Mechanismus als Dorf: je Dach eine Straße, die ältesten Häuser am Platz. Helles Fenster = Fassung, Acker = Arbeit. Tippe auf ein Haus und geh hinein.', campus: () => 'Derselbe Mechanismus als Campus: jeder Turm ein Werk, jede Etage ein Zeitabschnitt, jedes helle Fenster eine Fassung. Tippe auf ein Gebäude und geh hinein.', buero: () => 'Derselbe Mechanismus als Bürokomplex: Riegel an Straßen, unten das Älteste, oben das Jüngste. Tippe auf ein Gebäude und geh hinein.'};
 function ansicht(a){ if(U.netT < 0.5 && a !== 'text') return;
   if(a === 'text'){ textfassung(!U.imText); return; } if(U.imText) textfassung(false);
   U.ansicht = U.ansicht === a ? 'kosmos' : a; const v = U.ansicht, ort = v === 'dorf' || v === 'campus' || v === 'buero';
@@ -669,8 +669,8 @@ function hineingehen(n){ const o = W.N.ort[n]; U.innen = {n, stil: U.stil, etage
 function hinausgehen(){ U.innenT = 0; $('#etagen').hidden = true; zeile(ANSICHT[U.ansicht]()); }
 function etageSetzen(k){ const I = U.innen; I.etage = k; I.wahl = null; etageSagen(); }
 function etageSchritt(d){ const I = U.innen, max = I.plan.reihen.length - 1; etageSetzen(I.etage < 0 ? (d > 0 ? 0 : max) : Math.max(0, Math.min(max, I.etage + d))); }
-function etageSagen(){ const I = U.innen, m = W.B.monde[I.n], max = I.plan.reihen.length; if(!m.samen.length){ zeile(`${m.titel}: noch leer. Es gibt nur die Ausgangsfassung, darum steht hier kein Schreibtisch.`); return; } if(I.etage < 0){ zeile(`${m.titel}: ${max} ${max === 1 ? 'Etage' : 'Etagen'}, unten das Älteste. In der Mitte die Treppe, je Stimme eine Abteilung. Tippe auf eine Etage.`); return; }
-  const r = I.plan.reihen[I.etage], t = x => x && x !== 'ohne Datum' ? new Date(x).toLocaleDateString('de-DE', {day: 'numeric', month: 'long'}) : 'ohne Datum'; zeile(`Etage ${I.etage + 1} von ${max}: ${r.von === r.bis ? t(r.von) : t(r.von) + ' bis ' + t(r.bis)}, ${r.zahl} ${r.zahl === 1 ? 'Schreibtisch' : 'Schreibtische'}. Ein Tisch ist eine Fassung, der Stapel ihre Textmenge.`); }
+function etageSagen(){ const I = U.innen, m = W.B.monde[I.n], max = I.plan.reihen.length, dorf = I.stil === 'dorf'; if(!m.samen.length){ zeile(`${m.titel}: noch leer. Es gibt nur die Ausgangsfassung, darum steht hier kein ${dorf ? 'Arbeitsplatz' : 'Schreibtisch'}.`); return; } if(I.etage < 0){ zeile(`${m.titel}: ${max} ${dorf ? (max === 1 ? 'Stockwerk' : 'Stockwerke') : (max === 1 ? 'Etage' : 'Etagen')}, unten das Älteste. Die Treppe ist die Spirale, je Stimme ${dorf ? 'eine Kammer' : 'eine Abteilung'}. Tippe auf ${dorf ? 'ein Stockwerk' : 'eine Etage'}.`); return; }
+  const r = I.plan.reihen[I.etage], t = x => x && x !== 'ohne Datum' ? new Date(x).toLocaleDateString('de-DE', {day: 'numeric', month: 'long'}) : 'ohne Datum'; zeile(`${dorf ? 'Stockwerk' : 'Etage'} ${I.etage + 1} von ${max}: ${r.von === r.bis ? t(r.von) : t(r.von) + ' bis ' + t(r.bis)}, ${r.zahl} ${dorf ? (r.zahl === 1 ? 'Werkbank' : 'Werkbänke') : (r.zahl === 1 ? 'Schreibtisch' : 'Schreibtische')}. ${dorf ? 'Eine Werkbank ist eine Fassung, die Bücher sind ihre Textmenge.' : 'Ein Tisch ist eine Fassung, der Stapel ihre Textmenge.'}`); }
 function innenTippen(sx, sy){ const I = U.innen, pl = I.plan; if(I.etage < 0){ let b = -1, bd = Infinity; pl.reihen.forEach((r, k) => { const s = toScreen(pl.o[0], r.y + 1, pl.o[2]), d = Math.abs(s[1] - sy); if(d < bd){ bd = d; b = k; } }); if(b >= 0) etageSetzen(b); return; }
   let t = null, bd = 44 * 44; for(const x of pl.tische){ if(x.k !== I.etage) continue; const s = toScreen(x.x, x.y, x.z), d = (s[0] - sx) ** 2 + (s[1] - sy) ** 2; if(d < bd){ bd = d; t = x; } }
   if(!t){ I.wahl = null; etageSagen(); return; } const m = W.B.monde[I.n], sa = m.samen[t.i];

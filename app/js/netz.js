@@ -16,7 +16,7 @@ import {wuchs, rangRadien} from './wuchs.js';
 import {ordne, lage} from './ordnung.js';
 import {alsformen} from './alsformen.js';
 import {gelaende, PFLANZE} from './gelaende.js';
-import {galaxie, planetOrt, DREHUNG} from './mondbahn.js';
+import {galaxie, planetOrt, galaxieZiele, DREHUNG} from './mondbahn.js';
 import {orteFuer} from './anlage.js';
 
 const MEM2 = fibSphere(4200), MEMD = fibSphere(900);
@@ -136,7 +136,7 @@ export class Netz {
   /* Werke eines Bezirks, für die Tastatur: erst die eigenen, dann das Lesematerial an ihnen */
   werkeIn(b){ const eigen = b === 'mitte' ? this.baum.mitte.werke : b === 'ohne' ? this.baum.ohne : (this.daecher[b] ? this.daecher[b].bereiche.flatMap(x => x.werke) : []);
     const mat = [...this.baum.material.keys()].filter(i => this.bezirk(i) === b); return [...eigen, ...mat]; }
-  bezirkZiel(b){ return b === 'mitte' ? this.L.mitte : b === 'ohne' ? this.L.ohne : this.daecher[b] || null; }
+  bezirkZiel(b){ if(this.sicht && this.sicht.has(b)) return this.sicht.get(b); return b === 'mitte' ? this.L.mitte : b === 'ohne' ? this.L.ohne : this.daecher[b] || null; }
   /* Werke eines Bezirks, die nur ihre Ausgangsfassung haben */
   knospenIn(b){ return this.werkeIn(b).filter(i => !this.baum.material.has(i) && !this.B.monde[i].samen.length).length; }
 }
@@ -168,9 +168,10 @@ export function baueNetz(N, U, wall, vis, aktiv, aktivDetail){
   const le = U.RM ? Math.round(U.landK || 0) : eio(U.landK || 0), korn = 1 - sstep(0.02, 0.3, le), gross = 1, hoch = le * (1 - (U.art ? U.art[2] : 0)), bodenVon = (x, z) => hoch > 0.001 ? N.land.y(x, z) * hoch : 0;   // le: 0 Licht, 1 Landschaft
   const ge = U.RM ? Math.round(U.galK || 0) : eio(U.galK || 0), tG = U.galZeit || 0, cG = Math.cos(DREHUNG * tG), sG = Math.sin(DREHUNG * tG);   // ge: 1 Galaxie
   if(ge > 0.001 && !N.gal) N.gal = galaxie(N, arbeit);
-  const stilO = U.stil === 'buero' ? orteFuer(N, 'buero') : null, stilK = stilO ? eio(U.art[2]) : 0;
+  const stilO = U.stil === 'buero' || U.stil === 'dorf' ? orteFuer(N, U.stil) : null, stilK = stilO ? eio(U.art[U.stil === 'buero' ? 2 : 0]) : 0, imDorf = U.stil === 'dorf';
+  N.sicht = ge > 0.5 ? galaxieZiele(N.gal, tG) : stilK > 0.5 ? stilO.ziele : null;   // jede Welt hat ihre eigene Lage: dorthin fährt die Kamera, dort enden die Bündel
   for(let n = 0; n < N.N; n++){ N.ort[n][0] = N.pos[n][0]; N.ort[n][1] = N.pos[n][1] + N.yBoden[n] * hoch; N.ort[n][2] = N.pos[n][2];
-    if(stilK > 0.001){ const q = stilO.pos[n]; N.ort[n][0] = mix(N.pos[n][0], q[0], stilK); N.ort[n][2] = mix(N.pos[n][2], q[2], stilK); }
+    if(stilK > 0.001){ const q = stilO.pos[n]; N.ort[n][0] = mix(N.pos[n][0], q[0], stilK); N.ort[n][2] = mix(N.pos[n][2], q[2], stilK); if(imDorf) N.ort[n][1] = mix(N.ort[n][1], N.land.y(q[0], q[2]) * hoch, stilK); }
     if(ge > 0.001){ planetOrt(N.gal.planeten[n], tG, TMP); N.ort[n][0] = mix(N.pos[n][0], TMP[0], ge); N.ort[n][1] = mix(N.ort[n][1], 0, ge); N.ort[n][2] = mix(N.pos[n][2], TMP[2], ge); } }
   const yM = bodenVon(0, 0), raum = (1 - le) * (1 - ge);   // in der Landschaft trägt der Boden, was im Kosmos die Hüllen zeigen
   const hov = U.hover && U.hover.art === 'mond' ? U.hover.i : -1, imDach = U.dach;   // null, 'mitte', 'ohne' oder ein Dach
@@ -195,12 +196,12 @@ export function baueNetz(N, U, wall, vis, aktiv, aktivDetail){
     // Im Dach werden die Bereiche sichtbar: ein weiches Feld in der Farbe ihrer Werke und ein feiner Ring
     if(drin) for(const b of d.bereiche){ P(b.mitte[0], yD, b.mitte[2], b.R * 1.2, b.farbe[0], b.farbe[1], b.farbe[2], 0.022 * vis * raum); ring([b.mitte[0], yD - 0.05, b.mitte[2]], b.R, mixc(WG, b.farbe, 0.35), 0.38 * vis, 0.07, 1); }
     if(drin) U.bereicheSchirm = d.bereiche.map(b => amRing([b.mitte[0], yD, b.mitte[2]], b.R, false, 0.08));
-    const sx = mix(d.mitte[0], cG * d.mitte[0] - sG * d.mitte[2], ge), sz = mix(d.mitte[2], sG * d.mitte[0] + cG * d.mitte[2], ge);
+    const so = N.gal ? N.gal.sonnen[j] : {x: 0, z: 0}, sx = mix(d.mitte[0], cG * so.x - sG * so.z, ge), sz = mix(d.mitte[2], sG * so.x + cG * so.z, ge);
     if(ge > 0.01){ const hS = (an ? 1.5 : 1) * ge * vis * hell, gS = Math.min(0.9, d.R * 0.09); P(sx, 0, sz, gS, d.farbe[0] * 0.5 + 0.5, d.farbe[1] * 0.5 + 0.45, d.farbe[2] * 0.5 + 0.35, 1.6 * hS); P(sx, 0, sz, gS * 5, d.farbe[0], d.farbe[1], d.farbe[2], 0.12 * hS); }   // die Sonne eines Dachs
-    U.daecherSchirm[j] = drin && ge < 0.5 ? amRing([d.mitte[0], yD, d.mitte[2]], d.R * 1.04, false, 0) : toScreen(stilK > 0.01 && stilO.mitten.has(j) ? mix(sx, stilO.mitten.get(j)[0], stilK) : sx, yD + d.R * mix(mix(0.42 * (1 - gk), 0.3, le), 0.16, ge), stilK > 0.01 && stilO.mitten.has(j) ? mix(sz, stilO.mitten.get(j)[1] - 3.2, stilK) : sz); }   // im Dach: sein Name am oberen Rand
+    U.daecherSchirm[j] = drin && ge < 0.5 ? amRing([d.mitte[0], yD, d.mitte[2]], d.R * 1.04, false, 0) : toScreen(stilK > 0.01 && stilO.mitten.has(j) ? mix(sx, stilO.mitten.get(j)[0], stilK) : sx, imDorf && stilO.mitten.has(j) ? mix(yD + d.R * 0.3, N.land.y(stilO.mitten.get(j)[0], stilO.mitten.get(j)[1]) * hoch + 3.5, stilK) : yD + d.R * mix(mix(0.42 * (1 - gk), 0.3, le), 0.16, ge), stilK > 0.01 && stilO.mitten.has(j) ? mix(sz, stilO.mitten.get(j)[1] - (imDorf ? 0 : 3.2), stilK) : sz); }   // im Dach: sein Name am oberen Rand
   U.daecherSchirm.length = N.daecher.length;
-  if(N.L.ohne){ const o = N.L.ohne, hO = U.hover && U.hover.art === 'ohne' || U.sel && U.sel.art === 'ohne'; const yO = bodenVon(o.mitte[0], o.mitte[2]); ring([o.mitte[0], yO - 0.05, o.mitte[2]], o.R, DUSTC, (hO ? 0.45 : 0.22) * vis * (imDach === 'ohne' ? 1.4 : imDach != null ? anders : 1) * (hO ? 1 : raum), 0.07, 3);
-    U.ohneSchirm = imDach === 'ohne' && ge < 0.5 ? amRing([o.mitte[0], yO, o.mitte[2]], o.R * 1.04, false, 0) : stilK > 0.5 && stilO.mitten.has('ohne') ? toScreen(stilO.mitten.get('ohne')[0], 0, stilO.mitten.get('ohne')[1] - 3.2) : toScreen(mix(o.mitte[0], cG * o.mitte[0] - sG * o.mitte[2], ge), yO + o.R * 0.3 * raum + 1.5 * le, mix(o.mitte[2], sG * o.mitte[0] + cG * o.mitte[2], ge)); } else U.ohneSchirm = null;
+  if(N.L.ohne){ const o = N.L.ohne, hO = U.hover && U.hover.art === 'ohne' || U.sel && U.sel.art === 'ohne'; const yO = bodenVon(o.mitte[0], o.mitte[2]); ring([o.mitte[0], yO - 0.05, o.mitte[2]], o.R, DUSTC, (hO ? 0.45 : 0.22) * vis * (imDach === 'ohne' ? 1.4 : imDach != null ? anders : 1) * (hO ? 1 : raum) * (1 - stilK) * (1 - ge), 0.07, 3);
+    U.ohneSchirm = imDach === 'ohne' && ge < 0.5 ? amRing([o.mitte[0], yO, o.mitte[2]], o.R * 1.04, false, 0) : stilK > 0.5 && stilO.mitten.has('ohne') ? toScreen(stilO.mitten.get('ohne')[0], imDorf ? N.land.y(stilO.mitten.get('ohne')[0], stilO.mitten.get('ohne')[1]) * hoch + 3.5 : 0, stilO.mitten.get('ohne')[1] - (imDorf ? 0 : 3.2)) : toScreen(mix(o.mitte[0], cG * (N.gal ? N.gal.ohneOrt : {x: 0}).x - sG * (N.gal ? N.gal.ohneOrt : {z: 0}).z, ge), yO + o.R * 0.3 * raum + 1.5 * le, mix(o.mitte[2], sG * (N.gal ? N.gal.ohneOrt : {x: 0}).x + cG * (N.gal ? N.gal.ohneOrt : {z: 0}).z, ge)); } else U.ohneSchirm = null;
   // Werke: das Licht des Netzes
   for(let n = 0; n < N.N; n++){
     const m = N.B.monde[n], o = N.ort[n], pts = N.mini[n].pts, k = pts.length / 6, material = N.baum.material.has(n);

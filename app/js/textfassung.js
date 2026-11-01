@@ -25,14 +25,14 @@ export const LEGENDE = [
 ];
 export const ENTSPRECHUNG = [
   ['Text', 'Kosmos · Garten · Galaxie · Dorf · Campus und Büro'],
-  ['Mitte', 'Zentrale · Lichtung · Kern · Marktplatz · Innenhof'],
-  ['Dach', 'Hülle · Hain · Sonne · Viertel · Bauabschnitt oder Straße'],
-  ['Werk', 'Zelle · Baum, Blume, Ranke oder Wiese · Planet · Haus · Gebäude'],
-  ['Zeit, von unten', 'Windung · Höhe am Stamm · Umlauf · Stockwerk · Etage'],
-  ['Stimme', 'Speiche · Farbe · Farbe · Licht im Fenster · Abteilung'],
-  ['Fassung', 'Korn · Blatt, Blüte oder Frucht · Mond · Fenster · Schreibtisch'],
-  ['Textmenge', 'Helle · Größe · Bahnlänge · Fenster · Karteistapel'],
-  ['Abstammung', 'Einrückung hier · Ast · Spur · Anbau · Faden von Tisch zu Tisch'],
+  ['Mitte', 'Zentrale · Lichtung · Kern · Dorfplatz · Innenhof'],
+  ['Dach', 'Hülle · Hain · Sonne · Dorfstraße · Bauabschnitt oder Straße'],
+  ['Werk', 'Zelle · Baum, Blume, Ranke oder Wiese · Planet mit Spirale · Haus · Gebäude'],
+  ['Zeit, von unten', 'Windung · Höhe am Stamm · Höhe der Spirale · Stockwerk · Etage'],
+  ['Stimme', 'Speiche · Farbe · Strang und Farbe · Kammer · Abteilung'],
+  ['Fassung', 'Korn · Blatt, Blüte oder Frucht · Lichtstück der Spirale · Fenster und Werkbank · Schreibtisch'],
+  ['Textmenge', 'Helle · Größe · Länge des Stücks · Bücher · Karteistapel'],
+  ['Abstammung', 'Einrückung hier · Ast · äußerer Strang · Anbau und Faden · Faden von Tisch zu Tisch'],
   ['Beziehung', 'Faden · Mycel · Lichtbrücke · Weg · Gang'],
 ];
 
