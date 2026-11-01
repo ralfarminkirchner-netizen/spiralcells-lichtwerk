@@ -20,25 +20,32 @@ const MEM2 = fibSphere(4200), MEMD = fibSphere(900);
 const SEEDC = VOICES.map(v => v.c);
 const TURN = 1.75, SPOKE = 144;
 
+/* Wie viel in einem Werk schon entstanden ist, von 0 bis 1: Fassungen und Textmenge, logarithmisch */
+export function arbeit(m){ const zeichen = m.samen.reduce((a, s) => a + Math.max(0, s.laenge || 0), 0);
+  return clamp(Math.log2(1 + m.samen.length + zeichen / 2000) / Math.log2(201), 0, 1); }
 /* Ein Werk im Kleinen: eine Zelle mit eigener Haut. Die Haut ist je Werk anders und stabil; darin liegen seine Fassungen
-   als Spirale, die Stimme als Farbe, Gabeln etwas neben der Bahn. Die Spirale ist Anordnung, kein Beleg für Abstammung. */
+   als Spirale, die Stimme als Farbe, Gabeln etwas neben der Bahn. Die Länge der Spirale zeigt, wie viel schon entstanden ist.
+   Die Spirale ist Anordnung, kein Beleg für Abstammung. Im Garten steigt dieselbe Spirale als Pflanze auf: jedes Korn hat seine Höhe. */
 function miniWuchs(m, rM, seed){
-  const n = m.samen.length, W = n ? wuchs(m) : null, turns = n > 35 ? 2.45 : n > 12 ? 2.05 : n > 10 ? 1.55 : 1.35, karg = n <= 10;
-  const bahn = t => { const a = -Math.PI * 0.73 + t * TAU * turns, r = rM * (karg ? 0.18 + 0.6 * Math.pow(t, 0.78) : 0.095 + 0.66 * Math.pow(t, 0.86)); return [r * Math.cos(a), r * Math.sin(a), a]; };
-  const schritt = Math.max(1, Math.ceil(n / 160)), pts = [], stiel = [];
+  const n = m.samen.length, W = n ? wuchs(m) : null, w = arbeit(m), turns = 0.45 + 2.6 * w, weite = 0.3 + 0.5 * w, H = rM * (1.2 + 4.2 * w);
+  const bahn = t => { const a = -Math.PI * 0.73 + t * TAU * turns, r = rM * (0.07 + weite * Math.pow(t, 0.8)); return [r * Math.cos(a), r * Math.sin(a), a]; };
+  const hoehe = t => H * (0.22 + 0.78 * t);
+  const schritt = Math.max(1, Math.ceil(n / 160)), pts = [], ptsH = [], stiel = [], stielH = [];
   for(let i = 0; i < n; i++){
-    const s = m.samen[i], t = n === 1 ? 0.25 : i / (n - 1); let [x, z, a] = bahn(t);
+    const s = m.samen[i], t = n === 1 ? 1 : i / (n - 1); let [x, z, a] = bahn(t);
     const sw = W.eltern[i] >= 0 ? W.kinder[W.eltern[i]] : null;
     if(sw && sw.length > 1){ const v = (sw.indexOf(i) - (sw.length - 1) / 2) / Math.max(1, (sw.length - 1) / 2) * rM * 0.1; x += Math.cos(a + Math.PI / 2) * v; z += Math.sin(a + Math.PI / 2) * v; }
     const c = s.form ? SILVER : typeof s.stimme === 'number' ? SEEDC[s.stimme] : s.stimme === MENSCH ? SILVER : DUSTC, g = s.status === 'grundformation' ? 0.5 : 0;
-    if(i % schritt === 0 || W.kinder[i].length > 1 || W.art[i] === 'gabel') pts.push(x, (i / n) * rM * 0.1, z, mix(c[0], GOLDC[0], g), mix(c[1], GOLDC[1], g), mix(c[2], GOLDC[2], g));
+    if(i % schritt === 0 || W.kinder[i].length > 1 || W.art[i] === 'gabel'){ pts.push(x, (i / n) * rM * 0.1, z, mix(c[0], GOLDC[0], g), mix(c[1], GOLDC[1], g), mix(c[2], GOLDC[2], g)); ptsH.push(hoehe(t)); }
   }
-  if(n > 1){ const q = Math.round(clamp(rM * 26 * turns, 24, 110)); for(let j = 0; j <= q; j++){ const [x, z] = bahn(j / q), c = m.samen[Math.round(j / q * (n - 1))]; const f = typeof c.stimme === 'number' ? SEEDC[c.stimme] : DUSTC; stiel.push(x, 0, z, f[0], f[1], f[2]); } }
+  if(n){ const q = Math.round(clamp(rM * 12 * turns, 10, 110)); for(let j = 0; j <= q; j++){ const [x, z] = bahn(j / q), c = m.samen[Math.round(j / q * (n - 1))], f = typeof c.stimme === 'number' ? SEEDC[c.stimme] : DUSTC; stiel.push(x, 0, z, f[0], f[1], f[2]); stielH.push(hoehe(j / q)); }
+    // Der Stängel: vom Keim am Boden bis zum Anfang der Spirale; in der Draufsicht liegt er im Keim
+    const q2 = Math.max(5, Math.round(H * 0.22 * 5)), [x0, z0] = bahn(0); for(let j = 0; j < q2; j++){ const u = j / q2; stiel.push(x0 * u, 0, z0 * u, DUSTC[0], DUSTC[1], DUSTC[2]); stielH.push(hoehe(0) * u); } }
   // Die Haut: leicht unregelmäßig; oben links liegt ein heller Rand, der ihr Tiefe gibt, ohne etwas zu behaupten
   const hn = Math.round(clamp(rM * 26, 40, 96)), p3 = hash(seed * 1.3) * TAU, p5 = hash(seed * 2.1) * TAU, haut = [];
   for(let j = 0; j < hn; j++){ const a = j / hn * TAU, r = rM * (1 + Math.sin(a * 3 + p3) * 0.036 + Math.cos(a * 5 + p5) * 0.016);
     let u = (a / Math.PI - 1.01) / 0.7, hell = u >= 0 && u <= 1 ? Math.sin(Math.PI * u) : 0; haut.push(r * Math.cos(a), r * Math.sin(a) * 0.94, hell); }
-  return {pts: new Float32Array(pts), stiel: new Float32Array(stiel), haut: new Float32Array(haut)};
+  return {pts: new Float32Array(pts), ptsH: new Float32Array(ptsH), stiel: new Float32Array(stiel), stielH: new Float32Array(stielH), haut: new Float32Array(haut), H};
 }
 /* Die Mischfarbe einer Reihe von Werken: so leuchtet ein Dach, wenn es leuchtet */
 function mischFarbe(mini, werke){ let r = 0, g = 0, b = 0, n = 0;
@@ -57,7 +64,7 @@ export class Netz {
     for(const i of this.baum.material.keys()) this.rM[i] = 0.32;
     this.L = lage(this.baum, this.rM.map(r => r * 1.1), {gapWerk: 0.3, gapBereich: 0.35, gapDach: 1.4});
     this.pos = this.L.pos.map((p, i) => [p[0], (hash(i * 3.7) - 0.5) * 0.25, p[2]]);
-    this.mini = B.monde.map((m, i) => this.baum.material.has(i) ? {pts: new Float32Array(0), stiel: new Float32Array(0), haut: new Float32Array(0)} : miniWuchs(m, this.rM[i], i + 1));
+    this.mini = B.monde.map((m, i) => this.baum.material.has(i) ? {pts: new Float32Array(0), ptsH: new Float32Array(0), stiel: new Float32Array(0), stielH: new Float32Array(0), haut: new Float32Array(0), H: 0} : miniWuchs(m, this.rM[i], i + 1));
     this.R2 = this.L.R; this.H2 = 0; this.mitte = [0, 0, 0]; this.Rm2 = this.L.R * 1.06;
     // Dächer und Bereiche mit Namen und der Mischfarbe ihrer Werke
     this.daecher = this.baum.daecher.map((d, j) => ({...d, ...this.L.daecher[j], farbe: mischFarbe(this.mini, d.bereiche.flatMap(b => b.werke)),
@@ -133,7 +140,7 @@ function amRing(c, R, unten, innen){ let best = null;
 
 export function baueNetz(N, U, wall, vis, aktiv, aktivDetail){
   if(vis <= 0.003) return;
-  const cx = CAM.P[0], cyy = CAM.P[1], cz = CAM.P[2], soloAny = U.solo >= 0;
+  const cx = CAM.P[0], cyy = CAM.P[1], cz = CAM.P[2], soloAny = U.solo >= 0, gk = U.gartenK || 0;   // gk: 0 Kosmos, 1 Garten; dieselben Werke am selben Ort
   const hov = U.hover && U.hover.art === 'mond' ? U.hover.i : -1, imDach = U.dach;   // null, 'mitte', 'ohne' oder ein Dach
   const hovD = U.hover && U.hover.art === 'dach' ? U.hover.i : -1, selD = U.sel && U.sel.art === 'dach' ? U.sel.i : -1;
   const selM = U.sel && U.sel.art === 'mond' ? U.sel.i : -1, anders = imDach != null ? 0.22 : 1;   // was nicht im betretenen Bezirk liegt, tritt zurück
@@ -145,14 +152,14 @@ export function baueNetz(N, U, wall, vis, aktiv, aktivDetail){
   P(0, 0, 0, Lm.R * 0.7, KEIMC[0], KEIMC[1], KEIMC[2], 0.09 * vis * hellM * (imDach === 'mitte' ? 0.5 : 1));
   P(0, 0, 0, Lm.R * 1.6, KEIMC[0], KEIMC[1], KEIMC[2], 0.06 * vis * hellM * (imDach === 'mitte' ? 0.5 : 1));
   ring([0, -0.05, 0], Lm.R, KEIMC, (anM ? 0.9 : 0.6) * vis * hellM, 0.09, 1);
-  huelle([0, 0, 0], Lm.R, 0.42, WG, (anM ? 0.9 : 0.55) * vis * (imDach === 'mitte' ? 0.35 : hellM), MEMD, cx, cyy, cz, imDach === 'mitte');
+  huelle([0, 0, 0], Lm.R, 0.42 * (1 - 0.9 * gk), WG, (anM ? 0.9 : 0.55) * vis * (imDach === 'mitte' ? 0.35 : hellM), MEMD, cx, cyy, cz, imDach === 'mitte');
   U.mitteSchirm = imDach === 'mitte' ? amRing([0, 0, 0], Lm.R * 1.04, false, 0) : amRing([0, 0, 0], Lm.R * 1.02, true, 0);   // im Überblick unter dem Rand, nie über den Werken; in der Mitte oben
   // Dächer: je eine Hülle, die am Saum leuchtet; der Boden nur, wenn man auf sie zeigt oder in ihr steht
   for(let j = 0; j < N.daecher.length; j++){ const d = N.daecher[j], drin = j === imDach, hell = (drin ? 1 : imDach != null ? anders : 1) * still, an = j === hovD || j === selD;
     const c = an ? mixc(WG, SILVER, 0.4) : WG;
     P(d.mitte[0], 0, d.mitte[2], d.R * 1.4, d.farbe[0], d.farbe[1], d.farbe[2], 0.012 * vis * hell * (an ? 1.8 : 1) * (drin ? 0.5 : 1));
     if(an || drin) ring([d.mitte[0], -0.05, d.mitte[2]], d.R, c, (an ? 0.6 : 0.35) * vis, 0.11, 1);
-    huelle(d.mitte, d.R, 0.38, c, (an ? 0.95 : drin ? 0.55 : 0.28) * vis * (drin ? 0.35 : hell), MEMD, cx, cyy, cz, drin);
+    huelle(d.mitte, d.R, 0.38 * (1 - 0.9 * gk), c, (an ? 0.95 : drin ? 0.55 : 0.28) * vis * (drin ? 0.35 : hell), MEMD, cx, cyy, cz, drin);
     // Im Dach werden die Bereiche sichtbar: ein weiches Feld in der Farbe ihrer Werke und ein feiner Ring
     if(drin) for(const b of d.bereiche){ P(b.mitte[0], 0, b.mitte[2], b.R * 1.2, b.farbe[0], b.farbe[1], b.farbe[2], 0.022 * vis); ring([b.mitte[0], -0.05, b.mitte[2]], b.R, mixc(WG, b.farbe, 0.35), 0.38 * vis, 0.07, 1); }
     if(drin) U.bereicheSchirm = d.bereiche.map(b => amRing(b.mitte, b.R, false, 0.08));
@@ -180,8 +187,8 @@ export function baueNetz(N, U, wall, vis, aktiv, aktivDetail){
     const haut = N.mini[n].haut, hz = Math.max(N.rM[n] * 0.012, CAM.S * 0.0026), hf = a * (hov === n || self ? 1.3 : 0.62);
     for(let p = 0; p < haut.length / 3; p++){ const h = haut[p * 3 + 2]; P(o[0] + haut[p * 3], o[1], o[2] + haut[p * 3 + 1], hz * (1 + 0.5 * h), mix(cr, WG[0], 0.45 + 0.5 * h), mix(cg, WG[1], 0.45 + 0.5 * h), mix(cb, WG[2], 0.45 + 0.5 * h), hf * (0.5 + 0.9 * h)); }
     const sz = Math.max(0.17 * Math.max(0.7, N.rM[n]), CAM.S * 0.0042);   // auch im Überblick bleibt die Gestalt eines Werks zu sehen, nicht nur sein Schein
-    for(let p = 0; p < k; p++) P(o[0] + pts[p * 6], o[1] + pts[p * 6 + 1], o[2] + pts[p * 6 + 2], sz, pts[p * 6 + 3], pts[p * 6 + 4], pts[p * 6 + 5], a * lit * 0.9);
-    const st = N.mini[n].stiel; for(let p = 0; p < st.length / 6; p++) P(o[0] + st[p * 6], o[1] + st[p * 6 + 1], o[2] + st[p * 6 + 2], sz * 0.45, st[p * 6 + 3], st[p * 6 + 4], st[p * 6 + 5], a * 0.3);
+    const ptsH = N.mini[n].ptsH, stH = N.mini[n].stielH; for(let p = 0; p < k; p++) P(o[0] + pts[p * 6], o[1] + mix(pts[p * 6 + 1], ptsH[p], gk), o[2] + pts[p * 6 + 2], sz, pts[p * 6 + 3], pts[p * 6 + 4], pts[p * 6 + 5], a * lit * 0.9);
+    const st = N.mini[n].stiel; for(let p = 0; p < st.length / 6; p++) P(o[0] + st[p * 6], o[1] + stH[p] * gk, o[2] + st[p * 6 + 2], sz * 0.45, st[p * 6 + 3], st[p * 6 + 4], st[p * 6 + 5], a * 0.3);
     P(o[0], o[1], o[2], k ? 0.2 : 0.26, KEIMC[0], KEIMC[1], KEIMC[2], a * (m.keimKristall ? 1.5 : k ? 0.8 : 1.1));
     // Ringe (Phase, zuletzt bewegt): im Überblick nur am jüngsten Werk je Bezirk, im Bezirk an allen seinen Werken
     const ringe = imDach != null ? bz === imDach : N.juengst.has(n), mt = [o[0], o[1] + N.rM[n] * 0.2, o[2]];
@@ -202,13 +209,18 @@ export function baueNetz(N, U, wall, vis, aktiv, aktivDetail){
     const anF = U.sel && U.sel.art === 'faden' && U.sel.i === fi, hovF = U.hover && U.hover.art === 'faden' && U.hover.i === fi;
     const beteiligt = aktiv === f.von || aktiv === f.nach || selM === f.von || selM === f.nach;
     const zeig = anF || hovF || beteiligt || (imDach != null && (f.bzVon === imDach || f.bzNach === imDach));
-    if(!zeig){ U.knoten[fi] = null; continue; }
+    if(!zeig){ U.knoten[fi] = null;
+      // Im Garten läuft jede gespeicherte Beziehung als Mycel unter dem Boden; es entsteht keine neue
+      if(gk > 0.01){ const st = STIL[f.typ] || STIL['verweist-auf'], dm = Math.hypot(A[0] - Bp[0], A[2] - Bp[2]), nm = Math.round(clamp(dm * 3, 12, 80)), ux = (Bp[2] - A[2]) / (dm || 1), uz = (A[0] - Bp[0]) / (dm || 1), ph = hash(fi * 3.3) * TAU;
+        for(let s = 0; s <= nm; s++){ const t = s / nm, sn = Math.sin(Math.PI * t), wb = sn * (Math.sin(t * 9 + ph) * 0.05 + Math.sin(t * 23 + ph * 2) * 0.018) * dm; P(mix(A[0], Bp[0], t) + ux * wb, -sn * (0.5 + dm * 0.05), mix(A[2], Bp[2], t) + uz * wb, fz, st.c[0], st.c[1], st.c[2], vis * gk * 1.9 * st.a * (soloAny ? 0.3 : 1) * (wahl ? 0.4 : 1)); } }
+      continue; }
     const st = STIL[f.typ] || STIL['verweist-auf'];
     const al = vis * (st.a + 0.04 * Math.min(6, f.kanten.length)) * (soloAny ? 0.3 : 1) * (anF || hovF ? 1.8 : beteiligt ? 1.3 : wahl ? 0.25 : 1) * (fokus ? (fokus.has(f.von) && fokus.has(f.nach) ? (U.als.fokus === 'planet' ? 0.22 : 0.45) : 0.05) : 1);   // im Blick auf Alsformen treten auch die Materialfäden zurück
     const pt = fadenWeg(N, f, A, Bp);
     const d = Math.hypot(A[0] - Bp[0], A[2] - Bp[2]), n = Math.round(clamp(d * 5, 18, 140));
     for(let s = 1; s < n; s++){ const t = s / n; if(st.luecke && t > 0.44 && t < 0.56) continue; if(st.strich && (s % 4 === 0)) continue;
       const q = pt(t), mund = 0.55 + 0.6 * t;   // zur Mündung hin heller: dorthin zeigt der Faden
+      q[1] = mix(q[1], -Math.sin(Math.PI * t) * (0.5 + d * 0.05), gk);
       P(q[0], q[1], q[2], fz, st.c[0], st.c[1], st.c[2], al * mund); }
     // Bewegung: Material fließt sichtbar zur neuen Fassung, ein Verweis zeigt; Zugehörigkeit steht still
     if(st.fluss && !U.RM){ const z = st.fluss === 'material' ? 3 : 1; for(let q = 0; q < z; q++){ const t = ((wall * (st.fluss === 'material' ? 0.12 : 0.07) + q / z + fi * 0.137) % 1), p3 = pt(t);
@@ -221,7 +233,7 @@ export function baueNetz(N, U, wall, vis, aktiv, aktivDetail){
   if(imDach == null){ const bz = Math.max(0.1, CAM.S * 0.0032);
     for(let bi = 0; bi < N.buendel.length; bi++){ const x = N.buendel[bi], za = N.bezirkZiel(x.von), zb = N.bezirkZiel(x.nach); if(!za || !zb) continue;
       const st = STIL[x.typ] || STIL['verweist-auf'], an = U.sel && U.sel.art === 'buendel' && U.sel.i === bi, ho = U.hover && U.hover.art === 'buendel' && U.hover.i === bi;
-      const al = vis * (st.a + 0.03 * Math.min(8, x.kanten)) * (soloAny ? 0.3 : 1) * (an || ho ? 1.8 : wahl ? 0.35 : 0.6) * (fokus ? 0.2 : 1);
+      const al = (1 - gk) * vis * (st.a + 0.03 * Math.min(8, x.kanten)) * (soloAny ? 0.3 : 1) * (an || ho ? 1.8 : wahl ? 0.35 : 0.6) * (fokus ? 0.2 : 1);
       const pt = bogen(za.mitte, za.R, zb.mitte, zb.R), d = Math.hypot(za.mitte[0] - zb.mitte[0], za.mitte[2] - zb.mitte[2]), n = Math.round(clamp(d * 3, 20, 120));
       const dicke = bz * (1 + 0.1 * Math.min(8, x.kanten));
       for(let s = 0; s <= n; s++){ const t = s / n; if(st.luecke && t > 0.44 && t < 0.56) continue; const q = pt(t); P(q[0], q[1], q[2], dicke, st.c[0], st.c[1], st.c[2], al * (0.5 + 0.6 * t)); }
@@ -234,7 +246,7 @@ export function baueNetz(N, U, wall, vis, aktiv, aktivDetail){
   for(let k = 0; k < MEM2.length / 3; k++){ const ux = MEM2[k * 3], uy = MEM2[k * 3 + 1], uz = MEM2[k * 3 + 2];
     const x = ux * Rm2, y = uy * Rm2 * 0.45, z = uz * Rm2;
     const vx = cx - x, vy = cyy - y, vz = cz - z, vl = Math.hypot(vx, vy, vz) || 1, fres = Math.pow(1 - Math.abs((ux * vx + uy * vy * 0.45 + uz * vz) / vl), 4.0);
-    const lum = fres * vis * 0.32 * (imDach != null || fokus ? 0.15 : 1); P(x, y, z, Rm2 * 0.0035, WG[0] * lum, WG[1] * lum * 0.97, WG[2] * lum * 0.98, 0.7); }
+    const lum = fres * vis * 0.32 * (imDach != null || fokus ? 0.15 : 1) * (1 - gk); P(x, y, z, Rm2 * 0.0035, WG[0] * lum, WG[1] * lum * 0.97, WG[2] * lum * 0.98, 0.7); }
   // Die fünf Stimmen als Kranz um die Mitte, mit kurzen Spuren
   const kopf = Math.min(N.L.mitte.R * 0.07, 0.65);
   for(let i = 0; i < 5; i++){ const c = mixc(VOICES[i].c, WG, 0.35), al = vis * (0.25 + 0.75 * N.stimmAnteil[i]) * U.soloA[i] * (imDach != null && imDach !== 'mitte' ? anders : 1) * still;

@@ -24,13 +24,13 @@ export function regie(U, Z, N, RM){
     const nMitte = dz ? [mix(N.mitte[0], dz.mitte[0], dk), mix(N.mitte[1], dz.mitte[1], dk), mix(N.mitte[2], dz.mitte[2], dk)] : N.mitte;
     // Der Maßstab misst, was alle Bezirke wirklich brauchen. Am Handy steht die lange Achse hochkant
     const yawN = 0.35 + (portrait && hochkant(N, asp) ? Math.PI / 2 : 0) + (RM ? 0 : 0.012) * U.netZeit;
-    const ganz = N.kreise ? netzMass(N, yawN, 50 * DEG, asp) / fit : N.Rm2 * 0.9;
+    const gk = RM ? Math.round(U.gartenK) : eio(U.gartenK), elevG = mix(50, 20, gk) * DEG, ganz = N.kreise ? netzMass(N, yawN, elevG, asp) * mix(1, 1.12, gk) / fit : N.Rm2 * 0.9;
     const nS = Math.exp(mix(Math.log(ganz), Math.log(dz ? dz.R * 1.08 : ganz), dk)), inward = U.netDir < 0;
     const tk = inward ? sstep(0.0, 0.7, nk) : sstep(0.3, 1.0, nk);
     Sv = Math.exp(mix(Math.log(Math.max(0.05, Sv)), Math.log(nS), nk));
     tg = [mix(tg[0], nMitte[0], tk), mix(tg[1], nMitte[1], tk), mix(tg[2], nMitte[2], tk)];
     // im Bezirk steiler von oben: die Ordnung liest sich wie eine Karte
-    elev = mix(elev, mix(50, 66, dk) * DEG, sstep(0, 0.8, nk)); fov = mix(fov, 40 * DEG, sstep(0, 0.6, nk)); yaw = mix(yaw, yawN, sstep(0.2, 1, nk));
+    elev = mix(elev, mix(mix(50, 20, gk), mix(66, 30, gk), dk) * DEG, sstep(0, 0.8, nk)); fov = mix(fov, 40 * DEG, sstep(0, 0.6, nk)); yaw = mix(yaw, yawN, sstep(0.2, 1, nk));
   }
   // Flug von einer Zelle zur nächsten: Ziel gleitet, Maßstab atmet weit auf
   if(U.flug && Z){ const e = eio(clamp((performance.now() - U.flug.t0) / U.flug.dauer, 0, 1)), hoch = Math.sin(Math.PI * e);

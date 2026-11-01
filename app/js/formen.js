@@ -16,7 +16,7 @@ const tischEl = $('#formen'), flaecheEl = tischEl.querySelector('.formen-flaeche
   zurueckEl = tischEl.querySelector('.formen-zurueck'), randEl = tischEl.querySelector('.formen-rand'), tunEl = tischEl.querySelector('.formen-tun');
 const roh = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c]));
 const RUHT = 'Der KiNFORMER ruht gerade. Formen geht, sobald er wach ist.';
-const HINTERGRUND = ['#lese', '#gl', '#snd', '#seite', '#spiralknopf', '#netzknopf', '#zurueck', '#marke'];
+const HINTERGRUND = ['#lese', '#gl', '#snd', '#seite', '#spiralknopf', '#gartenknopf', '#netzknopf', '#zurueck', '#marke'];
 const handy = () => matchMedia('(max-width: 760px), (pointer: coarse)').matches;
 const tastatur = () => matchMedia('(any-pointer: fine)').matches;
 

@@ -7,7 +7,7 @@ import {bestand} from '../app/js/daten.js';
 globalThis.innerWidth = 1200; globalThis.innerHeight = 800;
 const B = bestand(JSON.parse(readFileSync('testdaten/kette-claude/state.json', 'utf8')));
 const O = JSON.parse(readFileSync('app/ordnung.json', 'utf8'));
-const {Netz} = await import('../app/js/netz.js');
+const {Netz, arbeit} = await import('../app/js/netz.js');
 const N = new Netz(B, O);
 
 test('Netz: die Mitte ist so groß wie ein großes Dach, ihre Werke liegen in ihr', () => {
@@ -33,4 +33,11 @@ test('Netz: ein Werk nur mit seiner Ausgangsfassung ist eine Knospe, kein große
   const k = B.monde.findIndex((m, i) => !m.samen.length && !N.baum.material.has(i));
   if(k >= 0) assert.ok(N.rM[k] < 0.5);
   const voll = B.monde.findIndex(m => m.samen.length > 20); assert.ok(N.rM[voll] > 1);
+});
+test('Garten: dieselben Werke am selben Ort; wer mehr Arbeit trägt, hat die längere Spirale und steht höher', () => {
+  const m = n => ({samen: Array.from({length: n}, () => ({laenge: 2000}))});
+  assert.ok(arbeit(m(1)) < arbeit(m(10)) && arbeit(m(10)) < arbeit(m(100)));
+  const voll = B.monde.findIndex(x => x.samen.length > 20), klein = B.monde.findIndex((x, i) => x.samen.length === 1 && !N.baum.material.has(i));
+  assert.ok(N.mini[voll].H > N.mini[klein].H);
+  for(let i = 0; i < N.N; i++){ assert.equal(N.mini[i].ptsH.length, N.mini[i].pts.length / 6); assert.equal(N.mini[i].stielH.length, N.mini[i].stiel.length / 6); }
 });

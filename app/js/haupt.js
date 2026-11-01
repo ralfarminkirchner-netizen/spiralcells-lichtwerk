@@ -544,6 +544,7 @@ function advance(rdt){
   if(U.fahrt && (performance.now() > U.fahrt.bis || Math.abs(U.netT - U.netK) < 0.003)){ U.netK = U.netT; U.fahrt = null; }
   U.kelchK += (U.kelchT - U.kelchK) * (1 - Math.exp(-rdt / (W.RM ? 0.12 : 1.1)));
   U.spiralK += (U.spiralT - U.spiralK) * (1 - Math.exp(-rdt / (W.RM ? 0.12 : 1.1)));
+  { const zk = U.gartenK + (U.gartenT - U.gartenK) * (1 - Math.exp(-rdt / (W.RM ? 0.12 : 1.3))); U.gartenK = W.RM ? U.gartenT : zk; document.body.classList.toggle('imnetz', U.netK > 0.5); }
   U.dachK += ((U.dach != null || U.als ? 1 : 0) - U.dachK) * (1 - Math.exp(-rdt / (W.RM ? 0.1 : 0.7)));
   U.alsK += ((U.als ? 1 : 0) - U.alsK) * (1 - Math.exp(-rdt / (W.RM ? 0.1 : 0.7)));
   U.leseK += ((U.lese ? 1 : 0) - U.leseK) * k;
