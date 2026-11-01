@@ -74271,7 +74271,7 @@ function bestand(graph) {
       gegen: samen.filter((s) => s.stimme === i && s.modus === "review").length
     }));
     const eigene = new Set(fs.map((v3) => v3.id));
-    const faeden = [], aussen = [];
+    const faeden2 = [], aussen = [];
     for (const e2 of g.edges) {
       const a2 = eigene.has(e2.from_variant_id), b2 = eigene.has(e2.to_variant_id);
       if (!a2 && !b2) continue;
@@ -74287,7 +74287,7 @@ function bestand(graph) {
         verwendung: !!e2.usage,
         form: formFaden.has(e2.from_variant_id) && formen.get(e2.from_variant_id) === e2.to_variant_id
       };
-      if (a2 && b2) faeden.push(f2);
+      if (a2 && b2) faeden2.push(f2);
       else aussen.push({ ...f2, anderesWerk: werkVon(a2 ? e2.to_variant_id : e2.from_variant_id) });
     }
     const befunde = g.findings.filter((f2) => {
@@ -74308,7 +74308,7 @@ function bestand(graph) {
       if (s.form) continue;
       for (const sid of (s.fassung.contribution || {}).seen_variant_ids || []) if (eigene.has(sid) && !keimIds.has(sid)) bezug(s.stimme, stimmeDer(sid), s.zeit);
     }
-    for (const f2 of faeden) if (f2.typ !== "geh\xF6rt-zu" && !f2.form && stimmeVon(A.get(f2.kante.author_id)) === stimmeDer(f2.von)) bezug(stimmeDer(f2.von), stimmeDer(f2.nach), ms(f2.kante.created_at));
+    for (const f2 of faeden2) if (f2.typ !== "geh\xF6rt-zu" && !f2.form && stimmeVon(A.get(f2.kante.author_id)) === stimmeDer(f2.von)) bezug(stimmeDer(f2.von), stimmeDer(f2.nach), ms(f2.kante.created_at));
     for (const bf of befunde) {
       const autor = stimmeVon(A.get(bf.author_id));
       const ziele = bf.target_edge_id ? [E2.get(bf.target_edge_id)?.from_variant_id, E2.get(bf.target_edge_id)?.to_variant_id] : bf.target_variant_ids || [];
@@ -74320,7 +74320,7 @@ function bestand(graph) {
     const geprueft = samen.filter((s) => s.status === "gepr\xFCft").length;
     const probe = befunde.some((f2) => f2.evidence_status === "executed-probe");
     const gegenlesen = samen.filter((s) => s.modus === "review" && !s.form).length;
-    const echteFaeden = faeden.filter((f2) => !f2.form).length;
+    const echteFaeden = faeden2.filter((f2) => !f2.form).length;
     let reife = "frisch";
     if (kristall.length) reife = "kanonisch";
     else if (kopplung >= 0.5 || probe && nv >= 2 || geprueft) reife = "gereift";
@@ -74352,7 +74352,7 @@ function bestand(graph) {
       probe,
       winkel: kristall.length ? GOLD : nv === 0 ? null : SPOKE + (GOLD - SPOKE) * 0.84 * kopplung,
       // Traumfeld: keine Ordnung, der goldene Winkel bleibt Ralfs Kristallisieren
-      faeden,
+      faeden: faeden2,
       aussen,
       befunde,
       zeitspanne: zeiten.length ? [Math.min(...zeiten), Math.max(...zeiten)] : [0, 0],
@@ -76663,7 +76663,7 @@ var istFrei = (x, z2) => {
   const a2 = (j2 * karte.width + i) * 4;
   return px2[a2] < 30 && px2[a2 + 1] < 30 && px2[a2 + 2] < 30;
 };
-var renderer = new WebGPURenderer({ canvas, antialias: true });
+var renderer = new WebGPURenderer({ canvas, antialias: true, forceWebGL: /[?&]webgl/.test(location.search) || !navigator.gpu || !await navigator.gpu.requestAdapter().catch(() => null) });
 renderer.setPixelRatio(Math.min(devicePixelRatio, klein2 ? 1.5 : 2));
 renderer.setSize(innerWidth, innerHeight);
 renderer.toneMapping = AgXToneMapping;
@@ -77179,6 +77179,29 @@ function baueStadt(stil) {
   kI.castShadow = true;
   kI.receiveShadow = true;
   G.add(kI);
+  {
+    const oben = /* @__PURE__ */ new Map();
+    for (const i of ks) {
+      const n2 = kz2[i + 12], y = kz2[i + 3] + kz2[i + 5];
+      if (y > (oben.get(n2) ?? 0)) oben.set(n2, y);
+    }
+    const ART2 = { sternwarte: "kuppel", kapelle: "kuppel", museum: "kuppel", bibliothek: "kuppel", musik: "trommel", saal: "trommel", turnhalle: "trommel", kaffeehaus: "trommel", aussicht: "spitze", rathaus: "spitze", maerchen: "spitze", schreibstube: "spitze", schule: "gruen", spielhof: "gruen", heilhaus: "gruen", werkstatt: "schlot", garage: "schlot", druckerei: "schlot", bastel: "schlot" }, F2 = { kuppel: new SphereGeometry(1, 24, 12, 0, Math.PI * 2, 0, Math.PI / 2), trommel: new CylinderGeometry(1, 1, 0.7, 28), spitze: new ConeGeometry(1, 2.6, 4), gruen: new BoxGeometry(1.5, 0.22, 1.5), schlot: new CylinderGeometry(0.16, 0.22, 2, 10) }, M = { kuppel: new MeshStandardMaterial({ color: 12174024, metalness: 0.85, roughness: 0.3 }), trommel: new MeshStandardMaterial({ color: 14208960, roughness: 0.6 }), spitze: new MeshStandardMaterial({ color: 6262656, metalness: 0.8, roughness: 0.4 }), gruen: new MeshStandardMaterial({ color: 5208632, roughness: 0.95 }), schlot: new MeshStandardMaterial({ color: 8011828, roughness: 0.8 }) }, gr = /* @__PURE__ */ new Map();
+    for (const [n2, y] of oben) {
+      if (N3.baum.material.has(n2)) continue;
+      const a2 = ART2[funktionVon(N3, n2)];
+      if (a2) (gr.get(a2) || gr.set(a2, []).get(a2)).push([n2, y]);
+    }
+    const br = bue ? 1.7 : 1.45;
+    for (const [a2, li] of gr) {
+      const I = instanzen(F2[a2], M[a2], li, ([n2, y], m, c) => {
+        const p2 = hier.pos[n2], h2 = a2 === "trommel" ? 0.35 : a2 === "spitze" ? 0.72 : a2 === "schlot" ? 1 : a2 === "gruen" ? 0.11 : 0;
+        m.compose(V2.set(p2[0], y + 0.25 + h2, p2[2]), Q.setFromEuler(EU.set(0, a2 === "spitze" ? 0.785 : 0, 0)), V1.setScalar(a2 === "schlot" ? 1 : a2 === "spitze" ? br * 0.55 : br));
+        c.setRGB(1, 1, 1);
+      });
+      I.castShadow = true;
+      G.add(I);
+    }
+  }
   const betonS = stoff("anti_slip_concrete");
   for (const t3 of [betonS.farbe, betonS.normal, betonS.arm]) t3.repeat.set(1, 1);
   const sockel = [];
@@ -77441,6 +77464,7 @@ var weltKey = "dorf";
 function geheZu(k2) {
   const W2 = WELTEN[k2];
   if (!W2 || jetzt === W2) return;
+  if (jetzt) zeigeFaeden(null);
   weltKey = k2;
   if (jetzt && jetzt.gruppe.userData.knopf) jetzt.gruppe.userData.knopf.hidden = true;
   if (jetzt) {
@@ -77711,6 +77735,31 @@ addEventListener("keydown", (e2) => {
   if (haus.drin && e2.key === "ArrowDown") leiste2.querySelector(".ab").click();
 });
 var gemerkt = null;
+var faeden = null;
+function zeigeFaeden(n2) {
+  if (faeden) {
+    faeden.parent && faeden.parent.remove(faeden);
+    faeden.geometry.dispose();
+    faeden = null;
+  }
+  if (n2 == null) return 0;
+  const li = jetzt.gruppe.userData.haeuser, nach = new Map(li.map((h2) => [h2.n, h2])), a2 = nach.get(n2), geos = [];
+  let zahl = 0;
+  if (!a2) return 0;
+  for (const f2 of N3.faeden) {
+    if (f2.von !== n2 && f2.nach !== n2) continue;
+    const b2 = nach.get(f2.von === n2 ? f2.nach : f2.von);
+    if (!b2) continue;
+    zahl++;
+    const d2 = Math.hypot(a2.x - b2.x, a2.z - b2.z), m = new Vector3((a2.x + b2.x) / 2, Math.max(a2.y, b2.y) + 2 + d2 * 0.22, (a2.z + b2.z) / 2);
+    geos.push(farbeRoh(new TubeGeometry(new QuadraticBezierCurve3(new Vector3(a2.x, a2.y, a2.z), m, new Vector3(b2.x, b2.y, b2.z)), 28, 0.05, 5, false).toNonIndexed(), f2.von === n2 ? [2.6, 2, 1] : [1, 1.8, 2.6]));
+  }
+  if (geos.length) {
+    faeden = new Mesh(mergeGeometries(geos), new MeshBasicMaterial({ vertexColors: true, fog: false }));
+    jetzt.gruppe.add(faeden);
+  }
+  return zahl;
+}
 var dn = null;
 canvas.addEventListener("pointerdown", (e2) => {
   dn = [e2.clientX, e2.clientY];
@@ -77739,10 +77788,11 @@ canvas.addEventListener("pointerup", (e2) => {
       return;
     }
     gemerkt = beste.n;
+    const fz = zeigeFaeden(beste.n);
     const tp = jetzt.gruppe.userData.tippe;
     if (tp) tp(beste);
     const f2 = FUNKTIONEN[funktionVon(N3, beste.n)], feld = weltKey === "dorf" ? "name" : weltKey;
-    zeigeSatz(`${f2[feld] || f2.name}: ${beste.titel}`, beste.mat ? "Lesematerial" : beste.zahl ? `${beste.zahl} ${beste.zahl === 1 ? "Fassung" : "Fassungen"}${begehbar ? ". Noch einmal tippen: hineingehen." : ""}` : "nur die Ausgangsfassung");
+    zeigeSatz(`${f2[feld] || f2.name}: ${beste.titel}`, beste.mat ? "Lesematerial" : beste.zahl ? `${beste.zahl} ${beste.zahl === 1 ? "Fassung" : "Fassungen"}${fz ? ` \xB7 ${fz} ${fz === 1 ? "Faden" : "F\xE4den"}` : ""}${begehbar ? ". Noch einmal tippen: hineingehen." : ""}` : "nur die Ausgangsfassung");
   }
 });
 addEventListener("resize", () => {
@@ -77750,7 +77800,7 @@ addEventListener("resize", () => {
   camera.updateProjectionMatrix();
   renderer.setSize(innerWidth, innerHeight);
 });
-if (/werkstatt/.test(location.search)) window.__welten = { haus, hinein, hinaus, lies, tippeInnen, karte, E, LGR: LG.R, wege: LG.wege, renderer, camera, ctl, scene, geheZu, WELTEN };
+if (/werkstatt/.test(location.search)) window.__welten = { zeigeFaeden, haus, hinein, hinaus, lies, tippeInnen, karte, E, LGR: LG.R, wege: LG.wege, renderer, camera, ctl, scene, geheZu, WELTEN };
 geheZu(new URLSearchParams(location.search).get("welt") || "dorf");
 var uhr = new Clock();
 renderer.setAnimationLoop(() => {

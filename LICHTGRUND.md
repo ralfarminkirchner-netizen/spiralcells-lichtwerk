@@ -111,6 +111,12 @@ Ralf: Unreal später, erst alles andere selbst. Ziel bleibt Kino als Mac-App; da
 - Behoben: die große Straßenkarte ging im Grafikspeicher verloren, darum fehlten zeitweise Straßen.
 - Offen: Beim Start stellte der Browser im Prüflauf zweimal keine Grafik bereit (kein WebGPU-Adapter unter Last), Neuladen half; ein Satz dazu steht nur, wenn der Start selbst scheitert. Häuser bleiben grob. Fäden fehlen. Kein echtes Handy; Leseweg im Handy-Format nicht durchgespielt.
 
+## Schritt 18: Ersatzweg, Funktion am Bau, Fäden (01.11.)
+- Ohne WebGPU startet die Seite jetzt mit WebGL 2; im Test mit erzwungenem WebGL lief das Dorf ohne Fehler. Auf einem echten Handy nicht geprüft.
+- Campus und Büro: die Funktion zeigt sich auf dem Dach (Kuppel, Trommel, Spitze, Gründach, Schlot). Die Bauten darunter bleiben gleich gebaut.
+- Fäden: ein Werk antippen zeigt seine gespeicherten Beziehungen als Bogen und nennt ihre Zahl, Farbe nach Richtung. In der Galaxie bleiben sie stehen, während die Planeten weiterlaufen.
+- `werkzeuge/neu/server_lesen.py`: nur lesender Dienst hinter Passwort für Railway. Nicht veröffentlicht: Ralfs Railway-Anmeldung fehlt, die Frage ist vertagt.
+
 ## Prüfstand 01.11.
 - Geprüft im Browser bei 1280 x 800 und 390 x 844, auf der Datenkopie: alle Ansichten, Morph in Einzelbildern, Wähler, Textfassung, Werk öffnen und zurück. 60 Bilder je Sekunde am Mac (Grafik des Macs, nicht auf einem echten Handy). 0 schwarze Starts von 12. Bilder: `Development/Artifacts/lichtwerk-vergleich-20261101/lichtgrund/garten4` und `garten5`.
 - Offen: Laufende Bewegung nur in Standbildern beurteilt, nicht als Film. Nicht auf einem echten Handy geprüft. Namen überlappen teils die Marke. Die Innenräume sind noch schlichte Kisten: kein Glas, keine Möbel außer Tisch und Stuhl. Viele Werke haben nur eine Fassung, ihr Gebäude ist also einstöckig mit einem Tisch; das ist der Bestand.
