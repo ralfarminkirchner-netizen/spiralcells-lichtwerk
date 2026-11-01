@@ -17,3 +17,7 @@ Eigene Variante, abgezweigt von Alsformen (22.10.). Andere Zweige und Arbeitskop
 - Das Netz öffnet als Ganzes statt nur im Bezirk des Monds, aus dem man kommt; dieser bleibt markiert.
 - Die Bezirke liegen dicht um die Mitte, jeder trägt seinen Namen. Die Marke und der Name stehen nicht mehr doppelt da.
 - Werke ohne Dach, Scheine und Bögen sind leiser. Offen: Am Handy bleibt das Netz klein.
+
+## Schritt 3: Zellen im Netz
+- Jedes Werk hat eine eigene Haut und zeigt seine Fassungen als Spirale, die Stimme als Farbe (Zeichnung aus der Myzelstudie vom 26.10., in Licht übertragen). Die Spirale ist Anordnung, kein Beleg für Abstammung.
+- Die Körner im Netz flackern nicht mehr; das Licht bleibt in der Zelle.

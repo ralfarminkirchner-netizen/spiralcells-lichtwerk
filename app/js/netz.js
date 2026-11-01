@@ -20,21 +20,25 @@ const MEM2 = fibSphere(4200), MEMD = fibSphere(900);
 const SEEDC = VOICES.map(v => v.c);
 const TURN = 1.75, SPOKE = 144;
 
-/* Ein Werk im Kleinen: sein Wuchs, ein Punkt je Ausprägung, Stiele dazwischen (eine Übernahmereihe hat keine) */
-function miniWuchs(m, rM){
-  const n = m.samen.length; if(!n) return {pts: new Float32Array(0), stiel: new Float32Array(0)};
-  const W = wuchs(m), rr = rangRadien(Array.from(W.s1)), curl = m.winkel == null ? 0.42 : clamp((SPOKE - m.winkel) / (SPOKE - 137.50776), 0, 1);
-  const pos = i => { const r = rM * rr[i], a = W.th1[i] + curl * rr[i] * TURN; return [r * Math.cos(a), r * Math.sin(a)]; };
+/* Ein Werk im Kleinen: eine Zelle mit eigener Haut. Die Haut ist je Werk anders und stabil; darin liegen seine Fassungen
+   als Spirale, die Stimme als Farbe, Gabeln etwas neben der Bahn. Die Spirale ist Anordnung, kein Beleg für Abstammung. */
+function miniWuchs(m, rM, seed){
+  const n = m.samen.length, W = n ? wuchs(m) : null, turns = n > 35 ? 2.45 : n > 12 ? 2.05 : n > 10 ? 1.55 : 1.35, karg = n <= 10;
+  const bahn = t => { const a = -Math.PI * 0.73 + t * TAU * turns, r = rM * (karg ? 0.18 + 0.6 * Math.pow(t, 0.78) : 0.095 + 0.66 * Math.pow(t, 0.86)); return [r * Math.cos(a), r * Math.sin(a), a]; };
   const schritt = Math.max(1, Math.ceil(n / 160)), pts = [], stiel = [];
   for(let i = 0; i < n; i++){
-    const s = m.samen[i], [x, z] = pos(i);
+    const s = m.samen[i], t = n === 1 ? 0.25 : i / (n - 1); let [x, z, a] = bahn(t);
+    const sw = W.eltern[i] >= 0 ? W.kinder[W.eltern[i]] : null;
+    if(sw && sw.length > 1){ const v = (sw.indexOf(i) - (sw.length - 1) / 2) / Math.max(1, (sw.length - 1) / 2) * rM * 0.1; x += Math.cos(a + Math.PI / 2) * v; z += Math.sin(a + Math.PI / 2) * v; }
     const c = s.form ? SILVER : typeof s.stimme === 'number' ? SEEDC[s.stimme] : s.stimme === MENSCH ? SILVER : DUSTC, g = s.status === 'grundformation' ? 0.5 : 0;
-    if(i % schritt === 0 || W.kinder[i].length > 1 || W.art[i] === 'gabel') pts.push(x, (i / n) * rM * 0.35, z, mix(c[0], GOLDC[0], g), mix(c[1], GOLDC[1], g), mix(c[2], GOLDC[2], g));
-    const p = W.eltern[i]; if(W.art[i] === 'frei' || W.art[i] === 'reihe' || n > 400) continue;
-    const [px, pz] = p >= 0 ? pos(p) : [0, 0];
-    for(let q = 1; q <= 2; q++){ const t = q / 3; stiel.push(mix(px, x, t), 0, mix(pz, z, t), c[0], c[1], c[2]); }
+    if(i % schritt === 0 || W.kinder[i].length > 1 || W.art[i] === 'gabel') pts.push(x, (i / n) * rM * 0.1, z, mix(c[0], GOLDC[0], g), mix(c[1], GOLDC[1], g), mix(c[2], GOLDC[2], g));
   }
-  return {pts: new Float32Array(pts), stiel: new Float32Array(stiel)};
+  if(n > 1){ const q = Math.round(clamp(rM * 26 * turns, 24, 110)); for(let j = 0; j <= q; j++){ const [x, z] = bahn(j / q), c = m.samen[Math.round(j / q * (n - 1))]; const f = typeof c.stimme === 'number' ? SEEDC[c.stimme] : DUSTC; stiel.push(x, 0, z, f[0], f[1], f[2]); } }
+  // Die Haut: leicht unregelmäßig; oben links liegt ein heller Rand, der ihr Tiefe gibt, ohne etwas zu behaupten
+  const hn = Math.round(clamp(rM * 26, 40, 96)), p3 = hash(seed * 1.3) * TAU, p5 = hash(seed * 2.1) * TAU, haut = [];
+  for(let j = 0; j < hn; j++){ const a = j / hn * TAU, r = rM * (1 + Math.sin(a * 3 + p3) * 0.036 + Math.cos(a * 5 + p5) * 0.016);
+    let u = (a / Math.PI - 1.01) / 0.7, hell = u >= 0 && u <= 1 ? Math.sin(Math.PI * u) : 0; haut.push(r * Math.cos(a), r * Math.sin(a) * 0.94, hell); }
+  return {pts: new Float32Array(pts), stiel: new Float32Array(stiel), haut: new Float32Array(haut)};
 }
 /* Die Mischfarbe einer Reihe von Werken: so leuchtet ein Dach, wenn es leuchtet */
 function mischFarbe(mini, werke){ let r = 0, g = 0, b = 0, n = 0;
@@ -53,7 +57,7 @@ export class Netz {
     for(const i of this.baum.material.keys()) this.rM[i] = 0.32;
     this.L = lage(this.baum, this.rM.map(r => r * 1.1), {gapWerk: 0.3, gapBereich: 0.35, gapDach: 1.4});
     this.pos = this.L.pos.map((p, i) => [p[0], (hash(i * 3.7) - 0.5) * 0.25, p[2]]);
-    this.mini = B.monde.map((m, i) => this.baum.material.has(i) ? {pts: new Float32Array(0), stiel: new Float32Array(0)} : miniWuchs(m, this.rM[i]));
+    this.mini = B.monde.map((m, i) => this.baum.material.has(i) ? {pts: new Float32Array(0), stiel: new Float32Array(0), haut: new Float32Array(0)} : miniWuchs(m, this.rM[i], i + 1));
     this.R2 = this.L.R; this.H2 = 0; this.mitte = [0, 0, 0]; this.Rm2 = this.L.R * 1.06;
     // Dächer und Bereiche mit Namen und der Mischfarbe ihrer Werke
     this.daecher = this.baum.daecher.map((d, j) => ({...d, ...this.L.daecher[j], farbe: mischFarbe(this.mini, d.bereiche.flatMap(b => b.werke)),
@@ -169,10 +173,14 @@ export function baueNetz(N, U, wall, vis, aktiv, aktivDetail){
       if(hov === n || self) screenRing(o, 0.35, WG, 0.4 * vis); U.monde[n] = toScreen(o[0], o[1], o[2]); continue; }
     // Viele Punkte auf kleinem Raum brennen aus: die Helligkeit je Punkt sinkt mit ihrer Zahl, groß heißt weit, nicht grell
     const lit = (m.traumfeld ? 1.4 : 2.2) * (hov === n ? 1.5 : 1) * (self ? 1.3 : 1) * Math.pow(Math.min(1, 16 / Math.max(1, k)), 0.7);
-    if(k){ let r = 0, g = 0, b = 0; for(let p = 0; p < k; p++){ r += pts[p * 6 + 3]; g += pts[p * 6 + 4]; b += pts[p * 6 + 5]; } P(o[0], o[1] + N.rM[n] * 0.15, o[2], N.rM[n] * 2.0, r / k, g / k, b / k, a * (m.traumfeld ? 0.14 : m.stimmen.length ? 0.35 : 0.24) * (fokus ? 0.4 : 1) * (imDach == null ? 0.35 : 1)); }   // im Blick: der Schein tritt zurück, die Gestalt bleibt
-    else P(o[0], o[1], o[2], 0.7, KEIMC[0], KEIMC[1], KEIMC[2], a * 0.1);   // eine Knospe: nur die Ausgangsfassung, warm und klein
+    // Die Zelle: ein Leib in der Farbe ihrer Stimmen und ihre Haut. Das Licht bleibt in der Zelle
+    let cr = KEIMC[0], cg = KEIMC[1], cb = KEIMC[2];
+    if(k){ cr = cg = cb = 0; for(let p = 0; p < k; p++){ cr += pts[p * 6 + 3]; cg += pts[p * 6 + 4]; cb += pts[p * 6 + 5]; } cr /= k; cg /= k; cb /= k; }
+    P(o[0], o[1], o[2], N.rM[n] * 1.15, cr, cg, cb, a * (m.traumfeld ? 0.06 : 0.11) * (fokus ? 0.4 : 1));
+    const haut = N.mini[n].haut, hz = Math.max(N.rM[n] * 0.012, CAM.S * 0.0026), hf = a * (hov === n || self ? 1.3 : 0.62);
+    for(let p = 0; p < haut.length / 3; p++){ const h = haut[p * 3 + 2]; P(o[0] + haut[p * 3], o[1], o[2] + haut[p * 3 + 1], hz * (1 + 0.5 * h), mix(cr, WG[0], 0.45 + 0.5 * h), mix(cg, WG[1], 0.45 + 0.5 * h), mix(cb, WG[2], 0.45 + 0.5 * h), hf * (0.5 + 0.9 * h)); }
     const sz = Math.max(0.17 * Math.max(0.7, N.rM[n]), CAM.S * 0.0042);   // auch im Überblick bleibt die Gestalt eines Werks zu sehen, nicht nur sein Schein
-    for(let p = 0; p < k; p++) P(o[0] + pts[p * 6], o[1] + pts[p * 6 + 1], o[2] + pts[p * 6 + 2], sz, pts[p * 6 + 3], pts[p * 6 + 4], pts[p * 6 + 5], a * lit * (U.RM ? 0.9 : 0.8 + 0.2 * Math.sin(wall * 0.7 + p * 0.37 + n)));
+    for(let p = 0; p < k; p++) P(o[0] + pts[p * 6], o[1] + pts[p * 6 + 1], o[2] + pts[p * 6 + 2], sz, pts[p * 6 + 3], pts[p * 6 + 4], pts[p * 6 + 5], a * lit * 0.9);
     const st = N.mini[n].stiel; for(let p = 0; p < st.length / 6; p++) P(o[0] + st[p * 6], o[1] + st[p * 6 + 1], o[2] + st[p * 6 + 2], sz * 0.45, st[p * 6 + 3], st[p * 6 + 4], st[p * 6 + 5], a * 0.3);
     P(o[0], o[1], o[2], k ? 0.2 : 0.26, KEIMC[0], KEIMC[1], KEIMC[2], a * (m.keimKristall ? 1.5 : k ? 0.8 : 1.1));
     // Ringe (Phase, zuletzt bewegt): im Überblick nur am jüngsten Werk je Bezirk, im Bezirk an allen seinen Werken
