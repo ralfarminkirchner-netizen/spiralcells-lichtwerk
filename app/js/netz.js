@@ -9,12 +9,14 @@
    Fäden zeigen Typ und Richtung: Material fließt, ein Verweis zeigt, Zugehörigkeit steht still.
    Im Überblick laufen sie gebündelt von Bezirk zu Bezirk; einzeln erst im Dach oder an der Wahl.
    ===================================================================== */
-import {TAU, clamp, mix, sstep, hash, mixc, P, CAM, toScreen, screenRing, WG, KEIMC, GOLDC, SILVER, DUSTC, ASCHE} from './licht.js';
+import {TAU, clamp, mix, sstep, eio, hash, mixc, P, CAM, toScreen, screenRing, WG, KEIMC, GOLDC, SILVER, DUSTC, ASCHE} from './licht.js';
 import {VOICES, fibSphere} from './zelle.js';
 import {MENSCH} from './daten.js';
 import {wuchs, rangRadien} from './wuchs.js';
 import {ordne, lage} from './ordnung.js';
 import {alsformen} from './alsformen.js';
+import {gelaende, PFLANZE} from './gelaende.js';
+import {galaxie, planetOrt, DREHUNG} from './mondbahn.js';
 
 const MEM2 = fibSphere(4200), MEMD = fibSphere(900);
 const SEEDC = VOICES.map(v => v.c);
@@ -49,11 +51,12 @@ function miniWuchs(m, rM, seed){
   const n = m.samen.length, W = n ? wuchs(m) : null, w = arbeit(m), turns = 0.45 + 2.6 * w, weite = 0.3 + 0.5 * w, H = rM * (2.2 + 6.5 * w);
   const bahn = t => { const a = -Math.PI * 0.73 + t * TAU * turns, r = rM * (0.07 + weite * Math.pow(t, 0.8)); return [r * Math.cos(a), r * Math.sin(a), a]; };
   const schritt = Math.max(1, Math.ceil(n / 160)), pts = [], stiel = [];
-  const G = n ? pflanze(m, W, rM, H) : {lage: new Float32Array(0), stengel: new Float32Array(0)}, ptsG = [];
+  const G = n ? pflanze(m, W, rM, H) : {lage: new Float32Array(0), stengel: new Float32Array(0)}, ptsG = [], korn = new Float32Array(n * 2);
   for(let i = 0; i < n; i++){
     const s = m.samen[i], t = n === 1 ? 1 : i / (n - 1); let [x, z, a] = bahn(t);
     const sw = W.eltern[i] >= 0 ? W.kinder[W.eltern[i]] : null;
     if(sw && sw.length > 1){ const v = (sw.indexOf(i) - (sw.length - 1) / 2) / Math.max(1, (sw.length - 1) / 2) * rM * 0.1; x += Math.cos(a + Math.PI / 2) * v; z += Math.sin(a + Math.PI / 2) * v; }
+    korn[i * 2] = x; korn[i * 2 + 1] = z;
     const c = s.form ? SILVER : typeof s.stimme === 'number' ? SEEDC[s.stimme] : s.stimme === MENSCH ? SILVER : DUSTC, g = s.status === 'grundformation' ? 0.5 : 0;
     if(i % schritt === 0 || W.kinder[i].length > 1 || W.art[i] === 'gabel'){ pts.push(x, (i / n) * rM * 0.1, z, mix(c[0], GOLDC[0], g), mix(c[1], GOLDC[1], g), mix(c[2], GOLDC[2], g)); ptsG.push(G.lage[i * 3], G.lage[i * 3 + 1], G.lage[i * 3 + 2]); }
   }
@@ -62,7 +65,7 @@ function miniWuchs(m, rM, seed){
   const hn = Math.round(clamp(rM * 26, 40, 96)), p3 = hash(seed * 1.3) * TAU, p5 = hash(seed * 2.1) * TAU, haut = [];
   for(let j = 0; j < hn; j++){ const a = j / hn * TAU, r = rM * (1 + Math.sin(a * 3 + p3) * 0.036 + Math.cos(a * 5 + p5) * 0.016);
     let u = (a / Math.PI - 1.01) / 0.7, hell = u >= 0 && u <= 1 ? Math.sin(Math.PI * u) : 0; haut.push(r * Math.cos(a), r * Math.sin(a) * 0.94, hell); }
-  return {pts: new Float32Array(pts), ptsG: new Float32Array(ptsG), stiel: new Float32Array(stiel), stengel: G.stengel, haut: new Float32Array(haut), H, plan: n ? {lage: G.lage, W, lose: Array.from({length: n}, (_, i) => W.art[i] === 'frei' || W.art[i] === 'reihe'), tiefste: Math.max(...W.tiefe)} : null};
+  return {korn, pts: new Float32Array(pts), ptsG: new Float32Array(ptsG), stiel: new Float32Array(stiel), stengel: G.stengel, haut: new Float32Array(haut), H, plan: n ? {lage: G.lage, W, lose: Array.from({length: n}, (_, i) => W.art[i] === 'frei' || W.art[i] === 'reihe'), tiefste: Math.max(...W.tiefe)} : null};
 }
 /* Die Mischfarbe einer Reihe von Werken: so leuchtet ein Dach, wenn es leuchtet */
 function mischFarbe(mini, werke){ let r = 0, g = 0, b = 0, n = 0;
@@ -81,7 +84,10 @@ export class Netz {
     for(const i of this.baum.material.keys()) this.rM[i] = 0.32;
     this.L = lage(this.baum, this.rM.map(r => r * 1.1), {gapWerk: 0.3, gapBereich: 0.35, gapDach: 1.4});
     this.pos = this.L.pos.map((p, i) => [p[0], (hash(i * 3.7) - 0.5) * 0.25, p[2]]);
+    this.ort = this.pos.map(p => [...p]);   // wo ein Werk gerade steht: im Kosmos sein Platz, in der Landschaft auf dem Boden
     this.mini = B.monde.map((m, i) => this.baum.material.has(i) ? {pts: new Float32Array(0), ptsG: new Float32Array(0), stiel: new Float32Array(0), stengel: new Float32Array(0), haut: new Float32Array(0), H: 0, plan: null} : miniWuchs(m, this.rM[i], i + 1));
+    this.land = gelaende({R: this.L.R, mitte: this.L.mitte, ohne: this.L.ohne, daecher: this.baum.daecher.map((d, j) => ({...this.L.daecher[j], arbeit: d.bereiche.flatMap(b => b.werke).reduce((a, i) => a + arbeit(B.monde[i]), 0)}))});
+    this.yBoden = this.pos.map(p => this.land.y(p[0], p[2]));
     this.R2 = this.L.R; this.H2 = 0; this.mitte = [0, 0, 0]; this.Rm2 = this.L.R * 1.06;
     // Dächer und Bereiche mit Namen und der Mischfarbe ihrer Werke
     this.daecher = this.baum.daecher.map((d, j) => ({...d, ...this.L.daecher[j], farbe: mischFarbe(this.mini, d.bereiche.flatMap(b => b.werke)),
@@ -158,6 +164,12 @@ function amRing(c, R, unten, innen){ let best = null;
 export function baueNetz(N, U, wall, vis, aktiv, aktivDetail){
   if(vis <= 0.003) return;
   const cx = CAM.P[0], cyy = CAM.P[1], cz = CAM.P[2], soloAny = U.solo >= 0, gk = U.gartenK || 0;   // gk: 0 Kosmos, 1 Garten; dieselben Werke am selben Ort
+  const le = U.RM ? Math.round(U.landK || 0) : eio(U.landK || 0), korn = 1 - sstep(0.3, 0.8, le), gross = mix(1, PFLANZE, le), bodenVon = (x, z) => le > 0.001 ? N.land.y(x, z) * le : 0;   // le: 0 Licht, 1 Landschaft
+  const ge = U.RM ? Math.round(U.galK || 0) : eio(U.galK || 0), tG = U.galZeit || 0, cG = Math.cos(DREHUNG * tG), sG = Math.sin(DREHUNG * tG);   // ge: 1 Galaxie
+  if(ge > 0.001 && !N.gal) N.gal = galaxie(N, arbeit);
+  for(let n = 0; n < N.N; n++){ N.ort[n][0] = N.pos[n][0]; N.ort[n][1] = N.pos[n][1] + N.yBoden[n] * le; N.ort[n][2] = N.pos[n][2];
+    if(ge > 0.001){ planetOrt(N.gal.planeten[n], tG, TMP); N.ort[n][0] = mix(N.pos[n][0], TMP[0], ge); N.ort[n][1] = mix(N.ort[n][1], 0, ge); N.ort[n][2] = mix(N.pos[n][2], TMP[2], ge); } }
+  const yM = bodenVon(0, 0), raum = (1 - le) * (1 - ge);   // in der Landschaft trägt der Boden, was im Kosmos die Hüllen zeigen
   const hov = U.hover && U.hover.art === 'mond' ? U.hover.i : -1, imDach = U.dach;   // null, 'mitte', 'ohne' oder ein Dach
   const hovD = U.hover && U.hover.art === 'dach' ? U.hover.i : -1, selD = U.sel && U.sel.art === 'dach' ? U.sel.i : -1;
   const selM = U.sel && U.sel.art === 'mond' ? U.sel.i : -1, anders = imDach != null ? 0.22 : 1;   // was nicht im betretenen Bezirk liegt, tritt zurück
@@ -165,53 +177,55 @@ export function baueNetz(N, U, wall, vis, aktiv, aktivDetail){
   // Mitte: die Zentrale, ein warmer Kern mit eigener Hülle, heller als jedes Dach
   const Lm = N.L.mitte, puls = U.RM ? 0.85 : 0.75 + 0.25 * Math.sin(wall * 0.9), hovM = U.hover && U.hover.art === 'mitte', anM = hovM || (U.sel && U.sel.art === 'mitte');
   const hellM = (imDach === 'mitte' ? 1.2 : imDach != null ? anders : 1) * still;
-  P(0, 0, 0, Math.min(Lm.R * 0.12, 1.1), KEIMC[0], KEIMC[1], KEIMC[2], 0.8 * vis * puls * (anM ? 1.5 : 1) * still);
-  P(0, 0, 0, Lm.R * 0.7, KEIMC[0], KEIMC[1], KEIMC[2], 0.09 * vis * hellM * (imDach === 'mitte' ? 0.5 : 1));
-  P(0, 0, 0, Lm.R * 1.6, KEIMC[0], KEIMC[1], KEIMC[2], 0.06 * vis * hellM * (imDach === 'mitte' ? 0.5 : 1));
-  ring([0, -0.05, 0], Lm.R, KEIMC, (anM ? 0.9 : 0.6) * vis * hellM, 0.09, 1);
-  huelle([0, 0, 0], Lm.R, 0.42 * (1 - 0.9 * gk), WG, (anM ? 0.9 : 0.55) * vis * (imDach === 'mitte' ? 0.35 : hellM), MEMD, cx, cyy, cz, imDach === 'mitte');
-  U.mitteSchirm = imDach === 'mitte' ? amRing([0, 0, 0], Lm.R * 1.04, false, 0) : amRing([0, 0, 0], Lm.R * 1.02, true, 0);   // im Überblick unter dem Rand, nie über den Werken; in der Mitte oben
+  P(0, yM, 0, Math.min(Lm.R * 0.12, 1.1), KEIMC[0], KEIMC[1], KEIMC[2], 0.8 * vis * puls * (anM ? 1.5 : 1) * still * mix(1, 0.5, le));
+  P(0, yM, 0, Lm.R * 0.7, KEIMC[0], KEIMC[1], KEIMC[2], 0.09 * vis * hellM * (imDach === 'mitte' ? 0.5 : 1) * raum);
+  P(0, yM, 0, Lm.R * 1.6, KEIMC[0], KEIMC[1], KEIMC[2], 0.06 * vis * hellM * (imDach === 'mitte' ? 0.5 : 1) * raum);
+  ring([0, yM - 0.05, 0], Lm.R, KEIMC, (anM ? 0.9 : 0.6) * vis * hellM * mix(1, 0.5, le), 0.09, 1);
+  huelle([0, 0, 0], Lm.R, 0.42 * (1 - 0.9 * gk), WG, (anM ? 0.9 : 0.55) * vis * (imDach === 'mitte' ? 0.35 : hellM) * raum, MEMD, cx, cyy, cz, imDach === 'mitte');
+  U.mitteSchirm = imDach === 'mitte' ? amRing([0, yM, 0], Lm.R * 1.04, false, 0) : amRing([0, yM, 0], Lm.R * 1.02, true, 0);   // im Überblick unter dem Rand, nie über den Werken; in der Mitte oben
   // Dächer: je eine Hülle, die am Saum leuchtet; der Boden nur, wenn man auf sie zeigt oder in ihr steht
   for(let j = 0; j < N.daecher.length; j++){ const d = N.daecher[j], drin = j === imDach, hell = (drin ? 1 : imDach != null ? anders : 1) * still, an = j === hovD || j === selD;
-    const c = an ? mixc(WG, SILVER, 0.4) : WG;
-    P(d.mitte[0], 0, d.mitte[2], d.R * 1.4, d.farbe[0], d.farbe[1], d.farbe[2], 0.012 * vis * hell * (an ? 1.8 : 1) * (drin ? 0.5 : 1));
-    if(an || drin) ring([d.mitte[0], -0.05, d.mitte[2]], d.R, c, (an ? 0.6 : 0.35) * vis, 0.11, 1);
-    huelle(d.mitte, d.R, 0.38 * (1 - 0.9 * gk), c, (an ? 0.95 : drin ? 0.55 : 0.28) * vis * (drin ? 0.35 : hell), MEMD, cx, cyy, cz, drin);
+    const c = an ? mixc(WG, SILVER, 0.4) : WG, yD = bodenVon(d.mitte[0], d.mitte[2]);
+    P(d.mitte[0], yD, d.mitte[2], d.R * 1.4, d.farbe[0], d.farbe[1], d.farbe[2], 0.012 * vis * hell * (an ? 1.8 : 1) * (drin ? 0.5 : 1) * raum);
+    if((an || drin || le > 0.01) && ge < 0.5) ring([d.mitte[0], yD - 0.05, d.mitte[2]], d.R, le > 0.5 && !an ? mixc(KEIMC, GOLDC, 0.4) : c, Math.max(an ? 0.6 : drin ? 0.35 : 0, 0.34 * le * hell) * vis, 0.11, 1);   // in der Landschaft: die Lichter am Beetrand
+    huelle(d.mitte, d.R, 0.38 * (1 - 0.9 * gk), c, (an ? 0.95 : drin ? 0.55 : 0.28) * vis * (drin ? 0.35 : hell) * raum, MEMD, cx, cyy, cz, drin);
     // Im Dach werden die Bereiche sichtbar: ein weiches Feld in der Farbe ihrer Werke und ein feiner Ring
-    if(drin) for(const b of d.bereiche){ P(b.mitte[0], 0, b.mitte[2], b.R * 1.2, b.farbe[0], b.farbe[1], b.farbe[2], 0.022 * vis); ring([b.mitte[0], -0.05, b.mitte[2]], b.R, mixc(WG, b.farbe, 0.35), 0.38 * vis, 0.07, 1); }
-    if(drin) U.bereicheSchirm = d.bereiche.map(b => amRing(b.mitte, b.R, false, 0.08));
-    U.daecherSchirm[j] = drin ? amRing(d.mitte, d.R * 1.04, false, 0) : toScreen(d.mitte[0], d.R * 0.42 * (1 - gk), d.mitte[2]); }   // im Dach: sein Name am oberen Rand
+    if(drin) for(const b of d.bereiche){ P(b.mitte[0], yD, b.mitte[2], b.R * 1.2, b.farbe[0], b.farbe[1], b.farbe[2], 0.022 * vis * raum); ring([b.mitte[0], yD - 0.05, b.mitte[2]], b.R, mixc(WG, b.farbe, 0.35), 0.38 * vis, 0.07, 1); }
+    if(drin) U.bereicheSchirm = d.bereiche.map(b => amRing([b.mitte[0], yD, b.mitte[2]], b.R, false, 0.08));
+    const sx = mix(d.mitte[0], cG * d.mitte[0] - sG * d.mitte[2], ge), sz = mix(d.mitte[2], sG * d.mitte[0] + cG * d.mitte[2], ge);
+    if(ge > 0.01){ const hS = (an ? 1.5 : 1) * ge * vis * hell, gS = Math.min(0.9, d.R * 0.09); P(sx, 0, sz, gS, d.farbe[0] * 0.5 + 0.5, d.farbe[1] * 0.5 + 0.45, d.farbe[2] * 0.5 + 0.35, 1.6 * hS); P(sx, 0, sz, gS * 5, d.farbe[0], d.farbe[1], d.farbe[2], 0.12 * hS); }   // die Sonne eines Dachs
+    U.daecherSchirm[j] = drin && ge < 0.5 ? amRing([d.mitte[0], yD, d.mitte[2]], d.R * 1.04, false, 0) : toScreen(sx, yD + d.R * mix(mix(0.42 * (1 - gk), 0.3, le), 0.16, ge), sz); }   // im Dach: sein Name am oberen Rand
   U.daecherSchirm.length = N.daecher.length;
-  if(N.L.ohne){ const o = N.L.ohne, hO = U.hover && U.hover.art === 'ohne' || U.sel && U.sel.art === 'ohne'; ring([o.mitte[0], -0.05, o.mitte[2]], o.R, DUSTC, (hO ? 0.45 : 0.22) * vis * (imDach === 'ohne' ? 1.4 : imDach != null ? anders : 1), 0.07, 3);
-    U.ohneSchirm = imDach === 'ohne' ? amRing(o.mitte, o.R * 1.04, false, 0) : toScreen(o.mitte[0], o.R * 0.3, o.mitte[2]); } else U.ohneSchirm = null;
+  if(N.L.ohne){ const o = N.L.ohne, hO = U.hover && U.hover.art === 'ohne' || U.sel && U.sel.art === 'ohne'; const yO = bodenVon(o.mitte[0], o.mitte[2]); ring([o.mitte[0], yO - 0.05, o.mitte[2]], o.R, DUSTC, (hO ? 0.45 : 0.22) * vis * (imDach === 'ohne' ? 1.4 : imDach != null ? anders : 1) * (hO ? 1 : raum), 0.07, 3);
+    U.ohneSchirm = imDach === 'ohne' && ge < 0.5 ? amRing([o.mitte[0], yO, o.mitte[2]], o.R * 1.04, false, 0) : toScreen(mix(o.mitte[0], cG * o.mitte[0] - sG * o.mitte[2], ge), yO + o.R * 0.3 * raum + 1.5 * le, mix(o.mitte[2], sG * o.mitte[0] + cG * o.mitte[2], ge)); } else U.ohneSchirm = null;
   // Werke: das Licht des Netzes
   for(let n = 0; n < N.N; n++){
-    const m = N.B.monde[n], o = N.pos[n], pts = N.mini[n].pts, k = pts.length / 6, material = N.baum.material.has(n);
+    const m = N.B.monde[n], o = N.ort[n], pts = N.mini[n].pts, k = pts.length / 6, material = N.baum.material.has(n);
     const self = n === aktiv, fade = self ? (1 - aktivDetail) : 1; if(fade <= 0.01){ U.monde[n] = null; continue; }
     const bz = N.bezirk(n), dachHell = imDach == null ? (bz === 'ohne' ? 0.55 : 1) : bz === imDach ? 1.15 : 0.25;   // noch nicht Zugeordnetes bleibt im Überblick leise
     const dc = Math.hypot(o[0] - cx, o[1] - cyy, o[2] - cz), near = sstep(CAM.S * 0.03, CAM.S * 0.3, dc);
     let a = vis * fade * (self ? 1 : near) * dachHell;
     if(fokus) a *= fokus.has(n) ? 1.2 : 0.14;
     if(soloAny) a *= m.stimmen.includes(U.solo) ? 1.3 : 0.18;
-    if(material){ P(o[0], o[1], o[2], 0.16, DUSTC[0], DUSTC[1], DUSTC[2], a * 0.9); P(o[0], o[1], o[2], 0.5, DUSTC[0], DUSTC[1], DUSTC[2], a * 0.05);
+    if(material){ P(o[0], o[1], o[2], 0.16, DUSTC[0], DUSTC[1], DUSTC[2], a * 0.9 * raum); P(o[0], o[1], o[2], 0.5, DUSTC[0], DUSTC[1], DUSTC[2], a * 0.05 * raum);
       if(hov === n || self) screenRing(o, 0.35, WG, 0.4 * vis); U.monde[n] = toScreen(o[0], o[1], o[2]); continue; }
     // Viele Punkte auf kleinem Raum brennen aus: die Helligkeit je Punkt sinkt mit ihrer Zahl, groß heißt weit, nicht grell
     const lit = (m.traumfeld ? 1.4 : 2.2) * (hov === n ? 1.5 : 1) * (self ? 1.3 : 1) * Math.pow(Math.min(1, 16 / Math.max(1, k)), 0.7);
     // Die Zelle: ein Leib in der Farbe ihrer Stimmen und ihre Haut. Das Licht bleibt in der Zelle
     let cr = KEIMC[0], cg = KEIMC[1], cb = KEIMC[2];
     if(k){ cr = cg = cb = 0; for(let p = 0; p < k; p++){ cr += pts[p * 6 + 3]; cg += pts[p * 6 + 4]; cb += pts[p * 6 + 5]; } cr /= k; cg /= k; cb /= k; }
-    P(o[0], o[1], o[2], N.rM[n] * 1.15, cr, cg, cb, a * (m.traumfeld ? 0.06 : 0.11) * (fokus ? 0.4 : 1));
-    const haut = N.mini[n].haut, hz = Math.max(N.rM[n] * 0.012, CAM.S * 0.0026), hf = a * (hov === n || self ? 1.3 : 0.62);
+    P(o[0], o[1], o[2], N.rM[n] * 1.15, cr, cg, cb, a * (m.traumfeld ? 0.06 : 0.11) * (fokus ? 0.4 : 1) * raum);
+    const haut = N.mini[n].haut, hz = Math.max(N.rM[n] * 0.012, CAM.S * 0.0026), hf = a * (hov === n || self ? 1.3 : 0.62) * raum;
     for(let p = 0; p < haut.length / 3; p++){ const h = haut[p * 3 + 2]; P(o[0] + haut[p * 3], o[1], o[2] + haut[p * 3 + 1], hz * (1 + 0.5 * h), mix(cr, WG[0], 0.45 + 0.5 * h), mix(cg, WG[1], 0.45 + 0.5 * h), mix(cb, WG[2], 0.45 + 0.5 * h), hf * (0.5 + 0.9 * h)); }
     const sz = Math.max(0.17 * Math.max(0.7, N.rM[n]), CAM.S * 0.0042);   // auch im Überblick bleibt die Gestalt eines Werks zu sehen, nicht nur sein Schein
-    const pG = N.mini[n].ptsG; for(let p = 0; p < k; p++) P(o[0] + mix(pts[p * 6], pG[p * 3], gk), o[1] + mix(pts[p * 6 + 1], pG[p * 3 + 1], gk), o[2] + mix(pts[p * 6 + 2], pG[p * 3 + 2], gk), sz, pts[p * 6 + 3], pts[p * 6 + 4], pts[p * 6 + 5], a * lit * 0.9);
+    const pG = N.mini[n].ptsG; if(korn * (1 - ge) > 0.002) for(let p = 0; p < k; p++) P(o[0] + mix(pts[p * 6], pG[p * 3], gk) * gross, o[1] + mix(pts[p * 6 + 1], pG[p * 3 + 1], gk) * gross, o[2] + mix(pts[p * 6 + 2], pG[p * 3 + 2], gk) * gross, sz, pts[p * 6 + 3], pts[p * 6 + 4], pts[p * 6 + 5], a * lit * 0.9 * korn * (1 - ge));   // jedes Korn bleibt, wo sein Blatt entsteht
     const st = N.mini[n].stiel; for(let p = 0; p < st.length / 6; p++) P(o[0] + st[p * 6], o[1], o[2] + st[p * 6 + 2], sz * 0.45, st[p * 6 + 3], st[p * 6 + 4], st[p * 6 + 5], a * 0.3 * (1 - gk));
-    if(gk > 0.01){ const sg = N.mini[n].stengel; for(let p = 0; p < sg.length / 6; p++) P(o[0] + sg[p * 6], o[1] + sg[p * 6 + 1], o[2] + sg[p * 6 + 2], sz * 0.5, sg[p * 6 + 3], sg[p * 6 + 4], sg[p * 6 + 5], a * 0.55 * gk); }
-    P(o[0], o[1], o[2], k ? 0.2 : 0.26, KEIMC[0], KEIMC[1], KEIMC[2], a * (m.keimKristall ? 1.5 : k ? 0.8 : 1.1));
+    if(gk > 0.01){ const sg = N.mini[n].stengel; for(let p = 0; p < sg.length / 6; p++) P(o[0] + sg[p * 6], o[1] + sg[p * 6 + 1], o[2] + sg[p * 6 + 2], sz * 0.5, sg[p * 6 + 3], sg[p * 6 + 4], sg[p * 6 + 5], a * 0.55 * gk * raum); }
+    P(o[0], o[1], o[2], k ? 0.2 : 0.26, KEIMC[0], KEIMC[1], KEIMC[2], a * (m.keimKristall ? 1.5 : k ? 0.8 : 1.1) * raum);
     // Ringe (Phase, zuletzt bewegt): im Überblick nur am jüngsten Werk je Bezirk, im Bezirk an allen seinen Werken
     const ringe = imDach != null ? bz === imDach : N.juengst.has(n), mt = [o[0], o[1] + N.rM[n] * 0.2, o[2]];
     const rc = m.reife === 'kanonisch' ? GOLDC : WG;
-    if((ringe && !m.traumfeld) || hov === n) screenRing(mt, N.rM[n] * 1.3, rc, 0.28 * a, Math.max(0.06, m.phase));
+    if(((ringe && !m.traumfeld) && le < 0.5) || hov === n) screenRing(mt, N.rM[n] * 1.3, rc, 0.28 * a, Math.max(0.06, m.phase));
     if(self || hov === n || selM === n){ const pu = U.RM ? 0.5 : 0.5 + 0.5 * Math.sin(wall * 2.4); screenRing(mt, N.rM[n] * (1.6 + 0.12 * pu), SILVER, (self ? 0.5 : 0.35) * vis); }
     const neu = N.neu && N.neu.get(m.id);
     if(neu){ const s1 = neu.find(x => typeof x.stimme === 'number'), c = s1 ? SEEDC[s1.stimme] : WG, pl = U.RM ? 0.8 : 0.65 + 0.35 * Math.sin(wall * 1.6 + n);
@@ -223,14 +237,14 @@ export function baueNetz(N, U, wall, vis, aktiv, aktivDetail){
   // Fäden zwischen Werken: Typ, Richtung, Verwendung. Einzeln nur im Bezirk oder an der Wahl, sonst gebündelt
   U.knoten.length = N.faeden.length; U.buendelKnoten.length = 0;
   const fz = Math.max(0.11, CAM.S * 0.004), wahl = selM >= 0;   // ist ein Werk gewählt, treten die übrigen Fäden zurück
-  for(let fi = 0; fi < N.faeden.length; fi++){ const f = N.faeden[fi], A = N.pos[f.von], Bp = N.pos[f.nach];
+  for(let fi = 0; fi < N.faeden.length; fi++){ const f = N.faeden[fi], A = N.ort[f.von], Bp = N.ort[f.nach];
     const anF = U.sel && U.sel.art === 'faden' && U.sel.i === fi, hovF = U.hover && U.hover.art === 'faden' && U.hover.i === fi;
     const beteiligt = aktiv === f.von || aktiv === f.nach || selM === f.von || selM === f.nach;
     const zeig = anF || hovF || beteiligt || (imDach != null && (f.bzVon === imDach || f.bzNach === imDach));
     if(!zeig){ U.knoten[fi] = null;
       // Im Garten läuft jede gespeicherte Beziehung als Mycel unter dem Boden; es entsteht keine neue
       if(gk > 0.01){ const st = STIL[f.typ] || STIL['verweist-auf'], dm = Math.hypot(A[0] - Bp[0], A[2] - Bp[2]), nm = Math.round(clamp(dm * 3, 12, 80)), ux = (Bp[2] - A[2]) / (dm || 1), uz = (A[0] - Bp[0]) / (dm || 1), ph = hash(fi * 3.3) * TAU;
-        for(let s = 0; s <= nm; s++){ const t = s / nm, sn = Math.sin(Math.PI * t), wb = sn * (Math.sin(t * 9 + ph) * 0.05 + Math.sin(t * 23 + ph * 2) * 0.018) * dm; P(mix(A[0], Bp[0], t) + ux * wb, -sn * (0.8 + dm * 0.045), mix(A[2], Bp[2], t) + uz * wb, fz, st.c[0], st.c[1], st.c[2], vis * gk * 1.9 * st.a * (soloAny ? 0.3 : 1) * (wahl ? 0.4 : 1)); } }
+        for(let s = 0; s <= nm; s++){ const t = s / nm, sn = Math.sin(Math.PI * t), wb = sn * (Math.sin(t * 9 + ph) * 0.05 + Math.sin(t * 23 + ph * 2) * 0.018) * dm, x0 = mix(A[0], Bp[0], t) + ux * wb, z0 = mix(A[2], Bp[2], t) + uz * wb; P(x0, le > 0.01 ? mix(-sn * (0.8 + dm * 0.045), weg(f, s, nm, x0, z0, N) + 0.04, le) : -sn * (0.8 + dm * 0.045), z0, fz * mix(1, 0.8, le), mix(st.c[0], 1.0, 0.4 * le), mix(st.c[1], 0.72, 0.4 * le), mix(st.c[2], 0.36, 0.4 * le), vis * gk * mix(1.9, 1.0, le) * st.a * (soloAny ? 0.3 : 1) * (wahl ? 0.4 : 1)); } }
       continue; }
     const st = STIL[f.typ] || STIL['verweist-auf'];
     const al = vis * (st.a + 0.04 * Math.min(6, f.kanten.length)) * (soloAny ? 0.3 : 1) * (anF || hovF ? 1.8 : beteiligt ? 1.3 : wahl ? 0.25 : 1) * (fokus ? (fokus.has(f.von) && fokus.has(f.nach) ? (U.als.fokus === 'planet' ? 0.22 : 0.45) : 0.05) : 1);   // im Blick auf Alsformen treten auch die Materialfäden zurück
@@ -238,20 +252,20 @@ export function baueNetz(N, U, wall, vis, aktiv, aktivDetail){
     const d = Math.hypot(A[0] - Bp[0], A[2] - Bp[2]), n = Math.round(clamp(d * 5, 18, 140));
     for(let s = 1; s < n; s++){ const t = s / n; if(st.luecke && t > 0.44 && t < 0.56) continue; if(st.strich && (s % 4 === 0)) continue;
       const q = pt(t), mund = 0.55 + 0.6 * t;   // zur Mündung hin heller: dorthin zeigt der Faden
-      q[1] = mix(q[1], -Math.sin(Math.PI * t) * (0.8 + d * 0.045), gk);
+      q[1] = le > 0.01 ? N.land.y(q[0], q[2]) * le + 0.05 : mix(q[1], -Math.sin(Math.PI * t) * (0.8 + d * 0.045), gk);
       P(q[0], q[1], q[2], fz, st.c[0], st.c[1], st.c[2], al * mund); }
     // Bewegung: Material fließt sichtbar zur neuen Fassung, ein Verweis zeigt; Zugehörigkeit steht still
     if(st.fluss && !U.RM){ const z = st.fluss === 'material' ? 3 : 1; for(let q = 0; q < z; q++){ const t = ((wall * (st.fluss === 'material' ? 0.12 : 0.07) + q / z + fi * 0.137) % 1), p3 = pt(t);
       P(p3[0], p3[1], p3[2], fz * (st.fluss === 'material' ? 2.4 : 1.6), st.c[0], st.c[1], st.c[2], al * 2.2 * Math.sin(Math.PI * t)); } }
     // Knoten in der Mitte: anfassbar; mit Verwendung (Zweck, Teile, Grenzen) heller und mit Ring
-    const km = pt(0.5); P(km[0], km[1], km[2], fz * (f.verwendung ? 1.9 : 1.3), st.c[0], st.c[1], st.c[2], al * (f.verwendung ? 2.4 : 1.4));
+    const km = pt(0.5); if(le > 0.01) km[1] = N.land.y(km[0], km[2]) * le + 0.08; P(km[0], km[1], km[2], fz * (f.verwendung ? 1.9 : 1.3), st.c[0], st.c[1], st.c[2], al * (f.verwendung ? 2.4 : 1.4));
     if(f.verwendung) screenRing(km, fz * 2.2, st.c, al * 1.2);
     U.knoten[fi] = toScreen(km[0], km[1], km[2]); }
   // Bündel im Überblick: ein Bogen je Bezirkspaar, von Rand zu Rand, Stärke nach Zahl der Kanten
   if(imDach == null){ const bz = Math.max(0.1, CAM.S * 0.0032);
     for(let bi = 0; bi < N.buendel.length; bi++){ const x = N.buendel[bi], za = N.bezirkZiel(x.von), zb = N.bezirkZiel(x.nach); if(!za || !zb) continue;
       const st = STIL[x.typ] || STIL['verweist-auf'], an = U.sel && U.sel.art === 'buendel' && U.sel.i === bi, ho = U.hover && U.hover.art === 'buendel' && U.hover.i === bi;
-      const al = (1 - gk) * vis * (st.a + 0.03 * Math.min(8, x.kanten)) * (soloAny ? 0.3 : 1) * (an || ho ? 1.8 : wahl ? 0.35 : 0.6) * (fokus ? 0.2 : 1);
+      const al = (1 - gk) * (1 - ge) * vis * (st.a + 0.03 * Math.min(8, x.kanten)) * (soloAny ? 0.3 : 1) * (an || ho ? 1.8 : wahl ? 0.35 : 0.6) * (fokus ? 0.2 : 1);
       const pt = bogen(za.mitte, za.R, zb.mitte, zb.R), d = Math.hypot(za.mitte[0] - zb.mitte[0], za.mitte[2] - zb.mitte[2]), n = Math.round(clamp(d * 3, 20, 120));
       const dicke = bz * (1 + 0.1 * Math.min(8, x.kanten));
       for(let s = 0; s <= n; s++){ const t = s / n; if(st.luecke && t > 0.44 && t < 0.56) continue; const q = pt(t); P(q[0], q[1], q[2], dicke, st.c[0], st.c[1], st.c[2], al * (0.5 + 0.6 * t)); }
@@ -264,15 +278,15 @@ export function baueNetz(N, U, wall, vis, aktiv, aktivDetail){
   for(let k = 0; k < MEM2.length / 3; k++){ const ux = MEM2[k * 3], uy = MEM2[k * 3 + 1], uz = MEM2[k * 3 + 2];
     const x = ux * Rm2, y = uy * Rm2 * 0.45, z = uz * Rm2;
     const vx = cx - x, vy = cyy - y, vz = cz - z, vl = Math.hypot(vx, vy, vz) || 1, fres = Math.pow(1 - Math.abs((ux * vx + uy * vy * 0.45 + uz * vz) / vl), 4.0);
-    const lum = fres * vis * 0.32 * (imDach != null || fokus ? 0.15 : 1) * (1 - gk); P(x, y, z, Rm2 * 0.0035, WG[0] * lum, WG[1] * lum * 0.97, WG[2] * lum * 0.98, 0.7); }
+    const lum = fres * vis * 0.32 * (imDach != null || fokus ? 0.15 : 1) * (1 - gk) * (1 - ge); P(x, y, z, Rm2 * 0.0035, WG[0] * lum, WG[1] * lum * 0.97, WG[2] * lum * 0.98, 0.7); }
   // Die fünf Stimmen als Kranz um die Mitte, mit kurzen Spuren
   const kopf = Math.min(N.L.mitte.R * 0.07, 0.65);
   for(let i = 0; i < 5; i++){ const c = mixc(VOICES[i].c, WG, 0.35), al = vis * (0.25 + 0.75 * N.stimmAnteil[i]) * U.soloA[i] * (imDach != null && imDach !== 'mitte' ? anders : 1) * still;
-    for(let k = 0; k < 30; k++){ bigHead(N, i, wall - k * 0.018, TMP); const age = k / 30; P(TMP[0], TMP[1], TMP[2], kopf * mix(0.35, 0.08, age), c[0], c[1], c[2], Math.pow(1 - age, 1.5) * al * 0.5); }
-    bigHead(N, i, wall, TMP); P(TMP[0], TMP[1], TMP[2], kopf, c[0], c[1], c[2], 2.0 * al);
+    for(let k = 0; k < 30; k++){ bigHead(N, i, wall - k * 0.018, TMP); TMP[1] += le * (yM + 2.2); const age = k / 30; P(TMP[0], TMP[1], TMP[2], kopf * mix(0.35, 0.08, age), c[0], c[1], c[2], Math.pow(1 - age, 1.5) * al * 0.5); }
+    bigHead(N, i, wall, TMP); TMP[1] += le * (yM + 2.2); P(TMP[0], TMP[1], TMP[2], kopf, c[0], c[1], c[2], 2.0 * al);
     U.bigHeads[i] = toScreen(TMP[0], TMP[1], TMP[2]); }
   // Türen in den Verbund: stille Punkte auf dem Bogen über der Mitte; Ring erst, wenn man auf sie zeigt oder in der Mitte steht
-  for(let i = 0; i < N.tueren.length; i++){ const t = N.tueren[i]; N.tuerPos(i, TMP); const wach = t.wach === true;
+  for(let i = 0; i < N.tueren.length; i++){ const t = N.tueren[i]; N.tuerPos(i, TMP); TMP[1] += bodenVon(TMP[0], TMP[2]); const wach = t.wach === true;
     const c = wach ? KEIMC : DUSTC, pu = wach ? 0.75 + 0.25 * Math.sin(wall * 1.3 + i) * (U.RM ? 0 : 1) : 0.35, h = U.hover && U.hover.art === 'tuer' && U.hover.i === i;
     const hellT = (imDach == null || imDach === 'mitte' ? 1 : anders) * still;
     P(TMP[0], TMP[1], TMP[2], Math.min(N.L.mitte.R * 0.04, 0.4), c[0], c[1], c[2], vis * pu * (h ? 2.2 : 1.1) * hellT);
@@ -280,6 +294,8 @@ export function baueNetz(N, U, wall, vis, aktiv, aktivDetail){
     U.tueren[i] = toScreen(TMP[0], TMP[1], TMP[2]); }
 }
 
+/* Die Bodenhöhe am Mycel ändert sich nicht: einmal rechnen genügt */
+function weg(f, s, nm, x, z, N){ const c = f._boden || (f._boden = new Float32Array(nm + 1).fill(NaN)); if(Number.isNaN(c[s])) c[s] = N.land.y(x, z); return c[s]; }
 /* Der Weg eines Fadens: im selben Bezirk ein flacher Bogen; über Bezirksgrenzen tritt er am eigenen Rand aus und am fremden ein */
 function fadenWeg(N, f, A, Bp){
   const d = Math.hypot(A[0] - Bp[0], A[2] - Bp[2]), lift = d * 0.16 + 0.4;

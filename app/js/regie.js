@@ -21,16 +21,18 @@ export function regie(U, Z, N, RM){
       U.dachGlatt = g && k < 1 ? {mitte: [mix(g.mitte[0], d.mitte[0], k), mix(g.mitte[1], d.mitte[1], k), mix(g.mitte[2], d.mitte[2], k)], R: Math.exp(mix(Math.log(g.R), Math.log(d.R), k))} : {mitte: [...d.mitte], R: d.R};
       U.dachZiel = U.dachGlatt; }
     const dz = U.dachZiel, dk = dz ? (RM ? Math.round(U.dachK) : eio(U.dachK)) : 0;
-    const nMitte = dz ? [mix(N.mitte[0], dz.mitte[0], dk), mix(N.mitte[1], dz.mitte[1], dk), mix(N.mitte[2], dz.mitte[2], dk)] : N.mitte;
+    const nMitte0 = dz ? [mix(N.mitte[0], dz.mitte[0], dk), mix(N.mitte[1], dz.mitte[1], dk), mix(N.mitte[2], dz.mitte[2], dk)] : N.mitte, lzm = RM ? Math.round(U.landK) : eio(U.landK);
+    const gzm = RM ? Math.round(U.galK) : eio(U.galK), nMitte = lzm > 0 && N.land ? [nMitte0[0], nMitte0[1] + lzm * (N.land.y(nMitte0[0], nMitte0[2]) + N.L.R * 0.05), nMitte0[2]] : gzm > 0 ? [mix(nMitte0[0], 0, gzm * (1 - dk)), N.L.R * 0.05 * gzm, mix(nMitte0[2], 0, gzm * (1 - dk))] : nMitte0;   // in der Landschaft blickt man über den Boden, der Himmel gehört ins Bild
     // Der Maßstab misst, was alle Bezirke wirklich brauchen. Am Handy steht die lange Achse hochkant
-    const yawN = 0.35 + (portrait && hochkant(N, asp) ? Math.PI / 2 : 0) + (RM ? 0 : 0.012) * U.netZeit;
-    const gk = RM ? Math.round(U.gartenK) : eio(U.gartenK), elevG = mix(50, 14, gk) * DEG, ganz = N.kreise ? netzMass(N, yawN, elevG, asp) * mix(1, 1.12, gk) / fit : N.Rm2 * 0.9;
-    const nS = Math.exp(mix(Math.log(ganz), Math.log(dz ? dz.R * 1.08 : ganz), dk)), inward = U.netDir < 0;
+    const lz = RM ? Math.round(U.landK) : eio(U.landK), yawN = 0.35 + (portrait && hochkant(N, asp) ? Math.PI / 2 : 0) + (RM ? 0 : mix(0.012 * U.netZeit, Math.sin(U.netZeit * 0.03) * 0.14, lz));   // in der Landschaft pendelt der Blick: die Sonne bleibt im Rücken des Bildes
+    const gk = RM ? Math.round(U.gartenK) : eio(U.gartenK), le = RM ? Math.round(U.landK) : eio(U.landK), ge = RM ? Math.round(U.galK) : eio(U.galK), elevG = mix(mix(mix(50, 14, gk), portrait ? 15 : 12.5, le), portrait ? 34 : 24, ge) * DEG, ganz = (N.kreise ? netzMass(N, yawN, elevG, asp) * mix(1, 1.12, gk) / fit : N.Rm2 * 0.9) * mix(1, portrait ? 0.42 : 0.82, le) * mix(1, portrait ? 0.7 : 1.02, ge);
+    U.yawBasis = 0.35 + (portrait && hochkant(N, asp) ? Math.PI / 2 : 0);
+    const nS = Math.exp(mix(Math.log(ganz), Math.log(dz ? dz.R * mix(1.08, 0.85, le) : ganz), dk)), inward = U.netDir < 0;
     const tk = inward ? sstep(0.0, 0.7, nk) : sstep(0.3, 1.0, nk);
     Sv = Math.exp(mix(Math.log(Math.max(0.05, Sv)), Math.log(nS), nk));
     tg = [mix(tg[0], nMitte[0], tk), mix(tg[1], nMitte[1], tk), mix(tg[2], nMitte[2], tk)];
     // im Bezirk steiler von oben: die Ordnung liest sich wie eine Karte
-    elev = mix(elev, mix(mix(50, 14, gk), mix(66, 26, gk), dk) * DEG, sstep(0, 0.8, nk)); fov = mix(fov, 40 * DEG, sstep(0, 0.6, nk)); yaw = mix(yaw, yawN, sstep(0.2, 1, nk));
+    elev = mix(elev, mix(mix(mix(mix(50, 14, gk), portrait ? 15 : 12.5, le), portrait ? 34 : 24, ge), mix(mix(66, 26, gk), 18, le), dk) * DEG, sstep(0, 0.8, nk)); fov = mix(fov, mix(40, 50, le) * DEG, sstep(0, 0.6, nk)); yaw = mix(yaw, yawN, sstep(0.2, 1, nk));
   }
   // Flug von einer Zelle zur nächsten: Ziel gleitet, Maßstab atmet weit auf
   if(U.flug && Z){ const e = eio(clamp((performance.now() - U.flug.t0) / U.flug.dauer, 0, 1)), hoch = Math.sin(Math.PI * e);

@@ -17,7 +17,6 @@
 html,body{height:100%;margin:0;background:var(--void);color:var(--ink);overflow:hidden}
 body{font-family:var(--f-line);-webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none}
 #gl{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none;cursor:default;outline:none}
-#garten{position:fixed;inset:0;width:100%;height:100%;display:none;pointer-events:none}
 .imgarten #namen,.imgarten #dachnamen,.imgarten #zeile{text-shadow:0 1px 3px rgba(10,8,3,.9),0 0 10px rgba(10,8,3,.6)}
 #gl.zeigt{cursor:pointer}
 #gl:focus-visible{box-shadow:inset 0 0 0 1px var(--ink-faint)}
@@ -168,15 +167,22 @@ button{font:inherit;color:inherit}
 #spiralknopf[aria-pressed="true"]{color:var(--ink)}
 #gartenknopf{right:calc(max(10px,env(safe-area-inset-right,0px)) + 104px);display:none}
 .imnetz #gartenknopf{display:block}
+#lichtknopf{right:calc(max(10px,env(safe-area-inset-right,0px)) + 156px);display:none}
+.imnetz #lichtknopf{display:block}
+#lichtknopf[aria-pressed="true"]{color:var(--ink)}
+#lichtknopf svg,#galaxieknopf svg{width:22px;height:22px;display:block}
+#galaxieknopf{right:calc(max(10px,env(safe-area-inset-right,0px)) + 208px);display:none}
+.imnetz #galaxieknopf{display:block}
+#galaxieknopf[aria-pressed="true"]{color:var(--ink)}
 .imnetz #spiralknopf{display:none}
 #gartenknopf[aria-pressed="true"]{color:var(--ink)}
 #gartenknopf svg,#seite svg,#spiralknopf svg,#netzknopf svg{width:22px;height:22px;display:block}
 #seite .oben{display:none}
 #seite[aria-pressed="true"] .oben{display:block}
 #seite[aria-pressed="true"] .kelch{display:none}
-#seite,#gartenknopf,#spiralknopf,#netzknopf,#snd{opacity:.35}
-.active #seite,.active #gartenknopf,.active #spiralknopf,.active #netzknopf,.active #snd,.corner:focus-visible{opacity:1}
-.lesend #seite,.lesend #gartenknopf,.lesend #spiralknopf,.lesend #netzknopf{opacity:0;pointer-events:none}
+#seite,#gartenknopf,#lichtknopf,#galaxieknopf,#spiralknopf,#netzknopf,#snd{opacity:.35}
+.active #seite,.active #gartenknopf,.active #lichtknopf,.active #galaxieknopf,.active #spiralknopf,.active #netzknopf,.active #snd,.corner:focus-visible{opacity:1}
+.lesend #seite,.lesend #gartenknopf,.lesend #lichtknopf,.lesend #galaxieknopf,.lesend #spiralknopf,.lesend #netzknopf{opacity:0;pointer-events:none}
 
 .ruhe{position:fixed;inset:0;display:grid;place-items:center;margin:0;padding:0 24px;text-align:center;font-weight:300;letter-spacing:.12em;color:var(--ink)}
 

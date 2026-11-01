@@ -179,7 +179,7 @@ export function lichtmaschine(canvas, onLost){
   }
   const freeTarget = x => { if(!x) return; gl.deleteTexture(x.t); gl.deleteFramebuffer(x.f); };
 
-  const M = {W: 1, H: 1, DPR: 1, qScale: 1, sceneT: null, nebT: null, mips: [], gl};
+  const M = {W: 1, H: 1, DPR: 1, qScale: 1, sceneT: null, nebT: null, mips: [], gl, prog};
   M.resize = function(){
     CAM.cssW = innerWidth; CAM.cssH = innerHeight;
     M.DPR = Math.min(window.devicePixelRatio || 1, CAM.cssW < 700 ? 1.5 : 2);
@@ -187,7 +187,10 @@ export function lichtmaschine(canvas, onLost){
     if(w === M.W && h === M.H && M.sceneT) return;
     M.W = w; M.H = h; canvas.width = w; canvas.height = h;
     freeTarget(M.sceneT); freeTarget(M.nebT); M.mips.forEach(freeTarget); M.mips = [];
-    M.sceneT = makeTarget(w, h); M.nebT = makeTarget(Math.max(2, w >> 2), Math.max(2, h >> 2));
+    M.sceneT = makeTarget(w, h);
+    if(M.tiefe) gl.deleteRenderbuffer(M.tiefe); M.tiefe = gl.createRenderbuffer(); gl.bindRenderbuffer(gl.RENDERBUFFER, M.tiefe); gl.renderbufferStorage(gl.RENDERBUFFER, gl.DEPTH_COMPONENT24, w, h);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, M.sceneT.f); gl.framebufferRenderbuffer(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.RENDERBUFFER, M.tiefe);
+    M.nebT = makeTarget(Math.max(2, w >> 2), Math.max(2, h >> 2));
     let mw = w, mh = h; for(let i = 0; i < 6; i++){ mw = Math.max(2, mw >> 1); mh = Math.max(2, mh >> 1); M.mips.push(makeTarget(mw, mh)); }
   };
 
@@ -206,7 +209,8 @@ export function lichtmaschine(canvas, onLost){
     gl.uniform2f(P_NEB.u.uPar, look.par[0], look.par[1]); gl.uniform1f(P_NEB.u.uI, look.neb); gl.uniform1f(P_NEB.u.uEnc, ENC);
     blit(M.nebT);
     gl.bindFramebuffer(gl.FRAMEBUFFER, M.sceneT.f); gl.viewport(0, 0, M.W, M.H);
-    gl.clearColor(0, 0, 0, 1); gl.clear(gl.COLOR_BUFFER_BIT);
+    gl.clearColor(0, 0, 0, 1); gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+    if(M.vorPunkte) M.vorPunkte(gl, ENC);   // eigene Bühnen (Landschaft, Galaxie) liegen unter den Lichtpunkten, im selben Licht
     gl.enable(gl.BLEND); gl.blendFunc(gl.ONE, gl.ONE);
     gl.useProgram(P_POINT.p);
     gl.uniformMatrix4fv(P_POINT.u.uVP, false, CAM.VP);

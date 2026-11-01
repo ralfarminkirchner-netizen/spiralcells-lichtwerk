@@ -32,3 +32,14 @@ Eigene Variante, abgezweigt von Alsformen (22.10.). Andere Zweige und Arbeitskop
 
 ## Schritt 6: Garten in eigener Optik (Ralf, 01.11.)
 - Eigene Malschicht `app/js/garten.js`: Himmel, Erde, Beete, gemalte Pflanzen, Mycel am Boden, die fünf Stimmen als Falter. Sie blendet über dem Lichtwerk ein; Werke und Beziehungen bleiben dieselben, am selben Ort.
+
+## Schritt 7: Garten als Landschaft, echter Morph (Ralf, 01.11.)
+- Himmel, Gelände, Gras und Pflanzen entstehen jetzt in derselben Lichtmaschine wie der Kosmos (`garten.js`, Rechnung in `gelaende.js`), nicht mehr als Malschicht darüber.
+- Beet = Dach, seine Höhe = Arbeit darin. Lichtung = Zentrale. Wildwiese = ohne Dach. Ein Blatt = eine Fassung (Farbe: Stimme, Größe: Text), die Stiele folgen der belegten Abstammung. Mycel läuft am Boden. Berge, Wolken, Sonne und Gras sind Grund und tragen nichts.
+- Morph (5,5 Sekunden): jedes Korn bleibt an seinem Ort und entfaltet sich dort zum Blatt; das Gelände breitet sich von der Zentrale aus, dann kommt der Himmel. Taste B.
+- Ralfs Lichtansicht bleibt: Taste L.
+
+## Schritt 8: Galaxie mit Mondspiralen (Ralf, 01.11.)
+- Taste M, `galaxie.js`, Rechnung in `mondbahn.js`. Planet = Werk, Mond = Fassung, Farbe = Stimme, Sonne = Dach. Zentrale und ohne Dach kreisen um den Kern.
+- Die Spirale ist nicht gezeichnet: jeder Punkt ist derselbe Mond zu einer früheren Zeit. Sie entsteht, weil der Planet läuft, die Galaxie sich dreht und durchs All fliegt. Ihre Länge ist die geleistete Arbeit.
+- Sterne und Nebel sind Grund. Zur Zeit null steht jeder Planet an seinem Platz im Kosmos.

@@ -3,12 +3,14 @@
    Liest den echten Bestand über den eigenen Server (Proxy auf 8401), baut daraus
    das Netz der Werke und die geöffnete Zelle, fährt zwischen ihnen, hält Rückwege.
    ===================================================================== */
-import {TAU, DEG, clamp, mix, sstep, P, L, CAM, setCamera, toScreen, pointerWorld, screenRing, lichtmaschine, WG, SILVER, KEIMC} from './licht.js';
+import {TAU, DEG, clamp, mix, sstep, eio, P, L, CAM, setCamera, toScreen, pointerWorld, screenRing, lichtmaschine, WG, SILVER, KEIMC} from './licht.js';
 import {materialParagraphs} from './materialraum.js';
 import {bestand, STIMMEN, kurz, menschlich, QUELLE} from './daten.js';
 import {Zelle, baueZelle, DT, updSparks, drawSparks, clearSparks, burst, spark} from './zelle.js';
 import {Netz, baueNetz} from './netz.js';
-import {zeichneGarten} from './garten.js';
+import {zeichneLandschaft} from './garten.js';
+import {zeichneGalaxie} from './galaxie.js';
+import {arbeit} from './netz.js';
 import {regie} from './regie.js';
 import {U, W} from './welt.js';
 import {klang, klangFrame, AU} from './klang.js';
@@ -546,6 +548,10 @@ function advance(rdt){
   U.kelchK += (U.kelchT - U.kelchK) * (1 - Math.exp(-rdt / (W.RM ? 0.12 : 1.1)));
   U.spiralK += (U.spiralT - U.spiralK) * (1 - Math.exp(-rdt / (W.RM ? 0.12 : 1.1)));
   { const zk = U.gartenK + (U.gartenT - U.gartenK) * (1 - Math.exp(-rdt / (W.RM ? 0.12 : 1.3))); U.gartenK = W.RM ? U.gartenT : zk; document.body.classList.toggle('imnetz', U.netK > 0.5); }
+  // Die Landschaft formt sich in gleichmäßigem Tempo: so ist das Umformen zu sehen
+  { const sch = rdt / (W.RM ? 0.1 : 5.5); U.landK = U.landT > U.landK ? Math.min(U.landT, U.landK + sch) : Math.max(U.landT, U.landK - sch); document.body.classList.toggle('imgarten', U.landK > 0.5);
+    U.galK = U.galT > U.galK ? Math.min(U.galT, U.galK + sch) : Math.max(U.galT, U.galK - sch);
+    if(U.galK <= 0) U.galZeit = 0; else if(W.RM) U.galZeit = 0; else if(!U.paused) U.galZeit += rdt; }
   U.dachK += ((U.dach != null || U.als ? 1 : 0) - U.dachK) * (1 - Math.exp(-rdt / (W.RM ? 0.1 : 0.7)));
   U.alsK += ((U.als ? 1 : 0) - U.alsK) * (1 - Math.exp(-rdt / (W.RM ? 0.1 : 0.7)));
   U.leseK += ((U.lese ? 1 : 0) - U.leseK) * k;
@@ -583,9 +589,11 @@ function draw(rdt){
   if(U.waehlen && W.Z){ const A = [0, 0, 0], v = U.waehlen.sel; if(v.art === 'same') W.Z.seedPos(v.i, A); else W.Z.keimPos(A); screenRing(A, (0.03 + 0.006 * Math.sin(W.wall * 5)) * CAM.S, SILVER, 0.6); }
   drawSparks();
   const Z = W.Z, still = Z && Z.S.still > 0 ? 1 : 0, lockGlow = Z ? Math.max(0, 1 - (Z.S.clock - Z.S.lockT) / 1.2) * (W.RM ? 0.3 : 1) : 0;
-  M.render(W.wall, {neb: 0.4, thr: 0.5, par: [U.yawOff * 0.15, U.elevOff * 0.12], still: W.RM,
+  const lz = W.RM ? Math.round(U.landK) : eio(U.landK);
+  const gz = W.RM ? Math.round(U.galK) : eio(U.galK);
+  M.vorPunkte = (gl, ENC) => { zeichneLandschaft(gl, W.N, U, M, W.wall, visN, lz, ENC); zeichneGalaxie(gl, W.N, U, M, arbeit, visN, gz, ENC, U.galZeit); };
+  M.render(W.wall, {neb: 0.4 * (1 - lz * visN), thr: 0.5 + 0.6 * lz * visN, par: [U.yawOff * 0.15, U.elevOff * 0.12], still: W.RM,
     bloom: 0.32 + (Z ? (0.42 * Z.S.lk * (1 - sstep(4, 10, Z.S.clock - Z.S.lockT)) + 0.1 * Z.S.lk + 0.12 * Z.S.C) * (1 - U.netK) : 0) + 0.6 * lockGlow, exp: (1.05 + 0.08 * (Z ? Z.S.hold : 0)) * (still ? 0.62 : 1)});
-  if(W.N) zeichneGarten(W.N, U, W.wall);
   ui(cam);
   klangFrame(W.ruht ? null : Z, U, [0, 0, 0, 0], U.netK);
 }
