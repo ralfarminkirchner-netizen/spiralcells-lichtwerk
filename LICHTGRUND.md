@@ -1,0 +1,14 @@
+# Lichtgrund
+
+Eigene Variante, abgezweigt von Alsformen (22.10.). Andere Zweige und Arbeitskopien werden hier nicht verändert. Gutes kommt einzeln dazu, nur wenn es im Vorher-Nachher-Bild nichts verschlechtert.
+
+## Schritt 1: Spirale und Kelch zurück
+- Taste G oder der Knopf unten rechts zeigt den Mond als Spirale oder als Wuchs. Das ist nur eine Ansicht; eingerastet wird dadurch nichts.
+- Von der Seite steht jeder Mond wieder als geschlossener Kelch. Die Abstammung bleibt in der Wuchsansicht von oben lesbar.
+
+## Mögliche nächste Schritte (Ralf wählt)
+- Netz: Enge in der Mitte auflösen, Namen ohne Doppelung
+- Einstieg: Satz und geöffneter Mond müssen übereinstimmen
+- Netz: reiche Zellzeichnung aus der Myzelstudie
+- Schreibtisch von Kimi als Übersicht
+- Codex' Fassungsvergleich

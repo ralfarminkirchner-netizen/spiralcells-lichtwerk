@@ -80,7 +80,7 @@ export class Zelle {
     this.gRzeit = new Float32Array(G); this.sRzeit = new Float32Array(n);   // Radius nach Zeitrang: von der Seite steht die Zelle als Kelch
     this.seedDicht = new Float32Array(n); this.seedDichtK = new Float32Array(n);   // wie viel dichter ein Blatt liegt als die gleichmäßige Scheibe (ab dem Doppelten), von oben und im Kelch
     this.sR = new Float32Array(n); this.sTh = new Float32Array(n); this.sU = new Float32Array(n); this.sRc = new Float32Array(n);
-    this.kelchK = 0; this.curl = this.traum ? CURL_TRAUM : 0;
+    this.kelchK = 0; this.spiralK = 0; this.curl = this.traum ? CURL_TRAUM : 0;
     this.seedFirst = new Int32Array(n); this.seedCount = new Int32Array(n); this.seedCore = new Int32Array(n);
     const t0 = m.zeitspanne[0], t1 = m.zeitspanne[1], span = Math.max(1, t1 - t0);
     const yOf = i => { if(n <= 0) return 0; const f = 0.7 * (n > 1 ? i / (n - 1) : 1) + 0.3 * clamp((sam[i].zeit - t0) / span, 0, 1);
@@ -192,6 +192,11 @@ export class Zelle {
     let th = this.gTh[g] + this.gDt[g] + this.curl * this.gU[g] * TURN + S.rot, R = this.kelchK > 0 ? mix(this.gR[g], this.gRzeit[g], this.kelchK) : this.gR[g];
     if(this.traum){ const j = this.gJ[g]; th += 0.05 * Math.sin(S.clock * 0.07 + j * 40); R *= 1 + 0.04 * Math.sin(S.clock * 0.05 + j * 23); }   // Traumfeld: lose, still treibend
     let x = R * Math.cos(th), z = R * Math.sin(th);
+    // Die Spirale als Ansicht und der Kelch von der Seite: dieselben Körner in ihrer Folge, am Winkel, den der Mond heute hat
+    const sk = this.traum ? 0 : Math.max(this.spiralK, this.kelchK);
+    if(sk > 0.001){ const rz = this.kelchK > 0 ? mix(this.gRho[g], this.gRzeit[g], this.kelchK) : this.gRho[g], pg = this.gRank[g] * S.alpha + S.rot;
+      let pf = Math.atan2(z, x), d = pg - pf; d = Math.atan2(Math.sin(d), Math.cos(d)); const p = pf + d * sk, r = mix(Math.hypot(x, z), rz, sk);
+      x = r * Math.cos(p); z = r * Math.sin(p); }
     if(S.lk > 0.001 || S.frozen){ const rr = this.gRho[g] / Math.max(0.05, this.Rfinal);
       const b = S.frozen && S.clock - S.lockT > 4 ? 1 : sstep(0, 1, (S.clock - S.lockT - 0.55 - rr * 1.1) / 0.9);
       if(b > 0){ const pg = this.gPhiLock[g] + S.rot, rg = this.gRho[g];
@@ -203,7 +208,7 @@ export class Zelle {
   /* Mitte eines Blatts: daran hängen Stiele, Fäden und Marken */
   mittePos(i, o){
     const S = this.S, O = this.origin, th = this.sTh[i] + this.curl * this.sU[i] * TURN + S.rot, R = this.kelchK > 0 ? mix(this.sR[i], this.sRzeit[i], this.kelchK) : this.sR[i];
-    if(S.lk > 0.001 || S.frozen){ return this.kornPos(this.seedCore[i], o); }
+    if(S.lk > 0.001 || S.frozen || (!this.traum && Math.max(this.spiralK, this.kelchK) > 0.001)){ return this.kornPos(this.seedCore[i], o); }
     o[0] = O[0] + R * Math.cos(th); o[1] = O[1] + this.seedY[i]; o[2] = O[2] + R * Math.sin(th); return o;
   }
   seedPos(i, o){ return this.mittePos(i, o); }
@@ -375,7 +380,7 @@ export function baueZelle(Z, U, wall, rdt, vis){
     let pw = null; if(wall - U.pwT < 2.5 && !U.reading) pw = U.pointerWorldAt(CAM.target);
     const psz = 0.0065 * Math.max(0.6, Rm);
     // Die Hülle schmiegt sich an den Wuchs: wo Ranken weit hinausreichen, wölbt sie sich; eingerastet wird sie rund
-    const formK = (Z.traum ? 0.35 : 0.6) * (1 - 0.85 * Lk), H = Z.huelle;
+    const formK = (Z.traum ? 0.35 : 0.6) * (1 - 0.85 * Math.max(Lk, Z.traum ? 0 : Math.max(Z.spiralK, Z.kelchK))), H = Z.huelle;
     for(let k = 0; k < MEM.length / 3; k++){
       const ux0 = MEM[k * 3], uy = MEM[k * 3 + 1], uz0 = MEM[k * 3 + 2];
       const hb = ((Math.atan2(uz0, ux0) / TAU + 1) * HB) % HB, h0 = Math.floor(hb), hf = hb - h0, hv = mix(H[h0], H[(h0 + 1) % HB], hf);
@@ -420,7 +425,7 @@ export function baueZelle(Z, U, wall, rdt, vis){
     let bri = 0.8 * (Z.RM ? 0.93 : 0.86 + 0.14 * Math.sin(TAU * 0.42 * cl - rho * 7)) * Z.seedLuz[si] * (s.form ? 0.7 : Z.traum ? 1 - 0.75 * sstep(0.55, 1.02, rho / Math.max(0.05, Z.Rfinal)) : mix(0.8, 1.15, Z.seedJung[si]));
     if(Z.seedJung[si] === 1 && !s.form) sz *= g === Z.seedCore[si] ? 1.3 : 1.08;   // die jüngste Ausprägung jeder Stimme: ihre Wachstumsspitze, nur das Kernkorn deutlich; eine Form hat keine
     // Was trotz flächentreuer Breite dicht liegt (ein Blatt am Rand eines schmalen Fächers), wird feiner und leiser, statt auszubrennen
-    const dk = mix(Z.seedDicht[si], Z.seedDichtK[si], Z.kelchK); if(dk > 1){ sz *= Math.pow(dk, -0.2); bri *= Math.pow(dk, -0.35); }
+    const dk = Z.traum ? mix(Z.seedDicht[si], Z.seedDichtK[si], Z.kelchK) : mix(Z.seedDicht[si], 1, Math.max(Z.spiralK, Z.kelchK)); if(dk > 1){ sz *= Math.pow(dk, -0.2); bri *= Math.pow(dk, -0.35); }
     let cr = Z.gCol[g * 3], cg = Z.gCol[g * 3 + 1], cb = Z.gCol[g * 3 + 2];
     if(wavOn && S.lockedOnce){ const dw = (rho - wavR) / 0.05, gw = Math.exp(-dw * dw); bri *= 1 + 2.6 * gw; cr = mix(cr, GOLDC[0], 0.5 * gw); cg = mix(cg, GOLDC[1], 0.5 * gw); cb = mix(cb, GOLDC[2], 0.5 * gw); }
     for(const wv of S.waves){ const dn = (rho - wv.r * Math.max(0.1, S.Rs)) / 0.04; bri *= 1 + 1.2 * Math.exp(-dn * dn); }
@@ -528,7 +533,7 @@ function huelleGlaetten(Z, rdt){
 const STIELC = lin('#cfc6b4');
 function baueWuchs(Z, U, vis, fog, selSeed, wall){
   const m = Z.m, W = Z.W, gP = Z.gP, sicht = Z.gSicht, O = Z.origin, n = m.samen.length; if(!n || vis < 0.01) return;
-  const pfad = Z.wahl.pfad, tilt = U.kelchK, lockDim = 1 - 0.8 * Z.S.lk, soloAny = U.solo >= 0, stielK = 1 - 0.8 * tilt;   // von der Seite treten die Stiele zurück
+  const pfad = Z.wahl.pfad, tilt = U.kelchK, lockDim = 1 - 0.8 * Math.max(Z.S.lk, Z.traum ? 0 : Z.spiralK), soloAny = U.solo >= 0, stielK = 1 - 0.8 * tilt;   // von der Seite treten die Stiele zurück
   const A = [0, 0, 0], Bq = [0, 0, 0];
   const strich = (a, b, sz, c, al, punkte, lift) => { const d = Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2]), k = Math.max(2, Math.min(punkte, Math.round(d * 160)));
     for(let s = 1; s < k; s++){ const t = s / k, x = mix(a[0], b[0], t), y = mix(a[1], b[1], t) + (lift ? Math.sin(Math.PI * t) * lift : 0), z = mix(a[2], b[2], t); P(x, y, z, sz, c[0], c[1], c[2], al * fog(x, y, z)); } };

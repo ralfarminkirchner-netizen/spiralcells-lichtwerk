@@ -70,7 +70,7 @@ button{font:inherit;color:inherit}
 #dachnamen .mitte{font-size:13px;letter-spacing:.42em;color:var(--whitegold)}
 #dachnamen .ohne{font-size:10px;letter-spacing:.24em;color:var(--ink-soft)}
 #tuernamen span{position:absolute;left:0;top:0;font-size:10px;letter-spacing:.24em;color:var(--ink-soft);white-space:nowrap;will-change:transform;transition:opacity .8s ease}
-.ruht #seite,.ruht #netzknopf{display:none}
+.ruht #seite,.ruht #spiralknopf,.ruht #netzknopf{display:none}
 #namen span{position:absolute;left:0;top:0;font-size:11px;letter-spacing:.2em;white-space:nowrap;will-change:transform;transition:opacity .6s ease;text-shadow:0 0 12px rgba(4,3,10,.95)}
 #tage span{position:absolute;left:0;top:0;font-family:var(--f-measure);font-size:11px;letter-spacing:.08em;color:var(--ink-soft);white-space:nowrap;will-change:transform}
 
@@ -162,13 +162,15 @@ button{font:inherit;color:inherit}
 #snd[aria-pressed="true"]{color:var(--ink)}
 #seite{right:max(10px,env(safe-area-inset-right,0px))}
 #netzknopf{right:calc(max(10px,env(safe-area-inset-right,0px)) + 52px)}
-#seite svg,#netzknopf svg{width:22px;height:22px;display:block}
+#spiralknopf{right:calc(max(10px,env(safe-area-inset-right,0px)) + 104px)}
+#spiralknopf[aria-pressed="true"]{color:var(--ink)}
+#seite svg,#spiralknopf svg,#netzknopf svg{width:22px;height:22px;display:block}
 #seite .oben{display:none}
 #seite[aria-pressed="true"] .oben{display:block}
 #seite[aria-pressed="true"] .kelch{display:none}
-#seite,#netzknopf,#snd{opacity:.35}
-.active #seite,.active #netzknopf,.active #snd,.corner:focus-visible{opacity:1}
-.lesend #seite,.lesend #netzknopf{opacity:0;pointer-events:none}
+#seite,#spiralknopf,#netzknopf,#snd{opacity:.35}
+.active #seite,.active #spiralknopf,.active #netzknopf,.active #snd,.corner:focus-visible{opacity:1}
+.lesend #seite,.lesend #spiralknopf,.lesend #netzknopf{opacity:0;pointer-events:none}
 
 .ruhe{position:fixed;inset:0;display:grid;place-items:center;margin:0;padding:0 24px;text-align:center;font-weight:300;letter-spacing:.12em;color:var(--ink)}
 

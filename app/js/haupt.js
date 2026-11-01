@@ -543,12 +543,14 @@ function advance(rdt){
   U.netK += (U.netT - U.netK) * (1 - Math.exp(-rdt / (U.fahrt ? 0.28 : W.RM ? 0.12 : 1.5)));
   if(U.fahrt && (performance.now() > U.fahrt.bis || Math.abs(U.netT - U.netK) < 0.003)){ U.netK = U.netT; U.fahrt = null; }
   U.kelchK += (U.kelchT - U.kelchK) * (1 - Math.exp(-rdt / (W.RM ? 0.12 : 1.1)));
+  U.spiralK += (U.spiralT - U.spiralK) * (1 - Math.exp(-rdt / (W.RM ? 0.12 : 1.1)));
   U.dachK += ((U.dach != null || U.als ? 1 : 0) - U.dachK) * (1 - Math.exp(-rdt / (W.RM ? 0.1 : 0.7)));
   U.alsK += ((U.als ? 1 : 0) - U.alsK) * (1 - Math.exp(-rdt / (W.RM ? 0.1 : 0.7)));
   U.leseK += ((U.lese ? 1 : 0) - U.leseK) * k;
   U.kelchZeit += U.kelchK > 0.5 ? rdt : 0; U.netZeit += rdt;
   if(W.Z) W.Z.RM = W.RM; U.RM = W.RM;
   if(W.Z) W.Z.kelchK = W.RM ? Math.round(U.kelchK) : 0.5 - 0.5 * Math.cos(Math.PI * clamp(U.kelchK, 0, 1));
+  if(W.Z) W.Z.spiralK = W.RM ? Math.round(U.spiralK) : 0.5 - 0.5 * Math.cos(Math.PI * clamp(U.spiralK, 0, 1));
   if(U.mode === 'press' && performance.now() - U.t0 > (U.pressSeed >= 0 ? 700 : 450)){
     if(U.pressSeed >= 0 && W.Z){ U.mode = 'bind'; U.bind = {von: U.pressSeed, vonId: W.Z.m.samen[U.pressSeed].id, x: U.x, y: U.y, x0: U.x, y0: U.y, ziel: -1, ruhT: 0}; B.zeile('Zur zweiten Ausprägung ziehen, dort loslassen.'); }
     else if(W.Z){ U.mode = 'hold'; W.Z.S.holdT = 1; W.Z.S.holdP = pointerWorld(U.x, U.y, CAM.target); } }

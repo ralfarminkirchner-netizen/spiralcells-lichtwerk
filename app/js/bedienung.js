@@ -571,12 +571,13 @@ export function installiere(a){
     else if(k >= '1' && k <= '5'){ const i = +k - 1; U.solo = U.solo === i ? -1 : i; ansage(U.solo >= 0 ? `${STIMMEN[i].name} allein.` : 'Alle Stimmen.'); }
     else if(k === '0'){ U.solo = -1; }
     else if(k === 's' || k === 'S'){ seite(); }
+    else if(k === 'g' || k === 'G'){ spirale(); }
     else if(k === 'n' || k === 'N'){ api.zumNetz(); }
     else if(k === 'w' || k === 'W'){ const tu = W.N && W.N.tueren.find(x => x.name === 'Werkraum'); if(tu) tuerOeffnen(tu); else zeile('Den Werkraum gibt es hier nicht.'); }
     else if((k === 'ArrowRight' || k === 'ArrowLeft') && U.sel && U.sel.art === 'faden' && W.N && W.N.faeden[U.sel.i].kanten.length > 1){ e.preventDefault();   // durch die Verbindungen eines Bündels
       const n = W.N.faeden[U.sel.i].kanten.length; U.fadenK = ((U.fadenK || 0) + (k === 'ArrowRight' ? 1 : -1) + n) % n; const [t, s] = markeFuer(U.sel); zeigeMarke(t, s); ansage(t + '. ' + s); }
     else if(k === 'ArrowRight' || k === 'ArrowLeft'){ e.preventDefault(); schritt(k === 'ArrowRight' ? 1 : -1); }
-    else if(k === '?'){ U.hintUntil = W.wall + 8; hintEl.textContent = 'S Seite · N Netz · A Zusammenhänge · P Planet · W Werkraum · 1–5 eine Stimme · ⌘V legt ab · Halten verbindet · Esc zurück'; }
+    else if(k === '?'){ U.hintUntil = W.wall + 8; hintEl.textContent = 'S Seite · G Spirale · N Netz · A Zusammenhänge · P Planet · W Werkraum · 1–5 eine Stimme · ⌘V legt ab · Halten verbindet · Esc zurück'; }
     else if(k === 'Enter' && U.waehlen && U.sel && (U.sel.art === 'same' || U.sel.art === 'keim')){ const w = U.waehlen, nach = U.sel.art === 'same' ? U.sel.mond.samen[U.sel.i].id : U.sel.mond.keim[U.sel.mond.keim.length - 1].id;
       U.waehlen = null; if(nach !== w.von && U.sel.mond.id === w.mondId) api.kanteFragen(w.von, nach); else zeile('Nichts verbunden.'); }
     else if(k === 'Enter' && U.teilnahme && U.sel && U.sel.art === 'mond' && U.sel.i !== U.teilnahme.gegenstand){ const g = U.teilnahme.gegenstand; U.teilnahme = null; api.teilnahmeFragen(g, U.sel.i); }
@@ -616,6 +617,7 @@ export function installiere(a){
   // Ecken
   $('#snd').addEventListener('click', () => { const on = klangToggle(); const b = $('#snd'); b.setAttribute('aria-pressed', on ? 'true' : 'false'); b.setAttribute('aria-label', on ? 'Klang ausschalten' : 'Klang einschalten'); activity(); });
   $('#seite').addEventListener('click', () => { seite(); activity(); });
+  $('#spiralknopf').addEventListener('click', () => { spirale(); activity(); });
   $('#netzknopf').addEventListener('click', () => { if(U.netT > 0.5 && W.Z) api.zurZelle(); else api.zumNetz(); activity(); });
   ortEl.addEventListener('click', () => { schliesseSiegel(); U.waehlen = null; if(U.lese) schliesseLese(true); api.ortZurueck(); });   // direkt, nicht durch die Escape-Kette
   markeEl.addEventListener('click', () => { const s = U.sel || (U.hoverMarke ? U.hover : null); if(!s) return;
@@ -635,6 +637,10 @@ function zoomAuf(z){
   if(U.netK < 0.4 && z > 2.3 && W.Z){ U.zoom = 1; api.zumNetz(); return; }
   U.zoom = clamp(z, 0.35, 2.6);
 }
+function spirale(){ if(U.netT > 0.5) return; U.spiralT = U.spiralT > 0.5 ? 0 : 1;
+  const b = $('#spiralknopf'); b.setAttribute('aria-pressed', U.spiralT > 0.5 ? 'true' : 'false'); b.setAttribute('aria-label', U.spiralT > 0.5 ? 'Als Wuchs zeigen' : 'Als Spirale zeigen');
+  const m = W.Z && W.Z.m;
+  zeile(U.spiralT > 0.5 ? (m && m.kristall.length ? 'Dieser Mond ist eingerastet.' : 'Als Spirale gesehen. Eingerastet ist damit nichts.') : mondSatz(m)); }
 function seite(){ if(U.netT > 0.5) return; U.kelchT = U.kelchT > 0.5 ? 0 : 1; U.elevOff = 0;
   const b = $('#seite'); b.setAttribute('aria-pressed', U.kelchT > 0.5 ? 'true' : 'false'); b.setAttribute('aria-label', U.kelchT > 0.5 ? 'Von oben: das Werk' : 'Von der Seite: Geschichte');
   zeile(U.kelchT > 0.5 ? 'Von der Seite: die Geschichte. Unten der Keim, oben das Jüngste.' : mondSatz(W.Z && W.Z.m)); }

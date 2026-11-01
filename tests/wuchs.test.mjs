@@ -146,13 +146,13 @@ test('Kelch: von der Seite zählt die Zeit, Tagesmarken vom ersten bis zum letzt
   assert.ok(Z.tage.length >= 2); assert.equal(Z.tage[0].i, 0);
   assert.equal(tag(Z.tage.at(-1).t), tag(m.samen.at(-1).zeit), 'der letzte Tag hat seine Marke');
   for(let j = 1; j < Z.tage.length; j++) assert.ok(Z.tage[j].i > Z.tage[j - 1].i && Z.tage[j].y > Z.tage[j - 1].y && tag(Z.tage[j].t) !== tag(Z.tage[j - 1].t));
-  // Radius nach Zeitrang, weich überblendet; der Winkel bleibt die Abstammung
+  // Radius nach Zeitrang und Winkel aus der Kornfolge: von der Seite steht ein geschlossener Kelch
   assert.ok(!Z.S.locked && !Z.traum);
   const o = [0, 0, 0], r = () => Math.hypot(o[0] - Z.origin[0], o[2] - Z.origin[2]), w = () => Math.atan2(o[2] - Z.origin[2], o[0] - Z.origin[0]);
   for(const g of [0, Z.G >> 2, Z.G >> 1, Z.G - 1]){
-    Z.kelchK = 0; Z.kornPos(g, o); const r0 = r(), w0 = w();
-    Z.kelchK = 1; Z.kornPos(g, o); assert.ok(Math.abs(r() - Z.gRzeit[g]) < 1e-6); assert.ok(Math.abs(wende(w() - w0)) < 1e-6);
-    Z.kelchK = 0.5; Z.kornPos(g, o); assert.ok(Math.abs(r() - (r0 + Z.gRzeit[g]) / 2) < 1e-6); }
+    Z.kelchK = 1; Z.kornPos(g, o); assert.ok(Math.abs(r() - Z.gRzeit[g]) < 1e-6); assert.ok(Math.abs(wende(w() - (Z.gRank[g] * Z.S.alpha + Z.S.rot))) < 1e-6);
+    Z.kelchK = 0; Z.spiralK = 1; Z.kornPos(g, o); assert.ok(Math.abs(r() - Z.gRho[g]) < 1e-6); assert.ok(Math.abs(wende(w() - (Z.gRank[g] * Z.S.alpha + Z.S.rot))) < 1e-6);
+    Z.spiralK = 0; }
   for(let g = 1; g < Z.G; g++) assert.ok(Z.gRzeit[g] > Z.gRzeit[g - 1]);
   Z.kelchK = 0;
 });
