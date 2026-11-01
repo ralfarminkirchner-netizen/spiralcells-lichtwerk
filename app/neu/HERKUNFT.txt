@@ -1,0 +1,2 @@
+Materialien, Himmel und Modelle: Poly Haven (polyhaven.com), CC0.
+Engine: three.js 0.187.0, MIT.

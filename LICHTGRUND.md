@@ -82,6 +82,14 @@ Mechanismus, in jeder Welt gleich: unten das Älteste, oben das Jüngste. Verzwe
 - Bildrate 60 je Sekunde in Dorf und Galaxie bei 1280 x 800 und 390 x 844, am Mac. Kein echtes Handy geprüft. Der Leseweg im Handy-Format ist nicht bestätigt: der Prüflauf kam dort nicht ins Haus, Ursache ungeklärt.
 - Ralf nach diesem Schritt: Die Grafik reicht grundsätzlich nicht. Kein Feinschliff mehr, neue Engine.
 
+## Schritt 14: Eine Engine für alles (Ralf, 01.11.)
+Ralf: Die Grafik reicht nicht, kein Feinschliff, ein anderes Kaliber, und zwar für alles. Entscheidung: three.js 0.187 mit WebGPU (sonst WebGL 2), weil es im Browser und auf dem Handy läuft und zum Server passt. Neue Seite `app/welten.html`, Quelle `werkzeuge/neu/welten.js`, Bauen mit `werkzeuge/neu/baue.sh`. Materialien, Himmel und Modelle von Poly Haven (CC0), Bäume aus dem Generator ez-tree.
+- Stand: Kosmos, Garten, Galaxie, Dorf, Campus und Büro laufen auf derselben Engine mit denselben Daten und derselben Rechnung (`anlage`, `bauplan`, `mondbahn`, `gelaende`). Physikalische Materialien, Schatten, Umgebungsverdeckung, Glühen.
+- Reifegrad: Dorf und Galaxie sind deutlich weiter als vorher. Campus, Büro, Garten und Kosmos laufen, sind aber erst Rohbau.
+- Fehlt auf der neuen Engine: Innenräume, Lesen an der Werkbank, Fäden, Stimmen allein, Textfassung. Die alte Seite bleibt dafür unverändert da. Tippen nennt nur das Werk.
+- Server: neue Dateiarten `.hdr` und `.glb`; `blob:` für Bilder und Verbindungen in der Sicherheitsregel erlaubt. Das gilt für alle Seiten dieses Servers.
+- Bäume und Gras sind Grund und tragen nichts. Nicht auf einem echten Handy geprüft.
+
 ## Prüfstand 01.11.
 - Geprüft im Browser bei 1280 x 800 und 390 x 844, auf der Datenkopie: alle Ansichten, Morph in Einzelbildern, Wähler, Textfassung, Werk öffnen und zurück. 60 Bilder je Sekunde am Mac (Grafik des Macs, nicht auf einem echten Handy). 0 schwarze Starts von 12. Bilder: `Development/Artifacts/lichtwerk-vergleich-20261101/lichtgrund/garten4` und `garten5`.
 - Offen: Laufende Bewegung nur in Standbildern beurteilt, nicht als Film. Nicht auf einem echten Handy geprüft. Namen überlappen teils die Marke. Die Innenräume sind noch schlichte Kisten: kein Glas, keine Möbel außer Tisch und Stuhl. Viele Werke haben nur eine Fassung, ihr Gebäude ist also einstöckig mit einem Tisch; das ist der Bestand.

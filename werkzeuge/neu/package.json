@@ -1,0 +1,1 @@
+{"name":"lichtgrund-neu","private":true,"type":"module","dependencies":{"@dgreenheck/ez-tree":"1.1.0","@gltf-transform/cli":"4.2.1","esbuild":"0.25.0","three":"0.187.0"}}

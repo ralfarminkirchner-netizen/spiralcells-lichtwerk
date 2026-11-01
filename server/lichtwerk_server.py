@@ -71,8 +71,8 @@ UMGEBUNG = [  # nur Lebenszeichen; TiSCH (9030) wird nie angefragt, er kostet Ge
 ]
 TYPEN = {".html": "text/html; charset=utf-8", ".js": "text/javascript; charset=utf-8",
          ".css": "text/css; charset=utf-8", ".json": "application/json", ".svg": "image/svg+xml",
-         ".png": "image/png", ".jpg": "image/jpeg", ".ico": "image/x-icon", ".txt": "text/plain; charset=utf-8"}
-CSP = ("default-src 'self'; img-src 'self' data:; connect-src 'self'; style-src 'self' 'unsafe-inline'; "
+         ".png": "image/png", ".jpg": "image/jpeg", ".hdr": "application/octet-stream", ".glb": "model/gltf-binary", ".ico": "image/x-icon", ".txt": "text/plain; charset=utf-8"}
+CSP = ("default-src 'self'; img-src 'self' data: blob:; connect-src 'self' blob:; style-src 'self' 'unsafe-inline'; "
        "script-src 'self'; font-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'")
 
 
