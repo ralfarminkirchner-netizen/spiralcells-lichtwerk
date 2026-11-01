@@ -1,1 +1,1 @@
-{"name":"lichtgrund-neu","private":true,"type":"module","dependencies":{"@dgreenheck/ez-tree":"1.1.0","@gltf-transform/cli":"4.2.1","esbuild":"0.25.0","three":"0.187.0"}}
+{"name":"lichtgrund-neu","private":true,"type":"module","dependencies":{"@dgreenheck/ez-tree":"1.1.0","@gltf-transform/cli":"4.2.1","@lobehub/icons-static-svg":"1.101.0","esbuild":"0.25.0","lucide-static":"1.66.0","simple-icons":"16.36.0","three":"0.187.0"}}

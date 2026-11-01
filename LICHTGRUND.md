@@ -124,6 +124,15 @@ Ralf: Unreal später, erst alles andere selbst. Ziel bleibt Kino als Mac-App; da
 - Bäume, Blumen, Autos, See sind Grund und tragen nichts. Das Büro zeigt Höhe jetzt doppelt, das Verhältnis der Werke bleibt.
 - Offen: Campus und Büro bleiben künstlich, Dachformen wirken aufgesetzt. Bauten im Dorf bleiben grob. Kosmos bleibt der schwächste. Kein echtes Handy; Railway offen; Unreal ohne Bild.
 
+## Schritt 20: Erkennen auf einen Blick (Ralf, 01.11.)
+Ralf: Nicht nur Effekte. Objekte müssen zu dem passen, was sie sind; Icons, Logos der benutzten Werkzeuge; FASKA als Schule mit dem bunten Logo.
+- Wegweiser an jedem Werk (Dorf, Campus, Büro, Garten): Icon der Funktion, Name, Plaketten der belegten Stimmen (`werkzeuge/neu/zeichen.js`). Im Kosmos und in der Galaxie erscheint das Icon als Marke am Werk.
+- FASKA: echtes Logo aus `faska-studio-2` an Tor, Hauptschule, Türmen, Hülle und Sonne; Hauptschule mit fünf Fahnen und Fassadenfeldern in den Logofarben.
+- Tore mit dem Namen jedes Viertels. Gegenstände je Funktion aus Poly Haven: Tafel und Bank an Schulen, abgedeckte Autos an Garagen, Werkzeugwagen, Bücherregal, Tische am Kaffeehaus, Ente am Spielhof, Pferd am Märchenhaus.
+- Annahme: Die Stimme Hermes trägt das Logo von „Hermes Agent“. Die Daten belegen nur den Namen, nicht den Anbieter. „Bolt“ im Bestand war nur der Pfad „ThunderBolt“, darum kein Bolt-Logo.
+- Farbberechnung auf ACES, weil AgX die Farben auswusch.
+- Offen: Wegweiser aus der Ferne klein, Icons in Galaxie und Kosmos winzig. Die Bauten selbst bleiben grob, die Gegenstände sind nur Beiwerk, kein Bau wird dadurch schön. Kein echtes Handy.
+
 ## Prüfstand 01.11.
 - Geprüft im Browser bei 1280 x 800 und 390 x 844, auf der Datenkopie: alle Ansichten, Morph in Einzelbildern, Wähler, Textfassung, Werk öffnen und zurück. 60 Bilder je Sekunde am Mac (Grafik des Macs, nicht auf einem echten Handy). 0 schwarze Starts von 12. Bilder: `Development/Artifacts/lichtwerk-vergleich-20261101/lichtgrund/garten4` und `garten5`.
 - Offen: Laufende Bewegung nur in Standbildern beurteilt, nicht als Film. Nicht auf einem echten Handy geprüft. Namen überlappen teils die Marke. Die Innenräume sind noch schlichte Kisten: kein Glas, keine Möbel außer Tisch und Stuhl. Viele Werke haben nur eine Fassung, ihr Gebäude ist also einstöckig mit einem Tisch; das ist der Bestand.

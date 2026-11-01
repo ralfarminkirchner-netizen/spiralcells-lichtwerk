@@ -1,2 +1,5 @@
 Materialien, Himmel und Modelle: Poly Haven (polyhaven.com), CC0.
 Engine: three.js 0.187.0, MIT.
+
+Zeichen: Icons lucide-static (ISC). Werkzeug-Logos @lobehub/icons-static-svg (MIT), Marken bei ihren Inhabern. FASKA-Logo aus dem eigenen Projekt faska-studio-2.
+Gegenstände: Poly Haven, CC0.

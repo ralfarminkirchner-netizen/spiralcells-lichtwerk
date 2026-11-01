@@ -76249,6 +76249,128 @@ function nebenbau(bau2, fkt, H) {
   satteldach(bau2, x, o2, z2, yaw, 1.2, 0.72, 0.28, fkt === "schularchiv" ? [0.38, 0.4, 0.45] : dc, f2, 0.1);
 }
 
+// zeichen.js
+var ICON = { rathaus: "landmark", saal: "users", druckerei: "printer", post: "mail", aussicht: "eye", schule: "school", schularchiv: "archive", spielhof: "gamepad-2", musik: "music", museum: "building-2", heilhaus: "heart-pulse", bibliothek: "book-open", klause: "library", kaffeehaus: "coffee", werkstatt: "wrench", sternwarte: "telescope", schreibstube: "pen-tool", kapelle: "church", garage: "car", maerchen: "sparkles", bastel: "scissors", turnhalle: "activity", bildstock: "map-pin", speicher: "warehouse" };
+var FARBE = { rathaus: "#8a2f24", saal: "#7a5a2a", druckerei: "#3f4a55", post: "#c79a12", aussicht: "#3b6f6a", schule: "#2f7d3a", schularchiv: "#5c5346", spielhof: "#d97a1f", musik: "#6b3fa0", museum: "#4a5f7a", heilhaus: "#2e8f7f", bibliothek: "#6a3f22", klause: "#59606a", kaffeehaus: "#a0525f", werkstatt: "#4a4f55", sternwarte: "#1f3a6b", schreibstube: "#7a4f2a", kapelle: "#8a8fa0", garage: "#a8281f", maerchen: "#b0408a", bastel: "#2f8fa8", turnhalle: "#2f6fb0", bildstock: "#6f6a5e", speicher: "#7a6a4a" };
+var WERKZEUG = { claude: "claude-color", codex: "codex-color", hermes: "hermesagent", antigravity: "antigravity-color", kimi: "kimi-color" };
+var lade = async (datei, farbe, breit) => {
+  let t2 = await (await fetch(`neu/zeichen/${datei}.svg`)).text();
+  if (farbe) t2 = t2.replaceAll("currentColor", farbe);
+  if (farbe) t2 = t2.replace(/fill="#(000|000000)"/g, `fill="${farbe}"`);
+  if (breit) t2 = t2.replace("<svg", `<svg width="${breit}" height="${breit * 100 / 340}"`);
+  else if (!/\swidth=/.test(t2.slice(0, 300))) t2 = t2.replace("<svg", '<svg width="256" height="256"');
+  const u2 = URL.createObjectURL(new Blob([t2], { type: "image/svg+xml" })), i = new Image();
+  i.src = u2;
+  await i.decode();
+  return i;
+};
+var textur = (c) => {
+  const t2 = new CanvasTexture(c);
+  t2.colorSpace = SRGBColorSpace;
+  t2.anisotropy = 16;
+  return t2;
+};
+var eck = (x, a2, b2, w, h2, r2) => {
+  x.beginPath();
+  x.roundRect(a2, b2, w, h2, r2);
+  x.fill();
+};
+async function baueZeichen(titel) {
+  const Z3 = 256, sp = 8, c = document.createElement("canvas");
+  c.width = Z3 * sp;
+  c.height = Z3 * 5;
+  const x = c.getContext("2d", { willReadFrequently: true }), zelle = {};
+  let k2 = 0;
+  const R2 = c.height;
+  for (const [f2, name] of Object.entries(ICON)) {
+    const a2 = k2 % sp, b2 = Math.floor(k2 / sp);
+    x.fillStyle = FARBE[f2];
+    eck(x, a2 * Z3 + 6, b2 * Z3 + 6, Z3 - 12, Z3 - 12, 44);
+    x.strokeStyle = "rgba(255,255,255,.8)";
+    x.lineWidth = 6;
+    x.stroke();
+    const i = await lade("i-" + name, "#ffffff");
+    x.drawImage(i, a2 * Z3 + 44, b2 * Z3 + 44, Z3 - 88, Z3 - 88);
+    zelle[f2] = k2++;
+  }
+  for (const [s, name] of Object.entries(WERKZEUG)) {
+    const a2 = k2 % sp, b2 = Math.floor(k2 / sp);
+    x.fillStyle = "#fbf8f1";
+    x.beginPath();
+    x.arc(a2 * Z3 + Z3 / 2, b2 * Z3 + Z3 / 2, Z3 / 2 - 8, 0, 7);
+    x.fill();
+    const i = await lade("w-" + name, "#111111");
+    x.drawImage(i, a2 * Z3 + 44, b2 * Z3 + 44, Z3 - 88, Z3 - 88);
+    zelle["t" + s] = k2++;
+  }
+  const uv2 = (n2) => {
+    const a2 = n2 % sp, b2 = Math.floor(n2 / sp);
+    return [a2 / sp, 1 - (b2 + 1) / 5, (a2 + 1) / sp, 1 - b2 / 5];
+  };
+  const nc = document.createElement("canvas");
+  nc.width = 4096;
+  nc.height = 2560;
+  const nx = nc.getContext("2d", { willReadFrequently: true }), W2 = 512, H = 80;
+  nx.textBaseline = "middle";
+  const nuv = titel.map((t2, i) => {
+    const a2 = i % 8, b2 = Math.floor(i / 8);
+    nx.fillStyle = "#20170f";
+    nx.fillRect(a2 * W2 + 2, b2 * H + 2, W2 - 4, H - 4);
+    nx.strokeStyle = "#a5875a";
+    nx.lineWidth = 3;
+    nx.strokeRect(a2 * W2 + 5, b2 * H + 5, W2 - 10, H - 10);
+    nx.fillStyle = "#f6ecd6";
+    let g = 40;
+    do {
+      nx.font = `500 ${g}px "Avenir Next",system-ui,sans-serif`;
+      g -= 2;
+    } while (nx.measureText(t2).width > W2 - 36 && g > 14);
+    nx.textAlign = "center";
+    nx.fillText(t2, a2 * W2 + W2 / 2, b2 * H + H / 2 + 2);
+    return [a2 / 8, 1 - (b2 + 1) / 32, (a2 + 1) / 8, 1 - b2 / 32];
+  });
+  const fc = document.createElement("canvas");
+  fc.width = 1024;
+  fc.height = 320;
+  const fx = fc.getContext("2d");
+  fx.fillStyle = "#ffffff";
+  fx.fillRect(0, 0, 1024, 320);
+  const lg = await lade("faska", null, 3400);
+  fx.drawImage(lg, 1190, 420, 1420, 620, 150, 0, 733, 320);
+  const mat = (t2) => new MeshStandardMaterial({ map: t2, emissiveMap: t2, emissive: 16777215, emissiveIntensity: 0.18, roughness: 0.7, side: DoubleSide });
+  return { zelle, uv: uv2, nuv, atlas: textur(c), namen: textur(nc), faska: textur(fc), matAtlas: mat(textur(c)), matNamen: mat(textur(nc)), matFaska: new MeshStandardMaterial({ map: textur(fc), color: 11053224, roughness: 0.9, side: FrontSide }), ic: (f2) => `neu/zeichen/i-${ICON[f2]}.svg` };
+}
+function tafeln(Z3, liste, mergeGeometries2) {
+  const G = new Group(), jeMat = { atlas: [], namen: [], faska: [] };
+  for (const q2 of liste) {
+    const g = new PlaneGeometry(q2.w, q2.h), u2 = g.attributes.uv, [a2, b2, c, d2] = q2.uv;
+    for (let i = 0; i < 4; i++) u2.setXY(i, u2.getX(i) ? c : a2, u2.getY(i) ? d2 : b2);
+    const gg = g.toNonIndexed();
+    gg.applyMatrix4(new Matrix4().compose(new Vector3(q2.x, q2.y, q2.z), new Quaternion().setFromEuler(new Euler(0, q2.yaw, 0)), new Vector3(1, 1, 1)));
+    jeMat[q2.art].push(gg);
+  }
+  if (jeMat.atlas.length) G.add(new Mesh(mergeGeometries2(jeMat.atlas), Z3.matAtlas));
+  if (jeMat.namen.length) G.add(new Mesh(mergeGeometries2(jeMat.namen), Z3.matNamen));
+  if (jeMat.faska.length) G.add(new Mesh(mergeGeometries2(jeMat.faska), Z3.matFaska));
+  return G;
+}
+function wegweiser(bau2, Z3, liste, n2, fkt, stimmen, x, y, z2, blick, gr = 1) {
+  const yaw = blick, ux = Math.cos(yaw), uz = -Math.sin(yaw), fx = Math.sin(yaw), fz = Math.cos(yaw);
+  bau2.kiste("holz", 0.1, 2.5 * gr, 0.1, x, y + 1.25 * gr, z2, yaw);
+  bau2.kiste("holz", 1.15 * gr, 1.15 * gr, 0.05, x, y + 2.35 * gr, z2, yaw, [0.4, 0.3, 0.2]);
+  bau2.kiste("holz", 1.74 * gr, 0.28 * gr, 0.05, x, y + 1.56 * gr, z2, yaw, [0.4, 0.3, 0.2]);
+  const vorn = 0.035;
+  for (const sg of [1, -1]) {
+    const yy = sg > 0 ? yaw : yaw + Math.PI;
+    liste.push({ art: "atlas", uv: Z3.uv(Z3.zelle[fkt]), w: 1.05 * gr, h: 1.05 * gr, x: x + fx * vorn * sg, y: y + 2.35 * gr, z: z2 + fz * vorn * sg, yaw: yy });
+    liste.push({ art: "namen", uv: Z3.nuv[n2], w: 1.68 * gr, h: 0.26 * gr, x: x + fx * vorn * sg, y: y + 1.56 * gr, z: z2 + fz * vorn * sg, yaw: yy });
+  }
+  stimmen.forEach((s, i) => {
+    const v3 = (i - (stimmen.length - 1) / 2) * 0.36 * gr;
+    liste.push({ art: "atlas", uv: Z3.uv(Z3.zelle["t" + s]), w: 0.33 * gr, h: 0.33 * gr, x: x + ux * v3 + fx * 0.07, y: y + 1.2 * gr, z: z2 + uz * v3 + fz * 0.07, yaw });
+  });
+}
+
 // ../../app/js/funktion.js
 var FUNKTIONEN = {
   rathaus: { name: "Rathaus", campus: "Verwaltung", garten: "Hofbaum", galaxie: "Doppelring", buero: "Leitung" },
@@ -76666,8 +76788,8 @@ var istFrei = (x, z2) => {
 var renderer = new WebGPURenderer({ canvas, antialias: true, forceWebGL: /[?&]webgl/.test(location.search) || !navigator.gpu || !await navigator.gpu.requestAdapter().catch(() => null) });
 renderer.setPixelRatio(Math.min(devicePixelRatio, klein2 ? 1.5 : 2));
 renderer.setSize(innerWidth, innerHeight);
-renderer.toneMapping = AgXToneMapping;
-renderer.toneMappingExposure = 1;
+renderer.toneMapping = ACESFilmicToneMapping;
+renderer.toneMappingExposure = 0.72;
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = PCFShadowMap;
 try {
@@ -76680,14 +76802,14 @@ var scene = new Scene();
 var camera = new PerspectiveCamera(klein2 ? 46 : 36, innerWidth / innerHeight, 0.3, E * 40);
 var TL = new TextureLoader();
 var stoff = (name, srgb = true) => {
-  const lade = (d2, s) => {
+  const lade2 = (d2, s) => {
     const t2 = TL.load(`${NEU}stoffe/${name}/${d2}.jpg`);
     t2.wrapS = t2.wrapT = RepeatWrapping;
     t2.anisotropy = 16;
     if (s) t2.colorSpace = SRGBColorSpace;
     return t2;
   };
-  return { farbe: lade("farbe", true), normal: lade("normal"), arm: lade("arm") };
+  return { farbe: lade2("farbe", true), normal: lade2("normal"), arm: lade2("arm") };
 };
 var pbr = (name, skala, f2 = {}) => {
   const s = stoff(name);
@@ -76784,8 +76906,18 @@ scene.fog = NEBEL;
   gr.normalNode = normalMap(t2(gras.normal, 0.09).rgb, vec2(1.1));
   BODEN = { geo: g, grund: gr };
 }
+var Z2 = await baueZeichen(B2.monde.map((m) => kurz(m.titel, 34)));
+var stimmenVon = (m) => [...new Set(m.stimmen)].slice(0, 5).map((i) => STIMMEN[i].key);
+var istFaska = (n2) => {
+  const b2 = N3.bezirk(n2);
+  return typeof b2 === "number" && /FASKA/.test(N3.daecher[b2].name);
+};
 var bau = new Bau();
 var haeuser = [];
+var schilder0 = [];
+var requis = {};
+var torNamen = [];
+var GEGENSTAND = { schule: [["standing_chalkboard_01", 1.5], ["painted_wooden_bench", 0.6]], schularchiv: [["wooden_crate_01", 0.6]], spielhof: [["rubber_duck_toy", 0.7], ["painted_wooden_bench", 0.6]], musik: [["portable_cassette_player", 0.45], ["painted_wooden_bench", 0.6]], bibliothek: [["wooden_bookshelf_worn", 1.5]], klause: [["painted_wooden_bench", 0.55]], kaffeehaus: [["outdoor_table_chair_set_01", 0.85], ["wine_barrel_01", 0.8]], werkstatt: [["tool_cart", 0.9], ["metal_toolbox", 0.35], ["wooden_crate_01", 0.6]], garage: [["covered_car", 1], ["metal_toolbox", 0.35]], maerchen: [["horse_statue_01", 1.3]], bastel: [["wooden_crate_01", 0.55], ["planter_box_01", 0.5]], heilhaus: [["planter_box_01", 0.5], ["potted_plant_02", 0.8]], schreibstube: [["painted_wooden_bench", 0.55]], kapelle: [["planter_box_01", 0.45]], rathaus: [["painted_wooden_bench", 0.6], ["potted_plant_02", 0.9]], saal: [["wooden_picnic_table", 0.7]], post: [["wooden_crate_01", 0.5]], druckerei: [["wooden_crate_01", 0.7], ["wine_barrel_01", 0.8]], sternwarte: [["painted_wooden_bench", 0.55]], museum: [["potted_plant_02", 1]], turnhalle: [["painted_wooden_bench", 0.6]], aussicht: [["painted_wooden_bench", 0.5]] };
 B2.monde.forEach((m, n2) => {
   const o2 = O[n2], y = hoehe(o2[0], o2[2]), mat = N3.baum.material.has(n2), yaw = LG.yaw ? LG.yaw[n2] : 0, zahl = mat ? 0 : m.samen.length, ar = zahl ? arbeit(m) : 0, b0 = dorfBreite(N3.rM[n2]), t0 = b0 * 0.72, fkt = funktionVon(N3, n2), farben = (i) => {
     const c = blattFarbe(m.samen[i]);
@@ -76804,12 +76936,49 @@ B2.monde.forEach((m, n2) => {
     else an[t2 - 1].push(i);
   }
   const stock = etagen(m, N3.mini[n2].ar ?? ar, 4).map((e2) => e2.fassungen.filter((i) => haupt.has(i)).map(farben));
-  bauwerk(bau, fkt, { x: o2[0], y, z: o2[2], yaw, b: b0, t: t0, stock, reife: m.reife, se });
+  const groesser = fkt === "schule" && istFaska(n2) ? 1.25 : 1;
+  bauwerk(bau, fkt, { x: o2[0], y, z: o2[2], yaw, b: b0 * groesser, t: t0 * groesser, stock, reife: m.reife, se });
+  if (fkt !== "bildstock" && se) {
+    const qu0 = [se[1], -se[0]], tf = t0 * groesser, sx = o2[0] - se[0] * (tf * 0.75 + 1.1) + qu0[0] * (b0 * 0.55), sz = o2[2] - se[1] * (tf * 0.75 + 1.1) + qu0[1] * (b0 * 0.55);
+    wegweiser(bau, Z2, schilder0, n2, fkt, stimmenVon(m), sx, hoehe(sx, sz), sz, Math.atan2(-se[0], -se[1]), 0.62);
+    (GEGENSTAND[fkt] || []).forEach(([mod2, h2], i) => {
+      const w = (i ? 1 : -1) * (b0 * 0.55 + 0.55), a2 = o2[0] - se[0] * (tf * 0.75 + 0.5) + qu0[0] * w, c = o2[2] - se[1] * (tf * 0.75 + 0.5) + qu0[1] * w;
+      (requis[mod2] || (requis[mod2] = [])).push([a2, hoehe(a2, c), c, h2, Math.atan2(-se[0], -se[1]) + (i ? 0.4 : -0.3)]);
+    });
+    if (istFaska(n2) && fkt === "schule" && !haeuser.faskaHaupt) {
+      haeuser.faskaHaupt = true;
+      const FF = [[0.74, 0.09, 0.16], [0.24, 0.65, 0.85], [0.89, 0.37, 0.17], [1, 0.81, 0.02], [0.27, 0.65, 0.21]];
+      FF.forEach((f2, i) => {
+        const v3 = (i - 2) * b0 * 0.32, wx = o2[0] - se[0] * (tf * 0.43 + 0.04) + qu0[0] * v3, wz = o2[2] - se[1] * (tf * 0.43 + 0.04) + qu0[1] * v3;
+        bau.kiste("bunt", b0 * 0.28, 0.5, 0.05, wx, y + 0.42, wz, yaw, f2);
+        const px3 = o2[0] - se[0] * (tf + 2.2) + qu0[0] * (i - 2) * 0.8, pz2 = o2[2] - se[1] * (tf + 2.2) + qu0[1] * (i - 2) * 0.8, py2 = hoehe(px3, pz2);
+        bau.walze("metall", 0.03, 0.04, 3.4, px3, py2 + 1.7, pz2, [0.8, 0.8, 0.82], 6);
+        const qv = [qu0[0], qu0[1]];
+        bau.kiste("bunt", 0.72, 0.46, 0.02, px3 + qv[0] * 0.38, py2 + 3.1, pz2 + qv[1] * 0.38, Math.atan2(-se[0], -se[1]), f2);
+      });
+      const lx = o2[0] - se[0] * (tf * 0.5 + 0.12), lz = o2[2] - se[1] * (tf * 0.5 + 0.12), hoch = hoehe(lx, lz) + 0.55 + stock.length * 1.15 + b0 * 0.34;
+      schilder0.push({ art: "faska", uv: [0, 0, 1, 1], w: b0 * 1.5, h: b0 * 0.47, x: lx - se[0] * 0.25, y: hoch, z: lz - se[1] * 0.25, yaw: Math.atan2(-se[0], -se[1]) });
+    }
+  }
   const qu = se ? [se[1], -se[0]] : [1, 0], sv = se || [0, 1], neben = [...an, ...sch];
   neben.forEach((li, j2) => {
     const sp = 5, k2 = j2 % sp, r2 = Math.floor(j2 / sp), x = o2[0] + sv[0] * (t0 * 0.8 + 1 + r2 * 1.15) + qu[0] * ((k2 - (sp - 1) / 2) * 1.55), z2 = o2[2] + sv[1] * (t0 * 0.8 + 1 + r2 * 1.15) + qu[1] * ((k2 - (sp - 1) / 2) * 1.55);
     nebenbau(bau, fkt, { x, y: hoehe(x, z2), z: z2, yaw, liste: li.map(farben), reife: m.reife });
   });
+});
+LG.wege.forEach((w) => {
+  if (w.dach == null) return;
+  const d2 = N3.daecher[w.dach], [a2, b2] = w.punkte, l = Math.hypot(b2[0] - a2[0], b2[1] - a2[1]), ux = (b2[0] - a2[0]) / l, uz = (b2[1] - a2[1]) / l, s = LG.platz + 2.2, x = a2[0] + ux * s, z2 = a2[1] + uz * s, y = hoehe(x, z2), qx = -uz, qz = ux, yaw = Math.atan2(-ux, -uz), fa = /FASKA/.test(d2.name), br = fa ? 5.2 : 3.8;
+  for (const sg of [-1, 1]) {
+    bau.kiste("holz", 0.22, 3.4, 0.22, x + qx * sg * br / 2, y + 1.7, z2 + qz * sg * br / 2, yaw);
+  }
+  bau.kiste("holz", br + 0.5, 0.2, 0.26, x, y + 3.35, z2, yaw);
+  bau.kiste("holz", br - 0.4, 0.9 * (fa ? 1.7 : 1), 0.06, x, y + (fa ? 2.45 : 2.75), z2, yaw, [0.4, 0.3, 0.2]);
+  if (fa) schilder0.push({ art: "faska", uv: [0, 0, 1, 1], w: br - 0.55, h: (br - 0.55) * 0.31, x: x - ux * 0.05, y: y + 2.45, z: z2 - uz * 0.05, yaw });
+  else {
+    const i = B2.monde.length;
+    torNamen.push({ t: d2.name, x: x - ux * 0.05, y: y + 2.75, z: z2 - uz * 0.05, yaw, w: br - 0.6, h: 0.72 });
+  }
 });
 {
   const y = hoehe(0, 0), S2 = [0.72, 0.69, 0.64];
@@ -76834,6 +77003,30 @@ B2.monde.forEach((m, n2) => {
   });
 }
 var MAT = { putz: pbr("painted_plaster_wall", 0.45), holz: pbr("weathered_brown_planks", 0.8, { color: 6965808 }), stein: pbr("cobblestone_floor_04", 0.7, { color: 11049608 }), dach: pbr("clay_roof_tiles_02", 0.7), rahmen: new MeshStandardMaterial({ color: 2759698, roughness: 0.8, vertexColors: true }), bunt: new MeshStandardMaterial({ roughness: 0.6, vertexColors: true }), metall: new MeshStandardMaterial({ metalness: 0.75, roughness: 0.38, vertexColors: true }) };
+dorf.add(tafeln(Z2, schilder0, mergeGeometries));
+for (const q2 of torNamen) {
+  const c = document.createElement("canvas");
+  c.width = 640;
+  c.height = 160;
+  const x = c.getContext("2d");
+  x.fillStyle = "#20170f";
+  x.fillRect(0, 0, 640, 160);
+  x.fillStyle = "#f6ecd6";
+  x.textAlign = "center";
+  x.textBaseline = "middle";
+  let g = 88;
+  do {
+    x.font = `500 ${g}px "Avenir Next",system-ui,sans-serif`;
+    g -= 4;
+  } while (x.measureText(q2.t).width > 590 && g > 24);
+  x.fillText(q2.t, 320, 84);
+  const tx = new CanvasTexture(c);
+  tx.colorSpace = SRGBColorSpace;
+  const m = new Mesh(new PlaneGeometry(q2.w, q2.h), new MeshStandardMaterial({ map: tx, emissiveMap: tx, emissive: 16777215, emissiveIntensity: 0.4, side: DoubleSide }));
+  m.position.set(q2.x, q2.y, q2.z);
+  m.rotation.y = q2.yaw;
+  dorf.add(m);
+}
 for (const a2 of Object.keys(MAT)) {
   const g = bau.fertig(a2, mergeGeometries);
   if (!g) continue;
@@ -76931,7 +77124,37 @@ function wildblumen() {
   dorf.add(I);
   return or2.length;
 }
+async function gegenstaende(ziel, wo) {
+  const L2 = new GLTFLoader(), V4 = new Vector3(), Qq = new Quaternion(), EE2 = new Euler(), M = new Matrix4(), S2 = new Vector3();
+  await Promise.all(Object.entries(wo).map(async ([mod2, orte]) => {
+    let gl;
+    try {
+      gl = (await L2.loadAsync(`${NEU}modelle/${mod2}.glb`)).scene;
+    } catch (e2) {
+      return;
+    }
+    gl.updateMatrixWorld(true);
+    const box = new Box3().setFromObject(gl), hh = box.max.y - box.min.y || 1;
+    gl.traverse((t2) => {
+      if (!t2.isMesh) return;
+      t2.geometry.morphAttributes = {};
+      const I = new InstancedMesh(t2.geometry, t2.material, orte.length);
+      orte.forEach((o2, i) => {
+        Qq.setFromEuler(EE2.set(0, o2[4], 0));
+        const sk = o2[3] / hh;
+        M.compose(V4.set(o2[0], o2[1] - box.min.y * sk, o2[2]), Qq, S2.setScalar(sk));
+        M.multiply(t2.matrixWorld);
+        I.setMatrixAt(i, M);
+      });
+      I.castShadow = true;
+      I.receiveShadow = true;
+      I.frustumCulled = false;
+      ziel.add(I);
+    });
+  }));
+}
 sage("Das Dorf entsteht. B\xE4ume und Gras kommen dazu.");
+await gegenstaende(dorf, requis);
 var R = LG.R;
 var ST = await Promise.all([
   /*BAEUME*/
@@ -76939,12 +77162,28 @@ var ST = await Promise.all([
   streue(baum("Oak Medium", 23), klein2 ? 20 : 55, R * 0.45, R * 2.4, 6.5, true, 2.6),
   streue(baum("Aspen Medium", 37), klein2 ? 15 : 40, R * 0.5, R * 2.6, 7, true, 2.6),
   streue(baum("Oak Small", 61), klein2 ? 14 : 34, LG.platz + 4, R * 0.95, 4.2, true, 1.2),
-  streue(baum("Bush 2", 63), klein2 ? 60 : 160, LG.platz + 2, R * 1.1, 1.3, true, 0.3),
+  streue(baum("Bush 2", 63), klein2 ? 30 : 70, LG.platz + 2, R * 1.1, 1.3, true, 0.3),
   streue("shrub_02", klein2 ? 80 : 200, R * 0.15, R * 2.2, 0.9, true, 0.4),
   wildblumen(),
   streue("boulder_01", 8, R * 0.3, R * 2.5, 0.7, true, 1),
-  streue("grass_medium_01", klein2 ? 300 : 1e3, 0, R * 1.5, 0.45, false, 0.2)
+  streue("grass_medium_01", klein2 ? 200 : 500, 0, R * 1.5, 0.45, false, 0.2)
 ]);
+var symbol = (f2, x, y, z2, s) => {
+  const t2 = Z2.atlas.clone(), [a2, b2, c, d2] = Z2.uv(Z2.zelle[f2]);
+  t2.offset.set(a2, b2);
+  t2.repeat.set(c - a2, d2 - b2);
+  t2.needsUpdate = true;
+  const m = new Sprite(new SpriteMaterial({ map: t2, fog: false, depthWrite: false }));
+  m.position.set(x, y, z2);
+  m.scale.setScalar(s);
+  return m;
+};
+var faskaSchild = (x, y, z2, s) => {
+  const m = new Sprite(new SpriteMaterial({ map: Z2.faska, color: 12105912, fog: false, depthWrite: false }));
+  m.position.set(x, y, z2);
+  m.scale.set(s, s * 0.31, 1);
+  return m;
+};
 var farbeRoh = (g, c) => {
   const a2 = new Float32Array(g.attributes.position.count * 3);
   for (let i = 0; i < a2.length; i += 3) a2.set(c, i);
@@ -77171,7 +77410,22 @@ function baueGalaxie() {
     beschrifte();
     tick(0);
   });
-  G.userData = { scheibe: S0, tick, knopf, tippe: (h2) => {
+  const marken = liste.map((i) => {
+    const m = symbol(funktionVon(N3, i), 0, 0, 0, 0.75);
+    S0.add(m);
+    return m;
+  }), tick0 = tick;
+  N3.daecher.forEach((d2, j2) => {
+    const s = D.sonnen[j2];
+    if (s && /FASKA/.test(d2.name)) S0.add(faskaSchild(s.x, 2.2, s.z, 4));
+  });
+  G.userData = { scheibe: S0, tick: (dt) => {
+    tick0(dt);
+    liste.forEach((i, k2) => {
+      const q2 = ortP(i, T3);
+      marken[k2].position.set(q2[0], groesse(i) + 0.55, q2[1]);
+    });
+  }, knopf, tippe: (h2) => {
     const s = spirale(h2.n);
     s.visible = !s.visible;
     tick(0);
@@ -77348,6 +77602,23 @@ function baueStadt(stil) {
     see.position.set(breite * 0.45, 0.05, breite * 0.5);
     G.add(see);
   }
+  {
+    const bz = new Bau(), li = [];
+    B2.monde.forEach((m, n2) => {
+      if (N3.baum.material.has(n2) || !m.samen.length) return;
+      const p2 = hier.pos[n2], ww = bue ? 5.8 : 4.6, y0 = 0.12, x = p2[0] + ww * 0.32, z3 = p2[2] + (bue ? 2.2 : 2.3);
+      wegweiser(bz, Z2, li, n2, funktionVon(N3, n2), stimmenVon(m), x, y0, z3, 0, 0.75);
+      if (istFaska(n2)) {
+        let top = 0;
+        for (const i of ks) if (kz2[i + 12] === n2) top = Math.max(top, (kz2[i + 3] + kz2[i + 5]) * HS);
+        li.push({ art: "faska", uv: [0, 0, 1, 1], w: 3.1, h: 0.96, x: p2[0], y: top + 0.9, z: p2[2] + 1.3, yaw: 0 });
+      }
+    });
+    G.add(tafeln(Z2, li, mergeGeometries));
+    const mt = new MeshStandardMaterial({ color: 4863526, roughness: 0.8, vertexColors: true });
+    const gg = bz.fertig("holz", mergeGeometries);
+    if (gg) G.add(new Mesh(gg, mt));
+  }
   G.userData = { mitten: (j2) => {
     const m = hier.mitten ? hier.mitten.get(j2) : null, d2 = N3.daecher[j2];
     return m ? [m[0], 9, m[1]] : [d2.mitte[0], 9, d2.mitte[2]];
@@ -77371,9 +77642,9 @@ function baueGarten() {
     const bel = N3.pos.map((p2) => ({ x: p2[0], z: p2[2] })), Rn2 = N3.L.R, wo = { gruppe: G, belegt: bel, frei: () => true, boden: true };
     streue(baum("Oak Large", 51), klein2 ? 20 : 45, Rn2 * 1, Rn2 * 2.6, 13, true, 2.5, wo);
     streue(baum("Ash Medium", 53), klein2 ? 20 : 45, Rn2 * 0.9, Rn2 * 2.6, 9, true, 2.5, wo);
-    streue(baum("Bush 1", 55), klein2 ? 80 : 200, Rn2 * 0.1, Rn2 * 1.6, 1.8, true, 0.8, wo);
-    streue("grass_medium_01", klein2 ? 500 : 1800, 0, Rn2 * 1.3, 0.55, false, -1.5, wo);
-    streue(baum("Bush 3", 57), klein2 ? 60 : 160, Rn2 * 0.3, Rn2 * 1.5, 1.2, true, 0.6, wo);
+    streue(baum("Bush 1", 55), klein2 ? 30 : 80, Rn2 * 0.1, Rn2 * 1.6, 1.8, true, 0.8, wo);
+    streue("grass_medium_01", klein2 ? 300 : 800, 0, Rn2 * 1.3, 0.55, false, -1.5, wo);
+    streue(baum("Bush 3", 57), klein2 ? 30 : 70, Rn2 * 0.3, Rn2 * 1.5, 1.2, true, 0.6, wo);
   }
   const stiele = [], blaetter = [], kugeln = [];
   for (const w of pflanzen(N3).werke) {
@@ -77444,6 +77715,17 @@ function baueGarten() {
     S2.castShadow = true;
     G.add(S2);
   }
+  {
+    const bz = new Bau(), li = [];
+    B2.monde.forEach((m, n2) => {
+      if (N3.baum.material.has(n2) || !m.samen.length) return;
+      const p2 = N3.pos[n2], r2 = N3.rM[n2] * 0.95 + 0.25, x = p2[0] + r2 * 0.7, z2 = p2[2] + r2 * 0.7;
+      wegweiser(bz, Z2, li, n2, funktionVon(N3, n2), stimmenVon(m), x, hoehe(x, z2), z2, 0.5, 0.42);
+    });
+    G.add(tafeln(Z2, li, mergeGeometries));
+    const gg = bz.fertig("holz", mergeGeometries);
+    if (gg) G.add(new Mesh(gg, new MeshStandardMaterial({ color: 4863526, roughness: 0.8, vertexColors: true })));
+  }
   const Rn = N3.L.R;
   G.userData = { mitten: (j2) => {
     const d2 = N3.daecher[j2];
@@ -77491,6 +77773,14 @@ function baueKosmos() {
   }
   gp.setAttribute("position", new BufferAttribute(pp, 3));
   G.add(new Points(gp, new PointsMaterial({ color: 8949920, size: 1, sizeAttenuation: false, fog: false })));
+  B2.monde.forEach((m, n2) => {
+    if (N3.baum.material.has(n2) || !m.samen.length) return;
+    const q2 = N3.pos[n2];
+    G.add(symbol(funktionVon(N3, n2), q2[0], 0.7 + N3.rM[n2] * 0.3, q2[2], 0.8));
+  });
+  N3.daecher.forEach((d2) => {
+    if (/FASKA/.test(d2.name)) G.add(faskaSchild(d2.mitte[0], d2.R * 0.55, d2.mitte[2], d2.R * 0.9));
+  });
   const Rn = N3.Rm2 || N3.L.R;
   G.userData = { mitten: (j2) => {
     const d2 = N3.daecher[j2];
@@ -77552,6 +77842,9 @@ var weltKey = "dorf";
 function geheZu(k2) {
   const W2 = WELTEN[k2];
   if (!W2 || jetzt === W2) return;
+  namenEl.querySelectorAll(".werk").forEach((x) => {
+    x.style.opacity = "0";
+  });
   if (jetzt) zeigeFaeden(null);
   weltKey = k2;
   if (jetzt && jetzt.gruppe.userData.knopf) jetzt.gruppe.userData.knopf.hidden = true;
@@ -77628,9 +77921,9 @@ function namen() {
   }
   for (const h2 of nah) {
     let e2 = wn.get(h2);
-    const d2 = camera.position.distanceTo(v2.set(h2.x, h2.y + 1.6, h2.z)), zeig = weltKey === "dorf" && d2 < 26 && !h2.mat;
+    const d2 = camera.position.distanceTo(v2.set(h2.x, h2.y + 1.6, h2.z)), zeig = ["dorf", "campus", "buero", "garten"].includes(weltKey) && d2 < 34 && !h2.mat;
     if (!zeig) {
-      if (e2) e2.style.opacity = "0";
+      if (e2 && e2.style.opacity !== "0") e2.style.opacity = "0";
       continue;
     }
     v2.project(camera);
@@ -77641,7 +77934,10 @@ function namen() {
     if (!e2) {
       e2 = document.createElement("span");
       e2.className = "werk";
-      e2.textContent = kurz(h2.titel, 30);
+      const ii = document.createElement("img");
+      ii.src = Z2.ic(funktionVon(N3, h2.n));
+      ii.alt = "";
+      e2.append(ii, kurz(h2.titel, 30));
       namenEl.append(e2);
       wn.set(h2, e2);
     }
@@ -77901,7 +78197,7 @@ addEventListener("resize", () => {
   camera.updateProjectionMatrix();
   renderer.setSize(innerWidth, innerHeight);
 });
-if (/werkstatt/.test(location.search)) window.__welten = { zeigeFaeden, haus, hinein, hinaus, lies, tippeInnen, karte, E, LGR: LG.R, wege: LG.wege, renderer, camera, ctl, scene, geheZu, WELTEN };
+if (/werkstatt/.test(location.search)) window.__welten = { seite: (n2) => LG.seite[n2], zeigeFaeden, haus, hinein, hinaus, lies, tippeInnen, karte, E, LGR: LG.R, wege: LG.wege, renderer, camera, ctl, scene, geheZu, WELTEN };
 geheZu(new URLSearchParams(location.search).get("welt") || "dorf");
 var uhr = new Clock();
 renderer.setAnimationLoop(() => {
