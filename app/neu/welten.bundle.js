@@ -76571,7 +76571,8 @@ function baum(preset, seed) {
   });
   return T3;
 }
-async function streue(datei, zahl, rMin, rMax, gr, schatten, abstand = 1.4) {
+async function streue(datei, zahl, rMin, rMax, gr, schatten, abstand = 1.4, wo = {}) {
+  const zielG = wo.gruppe || dorf, istF = wo.frei || istFrei, bel = wo.belegt || haeuser;
   let gruppe;
   if (typeof datei === "string") {
     try {
@@ -76593,9 +76594,9 @@ async function streue(datei, zahl, rMin, rMax, gr, schatten, abstand = 1.4) {
   let v3 = 0;
   while (orte.length < zahl && v3++ < zahl * 30) {
     const s = v3 * 7.13 + datei.length * 31, r2 = rMin + (rMax - rMin) * Math.sqrt(hash(s)), w = hash(s + 1) * Math.PI * 2, x = Math.cos(w) * r2, z2 = Math.sin(w) * r2;
-    if (!istFrei(x, z2)) continue;
-    if (haeuser.some((h2) => (h2.x - x) ** 2 + (h2.z - z2) ** 2 < (abstand + 1.6) ** 2)) continue;
-    orte.push([x, hoehe(x, z2), z2, gr * (0.7 + 0.7 * hash(s + 2)) / hoch, hash(s + 3) * 6.28]);
+    if (!istF(x, z2)) continue;
+    if (bel.some((h2) => (h2.x - x) ** 2 + (h2.z - z2) ** 2 < (abstand + 1.6) ** 2)) continue;
+    orte.push([x, wo.flach ? 0 : wo.gruppe && !wo.boden ? 0 : hoehe(x, z2), z2, gr * (0.7 + 0.7 * hash(s + 2)) / hoch, hash(s + 3) * 6.28]);
   }
   for (const t2 of teile) {
     const I = new InstancedMesh(t2.geometry, t2.material, orte.length);
@@ -76609,7 +76610,7 @@ async function streue(datei, zahl, rMin, rMax, gr, schatten, abstand = 1.4) {
     I.castShadow = schatten;
     I.receiveShadow = true;
     I.frustumCulled = false;
-    dorf.add(I);
+    zielG.add(I);
   }
   return orte.length;
 }
@@ -76675,7 +76676,7 @@ function galaxieScheibe(Rg) {
   for (let j2 = 0; j2 < S2; j2++) for (let i = 0; i < S2; i++) {
     const px3 = (i / S2 - 0.5) * 2 * W2, pz2 = (j2 / S2 - 0.5) * 2 * W2, r2 = Math.hypot(px3, pz2), a2 = Math.atan2(pz2, px3), q2 = r2 / Rg;
     if (q2 > 1.7) continue;
-    const d2 = (a2 - ARM(r2)) % Math.PI, ab = Math.abs(d2 < 0 ? d2 + Math.PI : d2) / Math.PI, m2 = Math.min(ab, 1 - ab) * 2, weit = 0.2 + 0.12 * q2, arm = Math.exp(-m2 * m2 / (weit * weit)), n2 = fbm2(px3 / Rg * 7 + 9, pz2 / Rg * 7), n22 = fbm2(px3 / Rg * 22, pz2 / Rg * 22 + 5), staub = Math.exp(-((m2 - weit * 0.9) ** 2) / 0.012) * smooth01(q2 * 4) * (0.3 + n22), scheibe = Math.exp(-q2 * 2.1), kern = Math.exp(-Math.pow(q2 / 0.16, 1.1)), h2 = scheibe * (0.22 + 1.5 * arm * (0.4 + n2)) * (1 - 0.75 * Math.min(1, staub)) * smooth01((1.7 - q2) * 3), jung = arm * smooth01(q2 * 3), rot = h2 * (0.62 - 0.2 * jung) + kern * 1.5, gr = h2 * (0.62 - 0.04 * jung) + kern * 1.18, bl = h2 * (0.68 + 0.5 * jung) + kern * 0.72, kl = Math.pow(n22, 5) * 14 * arm * scheibe, o2 = (j2 * S2 + i) * 4;
+    const d2 = (a2 - ARM(r2)) % Math.PI, ab = Math.abs(d2 < 0 ? d2 + Math.PI : d2) / Math.PI, m2 = Math.min(ab, 1 - ab) * 2, weit = 0.3 + 0.2 * q2, arm = Math.exp(-m2 * m2 / (weit * weit)), n2 = fbm2(px3 / Rg * 7 + 9, pz2 / Rg * 7), n22 = fbm2(px3 / Rg * 22, pz2 / Rg * 22 + 5), staub = Math.exp(-((m2 - weit * 0.9) ** 2) / 0.012) * smooth01(q2 * 4) * (0.3 + n22), scheibe = Math.exp(-q2 * 2.1), kern = Math.exp(-Math.pow(q2 / 0.16, 1.1)), h2 = scheibe * (0.2 + 0.72 * arm * (0.4 + n2)) * (1 - 0.75 * Math.min(1, staub)) * smooth01((1.7 - q2) * 3), jung = arm * smooth01(q2 * 3), rot = h2 * (0.62 - 0.2 * jung) + kern * 1.5, gr = h2 * (0.62 - 0.04 * jung) + kern * 1.18, bl = h2 * (0.68 + 0.5 * jung) + kern * 0.72, kl = Math.pow(n22, 6) * 7 * arm * scheibe, o2 = (j2 * S2 + i) * 4;
     im.data[o2] = Math.min(255, 255 * (rot + kl));
     im.data[o2 + 1] = Math.min(255, 255 * (gr + kl * 0.35));
     im.data[o2 + 2] = Math.min(255, 255 * (bl + kl * 0.6));
@@ -76709,7 +76710,17 @@ function baueGalaxie() {
     g.setAttribute("color", new BufferAttribute(c, 3));
     return new Points(g, new PointsMaterial({ vertexColors: true, size: gr, sizeAttenuation: false, transparent: true, blending: AdditiveBlending, depthWrite: false, fog: false }));
   };
-  S0.add(punkte(sterne(Rg, klein2 ? 5e4 : 16e4), 1, 2.6));
+  {
+    const zn = klein2 ? 6e4 : 2e5, sd = new Float32Array(zn * 8), warm = [1, 0.86, 0.68], blau = [0.66, 0.78, 1], gauss = (i) => {
+      const u2 = Math.max(1e-5, hash(i * 1.37)), v3 = hash(i * 2.11);
+      return Math.sqrt(-2 * Math.log(u2)) * Math.cos(6.2832 * v3);
+    };
+    for (let i = 0; i < zn; i++) {
+      const kern = hash(i * 4.1) < 0.22, r2 = kern ? Math.abs(gauss(i + 5)) * Rg * 0.14 : -Math.log(1 - hash(i * 3.3) * 0.985) * Rg * 0.42, arm = i % 2 ? Math.PI : 0, a0 = Math.log(1 + r2 / (Rg * 0.11)) * 2.25 + arm, a2 = kern ? hash(i * 6.7) * 6.2832 : a0 + gauss(i + 9) * (0.26 + 0.2 * Math.min(1.5, r2 / Rg)), y = gauss(i + 13) * (kern ? Rg * 0.06 : Rg * 0.012), jung = !kern && hash(i * 8.1) < 0.65, f2 = jung ? blau : warm, h2 = (0.25 + 1.4 * Math.pow(hash(i * 9.9), 4)) * Math.exp(-r2 / (Rg * 1.1));
+      sd.set([Math.cos(a2) * r2, y, Math.sin(a2) * r2, 0, f2[0], f2[1], f2[2], h2], i * 8);
+    }
+    S0.add(punkte(sd, 1, 1.5));
+  }
   {
     const ff = sterne(Rg * 14, klein2 ? 3e3 : 8e3, 5);
     for (let i = 0; i < ff.length; i += 8) {
@@ -76749,7 +76760,7 @@ function baueGalaxie() {
   const gb = new BufferGeometry();
   gb.setAttribute("position", new Float32BufferAttribute(bp, 3));
   gb.setAttribute("color", new Float32BufferAttribute(bc, 3));
-  S0.add(new LineSegments(gb, new LineBasicMaterial({ vertexColors: true, transparent: true, opacity: 0.55, blending: AdditiveBlending, depthWrite: false, fog: false })));
+  S0.add(new LineSegments(gb, new LineBasicMaterial({ vertexColors: true, transparent: true, opacity: 0.16, blending: AdditiveBlending, depthWrite: false, fog: false })));
   const pm = new InstancedMesh(new IcosahedronGeometry(1, 3), new MeshStandardMaterial({ roughness: 0.62, metalness: 0, fog: false, emissive: 1118481 }), liste.length), groesse = (i) => Math.max(0.09, pl[i].r * 0.7);
   liste.forEach((i, k2) => {
     const c = pl[i].farbe;
@@ -76856,43 +76867,137 @@ function baueStadt(stil) {
   const G = new Group(), P3 = bauplan(N3, stil), hier = orteFuer(N3, stil), kz2 = P3.kisten, fz = P3.fenster, bue = stil === "buero", ks = [], fs = [];
   for (let i = 0; i < kz2.length; i += KISTE) ks.push(i);
   for (let i = 0; i < fz.length; i += FENSTER) fs.push(i);
-  const mat = bue ? new MeshStandardMaterial({ metalness: 0.15, roughness: 0.55 }) : new MeshPhysicalMaterial({ metalness: 0.92, roughness: 0.14, clearcoat: 1, clearcoatRoughness: 0.05 });
-  const kI = instanzen(new BoxGeometry(1, 1, 1), mat, ks, (i, m, c) => {
-    const sy = kz2[i + 5], y = kz2[i + 3] + sy / 2 + 0.02;
+  const fm = new MeshStandardNodeMaterial(), hF = bue ? 0.9 : 1.25, band = smoothstep2(0.86, 0.93, positionWorld.y.div(hF).fract()), pf = smoothstep2(0.9, 0.95, positionWorld.x.add(positionWorld.z).div(0.62).fract()), wand = band.max(pf), glas = bue ? vec3(0.1, 0.13, 0.16) : vec3(0.07, 0.15, 0.2), rahmen = bue ? vec3(0.62, 0.6, 0.56) : vec3(0.72, 0.74, 0.76);
+  fm.colorNode = mix(glas, rahmen, wand);
+  fm.metalnessNode = mix(float(0.95), float(0.2), wand);
+  fm.roughnessNode = mix(float(0.06), float(0.55), wand);
+  const kI = instanzen(new BoxGeometry(1, 1, 1), fm, ks, (i, m, c) => {
+    const sy = kz2[i + 5], y = kz2[i + 3] + sy / 2 + 0.25;
     EU.set(0, kz2[i + 7], 0);
     Q.setFromEuler(EU);
     m.compose(V2.set(kz2[i], y, kz2[i + 1]), Q, V1.set(kz2[i + 4], sy, kz2[i + 6]));
-    const f2 = bue ? 1.5 : 0.75;
-    c.setRGB(kz2[i + 8] * f2, kz2[i + 9] * f2, kz2[i + 10] * f2);
+    c.setRGB(1, 1, 1);
   });
   kI.castShadow = true;
   kI.receiveShadow = true;
   G.add(kI);
+  const betonS = stoff("anti_slip_concrete");
+  for (const t3 of [betonS.farbe, betonS.normal, betonS.arm]) t3.repeat.set(1, 1);
+  const sockel = [];
+  B2.monde.forEach((m, n2) => {
+    if (!N3.baum.material.has(n2)) sockel.push(hier.pos[n2]);
+  });
+  const sI = instanzen(new BoxGeometry(1, 1, 1), new MeshStandardMaterial({ color: 11578016, roughness: 0.9 }), sockel, (p2, m, c) => {
+    const w = bue ? 5.6 : 5;
+    m.compose(V2.set(p2[0], 0.12, p2[2]), Q.identity(), V1.set(w, 0.24, bue ? 4.2 : w));
+    c.setRGB(1, 1, 1);
+  });
+  sI.receiveShadow = true;
+  G.add(sI);
   G.add(instanzen(new BoxGeometry(1, 1, 0.03), new MeshBasicMaterial({}), fs, (i, m, c) => {
     const liegt = Math.hypot(fz[i + 4], fz[i + 5]) < 0.01;
     EU.set(liegt ? -Math.PI / 2 : 0, Math.atan2(fz[i + 4], fz[i + 5]), 0);
     Q.setFromEuler(EU);
-    m.compose(V2.set(fz[i], fz[i + 3] + 0.02, fz[i + 1]), Q, V1.set(fz[i + 6], fz[i + 7], 1));
-    c.setRGB(fz[i + 8] * 3.6, fz[i + 9] * 3.6, fz[i + 10] * 3.6);
+    m.compose(V2.set(fz[i], fz[i + 3] + 0.27, fz[i + 1]), Q, V1.set(fz[i + 6], fz[i + 7], 1));
+    c.setRGB(fz[i + 8] * 3, fz[i + 9] * 3, fz[i + 10] * 3);
   }));
-  const stein = stoff(bue ? "cobblestone_floor_04" : "clay_plaster");
   let breite = 0;
   for (const p2 of hier.pos) breite = Math.max(breite, Math.abs(p2[0]), Math.abs(p2[2]));
-  for (const t2 of [stein.farbe, stein.normal, stein.arm]) t2.repeat.set(breite * 3, breite * 3);
-  const pl = new Mesh(new CircleGeometry(breite * 30, 96), new MeshStandardMaterial({ map: stein.farbe, normalMap: stein.normal, roughnessMap: stein.arm, color: bue ? 7829370 : 9208952 }));
+  const EE2 = breite * 1.5, cv = document.createElement("canvas");
+  cv.width = cv.height = klein2 ? 2048 : 4096;
+  const cx = cv.getContext("2d"), z2 = cv.width / (2 * EE2), Kk = (x, y) => [(x + EE2) * z2, (y + EE2) * z2];
+  cx.fillStyle = "#000";
+  cx.fillRect(0, 0, cv.width, cv.width);
+  cx.lineCap = "round";
+  if (bue) {
+    const reihen = [...new Set(hier.pos.map((p2) => Math.round(p2[2] * 10) / 10))].sort((a2, b2) => a2 - b2);
+    cx.strokeStyle = "#f00";
+    cx.lineWidth = 3.2 * z2;
+    const qu = [...new Set(hier.pos.map((p2) => Math.round(p2[0] * 10) / 10))];
+    for (const r2 of reihen) {
+      const a2 = Kk(-EE2, r2 + 3.4), b2 = Kk(EE2, r2 + 3.4);
+      cx.beginPath();
+      cx.moveTo(...a2);
+      cx.lineTo(...b2);
+      cx.stroke();
+    }
+    cx.strokeStyle = "#0f0";
+    cx.lineWidth = 0.12 * z2;
+    cx.setLineDash([1.2 * z2, 1.4 * z2]);
+    for (const r2 of reihen) {
+      const a2 = Kk(-EE2, r2 + 3.4), b2 = Kk(EE2, r2 + 3.4);
+      cx.beginPath();
+      cx.moveTo(...a2);
+      cx.lineTo(...b2);
+      cx.stroke();
+    }
+    cx.setLineDash([]);
+    for (const dx of [-1, 1]) {
+      cx.strokeStyle = "#f00";
+      cx.lineWidth = 3.2 * z2;
+      const a2 = Kk(dx * (breite + 5), -EE2), b2 = Kk(dx * (breite + 5), EE2);
+      cx.beginPath();
+      cx.moveTo(...a2);
+      cx.lineTo(...b2);
+      cx.stroke();
+    }
+  } else {
+    cx.strokeStyle = "#f00";
+    cx.lineWidth = 1.1 * z2;
+    N3.daecher.forEach((d2) => {
+      const a2 = Kk(0, 0), b2 = Kk(d2.mitte[0], d2.mitte[2]), c1 = Kk(d2.mitte[2] * 0.3, -d2.mitte[0] * 0.3);
+      cx.beginPath();
+      cx.moveTo(...a2);
+      cx.quadraticCurveTo(c1[0], c1[1], b2[0], b2[1]);
+      cx.stroke();
+    });
+    B2.monde.forEach((m, n2) => {
+      if (N3.baum.material.has(n2)) return;
+      const p2 = hier.pos[n2], bz = N3.bezirk(n2), d2 = typeof bz === "number" ? N3.daecher[bz].mitte : [0, 0, 0], a2 = Kk(d2[0], d2[2]), b2 = Kk(p2[0], p2[2]);
+      cx.lineWidth = 0.5 * z2;
+      cx.beginPath();
+      cx.moveTo(...a2);
+      cx.lineTo(...b2);
+      cx.stroke();
+    });
+  }
+  const kt = new CanvasTexture(cv);
+  kt.flipY = false;
+  kt.anisotropy = 16;
+  kt.colorSpace = NoColorSpace;
+  const asph = stoff("aerial_asphalt_01"), gras = stoff("aerial_grass_rock"), weg = stoff("anti_slip_concrete"), xz = positionWorld.xz, t2 = (s, f2) => texture(s, xz.mul(f2)), ma = texture(kt, xz.div(2 * EE2).add(0.5)), inn = smoothstep2(EE2 * 0.98, EE2 * 0.9, xz.x.abs().max(xz.y.abs())), st = smoothstep2(0.35, 0.6, ma.r).mul(inn), mk = smoothstep2(0.3, 0.6, ma.g).mul(inn), bm = new MeshStandardNodeMaterial();
+  bm.colorNode = bue ? mix(mix(t2(weg.farbe, 0.3).rgb.mul(0.8), t2(asph.farbe, 0.2).rgb.mul(0.42), st), vec3(0.85, 0.82, 0.7), mk) : mix(t2(gras.farbe, 0.12).rgb.mul(vec3(0.55, 0.85, 0.42)).mul(t2(gras.farbe, 0.012).g.mul(1.5).add(0.5)), t2(weg.farbe, 0.5).rgb, st);
+  bm.roughnessNode = float(0.9);
+  bm.metalnessNode = float(0);
+  bm.normalNode = normalMap(bue ? mix(t2(weg.normal, 0.3).rgb, t2(asph.normal, 0.2).rgb, st) : mix(t2(gras.normal, 0.12).rgb, t2(weg.normal, 0.5).rgb, st), vec2(1));
+  const pl = new Mesh(new CircleGeometry(breite * 30, 96), bm);
   pl.rotation.x = -Math.PI / 2;
   pl.receiveShadow = true;
   G.add(pl);
+  const frei = (x, y) => {
+    const q2 = Kk(x, y), i = Math.floor(q2[0]), j2 = Math.floor(q2[1]);
+    if (i < 0 || j2 < 0 || i >= cv.width || j2 >= cv.width) return true;
+    return true;
+  }, belegt = hier.pos.map((p2) => ({ x: p2[0], z: p2[2] })), rmn = bue ? breite * 1.25 : 2;
+  const baeume = bue ? [[baum("Oak Small", 41), 30, breite * 1.2, breite * 2.2, 5]] : [[baum("Oak Medium", 23), klein2 ? 25 : 60, 3, breite * 2.2, 6], [baum("Aspen Medium", 37), klein2 ? 20 : 50, 3, breite * 2.4, 7], [baum("Pine Medium", 11), klein2 ? 15 : 40, breite * 1.1, breite * 3, 9]];
+  for (const [a2, zz, r0, r1, gr] of baeume) streue(a2, zz, r0, r1, gr, true, 3.5, { gruppe: G, belegt, frei });
   G.userData = { mitten: (j2) => {
     const m = hier.mitten ? hier.mitten.get(j2) : null, d2 = N3.daecher[j2];
     return m ? [m[0], 9, m[1]] : [d2.mitte[0], 9, d2.mitte[2]];
-  }, mitte: hier.mitten && hier.mitten.get("mitte") ? [hier.mitten.get("mitte")[0], 9, hier.mitten.get("mitte")[1]] : [0, 9, 0], haeuser: B2.monde.map((m, n2) => ({ n: n2, x: hier.pos[n2][0], y: 2, z: hier.pos[n2][2], titel: m.titel, zahl: m.samen.length, mat: N3.baum.material.has(n2) })), blick: [breite * 0.8, breite * 0.7, breite * 1.25], ziel: [0, 2, 0], max: breite * 5, sonne: true };
+  }, mitte: hier.mitten && hier.mitten.get("mitte") ? [hier.mitten.get("mitte")[0], 9, hier.mitten.get("mitte")[1]] : [0, 9, 0], haeuser: B2.monde.map((m, n2) => ({ n: n2, x: hier.pos[n2][0], y: 2, z: hier.pos[n2][2], titel: m.titel, zahl: m.samen.length, mat: N3.baum.material.has(n2) })), blick: bue ? [breite * 0.55, breite * 0.4, breite * 1.05] : [breite * 0.5, breite * 0.32, breite * 0.8], ziel: [0, 3, 0], max: breite * 5, sonne: true, nebel: 0.25 };
   return G;
 }
 function baueGarten() {
   const G = new Group(), bM = new Mesh(BODEN.geo, BODEN.grund);
   bM.receiveShadow = true;
   G.add(bM);
+  {
+    const bel = N3.pos.map((p2) => ({ x: p2[0], z: p2[2] })), Rn2 = N3.L.R, wo = { gruppe: G, belegt: bel, frei: () => true, boden: true };
+    streue(baum("Oak Large", 51), klein2 ? 20 : 45, Rn2 * 0.5, Rn2 * 2.6, 13, true, 2.5, wo);
+    streue(baum("Ash Medium", 53), klein2 ? 20 : 45, Rn2 * 0.4, Rn2 * 2.6, 9, true, 2.5, wo);
+    streue(baum("Bush 1", 55), klein2 ? 80 : 200, Rn2 * 0.1, Rn2 * 1.6, 1.8, true, 0.8, wo);
+    streue("grass_medium_01", klein2 ? 400 : 1400, 0, Rn2 * 1.2, 0.5, false, -1.5, wo);
+  }
   const stiele = [], blaetter = [], kugeln = [];
   for (const w of pflanzen(N3).werke) {
     const I = w.I;
@@ -76913,7 +77018,7 @@ function baueGarten() {
       V3.subVectors(V2, V1);
       const l = V3.length() || 1e-3;
       Q.setFromUnitVectors(hoch, V3.divideScalar(l));
-      const r2 = Math.max(0.012, s.br * 0.5);
+      const r2 = Math.max(0.03, s.br * 1.1);
       m.compose(V1, Q, new Vector3(r2, l, r2));
       c.setRGB(s.c[0], s.c[1], s.c[2]);
     });
@@ -76932,7 +77037,7 @@ function baueGarten() {
       V3.set(s.b[0], s.b[1], s.b[2]);
       const l = V3.length() || 0.1;
       Q.setFromUnitVectors(hoch, V3.divideScalar(l));
-      m.compose(V1, Q, new Vector3(Math.max(s.br * 1.6, l * 0.5), l, 1));
+      m.compose(V1, Q, new Vector3(Math.max(s.br * 2.4, l * 0.9), l * 1.5, 1));
       c.setRGB(s.c[0] * 1.3, s.c[1] * 1.3, s.c[2] * 1.3);
     });
     S2.castShadow = true;
@@ -76940,7 +77045,7 @@ function baueGarten() {
   }
   if (kugeln.length) {
     const S2 = instanzen(new IcosahedronGeometry(1, 2), new MeshStandardMaterial({ roughness: 0.4, emissiveIntensity: 0 }), kugeln, (s, m, c) => {
-      m.compose(V1.set(s.a[0] + s.ox, s.a[1] + s.ty, s.a[2] + s.oz), Q.identity(), V2.setScalar(s.br * 0.7));
+      m.compose(V1.set(s.a[0] + s.ox, s.a[1] + s.ty, s.a[2] + s.oz), Q.identity(), V2.setScalar(s.br * 0.95));
       c.setRGB(s.c[0] * 1.6, s.c[1] * 1.6, s.c[2] * 1.6);
     });
     S2.castShadow = true;
@@ -76950,7 +77055,7 @@ function baueGarten() {
   G.userData = { mitten: (j2) => {
     const d2 = N3.daecher[j2];
     return [d2.mitte[0], hoehe(d2.mitte[0], d2.mitte[2]) + 5, d2.mitte[2]];
-  }, mitte: [0, hoehe(0, 0) + 4, 0], haeuser: B2.monde.map((m, n2) => ({ n: n2, x: N3.pos[n2][0], y: hoehe(N3.pos[n2][0], N3.pos[n2][2]) + 1, z: N3.pos[n2][2], titel: m.titel, zahl: m.samen.length, mat: N3.baum.material.has(n2) })), blick: [Rn * 0.7, Rn * 0.42, Rn * 1.1], ziel: [0, hoehe(0, 0), 0], max: Rn * 5, sonne: true };
+  }, mitte: [0, hoehe(0, 0) + 4, 0], haeuser: B2.monde.map((m, n2) => ({ n: n2, x: N3.pos[n2][0], y: hoehe(N3.pos[n2][0], N3.pos[n2][2]) + 1, z: N3.pos[n2][2], titel: m.titel, zahl: m.samen.length, mat: N3.baum.material.has(n2) })), blick: [Rn * 0.32, hoehe(0, 0) + Rn * 0.2, Rn * 0.62], ziel: [0, hoehe(0, 0) + 1, 0], max: Rn * 5, sonne: true, nebel: 0.5 };
   return G;
 }
 function baueKosmos() {
@@ -76960,7 +77065,7 @@ function baueKosmos() {
     for (let i = 0; i < pts.length; i += 6) p2.push([q2[0] + pts[i], (q2[1] || 0) + pts[i + 1] + 0.1, q2[2] + pts[i + 2], pts[i + 3], pts[i + 4], pts[i + 5]]);
   });
   G.add(instanzen(new IcosahedronGeometry(1, 1), new MeshBasicMaterial({ fog: false }), p2, (k2, m, c) => {
-    m.compose(V2.set(k2[0], k2[1], k2[2]), Q.identity(), V1.setScalar(0.035));
+    m.compose(V2.set(k2[0], k2[1], k2[2]), Q.identity(), V1.setScalar(0.085));
     c.setRGB(k2[3] * 3.2, k2[4] * 3.2, k2[5] * 3.2);
   }));
   const huelle = (x, z2, r2, f2) => {
@@ -76969,8 +77074,8 @@ function baueKosmos() {
     k2.scale.y = 0.4;
     k2.position.set(x, 0, z2);
     m.colorNode = vec3(f2[0], f2[1], f2[2]);
-    m.opacityNode = float(1).sub(normalView.z.abs()).pow(3).mul(0.55);
-    m.emissiveNode = vec3(f2[0], f2[1], f2[2]).mul(float(1).sub(normalView.z.abs()).pow(3)).mul(2.2);
+    m.opacityNode = float(1).sub(normalView.z.abs()).pow(5).mul(0.3);
+    m.emissiveNode = vec3(f2[0], f2[1], f2[2]).mul(float(1).sub(normalView.z.abs()).pow(5)).mul(1.1);
     m.roughnessNode = float(0.3);
     return k2;
   };
@@ -76978,8 +77083,8 @@ function baueKosmos() {
   G.add(huelle(0, 0, N3.L.mitte.R, [1, 0.8, 0.5]), schein(0, 0.2, 0, N3.L.mitte.R * 1.8, [1, 0.75, 0.45], 0.4));
   const st = sterne(N3.L.R * 7, klein2 ? 8e3 : 26e3, 3), gp = new BufferGeometry(), pp = new Float32Array(st.length / 8 * 3);
   for (let i = 0; i < st.length / 8; i++) {
-    const w = i * 2.4, h2 = Math.sin(i * 12.9) * 0.9;
-    pp.set([Math.cos(w) * N3.L.R * 7, h2 * N3.L.R * 6, Math.sin(w) * N3.L.R * 7], i * 3);
+    const w = hash(i * 1.1) * 6.2832, h2 = hash(i * 2.3) * 2 - 1, q2 = Math.sqrt(1 - h2 * h2), rr = N3.L.R * 9;
+    pp.set([Math.cos(w) * q2 * rr, h2 * rr, Math.sin(w) * q2 * rr], i * 3);
   }
   gp.setAttribute("position", new BufferAttribute(pp, 3));
   G.add(new Points(gp, new PointsMaterial({ color: 8949920, size: 1, sizeAttenuation: false, fog: false })));
@@ -77056,6 +77161,7 @@ function geheZu(k2) {
   scene.background = fern ? new Color(0) : hdr;
   scene.environment = fern ? null : hdr;
   scene.fog = fern ? null : NEBEL;
+  NEBEL.density = 22e-4 / Math.max(1, LG.R / 40) * (u2.nebel ?? 1);
   sonne.visible = !fern;
   blum.strength.value = W2.glut;
   aoP.radius.value = fern ? 0.01 : 1.1;

@@ -97,6 +97,13 @@ Ralf: Gleiche Häuser sind sinnlos. Die Werke und Apps selbst sind die Vorlage f
 - Galaxie: Scheibe mit Armen, Staub, Sternentstehung und Kern; Sonnen = Dächer; Planeten = Werke laufen auf gezeichneten Bahnen. Spirale nur auf Wunsch: Planet antippen oder Knopf für alle.
 - Offen: Die Funktion zeigt sich in Campus, Büro und Garten bisher nur im Namen beim Antippen, in der Galaxie zusätzlich als Ring. Die Lage im Dorf ist noch die Spirale aus Schritt 12, kein gewachsener Ortsplan. Innenräume und Lesen fehlen auf der neuen Engine.
 
+## Schritt 16: Die übrigen Welten aus dem Rohbau (Ralf, 01.11.)
+Ralf: Unreal später, erst alles andere selbst. Ziel bleibt Kino als Mac-App; das Testprojekt liegt in `Development/Projects/lichtgrund-unreal`, kein Bild bisher, der Start blieb beim Laden stehen.
+- Galaxie: Sterne nach Glockenkurve statt harter Bänder, weicher Kern, Arme ohne weiße Linie, Bahnen leiser.
+- Campus: Glastürme mit Stockwerksbändern im Park, Wege von der Mitte zu Dächern und Werken, Bäume. Büro: Asphaltstraßen mit Mittelstreifen je Reihe, Gehweg, Sockel, Glasfassaden.
+- Garten: Wiese, große Bäume, Büsche und Gras als Grund; die Pflanzen der Werke kräftiger, näherer Blick. Kosmos: größere Lichtkörner, leisere Hüllen, gleichmäßiger Sternenhimmel.
+- Offen: Campus und Büro zeigen die Funktion noch nicht in der Gestalt. Das Dorf hat noch keinen Ortsplan. Innenräume, Lesen und Fäden fehlen auf dieser Engine. Das ist kein Kino; dafür bleibt Unreal.
+
 ## Prüfstand 01.11.
 - Geprüft im Browser bei 1280 x 800 und 390 x 844, auf der Datenkopie: alle Ansichten, Morph in Einzelbildern, Wähler, Textfassung, Werk öffnen und zurück. 60 Bilder je Sekunde am Mac (Grafik des Macs, nicht auf einem echten Handy). 0 schwarze Starts von 12. Bilder: `Development/Artifacts/lichtwerk-vergleich-20261101/lichtgrund/garten4` und `garten5`.
 - Offen: Laufende Bewegung nur in Standbildern beurteilt, nicht als Film. Nicht auf einem echten Handy geprüft. Namen überlappen teils die Marke. Die Innenräume sind noch schlichte Kisten: kein Glas, keine Möbel außer Tisch und Stuhl. Viele Werke haben nur eine Fassung, ihr Gebäude ist also einstöckig mit einem Tisch; das ist der Bestand.
