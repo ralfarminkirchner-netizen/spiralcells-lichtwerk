@@ -51,7 +51,7 @@ export class Netz {
       return (0.45 + 1.0 * Math.sqrt(k / 140)) * (m.stimmen.length ? 1.25 : 1) * 1.5; });
     // Lesematerial ist kein Werk: es wird ein kleines Korn
     for(const i of this.baum.material.keys()) this.rM[i] = 0.32;
-    this.L = lage(this.baum, this.rM.map(r => r * 1.1), {gapWerk: 0.3, gapBereich: 0.35, gapDach: 2.0});
+    this.L = lage(this.baum, this.rM.map(r => r * 1.1), {gapWerk: 0.3, gapBereich: 0.35, gapDach: 1.4});
     this.pos = this.L.pos.map((p, i) => [p[0], (hash(i * 3.7) - 0.5) * 0.25, p[2]]);
     this.mini = B.monde.map((m, i) => this.baum.material.has(i) ? {pts: new Float32Array(0), stiel: new Float32Array(0)} : miniWuchs(m, this.rM[i]));
     this.R2 = this.L.R; this.H2 = 0; this.mitte = [0, 0, 0]; this.Rm2 = this.L.R * 1.06;
@@ -61,6 +61,8 @@ export class Netz {
     // Bezirke als Kreise am Boden: daran misst die Kamera, wie viel sie zeigen muss
     this.kreise = [{x: 0, z: 0, R: this.L.mitte.R, h: this.L.mitte.R * 0.42}, ...this.daecher.map(d => ({x: d.mitte[0], z: d.mitte[2], R: d.R, h: d.R * 0.38}))];
     if(this.L.ohne) this.kreise.push({x: this.L.ohne.mitte[0], z: this.L.ohne.mitte[2], R: this.L.ohne.R, h: 0.5});
+    // Die Kamera blickt auf die Mitte des Ganzen, nicht auf die Zentrale allein: sonst ragt eine Seite aus dem Bild
+    const rand = (a, s) => Math.max(...this.kreise.map(k => s * k[a] + k.R)); this.mitte = [(rand('x', 1) - rand('x', -1)) / 2, 0, (rand('z', 1) - rand('z', -1)) / 2];
     // Im Überblick trägt je Bezirk nur das zuletzt bewegte Werk seine Ringe; die übrigen erst, wenn man im Bezirk ist
     const juengst = new Map();
     B.monde.forEach((m, i) => { if(this.baum.material.has(i)) return; const b = this.bezirk(i), t = (m.zeitspanne && m.zeitspanne[1]) || 0, x = juengst.get(b);
@@ -146,7 +148,7 @@ export function baueNetz(N, U, wall, vis, aktiv, aktivDetail){
     const c = an ? mixc(WG, SILVER, 0.4) : WG;
     P(d.mitte[0], 0, d.mitte[2], d.R * 1.4, d.farbe[0], d.farbe[1], d.farbe[2], 0.012 * vis * hell * (an ? 1.8 : 1) * (drin ? 0.5 : 1));
     if(an || drin) ring([d.mitte[0], -0.05, d.mitte[2]], d.R, c, (an ? 0.6 : 0.35) * vis, 0.11, 1);
-    huelle(d.mitte, d.R, 0.38, c, (an ? 0.95 : 0.55) * vis * (drin ? 0.35 : hell), MEMD, cx, cyy, cz, drin);
+    huelle(d.mitte, d.R, 0.38, c, (an ? 0.95 : drin ? 0.55 : 0.28) * vis * (drin ? 0.35 : hell), MEMD, cx, cyy, cz, drin);
     // Im Dach werden die Bereiche sichtbar: ein weiches Feld in der Farbe ihrer Werke und ein feiner Ring
     if(drin) for(const b of d.bereiche){ P(b.mitte[0], 0, b.mitte[2], b.R * 1.2, b.farbe[0], b.farbe[1], b.farbe[2], 0.022 * vis); ring([b.mitte[0], -0.05, b.mitte[2]], b.R, mixc(WG, b.farbe, 0.35), 0.38 * vis, 0.07, 1); }
     if(drin) U.bereicheSchirm = d.bereiche.map(b => amRing(b.mitte, b.R, false, 0.08));
@@ -158,7 +160,7 @@ export function baueNetz(N, U, wall, vis, aktiv, aktivDetail){
   for(let n = 0; n < N.N; n++){
     const m = N.B.monde[n], o = N.pos[n], pts = N.mini[n].pts, k = pts.length / 6, material = N.baum.material.has(n);
     const self = n === aktiv, fade = self ? (1 - aktivDetail) : 1; if(fade <= 0.01){ U.monde[n] = null; continue; }
-    const bz = N.bezirk(n), dachHell = imDach == null ? 1 : bz === imDach ? 1.15 : 0.25;
+    const bz = N.bezirk(n), dachHell = imDach == null ? (bz === 'ohne' ? 0.55 : 1) : bz === imDach ? 1.15 : 0.25;   // noch nicht Zugeordnetes bleibt im Überblick leise
     const dc = Math.hypot(o[0] - cx, o[1] - cyy, o[2] - cz), near = sstep(CAM.S * 0.03, CAM.S * 0.3, dc);
     let a = vis * fade * (self ? 1 : near) * dachHell;
     if(fokus) a *= fokus.has(n) ? 1.2 : 0.14;
@@ -167,9 +169,9 @@ export function baueNetz(N, U, wall, vis, aktiv, aktivDetail){
       if(hov === n || self) screenRing(o, 0.35, WG, 0.4 * vis); U.monde[n] = toScreen(o[0], o[1], o[2]); continue; }
     // Viele Punkte auf kleinem Raum brennen aus: die Helligkeit je Punkt sinkt mit ihrer Zahl, groß heißt weit, nicht grell
     const lit = (m.traumfeld ? 1.4 : 2.2) * (hov === n ? 1.5 : 1) * (self ? 1.3 : 1) * Math.pow(Math.min(1, 16 / Math.max(1, k)), 0.7);
-    if(k){ let r = 0, g = 0, b = 0; for(let p = 0; p < k; p++){ r += pts[p * 6 + 3]; g += pts[p * 6 + 4]; b += pts[p * 6 + 5]; } P(o[0], o[1] + N.rM[n] * 0.15, o[2], N.rM[n] * 2.0, r / k, g / k, b / k, a * (m.traumfeld ? 0.14 : m.stimmen.length ? 0.35 : 0.24) * (fokus ? 0.4 : 1)); }   // im Blick: der Schein tritt zurück, die Gestalt bleibt
+    if(k){ let r = 0, g = 0, b = 0; for(let p = 0; p < k; p++){ r += pts[p * 6 + 3]; g += pts[p * 6 + 4]; b += pts[p * 6 + 5]; } P(o[0], o[1] + N.rM[n] * 0.15, o[2], N.rM[n] * 2.0, r / k, g / k, b / k, a * (m.traumfeld ? 0.14 : m.stimmen.length ? 0.35 : 0.24) * (fokus ? 0.4 : 1) * (imDach == null ? 0.35 : 1)); }   // im Blick: der Schein tritt zurück, die Gestalt bleibt
     else P(o[0], o[1], o[2], 0.7, KEIMC[0], KEIMC[1], KEIMC[2], a * 0.1);   // eine Knospe: nur die Ausgangsfassung, warm und klein
-    const sz = 0.17 * Math.max(0.7, N.rM[n]);
+    const sz = Math.max(0.17 * Math.max(0.7, N.rM[n]), CAM.S * 0.0042);   // auch im Überblick bleibt die Gestalt eines Werks zu sehen, nicht nur sein Schein
     for(let p = 0; p < k; p++) P(o[0] + pts[p * 6], o[1] + pts[p * 6 + 1], o[2] + pts[p * 6 + 2], sz, pts[p * 6 + 3], pts[p * 6 + 4], pts[p * 6 + 5], a * lit * (U.RM ? 0.9 : 0.8 + 0.2 * Math.sin(wall * 0.7 + p * 0.37 + n)));
     const st = N.mini[n].stiel; for(let p = 0; p < st.length / 6; p++) P(o[0] + st[p * 6], o[1] + st[p * 6 + 1], o[2] + st[p * 6 + 2], sz * 0.45, st[p * 6 + 3], st[p * 6 + 4], st[p * 6 + 5], a * 0.3);
     P(o[0], o[1], o[2], k ? 0.2 : 0.26, KEIMC[0], KEIMC[1], KEIMC[2], a * (m.keimKristall ? 1.5 : k ? 0.8 : 1.1));
@@ -208,10 +210,10 @@ export function baueNetz(N, U, wall, vis, aktiv, aktivDetail){
     if(f.verwendung) screenRing(km, fz * 2.2, st.c, al * 1.2);
     U.knoten[fi] = toScreen(km[0], km[1], km[2]); }
   // Bündel im Überblick: ein Bogen je Bezirkspaar, von Rand zu Rand, Stärke nach Zahl der Kanten
-  if(imDach == null){ const bz = Math.max(0.16, CAM.S * 0.006);
+  if(imDach == null){ const bz = Math.max(0.1, CAM.S * 0.0032);
     for(let bi = 0; bi < N.buendel.length; bi++){ const x = N.buendel[bi], za = N.bezirkZiel(x.von), zb = N.bezirkZiel(x.nach); if(!za || !zb) continue;
       const st = STIL[x.typ] || STIL['verweist-auf'], an = U.sel && U.sel.art === 'buendel' && U.sel.i === bi, ho = U.hover && U.hover.art === 'buendel' && U.hover.i === bi;
-      const al = vis * (st.a + 0.03 * Math.min(8, x.kanten)) * (soloAny ? 0.3 : 1) * (an || ho ? 1.8 : wahl ? 0.35 : 1) * (fokus ? 0.2 : 1);
+      const al = vis * (st.a + 0.03 * Math.min(8, x.kanten)) * (soloAny ? 0.3 : 1) * (an || ho ? 1.8 : wahl ? 0.35 : 0.6) * (fokus ? 0.2 : 1);
       const pt = bogen(za.mitte, za.R, zb.mitte, zb.R), d = Math.hypot(za.mitte[0] - zb.mitte[0], za.mitte[2] - zb.mitte[2]), n = Math.round(clamp(d * 3, 20, 120));
       const dicke = bz * (1 + 0.1 * Math.min(8, x.kanten));
       for(let s = 0; s <= n; s++){ const t = s / n; if(st.luecke && t > 0.44 && t < 0.56) continue; const q = pt(t); P(q[0], q[1], q[2], dicke, st.c[0], st.c[1], st.c[2], al * (0.5 + 0.6 * t)); }

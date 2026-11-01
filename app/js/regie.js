@@ -22,7 +22,7 @@ export function regie(U, Z, N, RM){
       U.dachZiel = U.dachGlatt; }
     const dz = U.dachZiel, dk = dz ? (RM ? Math.round(U.dachK) : eio(U.dachK)) : 0;
     const nMitte = dz ? [mix(N.mitte[0], dz.mitte[0], dk), mix(N.mitte[1], dz.mitte[1], dk), mix(N.mitte[2], dz.mitte[2], dk)] : N.mitte;
-    // Die Zentrale bleibt in der Bildmitte; der Maßstab misst, was alle Bezirke wirklich brauchen. Am Handy steht die lange Achse hochkant
+    // Der Maßstab misst, was alle Bezirke wirklich brauchen. Am Handy steht die lange Achse hochkant
     const yawN = 0.35 + (portrait && hochkant(N, asp) ? Math.PI / 2 : 0) + (RM ? 0 : 0.012) * U.netZeit;
     const ganz = N.kreise ? netzMass(N, yawN, 50 * DEG, asp) / fit : N.Rm2 * 0.9;
     const nS = Math.exp(mix(Math.log(ganz), Math.log(dz ? dz.R * 1.08 : ganz), dk)), inward = U.netDir < 0;
@@ -52,9 +52,9 @@ export function regie(U, Z, N, RM){
 /* Wie viel halbe Bildhöhe die Bezirke um die Zentrale brauchen, bei diesem Blick (Breite durch das Seitenverhältnis, Tiefe verkürzt) */
 function netzMass(N, yaw, elev, asp){
   const cy = Math.cos(yaw), sy = Math.sin(yaw), se = Math.sin(elev), ce = Math.cos(elev); let u = 0, v = 0;
-  for(const k of N.kreise){ const cu = k.x * cy - k.z * sy, cv = -k.x * sy - k.z * cy;
+  for(const k of N.kreise){ const kx = k.x - N.mitte[0], kz = k.z - N.mitte[2], cu = kx * cy - kz * sy, cv = -kx * sy - kz * cy;
     u = Math.max(u, Math.abs(cu) + k.R); v = Math.max(v, (Math.abs(cv) + k.R) * se + k.h * ce); }
-  return Math.max(v, u / asp) * 1.1;
+  return Math.max(v * 1.28, u / asp * 1.1);   // oben und unten bleibt Platz für Marke und Zeile
 }
 /* Hochkant drehen, wenn das Netz am Handy so größer wird; einmal je Seitenverhältnis entschieden, damit es nicht springt */
 function hochkant(N, asp){ const a = Math.round(asp * 20) / 20;

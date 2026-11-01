@@ -57,13 +57,15 @@ export function ordne(B, O){
    Kreise packen: erst die Werke eines Bereichs (Phyllotaxis, ältestes innen), dann die Bereiche
    eines Dachs, dann die Dächer und „ohne Dach“ um die Mitte. Radien in Weltmaß; groß heißt: viel darin. */
 function phyllo(radien, gap){
-  // Kreise nach goldenem Winkel nach außen legen, ohne Überlappung (gierig, dann sanft entspannen)
+  // Jeder Kreis kommt an den freien Platz, der der Mitte am nächsten liegt: so bleibt kein leerer Raum im Bezirk
   const n = radien.length, pos = [];
   for(let k = 0; k < n; k++){
-    const a = k * GOLD; let d = k === 0 ? 0 : radien[0] * 0.2;
-    for(let t = 0; t < 400; t++){ const x = Math.cos(a) * d, z = Math.sin(a) * d;
-      if(pos.every((p, j) => Math.hypot(p[0] - x, p[1] - z) >= radien[j] + radien[k] + gap)) { pos.push([x, z]); break; }
-      d += Math.max(0.02, radien[k] * 0.12); if(t === 399) pos.push([x, z]); }
+    if(!k){ pos.push([0, 0]); continue; }
+    const schritt = Math.max(0.05, radien[k] * 0.2); let best = null;
+    for(let w = 0; w < 48; w++){ const a = k * GOLD + w * Math.PI / 24;
+      for(let d = radien[0] * 0.2; d < 400; d += schritt){ if(best && d >= best[2]) break; const x = Math.cos(a) * d, z = Math.sin(a) * d;
+        if(pos.every((p, j) => Math.hypot(p[0] - x, p[1] - z) >= radien[j] + radien[k] + gap)){ best = [x, z, d]; break; } } }
+    pos.push(best ? [best[0], best[1]] : [0, 0]);
   }
   let R = 0; pos.forEach((p, k) => { R = Math.max(R, Math.hypot(p[0], p[1]) + radien[k]); });
   return {pos, R: R + gap * 0.5};
@@ -77,18 +79,18 @@ export function lage(baum, rWerk, opt = {}){
   const dk = baum.daecher.map(d => { const bs = d.bereiche.map(b => bereichsKreis(b.werke)); const p = phyllo(bs.map(b => b.R), gapB); return {bs, rel: p.pos, R: p.R + 0.3}; });
   // Die Mitte ist so groß wie ein großes Dach: sie trägt das Ganze und muss als Kern lesbar sein
   const mk = bereichsKreis(baum.mitte.werke), Rm = Math.max(3.2, mk.R * 1.25, 0.7 * Math.max(0, ...dk.map(x => x.R)));
-  // „Ohne Dach“ ist ein Bezirk wie die Dächer, als letzter im Kranz: abgesetzt durch seine Gestalt, nicht durch Ferne
+  // „Ohne Dach“ ist ein Bezirk wie die Dächer: abgesetzt durch seine Gestalt, nicht durch Ferne
   const ohneK = bereichsKreis(baum.ohne);
   const kreise = dk.map(x => x.R); if(baum.ohne.length) kreise.push(ohneK.R);
-  // Dächer um die Mitte: größtes zuerst, dann im goldenen Winkel nach außen
-  const ordnungD = dk.map((_, j) => j).sort((a, b) => dk[b].R - dk[a].R); if(baum.ohne.length) ordnungD.push(dk.length);
+  // Dächer um die Mitte: größtes zuerst, jedes an den nächsten freien Platz; quer darf es weiter hinaus, denn das Bild ist breit
+  const ordnungD = kreise.map((_, j) => j).sort((a, b) => kreise[b] - kreise[a]);
   const D = [], gesetzt = [];
   for(const j of ordnungD){
-    const k = gesetzt.length, a = k * GOLD + 0.4; let d = Rm + kreise[j] + gapD;
-    for(let t = 0; t < 600; t++){ const x = Math.cos(a) * d, z = Math.sin(a) * d;
-      if(gesetzt.every(q => Math.hypot(D[q][0] - x, D[q][1] - z) >= kreise[q] + kreise[j] + gapD)){ D[j] = [x, z]; break; }
-      d += 0.25; if(t === 599) D[j] = [x, z]; }
-    gesetzt.push(j);
+    let best = null;
+    for(let w = 0; w < 72; w++){ const a = gesetzt.length * GOLD + 0.4 + w * Math.PI / 36;
+      for(let d = Rm + kreise[j] + gapD; d < 600; d += 0.25){ const x = Math.cos(a) * d, z = Math.sin(a) * d;
+        if(gesetzt.every(q => Math.hypot(D[q][0] - x, D[q][1] - z) >= kreise[q] + kreise[j] + gapD)){ const m = Math.hypot(x, z * 1.25); if(!best || m < best[2]) best = [x, z, m]; break; } } }
+    D[j] = [best[0], best[1]]; gesetzt.push(j);
   }
   let Rall = Rm; kreise.forEach((r, j) => { Rall = Math.max(Rall, Math.hypot(D[j][0], D[j][1]) + r); });
   const ohneMitte = baum.ohne.length ? D[dk.length] : [0, 0];

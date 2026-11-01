@@ -186,7 +186,7 @@ function zumNetz(){
   if(!W.B || W.ruht) return;
   clearTimeout(U.lesenUhr); if(B.stoff.offen()) B.stoff.schliesse(); U.als = null;
   B.waehle(null); U.netDir = 1; U.netT = 1; U.kelchT = 0; U.zoom = 1; U.elevOff = 0; U.yawOff = 0; U.waehlen = null;
-  U.dach = W.aktiv >= 0 && W.N && W.N.baum.daecher.length ? W.N.bezirk(W.aktiv) : null;   // zurück in den Bezirk, aus dem du kamst
+  U.dach = null;   // das Netz zeigt zuerst das Ganze; der Mond, aus dem du kamst, bleibt darin markiert
   if(W.aktiv >= 0) B.waehle({art: 'mond', i: W.aktiv, mond: W.B.monde[W.aktiv]}, 1);   // Rückweg: der Mond, aus dem du kamst, bleibt markiert
   B.zeile(B.netzSatz(W.B)); W.titelBis = -1; ortAktualisieren();
 }
@@ -624,7 +624,8 @@ function ui(cam){
     const bezirkVon = j => j === 0 ? 'mitte' : j <= nd ? j - 1 : 'ohne';
     const setze = j => { const el = kids[j], p = j === 0 ? U.mitteSchirm : j <= nd ? U.daecherSchirm[j - 1] : U.ohneSchirm;
       const leise = U.als || (U.dach != null && bezirkVon(j) !== U.dach) ? 0.25 : 1;
-      if(!zeig || !p || p[2] <= 0){ if(el.style.opacity !== '0') el.style.opacity = '0'; return; }
+      const aufMarke = [U.sel, U.hover].some(x => x && (x.art === 'mitte' ? j === 0 : x.art === 'dach' ? j === x.i + 1 : x.art === 'ohne' && j === nd + 1));   // die Marke nennt ihn schon
+      if(!zeig || !p || p[2] <= 0 || aufMarke){ if(el.style.opacity !== '0') el.style.opacity = '0'; return; }
       const bw = el.offsetWidth || 80, px = clamp(p[0], 12 + bw / 2, CAM.cssW - 12 - bw / 2);   // Namen bleiben im Bild
       const unter = j === 0 && U.dach !== 'mitte', y0 = unter ? p[1] + 10 : p[1] - 14 - 16;   // der Name der Mitte steht im Überblick unter ihrem Rand, nicht auf ihrem Inhalt
       const rr = {x: px - bw / 2, y: y0, w: bw, h: 16}; if(!frei(rr) || y0 < 60 || y0 > CAM.cssH - 64){ if(el.style.opacity !== '0') el.style.opacity = '0'; return; } belegt.push(rr);   // nie unter dem Titel oder der Zeile

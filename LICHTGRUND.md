@@ -12,3 +12,8 @@ Eigene Variante, abgezweigt von Alsformen (22.10.). Andere Zweige und Arbeitskop
 - Netz: reiche Zellzeichnung aus der Myzelstudie
 - Schreibtisch von Kimi als Übersicht
 - Codex' Fassungsvergleich
+
+## Schritt 2: Netz ordnen
+- Das Netz öffnet als Ganzes statt nur im Bezirk des Monds, aus dem man kommt; dieser bleibt markiert.
+- Die Bezirke liegen dicht um die Mitte, jeder trägt seinen Namen. Die Marke und der Name stehen nicht mehr doppelt da.
+- Werke ohne Dach, Scheine und Bögen sind leiser. Offen: Am Handy bleibt das Netz klein.
