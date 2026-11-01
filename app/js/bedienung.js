@@ -3,6 +3,7 @@
    Ziehen dreht, Halten verbindet, ⌘V oder Ablegen wirft Material ein.
    Jede folgenreiche Handlung braucht ein Halten im Bild. Keine Formulare.
    ===================================================================== */
+import {zeichneText} from './textgrund.js';
 import {clamp, sstep, DEG, CAM, toScreen, pointerWorld, SILVER} from './licht.js';
 import {U, W} from './welt.js';
 import {STIMMEN, MENSCH, menschlich, kurz, datum, nameVon, MODUS_SATZ, STATUS_SATZ, TYP_SATZ, URTEIL_SATZ, BELEG_SATZ, REIFE} from './daten.js';
@@ -573,6 +574,10 @@ export function installiere(a){
     else if(k === 's' || k === 'S'){ seite(); }
     else if(k === 'g' || k === 'G'){ spirale(); }
     else if(k === 'b' || k === 'B'){ ansicht('garten'); }
+    else if(k === 'd' || k === 'D'){ ansicht('dorf'); }
+    else if(k === 'c' || k === 'C'){ ansicht('campus'); }
+    else if(k === 'o' || k === 'O'){ ansicht('buero'); }
+    else if(k === 't' || k === 'T'){ ansicht('text'); }
     else if(k === 'l' || k === 'L'){ ansicht('licht'); }
     else if(k === 'm' || k === 'M'){ ansicht('galaxie'); }
     else if(k === 'n' || k === 'N'){ api.zumNetz(); }
@@ -580,7 +585,7 @@ export function installiere(a){
     else if((k === 'ArrowRight' || k === 'ArrowLeft') && U.sel && U.sel.art === 'faden' && W.N && W.N.faeden[U.sel.i].kanten.length > 1){ e.preventDefault();   // durch die Verbindungen eines Bündels
       const n = W.N.faeden[U.sel.i].kanten.length; U.fadenK = ((U.fadenK || 0) + (k === 'ArrowRight' ? 1 : -1) + n) % n; const [t, s] = markeFuer(U.sel); zeigeMarke(t, s); ansage(t + '. ' + s); }
     else if(k === 'ArrowRight' || k === 'ArrowLeft'){ e.preventDefault(); schritt(k === 'ArrowRight' ? 1 : -1); }
-    else if(k === '?'){ U.hintUntil = W.wall + 8; hintEl.textContent = 'S Seite · G Spirale · B Garten · L Lichtansicht · M Galaxie · N Netz · A Zusammenhänge · P Planet · W Werkraum · 1–5 eine Stimme · ⌘V legt ab · Halten verbindet · Esc zurück'; }
+    else if(k === '?'){ U.hintUntil = W.wall + 8; hintEl.textContent = 'S Seite · G Spirale · B Garten · L Lichtansicht · M Galaxie · D Dorf · C Campus · O Büro · T Text · N Netz · A Zusammenhänge · P Planet · W Werkraum · 1–5 eine Stimme · ⌘V legt ab · Halten verbindet · Esc zurück'; }
     else if(k === 'Enter' && U.waehlen && U.sel && (U.sel.art === 'same' || U.sel.art === 'keim')){ const w = U.waehlen, nach = U.sel.art === 'same' ? U.sel.mond.samen[U.sel.i].id : U.sel.mond.keim[U.sel.mond.keim.length - 1].id;
       U.waehlen = null; if(nach !== w.von && U.sel.mond.id === w.mondId) api.kanteFragen(w.von, nach); else zeile('Nichts verbunden.'); }
     else if(k === 'Enter' && U.teilnahme && U.sel && U.sel.art === 'mond' && U.sel.i !== U.teilnahme.gegenstand){ const g = U.teilnahme.gegenstand; U.teilnahme = null; api.teilnahmeFragen(g, U.sel.i); }
@@ -621,9 +626,8 @@ export function installiere(a){
   $('#snd').addEventListener('click', () => { const on = klangToggle(); const b = $('#snd'); b.setAttribute('aria-pressed', on ? 'true' : 'false'); b.setAttribute('aria-label', on ? 'Klang ausschalten' : 'Klang einschalten'); activity(); });
   $('#seite').addEventListener('click', () => { seite(); activity(); });
   $('#spiralknopf').addEventListener('click', () => { spirale(); activity(); });
-  $('#gartenknopf').addEventListener('click', () => { ansicht('garten'); activity(); });
-  $('#lichtknopf').addEventListener('click', () => { ansicht('licht'); activity(); });
-  $('#galaxieknopf').addEventListener('click', () => { ansicht('galaxie'); activity(); });
+  $('#ansichtknopf').addEventListener('click', () => { const w = $('#ansichten'); w.hidden = !w.hidden; $('#ansichtknopf').setAttribute('aria-expanded', w.hidden ? 'false' : 'true'); activity(); });
+  document.querySelectorAll('#ansichten button').forEach(b => b.addEventListener('click', () => { const a = b.dataset.a; if(a === 'kosmos'){ if(U.imText) textfassung(false); if(U.ansicht !== 'kosmos') ansicht(U.ansicht); } else if(a === U.ansicht && !U.imText){ /* bleibt */ } else ansicht(a); $('#ansichten').hidden = true; activity(); }));
   $('#netzknopf').addEventListener('click', () => { if(U.netT > 0.5 && W.Z) api.zurZelle(); else api.zumNetz(); activity(); });
   ortEl.addEventListener('click', () => { schliesseSiegel(); U.waehlen = null; if(U.lese) schliesseLese(true); api.ortZurueck(); });   // direkt, nicht durch die Escape-Kette
   markeEl.addEventListener('click', () => { const s = U.sel || (U.hoverMarke ? U.hover : null); if(!s) return;
@@ -643,12 +647,16 @@ function zoomAuf(z){
   if(U.netK < 0.4 && z > 2.3 && W.Z){ U.zoom = 1; api.zumNetz(); return; }
   U.zoom = clamp(z, 0.35, 2.6);
 }
-/* Dieselben Werke, andere Darstellung: Kosmos, Lichtansicht, Garten. Am Bestand ändert sich nichts */
-const ANSICHT = {kosmos: () => netzSatz(W.B), licht: () => 'Lichtansicht: dieselben Werke, die Spirale steigt als Pflanze aus Licht auf.', garten: () => 'Derselbe Bestand als Landschaft: Beete sind Dächer, Blätter sind Fassungen, das Mycel sind die Verbindungen.', galaxie: () => 'Derselbe Bestand als Galaxie: Planeten sind Werke, Monde sind Fassungen. Die Galaxie dreht sich und fliegt, darum werden ihre Bahnen Spiralen.'};
-function ansicht(a){ if(U.netT < 0.5) return; U.ansicht = U.ansicht === a ? 'kosmos' : a;
-  U.gartenT = U.ansicht === 'licht' || U.ansicht === 'garten' ? 1 : 0; U.landT = U.ansicht === 'garten' ? 1 : 0; U.galT = U.ansicht === 'galaxie' ? 1 : 0;
-  for(const [id, v, an, aus] of [['#gartenknopf', 'garten', 'Als Kosmos zeigen', 'Als Garten zeigen'], ['#lichtknopf', 'licht', 'Als Kosmos zeigen', 'Lichtansicht zeigen'], ['#galaxieknopf', 'galaxie', 'Als Kosmos zeigen', 'Als Galaxie zeigen']]){ const b = $(id), on = U.ansicht === v; b.setAttribute('aria-pressed', on ? 'true' : 'false'); b.setAttribute('aria-label', on ? an : aus); }
-  zeile(ANSICHT[U.ansicht]()); }
+/* Dieselben Werke, andere Darstellung. Am Bestand ändert sich nichts */
+const ANSICHT = {kosmos: () => netzSatz(W.B), licht: () => 'Lichtansicht: dieselben Werke, die Spirale steigt als Pflanze aus Licht auf.', garten: () => 'Derselbe Bestand als Landschaft: Beete sind Dächer, Blätter sind Fassungen, das Mycel sind die Verbindungen.', galaxie: () => 'Derselbe Bestand als Galaxie: Planeten sind Werke, Monde sind Fassungen. Die Galaxie dreht sich und fliegt, darum werden ihre Bahnen Spiralen.',
+  dorf: () => 'Derselbe Bestand als Dorf: Häuser sind Werke, jedes helle Fenster eine Fassung, die Wege sind die Verbindungen.', campus: () => 'Derselbe Bestand als Campus: Gebäude sind Werke, ihre Höhe ist die Arbeit, jedes helle Fenster eine Fassung.', buero: () => 'Derselbe Bestand als Büro: Tische sind Werke, Blätter sind Fassungen, der Stapel ist die Arbeit, Abteilungen sind Dächer.'};
+function ansicht(a){ if(U.netT < 0.5 && a !== 'text') return;
+  if(a === 'text'){ textfassung(!U.imText); return; } if(U.imText) textfassung(false);
+  U.ansicht = U.ansicht === a ? 'kosmos' : a; const v = U.ansicht, ort = v === 'dorf' || v === 'campus' || v === 'buero';
+  U.gartenT = v === 'licht' || v === 'garten' || ort ? 1 : 0; U.landT = v === 'garten' || ort ? 1 : 0; U.galT = v === 'galaxie' ? 1 : 0; U.stilZiel = ort ? v : null; if(!U.stil && ort){ U.stil = v; U.bauK = 0; }
+  wahlZeigen(); zeile(ANSICHT[v]()); }
+function wahlZeigen(){ document.querySelectorAll('#ansichten button').forEach(b => { b.setAttribute('aria-pressed', (U.imText ? b.dataset.a === 'text' : b.dataset.a === U.ansicht) ? 'true' : 'false'); }); }
+function textfassung(an){ U.imText = an; const el = $('#textgrund'); el.hidden = !an; if(an){ zeichneText(el, W.N, i => { textfassung(false); api.oeffneMond(i, {}); }, () => textfassung(false)); el.focus({preventScroll: true}); } else canvas.focus({preventScroll: true}); wahlZeigen(); }
 function spirale(){ if(U.netT > 0.5) return; U.spiralT = U.spiralT > 0.5 ? 0 : 1;
   const b = $('#spiralknopf'); b.setAttribute('aria-pressed', U.spiralT > 0.5 ? 'true' : 'false'); b.setAttribute('aria-label', U.spiralT > 0.5 ? 'Als Wuchs zeigen' : 'Als Spirale zeigen');
   const m = W.Z && W.Z.m;
@@ -658,6 +666,7 @@ function seite(){ if(U.netT > 0.5) return; U.kelchT = U.kelchT > 0.5 ? 0 : 1; U.
   zeile(U.kelchT > 0.5 ? 'Von der Seite: die Geschichte. Unten der Keim, oben das Jüngste.' : mondSatz(W.Z && W.Z.m)); }
 export function zurueck(){
   clearTimeout(U.lesenUhr);
+  if(U.imText){ textfassung(false); return; }
   if(U.siegel){ const l = U.siegel.lassen; schliesseSiegel(); l && l(); return; }
   if(U.waehlen){ U.waehlen = null; zeile(mondSatz(W.Z && W.Z.m)); return; }
   if(U.teilnahme){ U.teilnahme = null; zeile('Nichts eingetragen.'); return; }

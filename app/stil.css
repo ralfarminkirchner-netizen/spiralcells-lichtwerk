@@ -165,24 +165,39 @@ button{font:inherit;color:inherit}
 #netzknopf{right:calc(max(10px,env(safe-area-inset-right,0px)) + 52px)}
 #spiralknopf{right:calc(max(10px,env(safe-area-inset-right,0px)) + 104px)}
 #spiralknopf[aria-pressed="true"]{color:var(--ink)}
-#gartenknopf{right:calc(max(10px,env(safe-area-inset-right,0px)) + 104px);display:none}
-.imnetz #gartenknopf{display:block}
-#lichtknopf{right:calc(max(10px,env(safe-area-inset-right,0px)) + 156px);display:none}
-.imnetz #lichtknopf{display:block}
-#lichtknopf[aria-pressed="true"]{color:var(--ink)}
-#lichtknopf svg,#galaxieknopf svg{width:22px;height:22px;display:block}
-#galaxieknopf{right:calc(max(10px,env(safe-area-inset-right,0px)) + 208px);display:none}
-.imnetz #galaxieknopf{display:block}
-#galaxieknopf[aria-pressed="true"]{color:var(--ink)}
+#ansichtknopf{right:calc(max(10px,env(safe-area-inset-right,0px)) + 104px);display:none}
+.imnetz #ansichtknopf{display:flex}
+#ansichtknopf[aria-expanded="true"]{color:var(--ink)}
+#ansichten{position:fixed;right:max(10px,env(safe-area-inset-right,0px));bottom:calc(66px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;align-items:stretch;background:rgba(8,7,12,.82);border:1px solid rgba(255,246,224,.14);border-radius:10px;padding:6px;z-index:30;backdrop-filter:blur(8px)}
+#ansichten[hidden]{display:none}
+#ansichten button{all:unset;box-sizing:border-box;display:flex;justify-content:space-between;gap:26px;min-height:40px;align-items:center;padding:0 12px;border-radius:6px;color:var(--ink-soft);font-size:14px;letter-spacing:.06em;cursor:pointer}
+#ansichten button:hover,#ansichten button:focus-visible{background:rgba(255,246,224,.08);color:var(--ink)}
+#ansichten button[aria-pressed="true"]{color:var(--ink);background:rgba(255,246,224,.12)}
+#ansichten kbd{font:inherit;font-size:11px;opacity:.55}
+#textgrund{position:fixed;inset:0;z-index:40;background:#0c0b0a;color:#d8d3c6;overflow:auto;padding:24px clamp(14px,4vw,48px) 90px;font:13px/1.55 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;outline:0;-webkit-overflow-scrolling:touch}
+#textgrund[hidden]{display:none}
+#textgrund h1{font:inherit;font-weight:700;margin:0 0 2px}
+#textgrund p{margin:0 0 2px;white-space:pre-wrap}
+#textgrund details{margin:0}
+#textgrund summary{cursor:pointer;list-style:none;padding:3px 0;overflow-wrap:anywhere}
+#textgrund summary::-webkit-details-marker{display:none}
+#textgrund summary::before{content:"▸ "}
+#textgrund details[open]>summary::before{content:"▾ "}
+#textgrund .b{font-weight:700}
+#textgrund .e{padding-left:2ch}
+#textgrund .z{white-space:pre-wrap;overflow-wrap:anywhere;color:#b9b4a7}
+#textgrund button{all:unset;cursor:pointer;text-decoration:underline;text-underline-offset:3px;padding:6px 4px 6px 0;display:inline-block}
+#textgrund button:focus-visible,#textgrund summary:focus-visible{outline:1px solid #d8d3c6}
+#textgrund .zu{position:fixed;top:10px;right:14px;background:#0c0b0a;padding:6px 10px}
 .imnetz #spiralknopf{display:none}
 #gartenknopf[aria-pressed="true"]{color:var(--ink)}
-#gartenknopf svg,#seite svg,#spiralknopf svg,#netzknopf svg{width:22px;height:22px;display:block}
+#ansichtknopf svg,#seite svg,#spiralknopf svg,#netzknopf svg{width:22px;height:22px;display:block}
 #seite .oben{display:none}
 #seite[aria-pressed="true"] .oben{display:block}
 #seite[aria-pressed="true"] .kelch{display:none}
-#seite,#gartenknopf,#lichtknopf,#galaxieknopf,#spiralknopf,#netzknopf,#snd{opacity:.35}
-.active #seite,.active #gartenknopf,.active #lichtknopf,.active #galaxieknopf,.active #spiralknopf,.active #netzknopf,.active #snd,.corner:focus-visible{opacity:1}
-.lesend #seite,.lesend #gartenknopf,.lesend #lichtknopf,.lesend #galaxieknopf,.lesend #spiralknopf,.lesend #netzknopf{opacity:0;pointer-events:none}
+#seite,#ansichtknopf,#spiralknopf,#netzknopf,#snd{opacity:.35}
+.active #seite,.active #ansichtknopf,.active #spiralknopf,.active #netzknopf,.active #snd,.corner:focus-visible{opacity:1}
+.lesend #seite,.lesend #ansichtknopf,.lesend #spiralknopf,.lesend #netzknopf{opacity:0;pointer-events:none}
 
 .ruhe{position:fixed;inset:0;display:grid;place-items:center;margin:0;padding:0 24px;text-align:center;font-weight:300;letter-spacing:.12em;color:var(--ink)}
 

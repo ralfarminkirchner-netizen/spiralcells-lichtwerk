@@ -43,3 +43,17 @@ Eigene Variante, abgezweigt von Alsformen (22.10.). Andere Zweige und Arbeitskop
 - Taste M, `galaxie.js`, Rechnung in `mondbahn.js`. Planet = Werk, Mond = Fassung, Farbe = Stimme, Sonne = Dach. Zentrale und ohne Dach kreisen um den Kern.
 - Die Spirale ist nicht gezeichnet: jeder Punkt ist derselbe Mond zu einer früheren Zeit. Sie entsteht, weil der Planet läuft, die Galaxie sich dreht und durchs All fliegt. Ihre Länge ist die geleistete Arbeit.
 - Sterne und Nebel sind Grund. Zur Zeit null steht jeder Planet an seinem Platz im Kosmos.
+
+## Schritt 9: Dorf, Campus, Büro (Ralf, 01.11.)
+- Tasten D, C und O, `siedlung.js`, Rechnung in `bauplan.js`. Werk = Haus, Gebäude oder Tisch. Fassung = genau ein helles Fenster oder ein Blatt auf dem Tisch, Farbe = Stimme, unten das Älteste. Höhe des Baus oder des Stapels = geleistete Arbeit.
+- Dach = Viertel mit Hecke, Bauabschnitt oder Abteilung mit Glaswand. Zentrale = Marktplatz, Innenhof oder Empfang. Ohne Dach = ohne Grenze. Beziehungen laufen als Wege und Linien am Boden.
+- Abstammung: was aufeinander aufbaut, liegt im selben Bau; eine Gabel ist ein Anbau; Fassungen ohne belegte Herkunft stehen in eigenen Schuppen oder Nebenbauten. Ein Werk nur mit Ausgangsfassung hat kein helles Fenster, im Büro ein leerer Tisch.
+- Übergang: die Bauten stehen aus dem Boden auf, jedes Fenster und Blatt fliegt als Korn seiner Fassung an seinen Platz.
+
+## Schritt 10: Textfassung und Ansichten-Wähler (Ralf, 01.11.)
+- Taste T, `textfassung.js` (Inhalt), `textgrund.js` (Anzeige): die ganze Logik nur aus Text und Zeichen, aufklappbar. Bezirke, Bereiche, Werke mit Arbeitsbalken, Stimmen, Reife und Wuchs, jede Fassung mit Abstammung als Einrückung, jede gespeicherte Beziehung mit Richtung. Eine Tafel nennt, was einander in allen Ansichten entspricht. Keine Kennungen.
+- Der Pflanzenknopf öffnet jetzt einen Wähler für alle acht Ansichten, weil einzelne Knöpfe am Handy nicht mehr passen.
+
+## Prüfstand 01.11.
+- Geprüft im Browser bei 1280 x 800 und 390 x 844, auf der Datenkopie: alle Ansichten, Morph in Einzelbildern, Wähler, Textfassung, Werk öffnen und zurück. 60 Bilder je Sekunde am Mac (Grafik des Macs, nicht auf einem echten Handy). 0 schwarze Starts von 12. Bilder: `Development/Artifacts/lichtwerk-vergleich-20261101/lichtgrund/garten4`.
+- Offen: Laufende Bewegung nur in Standbildern beurteilt, nicht als Film. Nicht auf einem echten Handy geprüft. Viele Namen überlappen weiter die Marke. Die Hauptzweige haben nichts davon. In der Galaxie sind Bahnen sehr großer Werke (FASKA) noch dichte Schläuche statt einzelner Spiralen. Die Beete sind groß und oft leer, weil 72 Werke nur eine Fassung haben; das ist der Bestand.

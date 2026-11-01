@@ -37,3 +37,14 @@ test('Galaxie: mehr Arbeit, längere Spur', () => {
   const G = galaxie(N, arbeit), lang = new Map(); for(const q of G.monde) lang.set(q.planet, Math.max(lang.get(q.planet) || 0, q.tau / N.rM[q.planet]));
   const paare = [...lang].map(([n, l]) => [arbeit(B.monde[n]), l]).sort((a, b) => a[0] - b[0]); assert.ok(paare[paare.length - 1][1] >= paare[0][1]);
 });
+
+test('Dorf, Campus und Büro: jede Fassung genau ein Fenster oder Blatt', async () => {
+  const {bauplan} = await import('../app/js/bauplan.js');
+  for(const stil of ['dorf', 'campus', 'buero']) assert.equal(bauplan(N, stil).fensterZahl, fassungen, stil);
+});
+test('Textfassung: jedes Werk und jede Fassung steht da, keine Kennung', async () => {
+  const {alsText} = await import('../app/js/textfassung.js'), {FADEN_SATZ} = await import('../app/js/netz.js');
+  const T = alsText(N, FADEN_SATZ, arbeit), W = T.bezirke.flatMap(b => b.werke), Z = W.flatMap(w => w.fassungen);
+  assert.equal(W.length, B.monde.length); assert.equal(Z.length, fassungen);
+  const alles = JSON.stringify(T); for(const m of B.monde) for(const s of m.samen) assert.ok(!alles.includes(s.id), 'keine Kennung einer Fassung');
+});

@@ -164,10 +164,10 @@ function amRing(c, R, unten, innen){ let best = null;
 export function baueNetz(N, U, wall, vis, aktiv, aktivDetail){
   if(vis <= 0.003) return;
   const cx = CAM.P[0], cyy = CAM.P[1], cz = CAM.P[2], soloAny = U.solo >= 0, gk = U.gartenK || 0;   // gk: 0 Kosmos, 1 Garten; dieselben Werke am selben Ort
-  const le = U.RM ? Math.round(U.landK || 0) : eio(U.landK || 0), korn = 1 - sstep(0.3, 0.8, le), gross = mix(1, PFLANZE, le), bodenVon = (x, z) => le > 0.001 ? N.land.y(x, z) * le : 0;   // le: 0 Licht, 1 Landschaft
+  const le = U.RM ? Math.round(U.landK || 0) : eio(U.landK || 0), korn = 1 - sstep(0.3, 0.8, le), gross = mix(1, PFLANZE, le), hoch = le * (1 - (U.art ? U.art[2] : 0)), bodenVon = (x, z) => hoch > 0.001 ? N.land.y(x, z) * hoch : 0;   // le: 0 Licht, 1 Landschaft
   const ge = U.RM ? Math.round(U.galK || 0) : eio(U.galK || 0), tG = U.galZeit || 0, cG = Math.cos(DREHUNG * tG), sG = Math.sin(DREHUNG * tG);   // ge: 1 Galaxie
   if(ge > 0.001 && !N.gal) N.gal = galaxie(N, arbeit);
-  for(let n = 0; n < N.N; n++){ N.ort[n][0] = N.pos[n][0]; N.ort[n][1] = N.pos[n][1] + N.yBoden[n] * le; N.ort[n][2] = N.pos[n][2];
+  for(let n = 0; n < N.N; n++){ N.ort[n][0] = N.pos[n][0]; N.ort[n][1] = N.pos[n][1] + N.yBoden[n] * hoch; N.ort[n][2] = N.pos[n][2];
     if(ge > 0.001){ planetOrt(N.gal.planeten[n], tG, TMP); N.ort[n][0] = mix(N.pos[n][0], TMP[0], ge); N.ort[n][1] = mix(N.ort[n][1], 0, ge); N.ort[n][2] = mix(N.pos[n][2], TMP[2], ge); } }
   const yM = bodenVon(0, 0), raum = (1 - le) * (1 - ge);   // in der Landschaft trägt der Boden, was im Kosmos die Hüllen zeigen
   const hov = U.hover && U.hover.art === 'mond' ? U.hover.i : -1, imDach = U.dach;   // null, 'mitte', 'ohne' oder ein Dach
@@ -244,7 +244,7 @@ export function baueNetz(N, U, wall, vis, aktiv, aktivDetail){
     if(!zeig){ U.knoten[fi] = null;
       // Im Garten läuft jede gespeicherte Beziehung als Mycel unter dem Boden; es entsteht keine neue
       if(gk > 0.01){ const st = STIL[f.typ] || STIL['verweist-auf'], dm = Math.hypot(A[0] - Bp[0], A[2] - Bp[2]), nm = Math.round(clamp(dm * 3, 12, 80)), ux = (Bp[2] - A[2]) / (dm || 1), uz = (A[0] - Bp[0]) / (dm || 1), ph = hash(fi * 3.3) * TAU;
-        for(let s = 0; s <= nm; s++){ const t = s / nm, sn = Math.sin(Math.PI * t), wb = sn * (Math.sin(t * 9 + ph) * 0.05 + Math.sin(t * 23 + ph * 2) * 0.018) * dm, x0 = mix(A[0], Bp[0], t) + ux * wb, z0 = mix(A[2], Bp[2], t) + uz * wb; P(x0, le > 0.01 ? mix(-sn * (0.8 + dm * 0.045), weg(f, s, nm, x0, z0, N) + 0.04, le) : -sn * (0.8 + dm * 0.045), z0, fz * mix(1, 0.8, le), mix(st.c[0], 1.0, 0.4 * le), mix(st.c[1], 0.72, 0.4 * le), mix(st.c[2], 0.36, 0.4 * le), vis * gk * mix(1.9, 1.0, le) * st.a * (soloAny ? 0.3 : 1) * (wahl ? 0.4 : 1)); } }
+        for(let s = 0; s <= nm; s++){ const t = s / nm, sn = Math.sin(Math.PI * t), wb = sn * (Math.sin(t * 9 + ph) * 0.05 + Math.sin(t * 23 + ph * 2) * 0.018) * dm, x0 = mix(A[0], Bp[0], t) + ux * wb, z0 = mix(A[2], Bp[2], t) + uz * wb; P(x0, le > 0.01 ? mix(-sn * (0.8 + dm * 0.045), weg(f, s, nm, x0, z0, N) * (hoch / Math.max(le, 0.001)) + 0.04, le) : -sn * (0.8 + dm * 0.045), z0, fz * mix(1, 0.8, le), mix(st.c[0], 1.0, 0.4 * le), mix(st.c[1], 0.72, 0.4 * le), mix(st.c[2], 0.36, 0.4 * le), vis * gk * mix(1.9, 1.0, le) * st.a * (soloAny ? 0.3 : 1) * (wahl ? 0.4 : 1)); } }
       continue; }
     const st = STIL[f.typ] || STIL['verweist-auf'];
     const al = vis * (st.a + 0.04 * Math.min(6, f.kanten.length)) * (soloAny ? 0.3 : 1) * (anF || hovF ? 1.8 : beteiligt ? 1.3 : wahl ? 0.25 : 1) * (fokus ? (fokus.has(f.von) && fokus.has(f.nach) ? (U.als.fokus === 'planet' ? 0.22 : 0.45) : 0.05) : 1);   // im Blick auf Alsformen treten auch die Materialfäden zurück
@@ -252,13 +252,13 @@ export function baueNetz(N, U, wall, vis, aktiv, aktivDetail){
     const d = Math.hypot(A[0] - Bp[0], A[2] - Bp[2]), n = Math.round(clamp(d * 5, 18, 140));
     for(let s = 1; s < n; s++){ const t = s / n; if(st.luecke && t > 0.44 && t < 0.56) continue; if(st.strich && (s % 4 === 0)) continue;
       const q = pt(t), mund = 0.55 + 0.6 * t;   // zur Mündung hin heller: dorthin zeigt der Faden
-      q[1] = le > 0.01 ? N.land.y(q[0], q[2]) * le + 0.05 : mix(q[1], -Math.sin(Math.PI * t) * (0.8 + d * 0.045), gk);
+      q[1] = le > 0.01 ? N.land.y(q[0], q[2]) * hoch + 0.05 : mix(q[1], -Math.sin(Math.PI * t) * (0.8 + d * 0.045), gk);
       P(q[0], q[1], q[2], fz, st.c[0], st.c[1], st.c[2], al * mund); }
     // Bewegung: Material fließt sichtbar zur neuen Fassung, ein Verweis zeigt; Zugehörigkeit steht still
     if(st.fluss && !U.RM){ const z = st.fluss === 'material' ? 3 : 1; for(let q = 0; q < z; q++){ const t = ((wall * (st.fluss === 'material' ? 0.12 : 0.07) + q / z + fi * 0.137) % 1), p3 = pt(t);
       P(p3[0], p3[1], p3[2], fz * (st.fluss === 'material' ? 2.4 : 1.6), st.c[0], st.c[1], st.c[2], al * 2.2 * Math.sin(Math.PI * t)); } }
     // Knoten in der Mitte: anfassbar; mit Verwendung (Zweck, Teile, Grenzen) heller und mit Ring
-    const km = pt(0.5); if(le > 0.01) km[1] = N.land.y(km[0], km[2]) * le + 0.08; P(km[0], km[1], km[2], fz * (f.verwendung ? 1.9 : 1.3), st.c[0], st.c[1], st.c[2], al * (f.verwendung ? 2.4 : 1.4));
+    const km = pt(0.5); if(le > 0.01) km[1] = N.land.y(km[0], km[2]) * hoch + 0.08; P(km[0], km[1], km[2], fz * (f.verwendung ? 1.9 : 1.3), st.c[0], st.c[1], st.c[2], al * (f.verwendung ? 2.4 : 1.4));
     if(f.verwendung) screenRing(km, fz * 2.2, st.c, al * 1.2);
     U.knoten[fi] = toScreen(km[0], km[1], km[2]); }
   // Bündel im Überblick: ein Bogen je Bezirkspaar, von Rand zu Rand, Stärke nach Zahl der Kanten

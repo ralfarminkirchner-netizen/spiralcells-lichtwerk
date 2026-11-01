@@ -8,9 +8,9 @@ import {CAM, sstep} from './licht.js';
 import {gelaende, sonne, bodenGitter, pflanzen, grasFeld, saum, PFLANZE, FELD} from './gelaende.js';
 
 const HIMMEL = `
-uniform vec3 uSun; uniform sampler2D uRausch; uniform float uZeit;
+uniform vec3 uSun; uniform sampler2D uRausch; uniform float uZeit; uniform float uKuehl;
 vec3 himmelsFarbe(vec3 d){ float e=max(d.y,0.0), s=max(dot(d,uSun),0.0);
-  vec3 hor=mix(vec3(.20,.17,.27),vec3(1.05,.50,.19),pow(s,3.5)); return mix(hor,vec3(.012,.032,.095),pow(e,.38)); }
+  vec3 hor=mix(vec3(.20,.17,.27),vec3(1.05,.50,.19),pow(s,3.5)); vec3 c=mix(hor,vec3(.012,.032,.095),pow(e,.38)); return mix(c,c.bgr*vec3(.75,.95,1.25)+vec3(.0,.012,.03),uKuehl); }
 vec3 nebel(vec3 c,vec3 d,float dist,float fern){ float f=1.0-exp(-pow(dist/fern,2.2)); return mix(c,himmelsFarbe(normalize(vec3(d.x,.025,d.z))),f); }`;
 const V_HIMMEL = `#version 300 es
 uniform mat4 uIVP; out vec3 vD; out vec2 vUv;
@@ -25,15 +25,15 @@ void main(){ vec3 d=normalize(vD); float s=max(dot(d,uSun),0.0), e=d.y; vec3 c=h
   c+=vec3(2.2,1.0,.38)*pow(s,70.0)*.5+vec3(22.,11.,4.)*smoothstep(.99925,.9997,s);
   // Ferne Bergketten: drei Schichten, je weiter desto dunstiger
   float az=atan(d.z,d.x)/TAU; for(int i=0;i<3;i++){ float fi=float(i), k=mix(3.,11.,fi/2.), h=(.030-.012*fi)+(.085-.024*fi)*(textureLod(uRausch,vec2(az*k,.17+fi*.31),0.).r-.28)+.012*textureLod(uRausch,vec2(az*k*5.,.61+fi*.13),0.).g;
-    vec3 berg=mix(himmelsFarbe(normalize(vec3(d.x,.03,d.z))),vec3(.03,.03,.05),.14+.13*fi); if(e<h) c=berg; }
+    vec3 dunst=himmelsFarbe(normalize(vec3(d.x,.025,d.z))), berg=mix(dunst,vec3(.03,.03,.05),.2+.16*fi); if(e<h) c=mix(dunst,berg,smoothstep(0.,h*.8,e)); }
   float tag=smoothstep(0.,1.,uTag*1.7-max(e,0.)*1.1); o=vec4(c*tag*uTag*uEnc,1.); }`;
 const V_BODEN = `#version 300 es
 layout(location=0) in vec3 aP; layout(location=1) in vec3 aN; layout(location=2) in float aL;
-uniform mat4 uVP; uniform float uE; out vec3 vW; out vec3 vN; out float vL;
-void main(){ vW=vec3(aP.x,aP.y*uE,aP.z); vN=normalize(vec3(aN.x*uE,aN.y,aN.z*uE)); vL=mix(1.,aL,uE); gl_Position=uVP*vec4(vW,1.); }`;
+uniform mat4 uVP; uniform float uE; uniform float uFlach; out vec3 vW; out vec3 vN; out float vL;
+void main(){ float hb=uE*(1.-uFlach); vW=vec3(aP.x,aP.y*hb,aP.z); vN=normalize(vec3(aN.x*hb,aN.y,aN.z*hb)); vL=mix(1.,aL,uE); gl_Position=uVP*vec4(vW,1.); }`;
 const F_BODEN = `#version 300 es
 precision highp float; in vec3 vW; in vec3 vN; in float vL; out vec4 o;
-uniform sampler2D uKarte; uniform sampler2D uSchatten; uniform vec3 uCam; uniform float uRk; uniform float uR; uniform float uRm; uniform float uE; uniform float uFern; uniform float uEnc;` + HIMMEL + `
+uniform sampler2D uKarte; uniform sampler2D uSchatten; uniform vec3 uCam; uniform float uRk; uniform float uR; uniform float uRm; uniform float uE; uniform float uFern; uniform float uEnc; uniform vec3 uArt;` + HIMMEL + `
 void main(){ vec2 uv=vW.xz/uRk*.5+.5; vec3 k=vec3(0.), sch=vec3(0.); if(all(greaterThan(uv,vec2(.001)))&&all(lessThan(uv,vec2(.999)))){ k=texture(uKarte,uv).rgb; sch=texture(uSchatten,uv).rgb; }
   vec4 a=texture(uRausch,vW.xz/(uR*.09)), b=texture(uRausch,vW.xz/(uR*.012)); vec3 v=vW-uCam; float dist=length(v); vec3 d=v/dist;
   float fein=mix(b.g,.5,smoothstep(uR*.5,uR*1.6,dist));
@@ -44,6 +44,9 @@ void main(){ vec2 uv=vW.xz/uRk*.5+.5; vec3 k=vec3(0.), sch=vec3(0.); if(all(grea
   vec3 licht=mix(vec3(.14,.14,.05),vec3(.30,.25,.10),a.g)*(.7+.6*fein);
   float ra=smoothstep(.34,.66,k.r+(a.b-.5)*.9+(b.a-.5)*.25), bu=smoothstep(.34,.66,k.b+(a.r-.5)*.5);
   erde=mix(erde,wiese*.55,smoothstep(.56,.74,a.a)*.75);   // Bewuchs auf den Beeten: Erde bleibt nie eine glatte Scheibe
+  erde=mix(erde,mix(vec3(.10,.085,.055),vec3(.075,.10,.04),a.g)*(.7+.6*fein),uArt.x);   // Dorf: Höfe und Gärten
+  erde=mix(erde,mix(vec3(.05,.095,.04),vec3(.065,.12,.05),step(.5,fract(dot(vW.xz,vec2(.7,.71))/uR*26.)))*(.85+.3*fein),uArt.y);   // Campus: gemähter Rasen
+  licht=mix(licht,vec3(.17,.15,.12)*(.75+.5*b.r),uArt.x); licht=mix(licht,vec3(.22,.22,.21)*(.85+.3*step(.06,fract(vW.x/2.2))*step(.06,fract(vW.z/2.2))),uArt.y);   // Marktplatz, Innenhof
   vec3 alb=mix(mix(mix(huegel,wiese,k.g),erde,ra),licht,bu);
   float rand=exp(-pow((k.r-.5)/.13,2.))*smoothstep(.42,.62,a.b+b.a*.2), inner=exp(-pow((k.b-.5)/.13,2.))*smoothstep(.42,.62,a.r+b.a*.2); alb=mix(alb,vec3(.20,.17,.13)*(.35+1.3*b.r),max(rand,inner)*.9);
   alb*=1.0-.34*sch.g;   // innere Grenzen der Bereiche
@@ -51,7 +54,9 @@ void main(){ vec2 uv=vW.xz/uRk*.5+.5; vec3 k=vec3(0.), sch=vec3(0.); if(all(grea
   vec3 c=alb*(vec3(3.4,1.75,.74)*sonne+mix(vec3(.05,.04,.04),vec3(.14,.19,.32),n.y*.5+.5)*.9);
   c+=alb*vec3(1.5,1.05,.5)*exp(-dot(vW.xz,vW.xz)/(uRm*uRm))*1.5;   // die Zentrale ist die hellste Stelle am Boden
   c+=vec3(.9,.5,.2)*max(rand,inner)*.018;
-  c=nebel(c,d,dist,uFern); float q=smoothstep(.1,.9,uE), weit=uR*(.5+19.*q*q*q), rr=length(vW.xz);   // das Gelände breitet sich von der Zentrale her aus
+  c=nebel(c,d,dist,uFern);
+  if(uArt.z>.001){ float kachel=step(.025,fract(vW.x/2.4))*step(.025,fract(vW.z/2.4)); vec3 boden=mix(vec3(.030,.032,.036),vec3(.062,.066,.074),k.r); boden=mix(boden,vec3(.040,.040,.042),k.g); boden=mix(boden,vec3(.115,.10,.08),k.b); boden*=(.86+.14*kachel)*(.94+.1*b.r); c=mix(c,boden,uArt.z); }
+  float q=smoothstep(.1,.9,uE), weit=uR*(.5+19.*q*q*q), rr=length(vW.xz);   // das Gelände breitet sich von der Zentrale her aus
   o=vec4(c*smoothstep(weit,weit*.55,rr)*smoothstep(.1,.3,uE)*uEnc,1.); }`;
 const V_PFL = `#version 300 es
 layout(location=0) in vec4 a0; layout(location=1) in vec4 a1; layout(location=2) in vec4 a2; layout(location=3) in vec4 a3; layout(location=4) in vec2 a4;
@@ -126,27 +131,31 @@ function baue(gl, N, M, yaw){
 
 const bind = (gl, ein, name, t, u) => { gl.activeTexture(gl.TEXTURE0 + ein); gl.bindTexture(gl.TEXTURE_2D, t); gl.uniform1i(u, ein); };
 
-export function zeichneLandschaft(gl, N, U, M, wall, vis, E, ENC){
+export const HIMMELTEXT = HIMMEL;
+export function zeichneLandschaft(gl, N, U, M, wall, vis, E, ENC, ort = {bau: 0, art: [0, 0, 0], siedlung: null}){
+  const buero = ort.art[2], kuehl = ort.art[1] * 0.75;
   if(!N || vis <= 0.003 || E <= 0.003) return;
   if(!B || B.N !== N) baue(gl, N, M, U.yawBasis ?? 0.35);
   const R = N.L.R, fern = R * 5.2, cam = CAM.P, tag = sstep(0.2, 1, E);
   // Himmel
   gl.disable(gl.BLEND); gl.disable(gl.DEPTH_TEST); gl.useProgram(B.pH.p); gl.bindVertexArray(B.emptyVao);
-  gl.uniformMatrix4fv(B.pH.u.uIVP, false, CAM.IVP); gl.uniform3fv(B.pH.u.uSun, B.S); gl.uniform1f(B.pH.u.uTag, tag * vis); gl.uniform1f(B.pH.u.uZeit, wall); gl.uniform1f(B.pH.u.uEnc, ENC); bind(gl, 0, 'r', B.tR, B.pH.u.uRausch); gl.drawArrays(gl.TRIANGLES, 0, 3);
+  gl.uniformMatrix4fv(B.pH.u.uIVP, false, CAM.IVP); gl.uniform3fv(B.pH.u.uSun, B.S); gl.uniform1f(B.pH.u.uKuehl, kuehl); gl.uniform1f(B.pH.u.uTag, tag * vis * (1 - buero)); gl.uniform1f(B.pH.u.uZeit, wall); gl.uniform1f(B.pH.u.uEnc, ENC); bind(gl, 0, 'r', B.tR, B.pH.u.uRausch); gl.drawArrays(gl.TRIANGLES, 0, 3);
   // Boden
   gl.enable(gl.DEPTH_TEST); gl.depthFunc(gl.LEQUAL); gl.depthMask(true); gl.useProgram(B.pB.p); gl.bindVertexArray(B.vaoB); const ub = B.pB.u;
-  gl.uniformMatrix4fv(ub.uVP, false, CAM.VP); gl.uniform3fv(ub.uSun, B.S); gl.uniform3fv(ub.uCam, cam); gl.uniform1f(ub.uRk, B.Rk); gl.uniform1f(ub.uR, R); gl.uniform1f(ub.uRm, N.L.mitte.R); gl.uniform1f(ub.uE, E * vis); gl.uniform1f(ub.uFern, fern); gl.uniform1f(ub.uEnc, ENC);
+  gl.uniformMatrix4fv(ub.uVP, false, CAM.VP); gl.uniform3fv(ub.uSun, B.S); gl.uniform3fv(ub.uCam, cam); gl.uniform1f(ub.uRk, B.Rk); gl.uniform1f(ub.uR, R); gl.uniform1f(ub.uRm, N.L.mitte.R); gl.uniform1f(ub.uE, E * vis); gl.uniform1f(ub.uFlach, buero); gl.uniform3fv(ub.uArt, ort.art); gl.uniform1f(ub.uKuehl, kuehl); gl.uniform1f(ub.uFern, fern); gl.uniform1f(ub.uEnc, ENC);
   bind(gl, 0, 'r', B.tR, ub.uRausch); bind(gl, 1, 'k', B.tK, ub.uKarte); bind(gl, 2, 's', B.tS, ub.uSchatten); gl.drawElements(gl.TRIANGLES, B.nB, gl.UNSIGNED_INT, 0);
+  if(ort.siedlung) ort.siedlung(B.tR, B.S, fern, kuehl);
+  gl.enable(gl.DEPTH_TEST); gl.depthFunc(gl.LEQUAL); gl.disable(gl.BLEND);
   // Abdunkeln nach Bezirk, Stimme und Blick: dieselben Regeln wie im Kosmos
   const fokus = U.als && U.als.set ? U.als.set : null; for(let n = 0; n < N.N; n++){ let a = U.dach == null || N.bezirk(n) === U.dach ? 1 : 0.4; if(U.solo >= 0 && !N.B.monde[n].stimmen.includes(U.solo)) a *= 0.25; if(fokus && !fokus.has(n)) a *= 0.2; B.dim[n * 4] = a * 255; }
   gl.activeTexture(gl.TEXTURE3); gl.bindTexture(gl.TEXTURE_2D, B.tD); gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, N.N, 1, gl.RGBA, gl.UNSIGNED_BYTE, B.dim);
   // Gras und Pflanzen, von hinten nach vorn
   gl.useProgram(B.pP.p); const up = B.pP.u; gl.depthMask(false); gl.enable(gl.BLEND); gl.blendFuncSeparate(gl.ONE, gl.ONE_MINUS_SRC_ALPHA, gl.ONE, gl.ONE); gl.disable(gl.CULL_FACE);
-  gl.uniformMatrix4fv(up.uVP, false, CAM.VP); gl.uniform3fv(up.uSun, B.S); gl.uniform3fv(up.uCam, cam); gl.uniform3fv(up.uRe, CAM.R); gl.uniform3fv(up.uHo, CAM.U); gl.uniform1f(up.uE, E); gl.uniform1f(up.uGk, U.gartenK); gl.uniform1f(up.uS, Math.max(0.08, CAM.S * 0.0042)); gl.uniform1f(up.uZeit, wall); gl.uniform1f(up.uWind, U.RM ? 0 : 1); gl.uniform1f(up.uGross, PFLANZE); gl.uniform1f(up.uFern, fern); gl.uniform1f(up.uEnc, ENC); gl.uniform1f(up.uVis, vis);
+  gl.uniformMatrix4fv(up.uVP, false, CAM.VP); gl.uniform3fv(up.uSun, B.S); gl.uniform3fv(up.uCam, cam); gl.uniform3fv(up.uRe, CAM.R); gl.uniform3fv(up.uHo, CAM.U); gl.uniform1f(up.uE, E * (1 - buero * 0)); gl.uniform1f(up.uGk, U.gartenK); gl.uniform1f(up.uS, Math.max(0.08, CAM.S * 0.0042)); gl.uniform1f(up.uZeit, wall); gl.uniform1f(up.uWind, U.RM ? 0 : 1); gl.uniform1f(up.uGross, PFLANZE); gl.uniform1f(up.uFern, fern); gl.uniform1f(up.uEnc, ENC); gl.uniform1f(up.uVis, vis * (1 - ort.bau)); gl.uniform1f(up.uKuehl, kuehl);
   bind(gl, 0, 'r', B.tR, up.uRausch); bind(gl, 3, 'd', B.tD, up.uDim);
-  gl.bindVertexArray(B.iG.vao); gl.drawArraysInstanced(gl.TRIANGLE_STRIP, 0, 8, B.nG);
+  if(ort.bau < 0.995){ gl.bindVertexArray(B.iG.vao); gl.drawArraysInstanced(gl.TRIANGLE_STRIP, 0, 8, B.nG);
   const yk = Math.atan2(cam[0], cam[2]); if(Math.abs(yk - B.yawS) > 0.04){ B.yawS = yk; const ws = B.P.werke.slice().sort((a, b) => Math.hypot(b.x - cam[0], b.z - cam[2]) - Math.hypot(a.x - cam[0], a.z - cam[2])); let q = 0; for(const w of ws){ B.scratch.set(w.I, q); q += w.I.length; } gl.bindBuffer(gl.ARRAY_BUFFER, B.iP.buf); gl.bufferSubData(gl.ARRAY_BUFFER, 0, B.scratch); }
-  gl.bindVertexArray(B.iP.vao); gl.drawArraysInstanced(gl.TRIANGLE_STRIP, 0, 8, B.nP);
+  gl.bindVertexArray(B.iP.vao); gl.drawArraysInstanced(gl.TRIANGLE_STRIP, 0, 8, B.nP); }
   gl.bindVertexArray(null); gl.depthMask(true); gl.disable(gl.DEPTH_TEST); gl.disable(gl.BLEND); gl.activeTexture(gl.TEXTURE0);
 }
 export { gelaende };
