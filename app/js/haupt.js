@@ -58,7 +58,7 @@ function alsNamen(belegt){
 }
 /* Im Bezirk: die Namen seiner Werke unter ihren Zellen, die Namen der Bereiche innen am oberen Rand ihres Rings.
    Im Dach steht der Werkname ohne den Namen des Dachs („FASKA Lernpfade“ heißt dort „Lernpfade“). Was sich überdeckt, weicht aus, sonst schweigt es */
-let werkBezirk = undefined;
+let werkBezirk = undefined; const satzBereich = document.createRange();
 function ohneDachName(t, dach){ if(!dach) return t; const d = dach.toLowerCase(), k = t.toLowerCase();
   if(k.startsWith(d + ' ') && t.length > d.length + 3) return t.slice(d.length + 1).replace(/^[·:\-–]\s*/, ''); return t; }
 function werkNamen(belegt){
@@ -192,8 +192,8 @@ function zumNetz(){
   clearTimeout(U.lesenUhr); if(B.stoff.offen()) B.stoff.schliesse(); U.als = null;
   B.waehle(null); U.netDir = 1; U.netT = 1; U.kelchT = 0; U.zoom = 1; U.elevOff = 0; U.yawOff = 0; U.waehlen = null;
   U.dach = null;   // das Netz zeigt zuerst das Ganze; der Mond, aus dem du kamst, bleibt darin markiert
-  if(W.aktiv >= 0) B.waehle({art: 'mond', i: W.aktiv, mond: W.B.monde[W.aktiv]}, 1);   // Rückweg: der Mond, aus dem du kamst, bleibt markiert
-  B.zeile(B.netzSatz(W.B)); W.titelBis = -1; ortAktualisieren();
+  if(W.aktiv >= 0 && !U.innen) B.waehle({art: 'mond', i: W.aktiv, mond: W.B.monde[W.aktiv]}, 1);   // Rückweg: der Mond, aus dem du kamst, bleibt markiert
+  if(U.innen && U.innenT > 0) B.etageSagen(); else B.zeile(B.netzSatz(W.B)); W.titelBis = -1; ortAktualisieren();
 }
 function zurZelle(){ if(!W.Z || W.ruht) return; U.netDir = -1; U.netT = 0; B.waehle(null); B.zeile(B.mondSatz(W.Z.m)); ortAktualisieren(); }
 /* Rückweg: zuerst den gemerkten Weg zurück (auch innerhalb des Monds), sonst ins Netz */
@@ -556,7 +556,7 @@ function advance(rdt){
     // Vom einen Ort zum anderen: erst sinkt der alte Bau, dann steht der neue auf
     const dB = rdt / (W.RM ? 0.1 : 2.2); if(U.stil !== U.stilZiel){ U.bauK = Math.max(0, U.bauK - dB * 1.6); if(U.bauK <= 0) U.stil = U.stilZiel; } else if(U.stil && U.landK > 0.4) U.bauK = Math.min(1, U.bauK + dB);
     const zi = U.stil === 'dorf' ? 0 : U.stil === 'campus' ? 1 : U.stil === 'buero' ? 2 : -1; for(let a = 0; a < 3; a++) U.art[a] += ((a === zi ? 1 : 0) - U.art[a]) * (1 - Math.exp(-rdt / (W.RM ? 0.05 : 0.8)));
-    U.innenK += (U.innenT - U.innenK) * (1 - Math.exp(-rdt / (W.RM ? 0.05 : 0.75))); if(U.innen && U.innenT === 0 && U.innenK < 0.01){ U.innen = null; U.innenK = 0; document.body.classList.remove('imhaus'); B.innenSchilder && B.innenSchilder(); }
+    U.innenK += (U.innenT - U.innenK) * (1 - Math.exp(-rdt / (W.RM ? 0.05 : 1.25))); if(U.innen && U.innenT === 0 && U.innenK < 0.01){ U.innen = null; U.innenK = 0; document.body.classList.remove('imhaus'); B.innenSchilder && B.innenSchilder(); }
     if(U.galK <= 0) U.galZeit = 0; else if(W.RM) U.galZeit = 0; else if(!U.paused) U.galZeit += rdt; }
   U.dachK += ((U.dach != null || U.als ? 1 : 0) - U.dachK) * (1 - Math.exp(-rdt / (W.RM ? 0.1 : 0.7)));
   U.alsK += ((U.als ? 1 : 0) - U.alsK) * (1 - Math.exp(-rdt / (W.RM ? 0.1 : 0.7)));
@@ -581,7 +581,7 @@ function draw(rdt){
   if(U.flug && performance.now() - U.flug.t0 > U.flug.dauer) U.flug = null;
   const visZ = W.Z ? (1 - sstep(0.25, 0.7, U.netK)) * (1 - 0.7 * fk) : 0, visN = W.N && !W.ruht ? Math.max(sstep(0.05, 0.5, U.netK), 0.75 * fk) : 0;
   if(W.Z) baueZelle(W.Z, U, W.wall, rdt, visZ);
-  const innE = U.innen ? (W.RM ? Math.round(U.innenK) : eio(U.innenK)) : 0, draussen = 1 - sstep(0.25, 0.6, innE), drinnen = sstep(0.5, 0.85, innE) * visN;
+  const innE = U.innen ? (W.RM ? Math.round(U.innenK) : eio(U.innenK)) : 0, innK = U.innen ? (W.RM ? Math.round(U.innenK) : U.innenK) : 0, draussen = 1 - sstep(0.1, 0.6, innK), drinnen = sstep(0.3, 0.75, innK) * visN;
   if(visN > 0) baueNetz(W.N, U, W.wall, visN * draussen, W.aktiv, visZ);
   if(drinnen > 0.01) innenLichter(P, screenRing, U.innen, drinnen);
   if(visN * draussen > 0.003 && W.N.als) baueAlsformen(W.N, W.N.als, U, W.wall, visN * draussen, W.RM); else { U.echos.fill(null); U.spuren.fill(null); U.alsSchilder.length = 0; }
@@ -635,7 +635,8 @@ function ui(cam){
     el.style.transform = `translate(${Math.round(x)}px,${Math.round(y)}px) translate(0,-50%)`; el.style.opacity = (namenK * 0.85).toFixed(2); }
   U.namenAn = namenK > 0.01;
   // Dächer und Mitte tragen im Netz ihren Namen
-  const belegt = [];   // ein Platz je Name in diesem Bild: Mitte, Marke, Dächer, Werke, Türen
+  const belegt = [];   // ein Platz je Name in diesem Bild: Satz, Mitte, Marke, Dächer, Werke, Türen
+  { const li = document.getElementById('line'); if(li.classList.contains('on') && li.firstChild){ satzBereich.selectNodeContents(li); const r = satzBereich.getBoundingClientRect(); if(r.width) belegt.push({x: r.left - 6, y: r.top - 4, w: r.width + 12, h: r.height + 8}); } }
   if(dachEl && W.N){ const zeig = U.netK > 0.55 && !W.ruht, kids = dachEl.children, nd = W.N.daecher.length;
     // Namen, die sich überdecken würden, schweigen. Im Überblick: die Mitte, dann die Marke, dann die Dächer.
     // Im Bezirk: sein Name, die Marke und seine Werke zuerst; die Namen der anderen Bezirke nur, wo noch Platz ist

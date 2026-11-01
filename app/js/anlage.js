@@ -31,7 +31,7 @@ function dorfLage(N){
   const ohne = nachAlter(N.werkeIn('ohne')); ohne.forEach((n, i) => { const r = Math.sqrt((aussen + 5) ** 2 + 22 * (i + 1)), a = i * 2.39996 + 1; pos[n] = [Math.cos(a) * r, 0, Math.sin(a) * r]; seite[n] = [Math.cos(a), Math.sin(a)]; yaw[n] = a * 1.7; });
   if(ohne.length){ const m = pos[ohne[Math.floor(ohne.length / 2)]]; mitten.set('ohne', [m[0], m[2]]); ziele.set('ohne', {mitte: [0, 0, 0], R: Math.hypot(pos[ohne[ohne.length - 1]][0], pos[ohne[ohne.length - 1]][2]) + 2}); }
   for(let n = 0; n < N.N; n++) if(!pos[n]){ pos[n] = [ringR, 0, 0]; seite[n] = [1, 0]; }
-  return {pos, yaw, seite, mitten, ziele, wege};
+  return {pos, yaw, seite, mitten, ziele, wege, R: aussen};
 }
 /* Teilt die Fassungen eines Werks nach Abstammung: 0 der Hauptstrang, dann Gabeln, negativ die Fassungen ohne belegte Herkunft (je sechs ein Schuppen) */
 export function bauteile(W, zahl){ const lose = i => W.art[i] === 'frei' || W.art[i] === 'reihe', teil = new Int32Array(zahl), anbauten = []; let schuppen = 0;
@@ -42,7 +42,7 @@ export function bauteile(W, zahl){ const lose = i => W.art[i] === 'frei' || W.ar
 /* Die Etagen eines Werks: unten das Älteste. Ihre Zahl ist die geleistete Arbeit; je Etage die Fassungen eines Zeitabschnitts */
 export function etagen(m, ar = 0.5, hoechstens = 16){
   const ord = m.samen.map((_, i) => i).sort((a, b) => (m.samen[a].zeit || 0) - (m.samen[b].zeit || 0)), n = ord.length; if(!n) return [];
-  const F = Math.min(n, Math.max(1, Math.round(1 + (hoechstens - 1) * ar * ar * 1.25))), tag = t => t ? new Date(t).toISOString().slice(0, 10) : 'ohne Datum', raus = [];
+  const F = Math.min(n, hoechstens, Math.max(1, Math.round(1 + (hoechstens - 1) * ar * ar * 1.25))), tag = t => t ? new Date(t).toISOString().slice(0, 10) : 'ohne Datum', raus = [];
   for(let k = 0; k < F; k++){ const li = ord.slice(Math.floor(k * n / F), Math.floor((k + 1) * n / F)); raus.push({von: tag(m.samen[li[0]].zeit), bis: tag(m.samen[li[li.length - 1]].zeit), fassungen: li}); }
   return raus;
 }

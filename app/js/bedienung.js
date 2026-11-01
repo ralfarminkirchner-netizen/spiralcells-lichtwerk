@@ -16,6 +16,7 @@ import * as stoff from './stoff.js';
 import {teilnahmeMarke, spurMarke, alsSatz, zellSatz, STAND_SATZ} from './alsformen.js';
 import {quellAdresse, quellFassung, quellName} from './quelle.js';
 import {werkFarbe} from './verschraenkung.js';
+import {appSource} from './materialraum.js';
 
 const $ = s => document.querySelector(s);
 const canvas = $('#gl'), lineEl = $('#line'), markeEl = $('#marke'), leseEl = $('#lese'), siegelEl = $('#siegel'), hintEl = $('#hint'), ortEl = $('#zurueck');
@@ -85,7 +86,7 @@ let markeW = 200;
 export function setzeMarke(sx, sy){
   const w = markeW, links = sx > CAM.cssW - w - 40;
   markeEl.classList.toggle('links', links);
-  const x = clamp(links ? sx - w - 22 : sx + 22, 12, Math.max(12, CAM.cssW - w - 12)), y = clamp(sy - 16, 60, CAM.cssH - 140);
+  const x = clamp(links ? sx - w - 22 : sx + 22, 12, Math.max(12, CAM.cssW - w - 12)), l = lineEl.classList.contains('on') && lineEl.textContent ? lineEl.getBoundingClientRect().top : CAM.cssH, y = clamp(sy - 16, 60, Math.max(60, Math.min(CAM.cssH - 140, l - markeEl.offsetHeight - 8)));
   markeEl.style.transform = `translate(${Math.round(x)}px,${Math.round(y)}px)`;
 }
 
@@ -260,6 +261,8 @@ function baueTun(v, sel){
   tun.append(auf, weitere);
 }
 const formKorn = sel => sel && sel.art === 'same' && sel.mond.samen[sel.i]?.form ? sel.mond.samen[sel.i] : null;
+/* Ein gespeicherter App-Zustand ist kein Lesetext: hier steht seine Beschreibung. Das Ganze bleibt unter „Ganz lesen“ und in den technischen Details */
+function lesbar(text){ const q = appSource(text); if(!q) return absaetze(text); const n = q.sections.length; return absaetze(q.summary) + `<p class="leise">${esc(q.scope)} ${n} ${n === 1 ? 'Ausschnitt' : 'Ausschnitte'} unter „Ganz lesen“.</p>`; }
 function zeigeText(v, sel){
   if(sel) baueTun(v, sel);
   leseEl.querySelector('.lese-titel').textContent = kurz(v.label, 220);
@@ -267,7 +270,7 @@ function zeigeText(v, sel){
   const form = formKorn(sel);
   leseEl.querySelector('.lese-text').innerHTML = form
     ? `<p>Eine Form ohne Modell, vom KiNFORMER gesetzt und von dir behalten. Die Worte sind die des Originals.</p><p class="zitat">${esc(String(v.notes || '').replace(/^Form ohne Modell · KiNFORMER · /, ''))}</p>`
-    : absaetze(v.content || v.notes || '');
+    : lesbar(v.content || v.notes || '');
   // Technische Details: standardmäßig geschlossen, öffnet nie von selbst
   const det = leseEl.querySelector('.technik'); det.open = false;
   const B = W.B, t = B.baeume.get(v.worktree_id);
@@ -646,7 +649,7 @@ export function installiere(a){
   griff.addEventListener('pointermove', e => { if(gy != null){ leseEl.style.transition = 'none'; leseEl.style.translate = `0 ${Math.max(0, e.clientY - gy)}px`; } });
   const griffEnde = e => { if(gy == null) return; const d = e.clientY - gy; gy = null; leseEl.style.transition = ''; leseEl.style.translate = ''; if(d > 70){ schliesseLese(true); U.stufe = 1; } };
   griff.addEventListener('pointerup', griffEnde); griff.addEventListener('pointercancel', griffEnde);
-  leseEl.querySelector('.lese-zu').addEventListener('click', () => { schliesseLese(true); U.stufe = 1; canvas.focus({preventScroll: true}); });
+  leseEl.querySelector('.lese-zu').addEventListener('click', () => { if(U.ausHaus && U.netT < 0.5){ zurueckInsHaus(); return; } schliesseLese(true); U.stufe = 1; canvas.focus({preventScroll: true}); });
 }
 
 function setHold(on, sx, sy){ const Z = W.Z; if(!Z) return; if(on){ Z.S.holdT = 1; Z.S.holdP = pointerWorld(sx, sy, CAM.target); } else Z.S.holdT = 0; }
@@ -655,26 +658,29 @@ function zoomAuf(z){
   U.zoom = clamp(z, 0.35, 2.6);
 }
 /* Dieselben Werke, andere Darstellung. Am Bestand ändert sich nichts */
-const ANSICHT = {kosmos: () => netzSatz(W.B), licht: () => 'Lichtansicht: dieselben Werke, die Spirale steigt als Pflanze aus Licht auf.', garten: () => 'Derselbe Mechanismus als Garten: Bäume und Ranken wachsen aus der Abstammung, Blätter, Blüten und Früchte sind Fassungen, das Mycel sind die Verbindungen.', galaxie: () => 'Derselbe Mechanismus als Galaxie: Sonne = Dach, Spirale = Werk, jedes Lichtstück eine Fassung, unten die älteste.',
-  dorf: () => 'Derselbe Mechanismus als Dorf: je Dach eine Straße, die ältesten Häuser am Platz. Helles Fenster = Fassung, Acker = Arbeit. Tippe auf ein Haus und geh hinein.', campus: () => 'Derselbe Mechanismus als Campus: jeder Turm ein Werk, jede Etage ein Zeitabschnitt, jedes helle Fenster eine Fassung. Tippe auf ein Gebäude und geh hinein.', buero: () => 'Derselbe Mechanismus als Bürokomplex: Riegel an Straßen, unten das Älteste, oben das Jüngste. Tippe auf ein Gebäude und geh hinein.'};
+const ANSICHT = {kosmos: () => netzSatz(W.B), licht: () => 'Lichtansicht: dieselben Werke, die Spirale steigt als Pflanze aus Licht auf.', garten: () => 'Derselbe Mechanismus als Garten: Bäume und Ranken wachsen aus der Abstammung, Blätter, Blüten und Früchte sind Fassungen, das Mycel sind die Verbindungen.', galaxie: () => 'Sonne = Dach, Spirale = Werk, jedes Lichtstück eine Fassung, unten die älteste.',
+  dorf: () => 'Straße = Dach, Haus = Werk, helles Fenster = Fassung. Tippe auf ein Haus und geh hinein.', campus: () => 'Derselbe Mechanismus als Campus: jeder Turm ein Werk, jede Etage ein Zeitabschnitt, jedes helle Fenster eine Fassung. Tippe auf ein Gebäude und geh hinein.', buero: () => 'Derselbe Mechanismus als Bürokomplex: Riegel an Straßen, unten das Älteste, oben das Jüngste. Tippe auf ein Gebäude und geh hinein.'};
 function ansicht(a){ if(U.netT < 0.5 && a !== 'text') return;
   if(a === 'text'){ textfassung(!U.imText); return; } if(U.imText) textfassung(false);
   U.ansicht = U.ansicht === a ? 'kosmos' : a; const v = U.ansicht, ort = v === 'dorf' || v === 'campus' || v === 'buero';
   U.gartenT = v === 'licht' || v === 'garten' || ort ? 1 : 0; U.landT = v === 'garten' || ort ? 1 : 0; U.galT = v === 'galaxie' ? 1 : 0; U.stilZiel = ort ? v : null; if(!U.stil && ort){ U.stil = v; U.bauK = 0; }
-  wahlZeigen(); zeile(ANSICHT[v]()); }
+  waehle(null); wahlZeigen(); ansichtSagen(); }
+/* Der Satz einer Welt erklärt sie und tritt dann zurück, damit er die Welt nicht verdeckt */
+function ansichtSagen(){ const satz = ANSICHT[U.ansicht](); zeile(satz); clearTimeout(U.satzUhr); if(U.ansicht !== 'kosmos') U.satzUhr = setTimeout(() => { if(lineText === satz) zeile(''); }, 9000); }
 function wahlZeigen(){ document.querySelectorAll('#ansichten button').forEach(b => { b.setAttribute('aria-pressed', (U.imText ? b.dataset.a === 'text' : b.dataset.a === U.ansicht) ? 'true' : 'false'); }); }
 function textfassung(an){ U.imText = an; const el = $('#textgrund'); el.hidden = !an; if(an){ zeichneText(el, W.N, i => { textfassung(false); api.oeffneMond(i, {}); }, () => textfassung(false)); el.focus({preventScroll: true}); } else canvas.focus({preventScroll: true}); wahlZeigen(); }
 /* In ein Gebäude hinein: das Ganze im Schnitt, dann Etage für Etage */
-function hineingehen(n){ const o = W.N.ort[n]; U.innen = {n, stil: U.stil, etage: -1, wahl: null, plan: innenPlan(W.N, n, U.stil, [o[0], 0, o[2]])}; U.innenT = 1; U.sel = null; document.body.classList.add('imhaus'); $('#etagen').hidden = false; etageSagen(); }
-function hinausgehen(){ U.innenT = 0; $('#etagen').hidden = true; zeile(ANSICHT[U.ansicht]()); }
+function hineingehen(n){ const o = W.N.ort[n]; U.innen = {n, stil: U.stil, etage: -1, wahl: null, plan: innenPlan(W.N, n, U.stil, [o[0], 0, o[2]])}; U.innenT = 1; U.sel = null; document.body.classList.add('imhaus'); etageSagen(); }
+function hinausgehen(){ U.innenT = 0; U.ausHaus = false; waehle(null); ansichtSagen(); }
+function zurueckInsHaus(){ U.ausHaus = false; schliesseLese(true); waehle(null); api.zurueck(); }
 function etageSetzen(k){ const I = U.innen; I.etage = k; I.wahl = null; etageSagen(); }
 function etageSchritt(d){ const I = U.innen, max = I.plan.reihen.length - 1; etageSetzen(I.etage < 0 ? (d > 0 ? 0 : max) : Math.max(0, Math.min(max, I.etage + d))); }
-function etageSagen(){ const I = U.innen, m = W.B.monde[I.n], max = I.plan.reihen.length, dorf = I.stil === 'dorf'; if(!m.samen.length){ zeile(`${m.titel}: noch leer. Es gibt nur die Ausgangsfassung, darum steht hier kein ${dorf ? 'Arbeitsplatz' : 'Schreibtisch'}.`); return; } if(I.etage < 0){ zeile(`${m.titel}: ${max} ${dorf ? (max === 1 ? 'Stockwerk' : 'Stockwerke') : (max === 1 ? 'Etage' : 'Etagen')}, unten das Älteste. Die Treppe ist die Spirale, je Stimme ${dorf ? 'eine Kammer' : 'eine Abteilung'}. Tippe auf ${dorf ? 'ein Stockwerk' : 'eine Etage'}.`); return; }
+export function etageSagen(){ const I = U.innen, m = W.B.monde[I.n], max = I.plan.reihen.length, dorf = I.stil === 'dorf'; if(!m.samen.length){ zeile(`${m.titel}: noch leer. Es gibt nur die Ausgangsfassung, darum steht hier kein ${dorf ? 'Arbeitsplatz' : 'Schreibtisch'}.`); return; } if(I.etage < 0){ zeile(`${m.titel}: ${max} ${dorf ? (max === 1 ? 'Stockwerk' : 'Stockwerke') : (max === 1 ? 'Etage' : 'Etagen')}, unten das Älteste. Die Treppe ist die Spirale, je Stimme ${dorf ? 'eine Kammer' : 'eine Abteilung'}. Tippe auf ${dorf ? 'ein Stockwerk' : 'eine Etage'}.`); return; }
   const r = I.plan.reihen[I.etage], t = x => x && x !== 'ohne Datum' ? new Date(x).toLocaleDateString('de-DE', {day: 'numeric', month: 'long'}) : 'ohne Datum'; zeile(`${dorf ? 'Stockwerk' : 'Etage'} ${I.etage + 1} von ${max}: ${r.von === r.bis ? t(r.von) : t(r.von) + ' bis ' + t(r.bis)}, ${r.zahl} ${dorf ? (r.zahl === 1 ? 'Werkbank' : 'Werkbänke') : (r.zahl === 1 ? 'Schreibtisch' : 'Schreibtische')}. ${dorf ? 'Eine Werkbank ist eine Fassung, die Bücher sind ihre Textmenge.' : 'Ein Tisch ist eine Fassung, der Stapel ihre Textmenge.'}`); }
 function innenTippen(sx, sy){ const I = U.innen, pl = I.plan; if(I.etage < 0){ let b = -1, bd = Infinity; pl.reihen.forEach((r, k) => { const s = toScreen(pl.o[0], r.y + 1, pl.o[2]), d = Math.abs(s[1] - sy); if(d < bd){ bd = d; b = k; } }); if(b >= 0) etageSetzen(b); return; }
   let t = null, bd = 44 * 44; for(const x of pl.tische){ if(x.k !== I.etage) continue; const s = toScreen(x.x, x.y, x.z), d = (s[0] - sx) ** 2 + (s[1] - sy) ** 2; if(d < bd){ bd = d; t = x; } }
   if(!t){ I.wahl = null; etageSagen(); return; } const m = W.B.monde[I.n], sa = m.samen[t.i];
-  if(I.wahl === t.i){ api.oeffneMond(I.n, {waehle: sa.id, stufe: 2}); return; } I.wahl = t.i; zeile(`${sa.label || 'Fassung'} · ${(sa.laenge || 0).toLocaleString('de-DE')} Zeichen · noch einmal tippen zum Lesen.`); }
+  if(I.wahl === t.i){ api.oeffneMond(I.n, {waehle: sa.id, stufe: 2}); U.ausHaus = true; return; } I.wahl = t.i; zeile(`${sa.label || 'Fassung'} · ${(sa.laenge || 0).toLocaleString('de-DE')} Zeichen · noch einmal tippen zum Lesen.`); }
 function spirale(){ if(U.netT > 0.5) return; U.spiralT = U.spiralT > 0.5 ? 0 : 1;
   const b = $('#spiralknopf'); b.setAttribute('aria-pressed', U.spiralT > 0.5 ? 'true' : 'false'); b.setAttribute('aria-label', U.spiralT > 0.5 ? 'Als Wuchs zeigen' : 'Als Spirale zeigen');
   const m = W.Z && W.Z.m;
@@ -682,12 +688,13 @@ function spirale(){ if(U.netT > 0.5) return; U.spiralT = U.spiralT > 0.5 ? 0 : 1
 function seite(){ if(U.netT > 0.5) return; U.kelchT = U.kelchT > 0.5 ? 0 : 1; U.elevOff = 0;
   const b = $('#seite'); b.setAttribute('aria-pressed', U.kelchT > 0.5 ? 'true' : 'false'); b.setAttribute('aria-label', U.kelchT > 0.5 ? 'Von oben: das Werk' : 'Von der Seite: Geschichte');
   zeile(U.kelchT > 0.5 ? 'Von der Seite: die Geschichte. Unten der Keim, oben das Jüngste.' : mondSatz(W.Z && W.Z.m)); }
-function B_schilder(){ const host = $('#innenschilder'); schilderMalen = () => { const I = U.innen, an = I && U.innenK > 0.7 && U.innenT > 0; if(!an){ if(host.childElementCount) host.innerHTML = ''; host._f = null; return; } const pl = I.plan, modus = I.etage < 0 ? 'ganz' : 'etage' + I.etage, liste = I.etage < 0 ? pl.reihen.map((r, k) => ({t: `${k + 1}`, x: pl.o[0] + pl.R * 1.12, y: r.y + 1.2, z: pl.o[2]})) : pl.schilder.map(s => ({t: s.name, x: pl.o[0] + s.x, y: I.etage * pl.HOEHE + 1.4, z: pl.o[2] + s.z})); if(host._f !== modus){ host._f = modus; host.innerHTML = ''; for(const q of liste){ const e = document.createElement('span'); e.textContent = q.t; host.append(e); } } liste.forEach((q, j) => { const s = toScreen(q.x, q.y, q.z), e = host.children[j]; if(e){ e.style.opacity = s[2] > 0 ? '.9' : '0'; e.style.transform = `translate(${Math.round(s[0])}px,${Math.round(s[1])}px) translate(-50%,-50%)`; } }); }; }
+function B_schilder(){ const host = $('#innenschilder'); schilderMalen = () => { const leiste = !(U.innen && U.innenT > 0 && U.netT > 0.5); if($('#etagen').hidden !== leiste) $('#etagen').hidden = leiste; const I = U.innen, an = I && U.innenK > 0.7 && U.innenT > 0; if(!an){ if(host.childElementCount) host.innerHTML = ''; host._f = null; return; } const pl = I.plan, modus = I.etage < 0 ? 'ganz' : 'etage' + I.etage, liste = I.etage < 0 ? pl.reihen.map((r, k) => ({t: `${k + 1}`, x: pl.o[0] + pl.R * 1.12, y: r.y + 1.2, z: pl.o[2]})) : pl.schilder.map(s => ({t: s.name, x: pl.o[0] + s.x, y: I.etage * pl.HOEHE + 1.4, z: pl.o[2] + s.z})); if(host._f !== modus){ host._f = modus; host.innerHTML = ''; for(const q of liste){ const e = document.createElement('span'); e.textContent = q.t; host.append(e); } } liste.forEach((q, j) => { const s = toScreen(q.x, q.y, q.z), e = host.children[j]; if(e){ e.style.opacity = s[2] > 0 ? '.9' : '0'; e.style.transform = `translate(${Math.round(s[0])}px,${Math.round(s[1])}px) translate(-50%,-50%)`; } }); }; }
 let schilderMalen = () => {};
 export const innenSchilder = () => schilderMalen();
 export function zurueck(){
   clearTimeout(U.lesenUhr);
   if(U.imText){ textfassung(false); return; }
+  if(U.ausHaus && U.netT < 0.5){ zurueckInsHaus(); return; }   // wer an der Werkbank liest, steht danach wieder an ihr
   if(U.innen && U.innenT > 0 && U.netT > 0.5){ if(U.innen.wahl != null){ U.innen.wahl = null; etageSagen(); return; } if(U.innen.etage >= 0){ etageSetzen(-1); return; } hinausgehen(); return; }
   if(U.siegel){ const l = U.siegel.lassen; schliesseSiegel(); l && l(); return; }
   if(U.waehlen){ U.waehlen = null; zeile(mondSatz(W.Z && W.Z.m)); return; }

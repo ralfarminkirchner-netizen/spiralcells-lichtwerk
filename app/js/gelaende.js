@@ -34,6 +34,11 @@ export function gelaende(L){
 /* Himmelsrichtung der Sonne: tief und im Rücken des Bildes, darum leuchten die Blätter von hinten */
 export function sonne(yaw){ const a = yaw + 0.55, e = 0.13, c = Math.cos(e); return [-Math.sin(a) * c, Math.sin(e), -Math.cos(a) * c]; }
 
+/* Die Höhe des Bodens, wie er gezeichnet wird: zwischen den Gitterpunkten gerade. Straßen und Äcker liegen darum auf ihm und nicht darunter */
+export const gitterMass = klein => klein ? [120, 160] : [170, 220];
+export function gitterHoehe(G, ringe, speichen){ const R = G.R, E = Math.exp(3.4) - 1, schon = new Map(), weit = i => R * 18 * (Math.exp(3.4 * i / ringe) - 1) / E, h = (i, j) => { j = (j + speichen) % speichen; const k = i * speichen + j; let v = schon.get(k); if(v === undefined){ const r = weit(i), a = j / speichen * Math.PI * 2; v = G.y(Math.cos(a) * r, Math.sin(a) * r); schon.set(k, v); } return v; };
+  return (x, z) => { const r = Math.hypot(x, z), fi = Math.log(1 + r * E / (R * 18)) * ringe / 3.4, i = Math.min(ringe - 1, Math.floor(fi)), v = fi - i, fj = (Math.atan2(z, x) / (Math.PI * 2) + 1) % 1 * speichen, j = Math.floor(fj), u = fj - j, A = h(i, j), B = h(i, j + 1), C = h(i + 1, j), D = h(i + 1, j + 1); return u + v <= 1 ? A + (B - A) * u + (C - A) * v : D + (C - D) * (1 - u) + (B - D) * (1 - v); }; }
+
 /* Der Boden als Gitter aus Ringen: innen fein, zum Horizont weit. x y z, Normale, Licht der Sonne (0 im Schatten eines Hügels) */
 export function bodenGitter(G, S, ringe = 170, speichen = 220){
   const R = G.R, n = (ringe + 1) * speichen, v = new Float32Array(n * 7), H = R * 0.006, weit = i => R * 18 * (Math.exp(3.4 * i / ringe) - 1) / (Math.exp(3.4) - 1);

@@ -72,6 +72,16 @@ Mechanismus, in jeder Welt gleich: unten das Älteste, oben das Jüngste. Verzwe
 - Kamera und Bündel finden in Dorf, Galaxie und Büro jetzt den Bezirk an seiner eigenen Lage (im Büro fuhr die Kamera vorher an den falschen Ort).
 - Offen: Straßen liegen an Hängen teils im Boden. Sehr große Werke (196 Fassungen) sind eher Perlensäulen als lesbare Spiralen. Die Innenräume bleiben schlicht. Am Handy ist das Dorf klein und der Satz verdeckt es teils. Nicht auf einem echten Handy geprüft.
 
+## Schritt 13: Mängel aus Schritt 12 (01.11.)
+- Galaxie: alle Stränge eines Werks liegen als Band nebeneinander, die Spirale öffnet sich nach oben; große Werke sind keine Perlensäulen mehr. Fassungen ohne belegte Herkunft bilden ein zweites Band gegenüber.
+- Dorf außen: Straßen und Äcker liegen auf dem gezeichneten Boden. Haupthaus: außen so viele Stockwerke wie innen (höchstens 4), Vorkragung, Sockel, Quergiebel, Kamin, Tür zur Straße. Kamera misst sich an den Straßen.
+- Innen: Dielen, Fenster, Ofen, Werkbank mit Beinen, Bücher, Lampe je Fassung (Einrichtung ohne Aussage).
+- Lesen an der Werkbank durchgespielt (Dorf und Campus, 1280 x 800). Behoben: rohe Daten statt Text bei App-Zuständen, Stockwerk-Leiste über dem Lesefeld, Rückweg über drei Stufen; Escape und Kreuz führen jetzt zurück an die Werkbank.
+- Namen und Marke meiden den Satz; der Satz einer Welt tritt nach 9 Sekunden zurück. Fäden des zuletzt offenen Werks zeigen sich in den Welten erst bei Wahl.
+- Bewegung in Bildfolgen geprüft. Behoben: schwarzer Block beim Betreten des Hauses, Stockwerke verschwanden auf einen Schlag. Bleibt: beim Betreten ein kurzer dunkler Streifen am Himmel; im Sternenfeld messbares Funkeln, teils Messartefakt.
+- Bildrate 60 je Sekunde in Dorf und Galaxie bei 1280 x 800 und 390 x 844, am Mac. Kein echtes Handy geprüft. Der Leseweg im Handy-Format ist nicht bestätigt: der Prüflauf kam dort nicht ins Haus, Ursache ungeklärt.
+- Ralf nach diesem Schritt: Die Grafik reicht grundsätzlich nicht. Kein Feinschliff mehr, neue Engine.
+
 ## Prüfstand 01.11.
 - Geprüft im Browser bei 1280 x 800 und 390 x 844, auf der Datenkopie: alle Ansichten, Morph in Einzelbildern, Wähler, Textfassung, Werk öffnen und zurück. 60 Bilder je Sekunde am Mac (Grafik des Macs, nicht auf einem echten Handy). 0 schwarze Starts von 12. Bilder: `Development/Artifacts/lichtwerk-vergleich-20261101/lichtgrund/garten4` und `garten5`.
 - Offen: Laufende Bewegung nur in Standbildern beurteilt, nicht als Film. Nicht auf einem echten Handy geprüft. Namen überlappen teils die Marke. Die Innenräume sind noch schlichte Kisten: kein Glas, keine Möbel außer Tisch und Stuhl. Viele Werke haben nur eine Fassung, ihr Gebäude ist also einstöckig mit einem Tisch; das ist der Bestand.

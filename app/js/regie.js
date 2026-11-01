@@ -4,6 +4,7 @@
    Netz der Werke (die größere Zelle). Weich wie die Plansequenz des Lichtwerks.
    ===================================================================== */
 import {DEG, clamp, mix, sstep, eio, CAM} from './licht.js';
+import {orteFuer} from './anlage.js';
 
 export function regie(U, Z, N, RM){
   const asp = CAM.cssW / CAM.cssH, fit = 1 / Math.min(1, asp * 1.08), portrait = asp < 0.75;
@@ -22,24 +23,26 @@ export function regie(U, Z, N, RM){
       U.dachZiel = U.dachGlatt; }
     const dz = U.dachZiel, dk = dz ? (RM ? Math.round(U.dachK) : eio(U.dachK)) : 0;
     const nMitte0 = dz ? [mix(N.mitte[0], dz.mitte[0], dk), mix(N.mitte[1], dz.mitte[1], dk), mix(N.mitte[2], dz.mitte[2], dk)] : N.mitte, lzm = RM ? Math.round(U.landK) : eio(U.landK);
-    const bue = U.art ? U.art[2] : 0, gzm = RM ? Math.round(U.galK) : eio(U.galK), nMitte = lzm > 0 && N.land ? [nMitte0[0], nMitte0[1] + lzm * (N.land.y(nMitte0[0], nMitte0[2]) + N.L.R * 0.05) * (1 - bue), nMitte0[2]] : gzm > 0 ? [mix(nMitte0[0], 0, gzm * (1 - dk)), N.L.R * 0.05 * gzm, mix(nMitte0[2], 0, gzm * (1 - dk))] : nMitte0;   // in der Landschaft blickt man über den Boden, der Himmel gehört ins Bild
+    const bue = U.art ? U.art[2] : 0, gzm = RM ? Math.round(U.galK) : eio(U.galK), dorfK = lzm * (U.art ? U.art[0] : 0) * (1 - dk), nMitte = lzm > 0 && N.land ? [mix(nMitte0[0], 0, dorfK), nMitte0[1] + lzm * (N.land.y(mix(nMitte0[0], 0, dorfK), mix(nMitte0[2], 0, dorfK)) + N.L.R * 0.05) * (1 - bue), mix(nMitte0[2], 0, dorfK)] : gzm > 0 ? [mix(nMitte0[0], 0, gzm * (1 - dk)), N.L.R * 0.05 * gzm, mix(nMitte0[2], 0, gzm * (1 - dk))] : nMitte0;   // in der Landschaft blickt man über den Boden, der Himmel gehört ins Bild
     // Der Maßstab misst, was alle Bezirke wirklich brauchen. Am Handy steht die lange Achse hochkant
     const lz = RM ? Math.round(U.landK) : eio(U.landK), yawN = 0.35 + (portrait && hochkant(N, asp) ? Math.PI / 2 : 0) + (RM ? 0 : mix(0.012 * U.netZeit, Math.sin(U.netZeit * 0.03) * 0.14, lz));   // in der Landschaft pendelt der Blick: die Sonne bleibt im Rücken des Bildes
-    const gk = RM ? Math.round(U.gartenK) : eio(U.gartenK), le = RM ? Math.round(U.landK) : eio(U.landK), ge = RM ? Math.round(U.galK) : eio(U.galK), elevG = mix(mix(mix(50, 14, gk), mix(mix(portrait ? 17 : 12.5, portrait ? 26 : 19, U.art ? U.art[0] : 0), 40, U.art ? U.art[2] : 0), le), portrait ? 34 : 30, ge) * DEG, ganz = (N.kreise ? netzMass(N, yawN, elevG, asp) * mix(1, 1.12, gk) / fit : N.Rm2 * 0.9) * mix(1, mix(mix(portrait ? 0.3 : 0.82, portrait ? 0.46 : 0.82, U.art ? U.art[0] : 0), portrait ? 0.7 : 1.0, U.art ? U.art[2] : 0), le) * mix(1, portrait ? 0.7 : 1.02, ge);
+    const gk = RM ? Math.round(U.gartenK) : eio(U.gartenK), le = RM ? Math.round(U.landK) : eio(U.landK), ge = RM ? Math.round(U.galK) : eio(U.galK), elevG = mix(mix(mix(50, 14, gk), mix(mix(portrait ? 17 : 12.5, portrait ? 32 : 22, U.art ? U.art[0] : 0), 40, U.art ? U.art[2] : 0), le), portrait ? 34 : 30, ge) * DEG, ganz = (N.kreise ? netzMass(N, yawN, elevG, asp) * mix(1, 1.12, gk) / fit : N.Rm2 * 0.9) * mix(1, mix(mix(portrait ? 0.3 : 0.82, portrait ? 0.46 : 0.82, U.art ? U.art[0] : 0), portrait ? 0.7 : 1.0, U.art ? U.art[2] : 0), le) * mix(1, portrait ? 0.7 : 1.02, ge);
     U.yawBasis = 0.35 + (portrait && hochkant(N, asp) ? Math.PI / 2 : 0);
-    const nS = Math.exp(mix(Math.log(ganz), Math.log(dz ? dz.R * mix(1.08, 0.85, le) : ganz), dk)), inward = U.netDir < 0;
+    // Das Dorf misst sich an seinen eigenen Straßen, nicht an den Orten des Kosmos
+    const dorfA = le * (U.art ? U.art[0] : 0), ganzW = dorfA > 0 ? mix(ganz, orteFuer(N, 'dorf').R * (portrait ? 0.82 : 1.02) / (asp * fit), dorfA) : ganz;
+    const nS = Math.exp(mix(Math.log(ganzW), Math.log(dz ? dz.R * mix(1.08, 0.85, le) : ganzW), dk)), inward = U.netDir < 0;
     const tk = inward ? sstep(0.0, 0.7, nk) : sstep(0.3, 1.0, nk);
     Sv = Math.exp(mix(Math.log(Math.max(0.05, Sv)), Math.log(nS), nk));
     tg = [mix(tg[0], nMitte[0], tk), mix(tg[1], nMitte[1], tk), mix(tg[2], nMitte[2], tk)];
     // im Bezirk steiler von oben: die Ordnung liest sich wie eine Karte
-    elev = mix(elev, mix(mix(mix(mix(50, 14, gk), mix(mix(portrait ? 17 : 12.5, portrait ? 26 : 19, U.art ? U.art[0] : 0), 40, U.art ? U.art[2] : 0), le), portrait ? 34 : 30, ge), mix(mix(66, 26, gk), mix(18, 46, U.art ? U.art[2] : 0), le), dk) * DEG, sstep(0, 0.8, nk)); fov = mix(fov, mix(40, mix(50, 38, U.art ? U.art[2] : 0), le) * DEG, sstep(0, 0.6, nk)); yaw = mix(yaw, yawN, sstep(0.2, 1, nk));
+    elev = mix(elev, mix(mix(mix(mix(50, 14, gk), mix(mix(portrait ? 17 : 12.5, portrait ? 32 : 22, U.art ? U.art[0] : 0), 40, U.art ? U.art[2] : 0), le), portrait ? 34 : 30, ge), mix(mix(66, 26, gk), mix(18, 46, U.art ? U.art[2] : 0), le), dk) * DEG, sstep(0, 0.8, nk)); fov = mix(fov, mix(40, mix(50, 38, U.art ? U.art[2] : 0), le) * DEG, sstep(0, 0.6, nk)); yaw = mix(yaw, yawN, sstep(0.2, 1, nk));
   }
   // Flug von einer Zelle zur nächsten: Ziel gleitet, Maßstab atmet weit auf
   if(U.flug && Z){ const e = eio(clamp((performance.now() - U.flug.t0) / U.flug.dauer, 0, 1)), hoch = Math.sin(Math.PI * e);
     tg = [mix(U.flug.von[0], tg[0], e), mix(U.flug.von[1], tg[1], e), mix(U.flug.von[2], tg[2], e)];
     Sv = Math.exp(mix(Math.log(Math.max(0.05, U.flug.S)), Math.log(Math.max(0.05, Sv)), e)) * (1 + 4.5 * hoch); elev = mix(elev, 55 * DEG, hoch); }
   // Im Gebäude: das Ganze im Schnitt, oder eine Etage von schräg oben
-  let innenE = 0; if(U.innen && N){ innenE = (RM ? Math.round(U.innenK) : eio(U.innenK)) * nk; const I = U.innen, pl = I.plan, et = I.etage, tgI = et >= 0 ? [pl.o[0], et * pl.HOEHE + 0.6, pl.o[2]] : [pl.o[0], pl.hoehe * 0.42, pl.o[2]], Si = et >= 0 ? pl.R * (portrait ? 1.0 : 0.72) : Math.max(pl.hoehe * 0.74, pl.R * 0.75) * (portrait ? 1.35 : 1), elI = (et >= 0 ? 52 : 15) * DEG, g = I.glatt || (I.glatt = {t: tgI.slice(), S: Si, e: elI}), ka = RM ? 1 : 0.07; for(let q = 0; q < 3; q++) g.t[q] = mix(g.t[q], tgI[q], ka); g.S = Math.exp(mix(Math.log(g.S), Math.log(Si), ka)); g.e = mix(g.e, elI, ka); const sch = et >= 0 ? (et + 1) * pl.HOEHE - 0.25 : 1e6; I.schnittGlatt = sch > 1e5 ? 1e6 : sch;
+  let innenE = 0; if(U.innen && N){ innenE = (RM ? Math.round(U.innenK) : eio(U.innenK)) * nk; const I = U.innen, pl = I.plan, et = I.etage, tgI = et >= 0 ? [pl.o[0] + (pl.cx || 0), et * pl.HOEHE + 0.6, pl.o[2]] : [pl.o[0] + (pl.cx || 0), pl.hoehe * 0.42, pl.o[2]], Si = et >= 0 ? pl.R * (portrait ? 1.0 : 0.72) : Math.max(pl.hoehe * 0.74, pl.R * 0.75) * (portrait ? 1.35 : 1), elI = (et >= 0 ? 52 : 15) * DEG, g = I.glatt || (I.glatt = {t: tgI.slice(), S: Si, e: elI}), ka = RM ? 1 : 0.045; for(let q = 0; q < 3; q++) g.t[q] = mix(g.t[q], tgI[q], ka); g.S = Math.exp(mix(Math.log(g.S), Math.log(Si), ka)); g.e = mix(g.e, elI, ka); const oben = pl.hoehe + 4, sch = et >= 0 ? (et + 1) * pl.HOEHE - 0.25 : oben; g.sch = g.sch == null ? oben : mix(g.sch, sch, ka); I.schnittGlatt = et < 0 && g.sch > oben - 0.05 ? 1e6 : g.sch;   // die Stockwerke werden abgetragen, sie verschwinden nicht auf einen Schlag
     tg = [mix(tg[0], g.t[0], innenE), mix(tg[1], g.t[1], innenE), mix(tg[2], g.t[2], innenE)]; Sv = Math.exp(mix(Math.log(Math.max(0.05, Sv)), Math.log(g.S / fit), innenE)); elev = mix(elev, g.e, innenE); fov = mix(fov, 40 * DEG, innenE); }
   const par = RM ? 0 : 1;
   U.baseElev = elev;
@@ -51,7 +54,7 @@ export function regie(U, Z, N, RM){
   const d = Sv / Math.tan(fov / 2);
   if(portrait) Sv *= 1 + 0.35 * U.leseK;   // Handy: beim Lesen rückt die Zelle kleiner nach oben, weg vom Titel
   const d2 = Sv / Math.tan(fov / 2);
-  return {target: tg, dist: d2, yaw, pitch: elev, fov, S: Sv, shift: ((portrait ? 0.1 + 0.5 * U.leseK : 0) + (portrait && N ? -0.42 * (U.landK > 0 ? eio(U.landK) : 0) * (1 - (U.art ? U.art[2] + 0.8 * U.art[0] : 0)) * nk : 0)) * (1 - innenE), shiftX};
+  return {target: tg, dist: d2, yaw, pitch: elev, fov, S: Sv, shift: ((portrait ? 0.1 + 0.5 * U.leseK : 0) + (portrait && N ? -0.42 * (U.landK > 0 ? eio(U.landK) : 0) * (1 - (U.art ? U.art[2] + U.art[0] : 0)) * nk : 0)) * (1 - innenE), shiftX};
 }
 
 /* Wie viel halbe Bildhöhe die Bezirke um die Zentrale brauchen, bei diesem Blick (Breite durch das Seitenverhältnis, Tiefe verkürzt) */

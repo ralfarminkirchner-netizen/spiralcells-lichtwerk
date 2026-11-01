@@ -21,10 +21,10 @@ uniform vec3 uCam, uArt; uniform float uFern, uEnc, uVis, uSchnitt, uTief;` + HI
 void main(){ if(vW.y>uSchnitt) discard;
   if(vForm>3.5){ float dm=vMass.x, r=length(vL.xz)*dm; if(vForm==4.&&(r>dm*.5||r<1.9)) discard; if(vForm==5.&&(r>dm*.5||r<2.05||abs(atan(vL.z,vL.x))>vMass.z)) discard; if(vForm==6.&&(r>dm*.5||r<dm*.5-.1)) discard; } vec3 v=vW-uCam; float dist=length(v); vec3 d=v/dist, n=normalize(cross(dFdx(vW),dFdy(vW))); if(dot(n,d)>0.) n=-n; vec3 alb=vF; float seite=abs(n.y)<.5?1.:0.;
   vec2 q=vec2(abs(n.x)>abs(n.z)?vL.z*vMass.z:vL.x*vMass.x,vL.y*vMass.y); float glanz=0.;
-  if(vForm==0.&&uArt.x>.2){ float b=smoothstep(.05,.03,abs(fract(q.y/.9)-.5)*.9)+smoothstep(.04,.025,abs(fract(q.x/1.1)-.5)*1.1); alb=mix(alb,vec3(.06,.04,.025),clamp(b,0.,1.)*seite*.7*uArt.x); }
+  if(vForm==0.&&uArt.x>.2){ float b=smoothstep(.035,.02,abs(fract(q.x/1.1)-.5)*1.1)+smoothstep(.03,.018,abs(fract((q.x+q.y)/1.55)-.5)*1.1)*.55; alb=mix(alb,vec3(.075,.05,.03),clamp(b,0.,1.)*seite*.72*uArt.x); }
   if(vForm==1.){ float r=texture(uRausch,vW.xz*.7+vW.y*.5).r; alb*=.55+.9*r; alb*=.82+.18*smoothstep(.2,.8,fract(q.y*7.)); }
   if(vForm==0.&&uArt.y>.2&&seite>.5){ vec2 g=vec2(fract(q.x/.55),fract(q.y/.5)); float rahmen=step(.08,g.x)*step(.1,g.y); alb=mix(vec3(.10,.105,.11),alb*.55,rahmen); glanz=rahmen*uArt.y; }
-  float s=max(dot(n,uSun)+.15,0.)/1.15, sonne=s; vec3 c=alb*(vec3(3.2,1.7,.75)*sonne*(1.-uArt.z)+mix(vec3(.05,.04,.04),vec3(.15,.2,.33),n.y*.5+.5));
+  float s=max(dot(n,uSun)+.15,0.)/1.15, sonne=s; vec3 c=alb*(vec3(3.2,1.7,.75)*sonne*(1.-uArt.z)+mix(vec3(.05,.04,.04),vec3(.15,.2,.33),n.y*.5+.5)+vec3(.2,.15,.1)*uArt.x*seite);
   if(glanz>0.){ vec3 rf=reflect(d,n); c+=himmelsFarbe(normalize(vec3(rf.x,abs(rf.y)+.02,rf.z)))*glanz*.16; }
   if(uArt.z>.001){ vec3 l=normalize(vec3(.35,.85,.25)); c=mix(c,alb*(.30+.62*max(dot(n,l),0.)),uArt.z); if(vForm==3.) c*=.55; if(vForm==6.) c=c*.6+vec3(.03,.04,.05); }
   c=mix(nebel(c,d,dist,uFern),c,uArt.z); c*=mix(1.,.22,smoothstep(0.,uTief,uSchnitt-vW.y-3.0)*step(uTief,99.)); o=vec4(c*uEnc*uVis,1.); }`;
@@ -40,7 +40,7 @@ void main(){ float r=dot(vUv,vUv), m=smoothstep(.05,.3,vM); vec3 lit=vLiegt>.5?m
 
 const V_B = `#version 300 es
 layout(location=0) in vec3 a0; layout(location=1) in vec3 a1; layout(location=2) in float a2; uniform mat4 uVP; uniform float uHoch; out vec3 vW; out vec3 vF; out float vS;
-void main(){ vW=vec3(a0.x,a0.y*uHoch+.03,a0.z); vF=a1; vS=a2; gl_Position=uVP*vec4(vW,1.); }`;
+void main(){ vW=vec3(a0.x,a0.y*uHoch+.05,a0.z); vF=a1; vS=a2; gl_Position=uVP*vec4(vW,1.); }`;
 const F_B = `#version 300 es
 precision highp float; in vec3 vW; in vec3 vF; in float vS; out vec4 o; uniform vec3 uCam; uniform float uFern, uEnc, uVis, uBau;` + HIMMELTEXT + `
 void main(){ if(uBau<.25) discard; vec3 v=vW-uCam; float dist=length(v); vec3 d=v/dist, n=normalize(cross(dFdx(vW),dFdy(vW))); if(n.y<0.) n=-n; float r=texture(uRausch,vW.xz*.31).r; vec3 alb=vF*(.72+.56*r); if(vS>-.5||vS<-1.5) alb*=.8+.4*smoothstep(.3,.5,abs(fract(vS)-.5));
@@ -67,9 +67,9 @@ let I = null;
 export function zeichneInnen(gl, N, U, M, vis, ENC, tR, S){
   if(!U.innen || vis <= 0.003) return; const inn = U.innen; baue(gl, N, M, inn.stil);
   if(!I || I.plan !== inn.plan){ if(I){ gl.deleteBuffer(I.b); gl.deleteVertexArray(I.v); } const v = gl.createVertexArray(), b = gl.createBuffer(); gl.bindVertexArray(v); gl.bindBuffer(gl.ARRAY_BUFFER, b); gl.bufferData(gl.ARRAY_BUFFER, inn.plan.kisten, gl.STATIC_DRAW); [[0, 4, 0], [1, 4, 4], [2, 4, 8], [3, 2, 12]].forEach(([l, g, of]) => { gl.enableVertexAttribArray(l); gl.vertexAttribPointer(l, g, gl.FLOAT, false, KISTE * 4, of * 4); gl.vertexAttribDivisor(l, 1); }); I = {plan: inn.plan, v, b, n: inn.plan.kisten.length / KISTE}; }
-  gl.enable(gl.DEPTH_TEST); gl.depthFunc(gl.LEQUAL); gl.depthMask(true); gl.clear(gl.DEPTH_BUFFER_BIT); gl.disable(gl.BLEND); gl.disable(gl.CULL_FACE);
+  gl.enable(gl.DEPTH_TEST); gl.depthFunc(gl.LEQUAL); gl.depthMask(true); gl.clear(gl.DEPTH_BUFFER_BIT); gl.disable(gl.CULL_FACE); const deck = Math.min(1, vis); if(deck < 0.995){ gl.enable(gl.BLEND); gl.blendColor(0, 0, 0, deck); gl.blendFunc(gl.ONE, gl.ONE_MINUS_CONSTANT_ALPHA); } else gl.disable(gl.BLEND);   // der Innenraum blendet über: nie ein schwarzer Block über dem Dorf
   gl.useProgram(B.pK.p); const u = B.pK.u, schnitt = inn.schnittGlatt ?? 1e6; gl.uniformMatrix4fv(u.uVP, false, CAM.VP); gl.uniform3fv(u.uCam, CAM.P); gl.uniform3fv(u.uSun, S || [0.4, 0.5, 0.3]); gl.uniform3f(u.uArt, 0, 0, 1); gl.uniform1f(u.uBau, 1); gl.uniform1f(u.uHoch, 0); gl.uniform1f(u.uFern, 1e4); gl.uniform1f(u.uEnc, ENC); gl.uniform1f(u.uVis, vis * 1.5); gl.uniform1f(u.uKuehl, 0); gl.uniform1f(u.uZeit, 0); gl.uniform1f(u.uSchnitt, schnitt); gl.uniform1f(u.uTief, inn.etage >= 0 ? 3 : 100);
   if(tR){ gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, tR); gl.uniform1i(u.uRausch, 0); }
-  gl.bindVertexArray(I.v); gl.drawArraysInstanced(gl.TRIANGLES, 0, 36, I.n); gl.bindVertexArray(null); gl.disable(gl.DEPTH_TEST);
+  gl.bindVertexArray(I.v); gl.drawArraysInstanced(gl.TRIANGLES, 0, 36, I.n); gl.bindVertexArray(null); gl.disable(gl.DEPTH_TEST); gl.disable(gl.BLEND);
 }
 export {innenPlan};

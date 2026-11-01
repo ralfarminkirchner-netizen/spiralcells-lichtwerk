@@ -18,11 +18,11 @@ const V_MOND = `#version 300 es
 layout(location=0) in vec4 a0; layout(location=1) in vec4 a1; layout(location=2) in vec4 a2; layout(location=3) in vec4 a3; layout(location=4) in vec2 aW;
 uniform mat4 uVP; uniform float uPx, uMin, uT, uE, uVis, uDreh; uniform sampler2D uDim; out vec3 vC;
 void main(){ float id=float(gl_VertexID); if(id>=aW.y){ gl_Position=vec4(2.,2.,2.,1.); gl_PointSize=0.; vC=vec3(0.); return; }
-  float k=id/max(aW.y-1.,1.), tau=mix(a2.x,a2.y,k), t=uT-tau, a=a1.x*t, c=cos(a), s=sin(a), an=a1.z+a1.w*t, rad=a1.y*(.55+.45*(1.-tau/max(a2.w,1e-4)));
+  float k=id/max(aW.y-1.,1.), tau=mix(a2.x,a2.y,k), t=uT-tau, a=a1.x*t, c=cos(a), s=sin(a), an=a1.z+a1.w*t, rad=a1.y*(.3+.7*(1.-tau/max(a2.w,1e-4)));
   float x=a0.x+c*a0.z-s*a0.w+cos(an)*rad, z=a0.y+s*a0.z+c*a0.w+sin(an)*rad, g=uDreh*uT, cg=cos(g), sg=sin(g);
   vec3 w=vec3(cg*x-sg*z,a3.w*(a2.w-tau)*uE,sg*x+cg*z); float kopf=step(k,0.);
   vec4 q=uVP*vec4(w,1.); gl_Position=q; float gr=a2.z*mix(.5,2.1,kopf), px=gr*uPx/max(q.w,1e-4), sz=max(px,uMin); gl_PointSize=min(sz,64.);
-  vC=q.w>0.?a3.rgb*mix(.62,2.4,kopf)*min(px*px/(sz*sz)+.5,1.)*uVis*smoothstep(0.,.4,uE)*texelFetch(uDim,ivec2(int(aW.x),0),0).r:vec3(0.); }`;
+  vC=q.w>0.?a3.rgb*mix(.8,2.4,kopf)*min(px*px/(sz*sz)+.5,1.)*uVis*smoothstep(0.,.4,uE)*texelFetch(uDim,ivec2(int(aW.x),0),0).r:vec3(0.); }`;
 const V_PL = `#version 300 es
 layout(location=0) in vec4 aP; layout(location=1) in vec3 aC; layout(location=2) in vec2 aL; uniform mat4 uVP; uniform float uPx, uMin; out vec3 vC; out vec2 vL;
 void main(){ vec4 q=uVP*vec4(aP.xyz,1.); gl_Position=q; gl_PointSize=clamp(aP.w*2.*uPx/max(q.w,1e-4),uMin,160.); vC=aC; vL=aL; }`;
@@ -32,6 +32,7 @@ void main(){ vec2 p=gl_PointCoord*2.-1.; p.y=-p.y; float r=dot(p,p); if(r>1.) di
   vec3 c=vC*(.05+1.5*l)+vC*rand*.7*(.25+l); float al=smoothstep(1.,.8,r); o=vec4(c*al*uEnc*uVis,al*uVis); }`;
 
 let G = null;
+const G_zahl = (pl, D, q) => pl[q.planet].zahlM || (pl[q.planet].zahlM = D.monde.reduce((a, x) => a + (x.planet === q.planet ? 1 : 0), 0));   // viele Fassungen: kleinere Köpfe, sonst wird die Spirale zur Perlenschnur
 function baue(gl, N, M, arbeit){
   if(G){ G.loesche(); G = null; }
   const klein = CAM.cssW < 700, R = N.L.R, D = galaxie(N, arbeit), pS = M.prog(V_STERN, PF), pM = M.prog(V_MOND, PF), pL = M.prog(V_PL, F_PL);
@@ -39,7 +40,7 @@ function baue(gl, N, M, arbeit){
   const sc = statisch(sterne(R, klein ? 26000 : 70000)), ne = statisch(nebel(R, klein ? 500 : 1100));
   const fern = sterne(R * 16, klein ? 2500 : 6000, 5); for(let i = 0; i < fern.length; i += 8){ const zu = k => { const x = Math.sin(i * 12.9898 + k * 78.233) * 43758.5453; return x - Math.floor(x); }, a = zu(1) * Math.PI * 2, b = (zu(2) * 2 - 1) * 0.95; fern[i] = Math.cos(a) * R * 9 * Math.sqrt(1 - b * b); fern[i + 1] = b * R * 6; fern[i + 2] = Math.sin(a) * R * 9 * Math.sqrt(1 - b * b); fern[i + 3] = R * 0.006; fern[i + 7] = 0.5 + Math.abs(Math.sin(i * 1.3)) * 0.7; }
   const fr = statisch(fern);
-  const S = klein ? 120 : 260, F = 18, mx = new Float32Array(D.monde.length * F), pl = D.planeten; D.monde.forEach((q, j) => { const p = pl[q.planet]; mx.set([p.sx, p.sz, p.rx, p.rz, p.wp, q.rm, q.ph, q.wm, q.tauA, q.tau, Math.max(0.05, p.rM * 0.045), p.alt, q.farbe[0], q.farbe[1], q.farbe[2], p.fl, q.planet, Math.min(S, D.zahlPunkte(q, klein ? 0.09 : 0.045))], j * F); });
+  const S = klein ? 120 : 260, F = 18, mx = new Float32Array(D.monde.length * F), pl = D.planeten; D.monde.forEach((q, j) => { const p = pl[q.planet]; mx.set([p.sx, p.sz, p.rx, p.rz, p.wp, q.rm, q.ph, q.wm, q.tauA, q.tau, Math.max(0.05, p.rM * 0.045 * Math.min(1, Math.sqrt(16 / G_zahl(pl, D, q)))), p.alt, q.farbe[0], q.farbe[1], q.farbe[2], p.fl, q.planet, Math.min(S, D.zahlPunkte(q, klein ? 0.07 : 0.032))], j * F); });
   const vaoM = gl.createVertexArray(), bm = gl.createBuffer(); gl.bindVertexArray(vaoM); gl.bindBuffer(gl.ARRAY_BUFFER, bm); gl.bufferData(gl.ARRAY_BUFFER, mx, gl.STATIC_DRAW); [[0, 4, 0], [1, 4, 16], [2, 4, 32], [3, 4, 48], [4, 2, 64]].forEach(([l, g, of]) => { gl.enableVertexAttribArray(l); gl.vertexAttribPointer(l, g, gl.FLOAT, false, F * 4, of); gl.vertexAttribDivisor(l, 1); });
   const pd = new Float32Array(pl.length * 9), vaoP = gl.createVertexArray(), bp = gl.createBuffer(); gl.bindVertexArray(vaoP); gl.bindBuffer(gl.ARRAY_BUFFER, bp); gl.bufferData(gl.ARRAY_BUFFER, pd.byteLength, gl.DYNAMIC_DRAW); [[0, 4, 0], [1, 3, 16], [2, 2, 28]].forEach(([l, g, of]) => { gl.enableVertexAttribArray(l); gl.vertexAttribPointer(l, g, gl.FLOAT, false, 36, of); });
   gl.bindVertexArray(null);

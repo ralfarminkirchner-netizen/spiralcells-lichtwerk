@@ -5,7 +5,7 @@
    Bedeutung steht in gelaende.js. Berge, Wolken und Sonne sind Grund und tragen nichts.
    ===================================================================== */
 import {CAM, sstep} from './licht.js';
-import {gelaende, sonne, bodenGitter, pflanzen, grasFeld, saum, PFLANZE, FELD} from './gelaende.js';
+import {gelaende, sonne, bodenGitter, pflanzen, grasFeld, saum, PFLANZE, FELD, gitterMass} from './gelaende.js';
 
 const HIMMEL = `
 uniform vec3 uSun; uniform sampler2D uRausch; uniform float uZeit; uniform float uKuehl;
@@ -116,7 +116,7 @@ function baue(gl, N, M, yaw){
   if(B){ B.loesche(); B = null; }
   const klein = CAM.cssW < 700, prog = M.prog, S = sonne(yaw), Rk = N.L.R * 1.4;
   const pH = prog(V_HIMMEL, F_HIMMEL), pB = prog(V_BODEN, F_BODEN), pP = prog(V_PFL, F_PFL);
-  const gitter = bodenGitter(N.land, S, klein ? 120 : 170, klein ? 160 : 220), vaoB = gl.createVertexArray(), vb = gl.createBuffer(), ib = gl.createBuffer();
+  const gitter = bodenGitter(N.land, S, ...gitterMass(klein)), vaoB = gl.createVertexArray(), vb = gl.createBuffer(), ib = gl.createBuffer();
   gl.bindVertexArray(vaoB); gl.bindBuffer(gl.ARRAY_BUFFER, vb); gl.bufferData(gl.ARRAY_BUFFER, gitter.v, gl.STATIC_DRAW); gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, ib); gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, gitter.ix, gl.STATIC_DRAW);
   gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 28, 0); gl.enableVertexAttribArray(1); gl.vertexAttribPointer(1, 3, gl.FLOAT, false, 28, 12); gl.enableVertexAttribArray(2); gl.vertexAttribPointer(2, 1, gl.FLOAT, false, 28, 24);
   const instanz = dyn => { const vao = gl.createVertexArray(), buf = gl.createBuffer(); gl.bindVertexArray(vao); gl.bindBuffer(gl.ARRAY_BUFFER, buf); const st = FELD * 4; [[0, 4, 0], [1, 4, 16], [2, 4, 32], [3, 4, 48], [4, 2, 64]].forEach(([l, g, of]) => { gl.enableVertexAttribArray(l); gl.vertexAttribPointer(l, g, gl.FLOAT, false, st, of); gl.vertexAttribDivisor(l, 1); }); return {vao, buf}; };
@@ -136,7 +136,7 @@ export function zeichneLandschaft(gl, N, U, M, wall, vis, E, ENC, ort = {bau: 0,
   const buero = ort.art[2], kuehl = ort.art[1] * 0.75, aussen = ort.aussen ?? 1;
   if(!N || vis <= 0.003 || E <= 0.003) return;
   if(!B || B.N !== N) baue(gl, N, M, U.yawBasis ?? 0.35);
-  const R = N.L.R, fern = R * 5.2, cam = CAM.P, tag = sstep(0.2, 1, E);
+  const R = N.L.R, fern = R * 5.2 * (CAM.cssW < CAM.cssH ? 1 + 0.8 * ort.art[0] : 1), cam = CAM.P, tag = sstep(0.2, 1, E);
   // Himmel
   gl.disable(gl.BLEND); gl.disable(gl.DEPTH_TEST); gl.useProgram(B.pH.p); gl.bindVertexArray(B.emptyVao);
   gl.uniformMatrix4fv(B.pH.u.uIVP, false, CAM.IVP); gl.uniform3fv(B.pH.u.uSun, B.S); gl.uniform1f(B.pH.u.uKuehl, kuehl); gl.uniform1f(B.pH.u.uTag, tag * vis * aussen * (1 - buero)); gl.uniform1f(B.pH.u.uZeit, wall); gl.uniform1f(B.pH.u.uEnc, ENC); bind(gl, 0, 'r', B.tR, B.pH.u.uRausch); gl.drawArrays(gl.TRIANGLES, 0, 3);

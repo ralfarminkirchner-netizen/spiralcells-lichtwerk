@@ -184,7 +184,7 @@ export function baueNetz(N, U, wall, vis, aktiv, aktivDetail){
   P(0, yM, 0, Math.min(Lm.R * 0.12, 1.1), KEIMC[0], KEIMC[1], KEIMC[2], 0.8 * vis * puls * (anM ? 1.5 : 1) * still * mix(1, 0.5, le));
   P(0, yM, 0, Lm.R * 0.7, KEIMC[0], KEIMC[1], KEIMC[2], 0.09 * vis * hellM * (imDach === 'mitte' ? 0.5 : 1) * raum);
   P(0, yM, 0, Lm.R * 1.6, KEIMC[0], KEIMC[1], KEIMC[2], 0.06 * vis * hellM * (imDach === 'mitte' ? 0.5 : 1) * raum);
-  ring([0, yM - 0.05, 0], Lm.R, KEIMC, (anM ? 0.9 : 0.6) * vis * hellM * (1 - le), 0.09, 1);
+  ring([0, yM - 0.05, 0], Lm.R, KEIMC, (anM ? 0.9 : 0.6) * vis * hellM * (1 - le) * (1 - ge), 0.09, 1);
   huelle([0, 0, 0], Lm.R, 0.42 * (1 - 0.9 * gk), WG, (anM ? 0.9 : 0.55) * vis * (imDach === 'mitte' ? 0.35 : hellM) * raum, MEMD, cx, cyy, cz, imDach === 'mitte');
   U.mitteSchirm = imDach === 'mitte' ? amRing([0, yM, 0], Lm.R * 1.04, false, 0) : amRing([0, yM, 0], Lm.R * 1.02, true, 0);   // im Überblick unter dem Rand, nie über den Werken; in der Mitte oben
   // Dächer: je eine Hülle, die am Saum leuchtet; der Boden nur, wenn man auf sie zeigt oder in ihr steht
@@ -194,8 +194,8 @@ export function baueNetz(N, U, wall, vis, aktiv, aktivDetail){
     if((an || drin) && ge < 0.5 && le < 0.5) ring([d.mitte[0], yD - 0.05, d.mitte[2]], d.R, le > 0.5 && !an ? mixc(KEIMC, GOLDC, 0.4) : c, Math.max(an ? 0.6 : drin ? 0.35 : 0, 0.34 * le * hell) * vis, 0.11, 1);   // in der Landschaft: die Lichter am Beetrand
     huelle(d.mitte, d.R, 0.38 * (1 - 0.9 * gk), c, (an ? 0.95 : drin ? 0.55 : 0.28) * vis * (drin ? 0.35 : hell) * raum, MEMD, cx, cyy, cz, drin);
     // Im Dach werden die Bereiche sichtbar: ein weiches Feld in der Farbe ihrer Werke und ein feiner Ring
-    if(drin) for(const b of d.bereiche){ P(b.mitte[0], yD, b.mitte[2], b.R * 1.2, b.farbe[0], b.farbe[1], b.farbe[2], 0.022 * vis * raum); ring([b.mitte[0], yD - 0.05, b.mitte[2]], b.R, mixc(WG, b.farbe, 0.35), 0.38 * vis, 0.07, 1); }
-    if(drin) U.bereicheSchirm = d.bereiche.map(b => amRing([b.mitte[0], yD, b.mitte[2]], b.R, false, 0.08));
+    if(drin) for(const b of d.bereiche){ P(b.mitte[0], yD, b.mitte[2], b.R * 1.2, b.farbe[0], b.farbe[1], b.farbe[2], 0.022 * vis * raum); ring([b.mitte[0], yD - 0.05, b.mitte[2]], b.R, mixc(WG, b.farbe, 0.35), 0.38 * vis * raum, 0.07, 1); }
+    if(drin) U.bereicheSchirm = raum > 0.5 ? d.bereiche.map(b => amRing([b.mitte[0], yD, b.mitte[2]], b.R, false, 0.08)) : [];   // Bereiche haben nur im Kosmos einen Ort
     const so = N.gal ? N.gal.sonnen[j] : {x: 0, z: 0}, sx = mix(d.mitte[0], cG * so.x - sG * so.z, ge), sz = mix(d.mitte[2], sG * so.x + cG * so.z, ge);
     if(ge > 0.01){ const hS = (an ? 1.5 : 1) * ge * vis * hell, gS = Math.min(0.9, d.R * 0.09); P(sx, 0, sz, gS, d.farbe[0] * 0.5 + 0.5, d.farbe[1] * 0.5 + 0.45, d.farbe[2] * 0.5 + 0.35, 1.6 * hS); P(sx, 0, sz, gS * 5, d.farbe[0], d.farbe[1], d.farbe[2], 0.12 * hS); }   // die Sonne eines Dachs
     U.daecherSchirm[j] = drin && ge < 0.5 ? amRing([d.mitte[0], yD, d.mitte[2]], d.R * 1.04, false, 0) : toScreen(stilK > 0.01 && stilO.mitten.has(j) ? mix(sx, stilO.mitten.get(j)[0], stilK) : sx, imDorf && stilO.mitten.has(j) ? mix(yD + d.R * 0.3, N.land.y(stilO.mitten.get(j)[0], stilO.mitten.get(j)[1]) * hoch + 3.5, stilK) : yD + d.R * mix(mix(0.42 * (1 - gk), 0.3, le), 0.16, ge), stilK > 0.01 && stilO.mitten.has(j) ? mix(sz, stilO.mitten.get(j)[1] - (imDorf ? 0 : 3.2), stilK) : sz); }   // im Dach: sein Name am oberen Rand
@@ -243,7 +243,7 @@ export function baueNetz(N, U, wall, vis, aktiv, aktivDetail){
   const fz = Math.max(0.11, CAM.S * 0.004), wahl = selM >= 0;   // ist ein Werk gewählt, treten die übrigen Fäden zurück
   for(let fi = 0; fi < N.faeden.length; fi++){ const f = N.faeden[fi], A = N.ort[f.von], Bp = N.ort[f.nach];
     const anF = U.sel && U.sel.art === 'faden' && U.sel.i === fi, hovF = U.hover && U.hover.art === 'faden' && U.hover.i === fi;
-    const beteiligt = aktiv === f.von || aktiv === f.nach || selM === f.von || selM === f.nach;
+    const eigeneWelt = le > 0.5 || ge > 0.5, beteiligt = (!eigeneWelt && (aktiv === f.von || aktiv === f.nach)) || selM === f.von || selM === f.nach;   // in den Welten zeigen sich Fäden erst, wenn man ein Werk wählt
     const zeig = anF || hovF || beteiligt || (imDach != null && (f.bzVon === imDach || f.bzNach === imDach));
     if(!zeig){ U.knoten[fi] = null;
       // Im Garten läuft jede gespeicherte Beziehung als Mycel unter dem Boden; es entsteht keine neue
