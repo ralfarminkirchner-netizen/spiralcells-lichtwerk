@@ -104,6 +104,13 @@ Ralf: Unreal später, erst alles andere selbst. Ziel bleibt Kino als Mac-App; da
 - Garten: Wiese, große Bäume, Büsche und Gras als Grund; die Pflanzen der Werke kräftiger, näherer Blick. Kosmos: größere Lichtkörner, leisere Hüllen, gleichmäßiger Sternenhimmel.
 - Offen: Campus und Büro zeigen die Funktion noch nicht in der Gestalt. Das Dorf hat noch keinen Ortsplan. Innenräume, Lesen und Fäden fehlen auf dieser Engine. Das ist kein Kino; dafür bleibt Unreal.
 
+## Schritt 17: Ortsplan, Innenräume und Lesen auf der neuen Engine (Ralf, 01.11.)
+- `app/js/ortsplan.js` (nur `welten.html`; die alte Seite behält die Spirale): Marktplatz mit Brunnen und Ständen, Zentrale rundum, Rathaus vorn. Dach = Viertel an eigener Straße, Bereich = Gasse, in jeder Gasse das Älteste vorn. SEiN und MiNDLAXY auf den Höhen. Bildstöcke am Feldweg, übrige Werke ohne Dach als Höfe außerhalb. Das ersetzt hier die Regel „ohne Dach = kein Weg“ und den langen Acker: das Gartenstück hinter dem Haus ist begrenzt, Arbeit zeigt sich in Stockwerken und Größe.
+- Innen: Bauwerk zweimal antippen, Stockwerke mit Leiste oder Pfeiltasten, Tisch antippen nennt die Fassung, nochmal tippen öffnet das Lesefeld. Escape führt Stufe für Stufe hinaus. Gilt für Dorf, Campus, Büro. Plan aus `innen.js`.
+- App-Zustände zeigen im Lesefeld ihre Beschreibung; der Quelltext steht nur in der alten Ansicht. Verbinden, Kristallisieren und Ablegen gibt es hier nicht: das Lesefeld schreibt nichts.
+- Behoben: die große Straßenkarte ging im Grafikspeicher verloren, darum fehlten zeitweise Straßen.
+- Offen: Beim Start stellte der Browser im Prüflauf zweimal keine Grafik bereit (kein WebGPU-Adapter unter Last), Neuladen half; ein Satz dazu steht nur, wenn der Start selbst scheitert. Häuser bleiben grob. Fäden fehlen. Kein echtes Handy; Leseweg im Handy-Format nicht durchgespielt.
+
 ## Prüfstand 01.11.
 - Geprüft im Browser bei 1280 x 800 und 390 x 844, auf der Datenkopie: alle Ansichten, Morph in Einzelbildern, Wähler, Textfassung, Werk öffnen und zurück. 60 Bilder je Sekunde am Mac (Grafik des Macs, nicht auf einem echten Handy). 0 schwarze Starts von 12. Bilder: `Development/Artifacts/lichtwerk-vergleich-20261101/lichtgrund/garten4` und `garten5`.
 - Offen: Laufende Bewegung nur in Standbildern beurteilt, nicht als Film. Nicht auf einem echten Handy geprüft. Namen überlappen teils die Marke. Die Innenräume sind noch schlichte Kisten: kein Glas, keine Möbel außer Tisch und Stuhl. Viele Werke haben nur eine Fassung, ihr Gebäude ist also einstöckig mit einem Tisch; das ist der Bestand.
