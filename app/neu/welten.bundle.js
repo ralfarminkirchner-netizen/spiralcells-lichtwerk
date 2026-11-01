@@ -15376,6 +15376,43 @@ var CylinderGeometry = class _CylinderGeometry extends BufferGeometry {
     return new _CylinderGeometry(data.radiusTop, data.radiusBottom, data.height, data.radialSegments, data.heightSegments, data.openEnded, data.thetaStart, data.thetaLength);
   }
 };
+var ConeGeometry = class _ConeGeometry extends CylinderGeometry {
+  /**
+   * Constructs a new cone geometry.
+   *
+   * @param {number} [radius=1] - Radius of the cone base.
+   * @param {number} [height=1] - Height of the cone.
+   * @param {number} [radialSegments=32] - Number of segmented faces around the circumference of the cone.
+   * @param {number} [heightSegments=1] - Number of rows of faces along the height of the cone.
+   * @param {boolean} [openEnded=false] - Whether the base of the cone is open or capped.
+   * @param {number} [thetaStart=0] - Start angle for first segment, in radians.
+   * @param {number} [thetaLength=Math.PI*2] - The central angle, often called theta, of the circular sector, in radians.
+   * The default value results in a complete cone.
+   */
+  constructor(radius = 1, height = 1, radialSegments = 32, heightSegments = 1, openEnded = false, thetaStart = 0, thetaLength = Math.PI * 2) {
+    super(0, radius, height, radialSegments, heightSegments, openEnded, thetaStart, thetaLength);
+    this.type = "ConeGeometry";
+    this.parameters = {
+      radius,
+      height,
+      radialSegments,
+      heightSegments,
+      openEnded,
+      thetaStart,
+      thetaLength
+    };
+  }
+  /**
+   * Factory method for creating an instance of this class from the given
+   * JSON object.
+   *
+   * @param {Object} data - A JSON object representing the serialized geometry.
+   * @return {ConeGeometry} A new instance.
+   */
+  static fromJSON(data) {
+    return new _ConeGeometry(data.radius, data.height, data.radialSegments, data.heightSegments, data.openEnded, data.thetaStart, data.thetaLength);
+  }
+};
 var PolyhedronGeometry = class _PolyhedronGeometry extends BufferGeometry {
   /**
    * Constructs a new polyhedron geometry.
@@ -17697,6 +17734,84 @@ var PlaneGeometry = class _PlaneGeometry extends BufferGeometry {
    */
   static fromJSON(data) {
     return new _PlaneGeometry(data.width, data.height, data.widthSegments, data.heightSegments);
+  }
+};
+var RingGeometry = class _RingGeometry extends BufferGeometry {
+  /**
+   * Constructs a new ring geometry.
+   *
+   * @param {number} [innerRadius=0.5] - The inner radius of the ring.
+   * @param {number} [outerRadius=1] - The outer radius of the ring.
+   * @param {number} [thetaSegments=32] - Number of segments. A higher number means the ring will be more round. Minimum is `3`.
+   * @param {number} [phiSegments=1] - Number of segments per ring segment. Minimum is `1`.
+   * @param {number} [thetaStart=0] - Starting angle in radians.
+   * @param {number} [thetaLength=Math.PI*2] - Central angle in radians.
+   */
+  constructor(innerRadius = 0.5, outerRadius = 1, thetaSegments = 32, phiSegments = 1, thetaStart = 0, thetaLength = Math.PI * 2) {
+    super();
+    this.type = "RingGeometry";
+    this.parameters = {
+      innerRadius,
+      outerRadius,
+      thetaSegments,
+      phiSegments,
+      thetaStart,
+      thetaLength
+    };
+    thetaSegments = Math.max(3, thetaSegments);
+    phiSegments = Math.max(1, phiSegments);
+    const indices = [];
+    const vertices = [];
+    const normals = [];
+    const uvs = [];
+    let radius = innerRadius;
+    const radiusStep = (outerRadius - innerRadius) / phiSegments;
+    const vertex = new Vector3();
+    const uv2 = new Vector2();
+    for (let j2 = 0; j2 <= phiSegments; j2++) {
+      for (let i = 0; i <= thetaSegments; i++) {
+        const segment = thetaStart + i / thetaSegments * thetaLength;
+        vertex.x = radius * Math.cos(segment);
+        vertex.y = radius * Math.sin(segment);
+        vertices.push(vertex.x, vertex.y, vertex.z);
+        normals.push(0, 0, 1);
+        uv2.x = (vertex.x / outerRadius + 1) / 2;
+        uv2.y = (vertex.y / outerRadius + 1) / 2;
+        uvs.push(uv2.x, uv2.y);
+      }
+      radius += radiusStep;
+    }
+    for (let j2 = 0; j2 < phiSegments; j2++) {
+      const thetaSegmentLevel = j2 * (thetaSegments + 1);
+      for (let i = 0; i < thetaSegments; i++) {
+        const segment = i + thetaSegmentLevel;
+        const a2 = segment;
+        const b2 = segment + thetaSegments + 1;
+        const c = segment + thetaSegments + 2;
+        const d2 = segment + 1;
+        indices.push(a2, b2, d2);
+        indices.push(b2, c, d2);
+      }
+    }
+    this.setIndex(indices);
+    this.setAttribute("position", new Float32BufferAttribute(vertices, 3));
+    this.setAttribute("normal", new Float32BufferAttribute(normals, 3));
+    this.setAttribute("uv", new Float32BufferAttribute(uvs, 2));
+  }
+  copy(source) {
+    super.copy(source);
+    this.parameters = Object.assign({}, source.parameters);
+    return this;
+  }
+  /**
+   * Factory method for creating an instance of this class from the given
+   * JSON object.
+   *
+   * @param {Object} data - A JSON object representing the serialized geometry.
+   * @return {RingGeometry} A new instance.
+   */
+  static fromJSON(data) {
+    return new _RingGeometry(data.innerRadius, data.outerRadius, data.thetaSegments, data.phiSegments, data.thetaStart, data.thetaLength);
   }
 };
 var ShapeGeometry = class _ShapeGeometry extends BufferGeometry {
@@ -22500,6 +22615,69 @@ PropertyBinding.prototype.SetterByBindingTypeAndVersioning = [
   ]
 ];
 var _controlInterpolantsResultBuffer = new Float32Array(1);
+var Clock = class {
+  /**
+   * Constructs a new clock.
+   *
+   * @deprecated since 183.
+   * @param {boolean} [autoStart=true] - Whether to automatically start the clock when
+   * `getDelta()` is called for the first time.
+   */
+  constructor(autoStart = true) {
+    this.autoStart = autoStart;
+    this.startTime = 0;
+    this.oldTime = 0;
+    this.elapsedTime = 0;
+    this.running = false;
+    warn("Clock: This module has been deprecated. Please use THREE.Timer instead.");
+  }
+  /**
+   * Starts the clock. When `autoStart` is set to `true`, the method is automatically
+   * called by the class.
+   */
+  start() {
+    this.startTime = performance.now();
+    this.oldTime = this.startTime;
+    this.elapsedTime = 0;
+    this.running = true;
+  }
+  /**
+   * Stops the clock.
+   */
+  stop() {
+    this.getElapsedTime();
+    this.running = false;
+    this.autoStart = false;
+  }
+  /**
+   * Returns the elapsed time in seconds.
+   *
+   * @return {number} The elapsed time.
+   */
+  getElapsedTime() {
+    this.getDelta();
+    return this.elapsedTime;
+  }
+  /**
+   * Returns the delta time in seconds.
+   *
+   * @return {number} The delta time.
+   */
+  getDelta() {
+    let diff = 0;
+    if (this.autoStart && !this.running) {
+      this.start();
+      return 0;
+    }
+    if (this.running) {
+      const newTime = performance.now();
+      diff = (newTime - this.oldTime) / 1e3;
+      this.oldTime = newTime;
+      this.elapsedTime += diff;
+    }
+    return diff;
+  }
+};
 var Spherical = class {
   /**
    * Constructs a new spherical.
@@ -74984,8 +75162,8 @@ function pflanzen(N4) {
           vor = p2;
         });
       } else {
-        const hS = H * 0.75, gx = (hash(n2 * 1.7) - 0.5) * rM * 0.3, gz = (hash(n2 * 2.3) - 0.5) * rM * 0.3, spitze = [gx, hS, gz];
-        if (q2) kurve([0, 0, 0], spitze, 0.06, clamp3(rM * 0.05, 0.025, 0.1), clamp3(rM * 0.025, 0.015, 0.05), STAENGEL, 0.5);
+        const hS = H * 0.75, gx = (hash(n2 * 1.7) - 0.5) * rM * 0.3, gz = (hash(n2 * 2.3) - 0.5) * rM * 0.3, spitze2 = [gx, hS, gz];
+        if (q2) kurve([0, 0, 0], spitze2, 0.06, clamp3(rM * 0.05, 0.025, 0.1), clamp3(rM * 0.025, 0.015, 0.05), STAENGEL, 0.5);
         fest.forEach((i, j2) => {
           const t2 = q2 === 1 ? 1 : (j2 + 1) / q2;
           organ(i, [gx * t2 * t2, hS * t2, gz * t2 * t2], j2 === q2 - 1, Math.min(1, 0.3 + 0.7 * t2));
@@ -75137,13 +75315,6 @@ var GRUND = Math.PI * 2 / 15;
 var ENG = 0.3;
 var spiralHoehe = (rM, ar) => rM * (1.2 + 3.4 * ar);
 var fassungsArbeit = (s) => clamp3(Math.log(1 + Math.max(0, s.laenge || 0) / 300) / Math.log(1 + 6e4 / 300), 0, 1);
-function planetOrt(p2, t2, o2) {
-  const zeit = t2 - p2.alt, a2 = p2.wp * zeit, c = Math.cos(a2), s = Math.sin(a2), x = p2.sx + c * p2.rx - s * p2.rz, z2 = p2.sz + s * p2.rx + c * p2.rz, g = DREHUNG * t2, cg = Math.cos(g), sg = Math.sin(g);
-  o2[0] = cg * x - sg * z2;
-  o2[1] = 0;
-  o2[2] = sg * x + cg * z2;
-  return o2;
-}
 function mondOrt(p2, q2, t2, tau, o2) {
   const zeit = t2 - tau, a2 = p2.wp * zeit, c = Math.cos(a2), s = Math.sin(a2), an = q2.ph + q2.wm * zeit, r2 = q2.rm * (ENG + (1 - ENG) * (1 - tau / Math.max(1e-6, p2.alt))), x = p2.sx + c * p2.rx - s * p2.rz + Math.cos(an) * r2, z2 = p2.sz + s * p2.rx + c * p2.rz + Math.sin(an) * r2, g = DREHUNG * t2, cg = Math.cos(g), sg = Math.sin(g);
   o2[0] = cg * x - sg * z2;
@@ -75217,14 +75388,6 @@ function sterne(R2, zahl, seed = 1) {
     const u2 = H(i, 1), arm = i % 2, kern = H(i, 9) < 0.2, r2 = kern ? R2 * 0.24 * Math.pow(H(i, 2), 0.7) : R2 * (0.12 + 1.25 * Math.sqrt(u2)), wurf = Math.pow(H(i, 3), 2) * (H(i, 4) < 0.5 ? -1 : 1) * 0.55 * (kern ? 3 : 1), a2 = Math.log(1 + r2 / (R2 * 0.11)) * 2.25 + arm * Math.PI + wurf, dick = (kern ? Math.sqrt(Math.max(0, (R2 * 0.24) ** 2 - r2 * r2)) * 0.55 : R2 * 0.022) * (H(i, 5) - 0.5) * 2;
     const f2 = kern || H(i, 6) < 0.25 ? warm : H(i, 7) < 0.92 ? blau : rosa, hell = (kern ? 0.32 : 0.2) * (0.35 + 1.3 * Math.pow(H(i, 8), 3)) * clamp3(1.5 - r2 / (R2 * 1.2), 0.12, 1);
     v3.set([Math.cos(a2) * r2, dick, Math.sin(a2) * r2, R2 * 16e-4 * (0.5 + H(i, 10)), f2[0], f2[1], f2[2], hell], i * 8);
-  }
-  return v3;
-}
-function nebel(R2, zahl) {
-  const v3 = new Float32Array(zahl * 8), bl = lin("#3a5cb0"), ro = lin("#b04a78"), ge = lin("#c98a4a");
-  for (let i = 0; i < zahl; i++) {
-    const H = (k2) => hash(i * 2.17 + k2 * 5.3 + 9), r2 = R2 * (0.08 + 1.2 * Math.sqrt(H(1))), a2 = Math.log(1 + r2 / (R2 * 0.11)) * 2.25 + i % 2 * Math.PI + (H(2) - 0.5) * 0.7, f2 = r2 < R2 * 0.3 ? ge : H(3) < 0.78 ? bl : ro;
-    v3.set([Math.cos(a2) * r2, 0, Math.sin(a2) * r2, R2 * (0.05 + 0.1 * H(4)), f2[0], f2[1], f2[2], 0.024 * clamp3(1.4 - r2 / (R2 * 1.2), 0.2, 1)], i * 8);
   }
   return v3;
 }
@@ -75526,7 +75689,7 @@ function bauplan(N4, stil) {
       const z2 = Math.max(1, zahl), t2 = 0.16, br = [0.62, 0.52, 0.38];
       return [mix2(br[0], r2 / z2, t2), mix2(br[1], g / z2, t2), mix2(br[2], b2 / z2, t2)];
     };
-    const haus2 = (x, z2, b2, t2, h2, liste, w) => {
+    const haus = (x, z2, b2, t2, h2, liste, w) => {
       kiste(n2, x, z2, -0.6, b2, h2 + 0.6, t2, yaw, BLOCK, wandM(), w);
       kiste(n2, x, z2, h2, b2 * 1.14, b2 * 0.48, t2 * 1.14, yaw, GIEBEL, dach, w + 0.15);
       fassade(n2, m, liste, x, z2, b2, h2, t2, yaw, Math.min(1, w + 0.2));
@@ -75563,7 +75726,7 @@ function bauplan(N4, stil) {
       }
     }
     if (!zahl) {
-      haus2(o2[0], o2[2], b0 * 0.55, t0 * 0.55, h0 * 0.6, [], wann);
+      haus(o2[0], o2[2], b0 * 0.55, t0 * 0.55, h0 * 0.6, [], wann);
       return;
     }
     const { teil, anbauten, schuppen } = bauteile(plan.W, zahl), haupt = [], an = anbauten.map(() => []), sch = Array.from({ length: schuppen }, () => []);
@@ -75576,12 +75739,12 @@ function bauplan(N4, stil) {
     if (haupt.length || !sch.length) haupthaus(o2[0], o2[2], b0, t0, h0, haupt, wann);
     an.forEach((li, j2) => {
       const a2 = plan.W.th1[anbauten[j2]], d2 = b0 * 0.72, br = b0 * 0.6;
-      haus2(o2[0] + Math.cos(a2) * d2, o2[2] + Math.sin(a2) * d2, br, br * F2.tief, h0 * (0.45 + 0.3 * hash(j2 + n2)), li, wann + 0.15);
+      haus(o2[0] + Math.cos(a2) * d2, o2[2] + Math.sin(a2) * d2, br, br * F2.tief, h0 * (0.45 + 0.3 * hash(j2 + n2)), li, wann + 0.15);
     });
     const nS = sch.length;
     sch.forEach((li, j2) => {
       const a2 = j2 * 2.39996 + n2, d2 = haupt.length ? b0 * (0.8 + 0.34 * Math.sqrt(j2)) : rM * 0.28 * Math.sqrt(j2 + 0.2) * (nS > 4 ? 1.6 : 1.1), br = 0.72, hh = 0.62;
-      haus2(o2[0] + Math.cos(a2) * d2, o2[2] + Math.sin(a2) * d2, br, br, hh, li, wann + 0.05 * (j2 % 6));
+      haus(o2[0] + Math.cos(a2) * d2, o2[2] + Math.sin(a2) * d2, br, br, hh, li, wann + 0.05 * (j2 % 6));
     });
   });
   if (LG2.wege) for (const w of LG2.wege) for (let i = 1; i < w.punkte.length; i++) {
@@ -75649,6 +75812,507 @@ async function lesenMitStand(pfad) {
   return { daten: await r2.json(), stand: r2.headers.get("X-Stand") };
 }
 
+// bauwerke.js
+var WEISS = [0.93, 0.89, 0.8];
+var LEHM = [0.85, 0.74, 0.58];
+var STEIN = [0.72, 0.69, 0.64];
+var KALK = [0.97, 0.95, 0.9];
+var ROT = [0.72, 0.28, 0.2];
+var GELB = [0.9, 0.7, 0.2];
+var BLAU = [0.2, 0.42, 0.7];
+var GRUEN = [0.28, 0.5, 0.3];
+var ROSA = [0.9, 0.55, 0.65];
+var DUNKEL = [0.14, 0.1, 0.08];
+var KUPFER = [0.3, 0.58, 0.5];
+var dachFarbe = (r2) => r2 === "kanonisch" ? [1.25, 0.95, 0.4] : r2 === "gereift" ? [1, 0.62, 0.5] : [0.56, 0.47, 0.38];
+var Bau = class {
+  constructor() {
+    this.teile = { putz: [], holz: [], stein: [], dach: [], rahmen: [], bunt: [], metall: [] };
+    this.glas = [];
+  }
+  form(art, g, x, y, z2, yaw = 0, farbe = [1, 1, 1], kipp = 0, kz2 = 0) {
+    g = g.index ? g.toNonIndexed() : g;
+    const c = new Float32Array(g.attributes.position.count * 3);
+    for (let i = 0; i < c.length; i += 3) c.set(farbe, i);
+    g.setAttribute("color", new BufferAttribute(c, 3));
+    g.deleteAttribute && g.morphAttributes;
+    g.applyMatrix4(new Matrix4().compose(new Vector3(x, y, z2), new Quaternion().setFromEuler(new Euler(kipp, yaw, kz2, "YXZ")), new Vector3(1, 1, 1)));
+    this.teile[art].push(g);
+  }
+  kiste(art, w, h2, d2, x, y, z2, yaw = 0, farbe, kipp = 0, kz2 = 0) {
+    const g = new BoxGeometry(w, h2, d2), uv2 = g.attributes.uv, n2 = g.attributes.normal;
+    for (let i = 0; i < uv2.count; i++) {
+      const ax = Math.abs(n2.getX(i)), ay = Math.abs(n2.getY(i));
+      uv2.setXY(i, uv2.getX(i) * (ax > 0.5 ? d2 : w), uv2.getY(i) * (ay > 0.5 ? d2 : h2));
+    }
+    this.form(art, g, x, y, z2, yaw, farbe, kipp, kz2);
+  }
+  walze(art, r0, r1, h2, x, y, z2, farbe, seg = 16) {
+    const g = new CylinderGeometry(r0, r1, h2, seg), uv2 = g.attributes.uv;
+    for (let i = 0; i < uv2.count; i++) uv2.setXY(i, uv2.getX(i) * Math.PI * 2 * Math.max(r0, r1), uv2.getY(i) * h2);
+    this.form(art, g, x, y, z2, 0, farbe);
+  }
+  kuppel(art, r2, x, y, z2, farbe) {
+    this.form(art, new SphereGeometry(r2, 20, 10, 0, Math.PI * 2, 0, Math.PI / 2), x, y, z2, 0, farbe);
+  }
+  giebel(b2, h2, x, y, z2, yaw, farbe) {
+    const g = new BufferGeometry();
+    g.setAttribute("position", new Float32BufferAttribute([-b2 / 2, 0, 0, b2 / 2, 0, 0, 0, h2, 0, b2 / 2, 0, 0, -b2 / 2, 0, 0, 0, h2, 0], 3));
+    g.setAttribute("uv", new Float32BufferAttribute([0, 0, b2, 0, b2 / 2, h2, 0, 0, b2, 0, b2 / 2, h2], 2));
+    g.computeVertexNormals();
+    this.form("putz", g, x, y, z2, yaw, farbe);
+  }
+  fertig(art, merge) {
+    return this.teile[art].length ? merge(this.teile[art]) : null;
+  }
+};
+var ort = (x, z2, yaw, lx, lz) => {
+  const c = Math.cos(yaw), s = Math.sin(yaw);
+  return [x + c * lx + s * lz, z2 - s * lx + c * lz];
+};
+function korpus(bau2, x, y0, z2, yaw, b2, t2, stock, h1, art, farbe, fach, kragen = 0.04) {
+  let oben = y0;
+  stock.forEach((liste, q2) => {
+    const f2 = 1 + q2 * kragen, bq = b2 * f2, tq = t2 * f2, y = y0 + q2 * h1;
+    bau2.kiste(art, bq, h1, tq, x, y + h1 / 2, z2, yaw, farbe);
+    if (fach) {
+      for (const [sx, sz] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) {
+        const p3 = ort(x, z2, yaw, sx * bq / 2, sz * tq / 2);
+        bau2.kiste("holz", 0.12, h1, 0.12, p3[0], y + h1 / 2, p3[1], yaw);
+      }
+      const p2 = [[bq + 0.1, 0.08, 0, tq / 2 + 0.02], [bq + 0.1, 0.08, 0, -tq / 2 - 0.02], [0.08, tq + 0.1, bq / 2 + 0.02, 0], [0.08, tq + 0.1, -bq / 2 - 0.02, 0]];
+      for (const [w, d2, lx, lz] of p2) {
+        const q22 = ort(x, z2, yaw, lx, lz);
+        bau2.kiste("holz", w, 0.1, d2, q22[0], y + h1 - 0.05, q22[1], yaw);
+      }
+    }
+    const zahl = liste.length, sp = clamp3(Math.ceil(Math.sqrt(zahl / 4)), 1, 8), re = Math.max(1, Math.ceil(zahl / (4 * sp))), hF = (h1 - 0.16) / re;
+    liste.forEach((c, k2) => {
+      const wn2 = k2 % 4, rest = Math.floor(k2 / 4), r2 = Math.floor(rest / sp), s = rest % sp, quer = wn2 % 2 === 1, lang = quer ? tq : bq, ab = (quer ? bq : tq) / 2 + 0.015, u2 = ((s + 0.5) / sp - 0.5) * lang * 0.84, w = Math.min(lang * 0.84 / sp * 0.62, 0.42), hh = Math.min(hF * 0.72, 0.6), vz = wn2 < 2 ? 1 : -1, lx = quer ? vz * ab : u2, lz = quer ? u2 : vz * ab, pp = ort(x, z2, yaw, lx, lz), yy = y + 0.08 + hF * (r2 + 0.5), dy = yaw + (quer ? Math.PI / 2 : 0);
+      bau2.kiste("rahmen", w + 0.08, hh + 0.08, 0.05, pp[0], yy, pp[1], dy);
+      bau2.glas.push({ x: pp[0], y: yy, z: pp[1], yaw: dy, w, h: hh, c });
+    });
+    oben = y + h1;
+  });
+  return oben;
+}
+function satteldach(bau2, x, y, z2, yaw, b2, t2, hd, dc, wand, ueber = 0.28) {
+  const lang = Math.hypot(b2 / 2, hd) + ueber, w = Math.atan2(hd, b2 / 2);
+  for (const sei of [1, -1]) {
+    const p2 = ort(x, z2, yaw, sei * (b2 / 4 + ueber * Math.cos(w) * 0.5), 0), g = new BoxGeometry(lang, 0.09, t2 + 0.5), uv2 = g.attributes.uv;
+    for (let i = 0; i < uv2.count; i++) uv2.setXY(i, uv2.getX(i) * lang, uv2.getY(i) * (t2 + 0.5));
+    bau2.form("dach", g, p2[0], y + hd / 2 - ueber * Math.sin(w) * 0.5 + 0.05, p2[1], yaw, dc, 0, sei * -w);
+  }
+  const fi = ort(x, z2, yaw, 0, 0);
+  bau2.kiste("holz", 0.13, 0.13, t2 + 0.56, fi[0], y + hd + 0.08, fi[1], yaw);
+  for (const sz of [1, -1]) {
+    const p2 = ort(x, z2, yaw, 0, sz * t2 / 2);
+    bau2.giebel(b2, hd, p2[0], y, p2[1], yaw, wand);
+  }
+}
+var spitze = (bau2, art, r2, h2, x, y, z2, f2, seg = 4) => {
+  const g = new ConeGeometry(r2, h2, seg);
+  bau2.form(art, g, x, y + h2 / 2, z2, Math.PI / 4, f2);
+};
+var saeulen = (bau2, x, y, z2, yaw, breite, lz, h2, zahl, f2 = KALK) => {
+  for (let i = 0; i < zahl; i++) {
+    const p2 = ort(x, z2, yaw, ((i + 0.5) / zahl - 0.5) * breite, lz);
+    bau2.walze("stein", 0.08, 0.1, h2, p2[0], y + h2 / 2, p2[1], f2, 8);
+  }
+};
+var tuer = (bau2, x, y, z2, yaw, se, t2, f2 = DUNKEL, br = 0.42, ho = 0.8) => {
+  if (!se) return;
+  const dx = x - se[0] * (t2 / 2 + 0.03), dz = z2 - se[1] * (t2 / 2 + 0.03);
+  bau2.kiste("bunt", br, ho, 0.07, dx, y + ho / 2 + 0.1, dz, yaw, f2);
+};
+function bauwerk(bau2, fkt, H) {
+  const { x, y, z: z2, yaw, b: b2, t: t2, stock, reife, se } = H, dc = dachFarbe(reife), L2 = (lx, lz) => ort(x, z2, yaw, lx, lz), n2 = stock.length, sockel = (f2 = STEIN, h2 = 0.9, k2 = 1.07) => bau2.kiste("stein", b2 * k2, h2, t2 * k2, x, y - h2 / 2 + 0.15, z2, yaw, f2), y0 = y + 0.15;
+  switch (fkt) {
+    case "rathaus": {
+      sockel();
+      const br = b2 * 1.25, o2 = korpus(bau2, x, y0, z2, yaw, br, t2, stock, 1.2, "putz", LEHM, false, 0);
+      satteldach(bau2, x, o2, z2, yaw, br, t2, br * 0.42, dc, LEHM);
+      const tp = L2(0, -t2 * 0.32);
+      bau2.kiste("stein", 1.1, o2 - y + 3.2, 1.1, tp[0], y + (o2 - y + 3.2) / 2, tp[1], yaw, STEIN);
+      const uh = L2(0, -t2 * 0.32 - 0.56);
+      bau2.walze("bunt", 0.36, 0.36, 0.05, uh[0], o2 + 2.4, uh[1], KALK);
+      spitze(bau2, "metall", 0.9, 2.2, tp[0], o2 + 3.2, tp[1], KUPFER);
+      saeulen(bau2, x, y0, z2, yaw, br * 0.8, t2 / 2 + 0.5, 1.15, 5);
+      const da = L2(0, t2 / 2 + 0.5);
+      bau2.kiste("stein", br * 0.85, 0.12, 0.9, da[0], y0 + 1.2, da[1], yaw, STEIN);
+      break;
+    }
+    case "saal": {
+      sockel();
+      const br = b2 * 1.5, o2 = korpus(bau2, x, y0, z2, yaw, br, t2 * 1.1, stock, 1.5, "putz", WEISS, false, 0);
+      satteldach(bau2, x, o2, z2, yaw, br, t2 * 1.1, br * 0.34, dc, WEISS);
+      saeulen(bau2, x, y0, z2, yaw, br * 0.7, t2 * 0.55 + 0.45, 1.4, 4, STEIN);
+      tuer(bau2, x, y0, z2, yaw, se, t2, BLAU, 0.9, 1.1);
+      break;
+    }
+    case "druckerei": {
+      sockel();
+      const o2 = korpus(bau2, x, y0, z2, yaw, b2 * 1.2, t2, stock, 1.15, "putz", LEHM, false, 0);
+      for (let i = 0; i < 3; i++) {
+        const p2 = L2((i - 1) * b2 * 0.4, 0);
+        bau2.kiste("dach", b2 * 0.4, 0.09, t2 + 0.3, p2[0], o2 + 0.35, p2[1], yaw, dc, 0, -0.65);
+        bau2.kiste("rahmen", 0.05, 0.72, t2, p2[0] + 0, o2 + 0.36, p2[1], yaw, [0.5, 0.7, 0.85]);
+      }
+      const k2 = L2(b2 * 0.75, -t2 * 0.3);
+      bau2.walze("stein", 0.2, 0.3, o2 - y + 2.6, k2[0], y + (o2 - y + 2.6) / 2, k2[1], ROT, 12);
+      const a2 = L2(-b2 * 0.85, 0);
+      bau2.kiste("holz", b2 * 0.5, 1, t2 * 0.6, a2[0], y + 0.5, a2[1], yaw);
+      break;
+    }
+    case "post": {
+      sockel();
+      const o2 = korpus(bau2, x, y0, z2, yaw, b2, t2, stock, 1.1, "putz", KALK, false, 0);
+      satteldach(bau2, x, o2, z2, yaw, b2, t2, b2 * 0.5, dc, KALK);
+      tuer(bau2, x, y0, z2, yaw, se, t2, GELB);
+      if (se) {
+        const p2 = [x - se[0] * (t2 / 2 + 0.5), z2 - se[1] * (t2 / 2 + 0.5)];
+        bau2.kiste("bunt", 0.3, 0.6, 0.2, p2[0] + 0.5, y + 1, p2[1], yaw, GELB);
+        bau2.walze("holz", 0.03, 0.03, 0.9, p2[0] + 0.5, y + 0.45, p2[1], DUNKEL, 6);
+      }
+      break;
+    }
+    case "aussicht": {
+      const r2 = b2 * 0.3, o2 = korpus(bau2, x, y0, z2, yaw, r2 * 2, r2 * 2, stock, 1.5, "stein", STEIN, false, 0);
+      bau2.kiste("holz", r2 * 3.2, 0.12, r2 * 3.2, x, o2 + 0.06, z2, yaw);
+      for (const [a2, c] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) {
+        const p2 = L2(a2 * r2 * 1.4, c * r2 * 1.4);
+        bau2.kiste("holz", 0.08, 1, 0.08, p2[0], o2 + 0.55, p2[1], yaw);
+      }
+      spitze(bau2, "dach", r2 * 2.3, 1.2, x, o2 + 1.05, z2, dc);
+      break;
+    }
+    case "schule": {
+      sockel(STEIN, 0.9, 1);
+      const br = b2 * 1.7, o2 = korpus(bau2, x, y0, z2, yaw, br, t2 * 0.85, stock, 1.15, "putz", [0.95, 0.82, 0.55], false, 0);
+      satteldach(bau2, x, o2, z2, yaw, br, t2 * 0.85, b2 * 0.42, dc, [0.95, 0.82, 0.55]);
+      const gl = L2(0, 0), hd = b2 * 0.42;
+      bau2.kiste("holz", 0.5, 0.8, 0.5, gl[0], o2 + hd + 0.4, gl[1], yaw);
+      spitze(bau2, "metall", 0.46, 0.7, gl[0], o2 + hd + 0.8, gl[1], KUPFER);
+      tuer(bau2, x, y0, z2, yaw, se, t2 * 0.85, GRUEN, 0.8, 1);
+      if (se) {
+        const m = [-se[0] * (t2 * 0.5 + 1.6), -se[1] * (t2 * 0.5 + 1.6)];
+        for (let i = 0; i < 6; i++) {
+          const a2 = i / 6 * Math.PI * 2;
+          bau2.kiste("holz", 0.06, 0.5, 0.06, x + m[0] + Math.cos(a2) * 1.3, y + 0.25, z2 + m[1] + Math.sin(a2) * 1.3, a2);
+        }
+        bau2.walze("bunt", 0.03, 0.03, 1.5, x + m[0], y + 0.75, z2 + m[1], DUNKEL, 6);
+        bau2.kiste("bunt", 0.4, 0.26, 0.04, x + m[0], y + 1.45, z2 + m[1], yaw, KALK);
+      }
+      break;
+    }
+    case "schularchiv": {
+      const br = b2 * 1.5, o2 = korpus(bau2, x, y0, z2, yaw, br, t2 * 0.8, stock, 1.3, "stein", [0.78, 0.7, 0.58], false, 0);
+      satteldach(bau2, x, o2, z2, yaw, br, t2 * 0.8, b2 * 0.34, [0.38, 0.4, 0.45], [0.78, 0.7, 0.58]);
+      for (const s of [-1, 1]) {
+        const f2 = L2(s * br * 0.4, t2 * 0.75);
+        bau2.kiste("stein", b2 * 0.44, o2 - y0, t2 * 0.9, f2[0], y0 + (o2 - y0) / 2, f2[1], yaw, [0.72, 0.65, 0.54]);
+        bau2.kiste("dach", b2 * 0.56, 0.1, t2 + 0.1, f2[0], o2 + 0.05, f2[1], yaw, [0.38, 0.4, 0.45]);
+      }
+      break;
+    }
+    case "spielhof": {
+      sockel(STEIN, 0.5);
+      const o2 = korpus(bau2, x, y0, z2, yaw, b2, t2, stock, 0.95, "bunt", [0.95, 0.72, 0.3], false, 0);
+      satteldach(bau2, x, o2, z2, yaw, b2, t2, b2 * 0.32, ROT, [0.95, 0.72, 0.3]);
+      const a2 = L2(b2, 0);
+      for (const s of [-1, 1]) {
+        bau2.kiste("bunt", 0.06, 1.2, 0.06, a2[0], y + 0.6, a2[1] + s * 0.5, yaw, BLAU, s * 0.15);
+      }
+      bau2.kiste("bunt", 0.06, 0.06, 1.1, a2[0], y + 1.17, a2[1], yaw, BLAU);
+      const c = L2(-b2, 0.2);
+      bau2.kiste("bunt", 0.3, 0.05, 1.2, c[0], y + 0.5, c[1], yaw, GELB, 0.6);
+      bau2.walze("stein", 0.5, 0.5, 0.06, a2[0] + 0.3, y + 0.05, a2[1] + 1, [0.9, 0.8, 0.55]);
+      break;
+    }
+    case "musik": {
+      const r2 = b2 * 0.62, h2 = 1.15 * n2, ff = stock;
+      bau2.walze("stein", r2 * 1.05, r2 * 1.08, 0.5, x, y + 0.05, z2, STEIN, 24);
+      bau2.walze("putz", r2, r2, h2, x, y0 + h2 / 2 + 0.1, z2, WEISS, 24);
+      ff.forEach((li, q2) => li.forEach((c, k2) => {
+        const a2 = k2 / Math.max(1, li.length) * Math.PI * 2 + q2, ww = Math.min(0.42, r2 * 3 / Math.max(3, li.length));
+        bau2.glas.push({ x: x + Math.cos(a2) * (r2 + 0.02), y: y0 + 0.65 + q2 * 1.15, z: z2 + Math.sin(a2) * (r2 + 0.02), yaw: Math.PI / 2 - a2, w: ww, h: 0.55, c });
+      }));
+      bau2.form("dach", new ConeGeometry(r2 * 1.2, r2 * 0.75, 24), x, y0 + h2 + 0.1 + r2 * 0.37, z2, 0, dc);
+      const pv = L2(r2 + 1.3, 0);
+      for (let i = 0; i < 6; i++) {
+        const a2 = i / 6 * Math.PI * 2;
+        bau2.walze("holz", 0.05, 0.05, 1, pv[0] + Math.cos(a2) * 0.65, y + 0.5, pv[1] + Math.sin(a2) * 0.65, KALK, 6);
+      }
+      bau2.form("dach", new ConeGeometry(0.9, 0.5, 6), pv[0], y + 1.25, pv[1], 0, KUPFER);
+      bau2.walze("holz", 0.72, 0.72, 0.08, pv[0], y + 0.05, pv[1], [0.6, 0.45, 0.3], 6);
+      break;
+    }
+    case "museum": {
+      for (let i = 0; i < 3; i++) bau2.kiste("stein", b2 * 1.4 + (2 - i) * 0.25, 0.12, t2 * 1.2 + (2 - i) * 0.25, x, y + 0.06 + i * 0.12, z2, yaw, KALK);
+      const o2 = korpus(bau2, x, y + 0.36, z2, yaw, b2 * 1.3, t2, stock, 1.35, "stein", KALK, false, 0);
+      saeulen(bau2, x, y + 0.36, z2, yaw, b2 * 1.2, t2 * 0.5 + 0.35, o2 - y - 0.36, 6);
+      bau2.kiste("stein", b2 * 1.4, 0.16, t2 + 0.9, x, o2 + 0.08, z2, yaw, KALK);
+      const h2 = L2(0, 0.2);
+      satteldach(bau2, h2[0], o2 + 0.16, h2[1], yaw, b2 * 1.4, t2 + 0.9, b2 * 0.2, [0.66, 0.62, 0.56], KALK, 0.05);
+      break;
+    }
+    case "heilhaus": {
+      sockel(STEIN, 0.5);
+      const o2 = korpus(bau2, x, y0, z2, yaw, b2, t2, stock, 1.1, "putz", KALK, false, 0);
+      for (const s of [-1, 1]) {
+        const f2 = L2(s * b2 * 0.72, 0);
+        bau2.kiste("putz", b2 * 0.44, o2 - y0, t2 * 1.5, f2[0], y0 + (o2 - y0) / 2, f2[1], yaw, KALK);
+        bau2.kiste("metall", b2 * 0.5, 0.08, t2 * 1.6, f2[0], o2 + 0.04, f2[1], yaw, KUPFER);
+      }
+      bau2.kiste("metall", b2 * 1.08, 0.08, t2 * 1.08, x, o2 + 0.04, z2, yaw, KUPFER);
+      for (let i = 0; i < 7; i++) {
+        const q2 = L2(-b2 + i * b2 * 0.34, t2 * 1.35);
+        bau2.form("bunt", new SphereGeometry(0.17, 8, 6), q2[0], y + 0.16, q2[1], 0, GRUEN);
+      }
+      break;
+    }
+    case "bibliothek": {
+      sockel();
+      const o2 = korpus(bau2, x, y0, z2, yaw, b2 * 1.1, t2 * 1.05, stock.length > 1 ? stock : stock, 1.5, "stein", [0.62, 0.55, 0.48], false, 0);
+      satteldach(bau2, x, o2, z2, yaw, b2 * 1.1, t2 * 1.05, b2 * 0.85, [0.3, 0.32, 0.38], [0.62, 0.55, 0.48]);
+      tuer(bau2, x, y0, z2, yaw, se, t2 * 1.05, ROT, 0.5, 1.1);
+      break;
+    }
+    case "klause": {
+      const br = Math.min(b2, 1.4), tr = Math.min(t2, 1.2);
+      bau2.kiste("stein", br * 1.05, 0.5, tr * 1.05, x, y - 0.1, z2, yaw);
+      const o2 = korpus(bau2, x, y0, z2, yaw, br, tr, stock, 1, "stein", [0.7, 0.66, 0.6], false, 0);
+      satteldach(bau2, x, o2, z2, yaw, br, tr, br * 0.62, dc, [0.7, 0.66, 0.6]);
+      const q2 = L2(br * 0.9, 0);
+      bau2.kiste("holz", 0.55, 0.06, 0.2, q2[0], y + 0.3, q2[1], yaw + 1.57);
+      break;
+    }
+    case "kaffeehaus": {
+      sockel(STEIN, 0.5);
+      const o2 = korpus(bau2, x, y0, z2, yaw, b2, t2, stock, 1.05, "putz", ROSA, false, 0);
+      satteldach(bau2, x, o2, z2, yaw, b2, t2, b2 * 0.45, dc, ROSA);
+      if (se) {
+        const v3 = [-se[0], -se[1]], m = [x + v3[0] * (t2 / 2 + 0.4), z2 + v3[1] * (t2 / 2 + 0.4)];
+        for (let i = 0; i < 5; i++) {
+          bau2.kiste("bunt", b2 * 0.2, 0.04, 0.8, ...(() => {
+            const p2 = ort(m[0], m[1], yaw, (i - 2) * b2 * 0.2, 0);
+            return [p2[0], y + 1.08, p2[1]];
+          })(), yaw, i % 2 ? KALK : ROT, 0.28);
+        }
+        for (let i = 0; i < 2; i++) {
+          const p2 = ort(x + v3[0] * (t2 / 2 + 1.3), z2 + v3[1] * (t2 / 2 + 1.3), yaw, (i - 0.5) * 1.2, 0);
+          bau2.walze("holz", 0.22, 0.22, 0.03, p2[0], y + 0.42, p2[1], KALK, 10);
+          bau2.walze("holz", 0.025, 0.025, 1.2, p2[0], y + 0.6, p2[1], DUNKEL, 6);
+          bau2.form("bunt", new ConeGeometry(0.45, 0.2, 8), p2[0], y + 1.25, p2[1], 0, ROT);
+        }
+      }
+      break;
+    }
+    case "werkstatt": {
+      sockel(STEIN, 0.4);
+      const o2 = korpus(bau2, x, y0, z2, yaw, b2 * 1.15, t2, stock, 1.2, "holz", [0.85, 0.7, 0.55], false, 0);
+      bau2.kiste("dach", b2 * 1.35, 0.09, t2 + 0.5, x, o2 + 0.33, z2, yaw, dc, 0, 0.3);
+      bau2.kiste("holz", b2 * 1.15, 0.7, 0.05, ...(() => {
+        const p2 = L2(0, t2 / 2);
+        return [p2[0], o2 + 0.25, p2[1]];
+      })(), yaw);
+      tuer(bau2, x, y0, z2, yaw, se, t2, DUNKEL, 1, 0.95);
+      const k2 = L2(b2 * 0.4, -t2 * 0.25);
+      bau2.walze("metall", 0.12, 0.12, 1.6, k2[0], o2 + 0.7, k2[1], [0.4, 0.4, 0.42], 8);
+      const h2 = L2(-b2 * 0.85, 0.2);
+      for (let i = 0; i < 3; i++) bau2.walze("holz", 0.1, 0.1, 0.8, h2[0], y + 0.12 + i * 0.12, h2[1] + i * 0.03, [0.7, 0.5, 0.3], 8);
+      break;
+    }
+    case "sternwarte": {
+      const r2 = b2 * 0.58;
+      bau2.walze("stein", r2 * 1.1, r2 * 1.15, 0.5, x, y + 0.05, z2, STEIN, 24);
+      const h2 = 1.15 * n2;
+      bau2.walze("putz", r2, r2, h2, x, y0 + h2 / 2 + 0.1, z2, KALK, 24);
+      stock.forEach((li, q2) => li.forEach((c, k2) => {
+        const a2 = k2 / Math.max(1, li.length) * Math.PI * 2 + q2;
+        bau2.glas.push({ x: x + Math.cos(a2) * (r2 + 0.02), y: y0 + 0.65 + q2 * 1.15, z: z2 + Math.sin(a2) * (r2 + 0.02), yaw: Math.PI / 2 - a2, w: Math.min(0.4, r2 * 3 / Math.max(3, li.length)), h: 0.5, c });
+      }));
+      bau2.kuppel("metall", r2 * 1.04, x, y0 + h2 + 0.1, z2, [0.72, 0.76, 0.8]);
+      const sl = L2(0, 0);
+      bau2.kiste("bunt", r2 * 0.28, r2 * 0.95, r2 * 1.06, sl[0], y0 + h2 + 0.1 + r2 * 0.46, sl[1], yaw, DUNKEL, -0.5);
+      const f2 = L2(0, r2 * 0.75);
+      bau2.walze("metall", 0.09, 0.13, r2 * 1.2, f2[0], y0 + h2 + 0.1 + r2 * 0.95, f2[1], [0.85, 0.75, 0.45], 10);
+      break;
+    }
+    case "schreibstube": {
+      sockel();
+      const o2 = korpus(bau2, x, y0, z2, yaw, b2 * 0.8, t2, stock, 1.2, "putz", WEISS, true, 0.05);
+      const fo = 1 + (n2 - 1) * 0.05;
+      satteldach(bau2, x, o2, z2, yaw, b2 * 0.8 * fo, t2 * fo, b2 * 0.68, dc, WEISS);
+      const g = L2(b2 * 0.2, t2 * 0.2);
+      bau2.kiste("putz", 0.42, 0.42, 0.42, g[0] + 0, o2 + b2 * 0.2, g[1], yaw, WEISS);
+      break;
+    }
+    case "kapelle": {
+      sockel(STEIN, 0.5, 1.02);
+      const nb2 = b2 * 0.75, nt = t2 * 1.3, o2 = korpus(bau2, x, y0, z2, yaw, nb2, nt, stock, 1.25, "stein", KALK, false, 0);
+      satteldach(bau2, x, o2, z2, yaw, nb2, nt, nb2 * 0.8, dc, KALK);
+      const ap = L2(0, -nt / 2);
+      bau2.walze("stein", nb2 * 0.46, nb2 * 0.46, o2 - y0, ap[0], y0 + (o2 - y0) / 2, ap[1], KALK, 18);
+      bau2.kuppel("dach", nb2 * 0.48, ap[0], o2, ap[1], dc);
+      const tp = L2(0, nt / 2 - 0.2);
+      bau2.kiste("stein", 0.62, 0.95, 0.62, tp[0], o2 + nb2 * 0.3 + 0.2, tp[1], yaw, KALK);
+      spitze(bau2, "metall", 0.56, 1.3, tp[0], o2 + nb2 * 0.3 + 0.67, tp[1], KUPFER);
+      tuer(bau2, x, y0, z2, yaw, se, nt, ROT, 0.42, 0.95);
+      break;
+    }
+    case "garage": {
+      bau2.kiste("stein", b2 * 1.4, 0.3, t2 * 1.3, x, y, z2, yaw);
+      const o2 = korpus(bau2, x, y0, z2, yaw, b2 * 1.3, t2, stock, 1.05, "bunt", [0.82, 0.84, 0.86], false, 0);
+      bau2.kiste("metall", b2 * 1.5, 0.12, t2 + 0.6, x, o2 + 0.06, z2, yaw, ROT);
+      tuer(bau2, x, y0, z2, yaw, se, t2, [0.3, 0.32, 0.36], 1.1, 0.85);
+      if (se) {
+        const m = [x - se[0] * (t2 / 2 + 1.9), z2 - se[1] * (t2 / 2 + 1.9)], ri = new RingGeometry(1.05, 1.5, 40);
+        ri.rotateX(-Math.PI / 2);
+        bau2.form("bunt", ri, m[0], y + 0.08, m[1], 0, [0.16, 0.16, 0.18]);
+        const au = new BoxGeometry(0.42, 0.18, 0.22);
+        bau2.form("bunt", au, m[0] + 1.27, y + 0.2, m[1], 1.57, GELB);
+        bau2.walze("stein", 0.1, 0.1, 0.6, x - se[0] * (t2 / 2 + 0.3) + 0.7, y + 0.3, z2 - se[1] * (t2 / 2 + 0.3), ROT, 8);
+      }
+      break;
+    }
+    case "maerchen": {
+      sockel(STEIN, 0.5, 0.9);
+      const r2 = b2 * 0.42, h2 = 1.1 * n2;
+      bau2.walze("stein", r2 * 0.95, r2 * 1.08, h2, x, y0 + h2 / 2, z2, [0.82, 0.76, 0.86], 12);
+      stock.forEach((li, q2) => li.forEach((c, k2) => {
+        const a3 = k2 / Math.max(1, li.length) * Math.PI * 2 + q2;
+        bau2.glas.push({ x: x + Math.cos(a3) * (r2 + 0.02), y: y0 + 0.6 + q2 * 1.1, z: z2 + Math.sin(a3) * (r2 + 0.02), yaw: Math.PI / 2 - a3, w: 0.3, h: 0.45, c });
+      }));
+      bau2.form("dach", new ConeGeometry(r2 * 1.35, r2 * 3.4, 12), x, y0 + h2 + r2 * 1.7, z2, 0, ROSA);
+      const a2 = L2(r2 * 1.5, 0.2);
+      bau2.walze("stein", 0.28, 0.3, h2 * 0.7, a2[0], y0 + h2 * 0.35, a2[1], [0.86, 0.8, 0.9], 10);
+      bau2.form("dach", new ConeGeometry(0.4, 1, 10), a2[0], y0 + h2 * 0.7 + 0.5, a2[1], 0, BLAU);
+      for (let i = 0; i < 4; i++) {
+        const q2 = L2(-r2 * 1.7 + i * 0.35, t2 * 0.6);
+        bau2.walze("bunt", 0.03, 0.04, 0.2, q2[0], y + 0.1, q2[1], KALK, 6);
+        bau2.kuppel("bunt", 0.12, q2[0], y + 0.2, q2[1], ROT);
+      }
+      break;
+    }
+    case "bastel": {
+      sockel(STEIN, 0.4);
+      const o2 = korpus(bau2, x, y0, z2, yaw, b2, t2, stock, 1.1, "putz", [0.7, 0.85, 0.7], true, 0.03);
+      satteldach(bau2, x, o2, z2, yaw, b2, t2, b2 * 0.45, dc, [0.7, 0.85, 0.7]);
+      if (se) {
+        const m = [x - se[0] * (t2 / 2 + 0.34), z2 - se[1] * (t2 / 2 + 0.34)];
+        for (let i = 0; i < 4; i++) {
+          const p2 = ort(m[0], m[1], yaw, (i - 1.5) * b2 * 0.25, 0);
+          bau2.kiste("bunt", b2 * 0.25, 0.04, 0.7, p2[0], y + 1.02, p2[1], yaw, i % 2 ? GELB : BLAU, 0.3);
+        }
+        const c = ort(x - se[0] * (t2 / 2 + 0.8), z2 - se[1] * (t2 / 2 + 0.8), yaw, b2 * 0.2, 0);
+        [ROT, GELB, BLAU, GRUEN].forEach((f2, i) => bau2.kiste("bunt", 0.3, 0.3, 0.3, c[0] + i % 2 * 0.35, y + 0.15 + (i > 1 ? 0.3 : 0), c[1], yaw, f2));
+      }
+      break;
+    }
+    case "turnhalle": {
+      sockel(STEIN, 0.5);
+      const br = b2 * 1.4, o2 = korpus(bau2, x, y0, z2, yaw, br, t2 * 1.1, stock, 1.5, "putz", [0.82, 0.88, 0.93], false, 0);
+      const g = new CylinderGeometry(br / 2, br / 2, t2 * 1.15, 24, 1, true, -Math.PI / 2, Math.PI);
+      g.rotateX(Math.PI / 2);
+      g.scale(1, 0.45, 1);
+      bau2.form("metall", g, x, o2, z2, yaw, [0.55, 0.65, 0.7]);
+      break;
+    }
+    case "bildstock": {
+      const st = stock.flat();
+      bau2.kiste("stein", 0.42, 0.14, 0.42, x, y + 0.07, z2, yaw, STEIN);
+      bau2.kiste("stein", 0.2, 0.75, 0.2, x, y + 0.5, z2, yaw, STEIN);
+      const bk = Math.max(0.34, 0.2 + st.length * 0.1);
+      bau2.kiste("stein", bk, 0.42, 0.3, x, y + 1.05, z2, yaw, KALK);
+      satteldach(bau2, x, y + 1.26, z2, yaw, bk + 0.05, 0.32, 0.2, dc, KALK, 0.06);
+      st.forEach((c, k2) => {
+        const p2 = ort(x, z2, yaw, ((k2 + 0.5) / st.length - 0.5) * bk * 0.8, 0.16);
+        bau2.glas.push({ x: p2[0], y: y + 1.05, z: p2[1], yaw, w: Math.min(0.2, bk * 0.7 / st.length), h: 0.26, c });
+      });
+      break;
+    }
+    default: {
+      const r2 = Math.max(0.34, b2 * 0.3), h2 = 0.9 * Math.max(1, n2);
+      bau2.walze("holz", r2, r2, h2, x, y + h2 / 2, z2, [0.75, 0.6, 0.42], 12);
+      stock.flat().forEach((c, k2, a2) => {
+        const w = k2 / a2.length * Math.PI * 2;
+        bau2.glas.push({ x: x + Math.cos(w) * (r2 + 0.02), y: y + 0.4, z: z2 + Math.sin(w) * (r2 + 0.02), yaw: Math.PI / 2 - w, w: 0.2, h: 0.3, c });
+      });
+      bau2.form("dach", new ConeGeometry(r2 * 1.2, r2 * 0.9, 12), x, y + h2 + r2 * 0.45, z2, 0, dc);
+    }
+  }
+}
+function nebenbau(bau2, fkt, H) {
+  const { x, y, z: z2, yaw, liste, reife } = H, dc = dachFarbe(reife), art = fkt === "werkstatt" || fkt === "garage" ? "holz" : fkt === "schularchiv" || fkt === "schule" ? "stein" : "putz", f2 = fkt === "schularchiv" ? [0.72, 0.65, 0.54] : fkt === "schule" ? [0.95, 0.82, 0.55] : LEHM;
+  const o2 = korpus(bau2, x, y + 0.05, z2, yaw, 1.2, 0.72, [liste], 0.72, art, f2, false, 0);
+  satteldach(bau2, x, o2, z2, yaw, 1.2, 0.72, 0.28, fkt === "schularchiv" ? [0.38, 0.4, 0.45] : dc, f2, 0.1);
+}
+
+// ../../app/js/funktion.js
+var FUNKTIONEN = {
+  rathaus: { name: "Rathaus", campus: "Verwaltung", garten: "Hofbaum", galaxie: "Doppelring", buero: "Leitung" },
+  saal: { name: "Gemeindesaal", campus: "Forum", garten: "Laube", galaxie: "Ring", buero: "Konferenz" },
+  druckerei: { name: "Druckerei", campus: "Verlag", garten: "Rankger\xFCst", galaxie: "Streifen", buero: "Redaktion" },
+  post: { name: "Postamt", campus: "Poststelle", garten: "Heckenweg", galaxie: "Mond", buero: "Poststelle" },
+  aussicht: { name: "Aussichtsturm", campus: "Leitwarte", garten: "Hochstamm", galaxie: "Mond", buero: "Leitwarte" },
+  schule: { name: "Schule", campus: "Lehrgeb\xE4ude", garten: "Schulgarten", galaxie: "Erdartig", buero: "Schulb\xFCro" },
+  schularchiv: { name: "Schularchiv", campus: "Archivbau", garten: "Obstreihe", galaxie: "Erdartig", buero: "Archiv" },
+  spielhof: { name: "Spielhof", campus: "Spielhaus", garten: "Spielwiese", galaxie: "Bunt", buero: "Spielzimmer" },
+  musik: { name: "Musikhaus", campus: "Konzerthalle", garten: "Klanggarten", galaxie: "Ring", buero: "Tonstudio" },
+  museum: { name: "Museum", campus: "Sammlung", garten: "Herbarium", galaxie: "Gestein", buero: "Sammlung" },
+  heilhaus: { name: "Heilhaus", campus: "Klinik", garten: "Kr\xE4utergarten", galaxie: "Wasser", buero: "Praxis" },
+  bibliothek: { name: "Bibliothek", campus: "Bibliothek", garten: "Baumhain", galaxie: "Gestein", buero: "Bibliothek" },
+  klause: { name: "Klause", campus: "Denkzelle", garten: "Einzelbaum", galaxie: "Fels", buero: "Einzelzimmer" },
+  kaffeehaus: { name: "Kaffeehaus", campus: "Caf\xE9", garten: "Sitzplatz", galaxie: "Mond", buero: "Teek\xFCche" },
+  werkstatt: { name: "Werkstatt", campus: "Labor", garten: "Beetkasten", galaxie: "Rost", buero: "Technik" },
+  sternwarte: { name: "Sternwarte", campus: "Observatorium", garten: "Sonnenuhr", galaxie: "Eis", buero: "Planung" },
+  schreibstube: { name: "Schreibstube", campus: "Schreibwerkstatt", garten: "Rankbogen", galaxie: "Streifen", buero: "Schreibb\xFCro" },
+  kapelle: { name: "Kapelle", campus: "Raum der Stille", garten: "Stillebeet", galaxie: "Eis", buero: "Stilleraum" },
+  garage: { name: "Garage", campus: "Teststrecke", garten: "Laufbahn", galaxie: "Rost", buero: "Fuhrpark" },
+  maerchen: { name: "M\xE4rchenhaus", campus: "Kinderhaus", garten: "Zaubergarten", galaxie: "Bunt", buero: "Kinderzimmer" },
+  bastel: { name: "Bastelladen", campus: "Materiallager", garten: "Bauerngarten", galaxie: "Bunt", buero: "Materialraum" },
+  turnhalle: { name: "Turnhalle", campus: "Sporthalle", garten: "Bewegungswiese", galaxie: "Wasser", buero: "Bewegungsraum" },
+  bildstock: { name: "Bildstock", campus: "Merktafel", garten: "Wegblume", galaxie: "Staub", buero: "Zettelkasten" },
+  speicher: { name: "Speicher", campus: "Depot", garten: "Kompost", galaxie: "Staub", buero: "Depot" }
+};
+var NACH_TITEL = [
+  [/^Zentrale/, "rathaus"],
+  [/Integrationstisch|tisch monorepo/, "saal"],
+  [/^Mooncells$/, "saal"],
+  [/Ein Inhalt, viele/, "druckerei"],
+  [/Hermes-Gesamtwerk/, "post"],
+  [/KiN OS/, "aussicht"],
+  [/Varianten/, "schularchiv"],
+  [/Atlas der Gegenwart|SPiRALMiNDS/, "sternwarte"],
+  [/MOONFiNGERS/, "sternwarte"],
+  [/PARALLAX/, "museum"],
+  [/Neuro Atlas|TRAUMAATLAS/, "heilhaus"],
+  [/Spiel$/, "spielhof"],
+  [/^Stelle aus/, "bildstock"],
+  [/Pilates|ATEMWELTEN/, "turnhalle"],
+  [/ANWESENHEiT|BEWUSSTSEiNSFOKUSSiERUNG/, "kapelle"],
+  [/ZEiTBLiND/, "aussicht"],
+  [/FASKA Lernwege/, "schule"],
+  [/deutsch party/, "spielhof"],
+  [/Wildwerkstatt|Hermes3D/, "werkstatt"],
+  [/Durkheim|Radcliffe/, "bibliothek"],
+  [/Musik und Mehrstimmigkeit/, "musik"],
+  [/Genealogical|Spiralwellen/, "sternwarte"],
+  [/RAiNBOW|hoerni/, "maerchen"]
+];
+var NACH_BEREICH = { "Schuldokumentation": "schule", "FLOW \xB7 Lernspiele": "spielhof", "MUSiC \xB7 Klangwelten": "musik", "Atlas": "museum", "Neuroatlas": "heilhaus", "TRAUMAATLAS": "heilhaus", "Kapitel und Denkr\xE4ume": "klause", "Gespr\xE4chskapitel": "kaffeehaus", "Apps": "werkstatt", "Atlas und Steuerung": "sternwarte", "Spiralen und Schreiben": "schreibstube", "EiN SEiN": "kapelle", "DEiN SEiN Astra": "kapelle", "Rennspiele": "garage", "RAiNBOW LiGHT und H\xF6rni": "maerchen", "M\xE4rchen und Einhorn": "maerchen", "KlebensFroh": "bastel", "Text und Reim": "schreibstube", "ADHS OS": "werkstatt" };
+function funktionVon(N4, n2) {
+  const m = N4.B.monde[n2];
+  if (N4.baum.material.has(n2)) return "speicher";
+  for (const [re, f2] of NACH_TITEL) if (re.test(m.titel)) return f2;
+  const bz = N4.bezirk(n2);
+  if (typeof bz === "number") {
+    for (const b2 of N4.daecher[bz].bereiche) if (b2.werke.includes(n2) && NACH_BEREICH[b2.name]) return NACH_BEREICH[b2.name];
+  }
+  return m.samen.length && /app/i.test(m.art || m.work_type || "") ? "werkstatt" : "schreibstube";
+}
+
 // welten.js
 var satz = document.getElementById("satz");
 var namenEl = document.getElementById("namen");
@@ -75663,104 +76327,6 @@ var sage = (a2, b2) => {
 };
 var NEU = "neu/";
 var klein2 = innerWidth < 700;
-var Bau = class {
-  constructor() {
-    this.teile = { putz: [], holz: [], stein: [], dach: [], rahmen: [] };
-    this.glas = [];
-  }
-  kiste(art, w, h2, d2, x, y, z2, yaw = 0, farbe = [1, 1, 1], kipp = 0) {
-    let g = new BoxGeometry(w, h2, d2);
-    const uv2 = g.attributes.uv, n2 = g.attributes.normal;
-    for (let i = 0; i < uv2.count; i++) {
-      const ax = Math.abs(n2.getX(i)), ay = Math.abs(n2.getY(i)), su = ax > 0.5 ? d2 : w, sv = ay > 0.5 ? d2 : h2;
-      uv2.setXY(i, uv2.getX(i) * su, uv2.getY(i) * sv);
-    }
-    g = g.toNonIndexed();
-    const c = new Float32Array(g.attributes.position.count * 3);
-    for (let i = 0; i < c.length; i += 3) c.set(farbe, i);
-    g.setAttribute("color", new BufferAttribute(c, 3));
-    g.applyMatrix4(new Matrix4().compose(new Vector3(x, y, z2), new Quaternion().setFromEuler(new Euler(kipp, yaw, 0, "YXZ")), new Vector3(1, 1, 1)));
-    this.teile[art].push(g);
-  }
-  /* Giebeldreieck zwischen Wand und Dach, First entlang der Tiefe */
-  giebel(b2, h2, x, y, z2, yaw, farbe) {
-    const a2 = [-b2 / 2, 0, 0, b2 / 2, 0, 0, 0, h2, 0], g = new BufferGeometry();
-    g.setAttribute("position", new Float32BufferAttribute([...a2, ...[a2[3], a2[4], a2[5], a2[0], a2[1], a2[2], a2[6], a2[7], a2[8]]], 3));
-    g.setAttribute("uv", new Float32BufferAttribute([0, 0, b2, 0, b2 / 2, h2, 0, 0, b2, 0, b2 / 2, h2], 2));
-    g.computeVertexNormals();
-    const c = new Float32Array(18);
-    for (let i = 0; i < 18; i += 3) c.set(farbe, i);
-    g.setAttribute("color", new BufferAttribute(c, 3));
-    g.applyMatrix4(new Matrix4().compose(new Vector3(x, y, z2), new Quaternion().setFromEuler(new Euler(0, yaw, 0)), new Vector3(1, 1, 1)));
-    this.teile.putz.push(g);
-  }
-  fertig(art) {
-    return this.teile[art].length ? mergeGeometries(this.teile[art]) : null;
-  }
-};
-var ort = (x, z2, yaw, lx, lz) => {
-  const c = Math.cos(yaw), s = Math.sin(yaw);
-  return [x + c * lx + s * lz, z2 - s * lx + c * lz];
-};
-var PUTZ = [[0.92, 0.86, 0.74], [0.86, 0.78, 0.64], [0.95, 0.9, 0.82], [0.8, 0.72, 0.6]];
-var dachFarbe = (r2) => r2 === "kanonisch" ? [1.25, 0.95, 0.4] : r2 === "gereift" ? [1, 0.62, 0.5] : [0.52, 0.43, 0.34];
-function haus(bau2, H) {
-  const { x, y, z: z2, yaw, b: b2, t: t2, stock, reife, n: n2, gross, se } = H, h1 = gross ? 1.25 : 0.82, wand = PUTZ[n2 % 4];
-  let oben = 0;
-  bau2.kiste("stein", b2 * 1.08, 0.9, t2 * 1.08, x, y - 0.3, z2, yaw);
-  stock.forEach((liste, q2) => {
-    const f2 = 1 + q2 * 0.045, bq = b2 * f2, tq = t2 * f2, y0 = y + 0.15 + q2 * h1;
-    bau2.kiste("putz", bq, h1, tq, x, y0 + h1 / 2, z2, yaw, wand);
-    if (gross) {
-      for (const [sx, sz] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) {
-        const p2 = ort(x, z2, yaw, sx * bq / 2, sz * tq / 2);
-        bau2.kiste("holz", 0.13, h1, 0.13, p2[0], y0 + h1 / 2, p2[1], yaw);
-      }
-      for (const [w4, d2, lx, lz] of [[bq + 0.1, 0.09, 0, tq / 2 + 0.02], [bq + 0.1, 0.09, 0, -tq / 2 - 0.02], [0.09, tq + 0.1, bq / 2 + 0.02, 0], [0.09, tq + 0.1, -bq / 2 - 0.02, 0]]) {
-        const p2 = ort(x, z2, yaw, lx, lz);
-        bau2.kiste("holz", w4, 0.11, d2, p2[0], y0 + h1 - 0.05, p2[1], yaw);
-        bau2.kiste("holz", w4, 0.08, d2, p2[0], y0 + 0.04, p2[1], yaw);
-      }
-    }
-    const zahl = liste.length, sp = clamp3(Math.ceil(Math.sqrt(zahl / 4)), 1, 7), re = Math.max(1, Math.ceil(zahl / (4 * sp))), hF = (h1 - 0.2) / re;
-    liste.forEach((c, k2) => {
-      const wandNr = k2 % 4, rest = Math.floor(k2 / 4), r2 = Math.floor(rest / sp), s = rest % sp, quer = wandNr % 2 === 1, lang2 = quer ? tq : bq, ab = (quer ? bq : tq) / 2 + 0.015, u2 = ((s + 0.5) / sp - 0.5) * lang2 * 0.86, w4 = Math.min(lang2 * 0.86 / sp * 0.62, 0.42), hh = Math.min(hF * 0.72, 0.56), vz = wandNr < 2 ? 1 : -1, lx = quer ? vz * ab : u2, lz = quer ? u2 : vz * ab, p2 = ort(x, z2, yaw, lx, lz), yy = y0 + 0.1 + hF * (r2 + 0.5), dy = yaw + (quer ? Math.PI / 2 : 0);
-      bau2.kiste("rahmen", w4 + 0.09, hh + 0.09, 0.05, p2[0], yy, p2[1], dy);
-      bau2.kiste("rahmen", w4 + 0.16, 0.05, 0.1, p2[0], yy - hh / 2 - 0.05, p2[1], dy);
-      bau2.glas.push({ x: p2[0], y: yy, z: p2[1], yaw: dy, w: w4, h: hh, c });
-    });
-    oben = y0 + h1;
-  });
-  const S2 = stock.length, fo = 1 + (S2 - 1) * 0.045, br = b2 * fo, tr = t2 * fo, hd = br * 0.58, lang = Math.hypot(br / 2, hd) + 0.28, w = Math.atan2(hd, br / 2), dc = dachFarbe(reife);
-  const flaeche = (sei) => {
-    const lm = sei * (br / 4 + 0.14 * Math.cos(w) * 0.9), p2 = ort(x, z2, yaw, lm * 1, 0), g = new BoxGeometry(lang, 0.09, tr + 0.5), uv2 = g.attributes.uv;
-    for (let i = 0; i < uv2.count; i++) uv2.setXY(i, uv2.getX(i) * lang, uv2.getY(i) * (tr + 0.5));
-    const gg = g.toNonIndexed(), c = new Float32Array(gg.attributes.position.count * 3);
-    for (let i = 0; i < c.length; i += 3) c.set(dc, i);
-    gg.setAttribute("color", new BufferAttribute(c, 3));
-    gg.applyMatrix4(new Matrix4().compose(new Vector3(p2[0], oben + hd / 2 + 0.06, p2[1]), new Quaternion().setFromEuler(new Euler(0, yaw, sei * -w, "YXZ")), new Vector3(1, 1, 1)));
-    bau2.teile.dach.push(gg);
-  };
-  flaeche(1);
-  flaeche(-1);
-  const fi = ort(x, z2, yaw, 0, 0);
-  bau2.kiste("holz", 0.14, 0.14, tr + 0.56, fi[0], oben + hd + 0.09, fi[1], yaw);
-  for (const sz of [1, -1]) {
-    const p2 = ort(x, z2, yaw, 0, sz * tr / 2);
-    bau2.giebel(br, hd, p2[0], oben, p2[1], yaw, wand);
-  }
-  if (S2 > 1) {
-    const k2 = ort(x, z2, yaw, br * 0.24, tr * 0.2);
-    bau2.kiste("stein", 0.34, hd + 0.75, 0.34, k2[0], oben + (hd + 0.75) / 2, k2[1], yaw);
-    bau2.kiste("holz", 0.42, 0.06, 0.42, k2[0], oben + hd + 0.78, k2[1], yaw);
-  }
-  if (se) {
-    const dx = x - se[0] * (t2 / 2 + 0.03), dz = z2 - se[1] * (t2 / 2 + 0.03);
-    bau2.kiste("holz", 0.42, 0.78, 0.06, dx, y + 0.55, dz, yaw);
-    bau2.kiste("stein", 0.62, 0.12, 0.34, x - se[0] * (t2 / 2 + 0.18), y + 0.1, z2 - se[1] * (t2 / 2 + 0.18), yaw);
-    bau2.kiste("dach", 0.8, 0.05, 0.5, x - se[0] * (t2 / 2 + 0.2), y + 1.06, z2 - se[1] * (t2 / 2 + 0.2), yaw, dc);
-  }
-}
 var [{ daten }, ord] = await Promise.all([lesenMitStand("/lichtwerk/graph"), lesen("/lichtwerk/ordnung").catch(() => lesen("/ordnung.json")).catch(() => null)]);
 var B2 = bestand(await bindeVaultquellen(daten, lesen));
 var N3;
@@ -75945,17 +76511,13 @@ scene.fog = NEBEL;
 var bau = new Bau();
 var haeuser = [];
 B2.monde.forEach((m, n2) => {
-  const o2 = O[n2], y = hoehe(o2[0], o2[2]), mat = N3.baum.material.has(n2), yaw = LG.yaw ? LG.yaw[n2] : 0, zahl = mat ? 0 : m.samen.length, ar = zahl ? arbeit(m) : 0, b0 = dorfBreite(N3.rM[n2]), t0 = b0 * 0.72, farben = (i) => {
+  const o2 = O[n2], y = hoehe(o2[0], o2[2]), mat = N3.baum.material.has(n2), yaw = LG.yaw ? LG.yaw[n2] : 0, zahl = mat ? 0 : m.samen.length, ar = zahl ? arbeit(m) : 0, b0 = dorfBreite(N3.rM[n2]), t0 = b0 * 0.72, fkt = funktionVon(N3, n2), farben = (i) => {
     const c = blattFarbe(m.samen[i]);
     return [c[0], c[1], c[2]];
-  };
-  haeuser.push({ n: n2, x: o2[0], y: y + 1.5, z: o2[2], titel: m.titel, zahl, mat });
-  if (mat) {
-    bau.kiste("stein", 0.8, 0.8, 0.8, o2[0], y + 0.3, o2[2], yaw);
-    return;
-  }
-  if (!zahl) {
-    haus(bau, { x: o2[0], y, z: o2[2], yaw, b: b0 * 0.6, t: t0 * 0.6, stock: [[]], reife: m.reife, n: n2, gross: false });
+  }, se = LG.seite[n2];
+  haeuser.push({ n: n2, x: o2[0], y: y + 1.5, z: o2[2], titel: m.titel, zahl, mat, fkt });
+  if (mat || !zahl) {
+    bauwerk(bau, mat ? "speicher" : fkt, { x: o2[0], y, z: o2[2], yaw, b: b0 * 0.7, t: t0 * 0.7, stock: [[]], reife: m.reife, se });
     return;
   }
   const plan = N3.mini[n2].plan, { teil, anbauten, schuppen } = plan ? bauteile(plan.W, zahl) : { teil: new Int32Array(zahl), anbauten: [], schuppen: 0 }, haupt = /* @__PURE__ */ new Set(), an = anbauten.map(() => []), sch = Array.from({ length: schuppen }, () => []);
@@ -75966,21 +76528,18 @@ B2.monde.forEach((m, n2) => {
     else an[t2 - 1].push(i);
   }
   const stock = etagen(m, N3.mini[n2].ar ?? ar, 4).map((e2) => e2.fassungen.filter((i) => haupt.has(i)).map(farben));
-  if (haupt.size || !sch.length) haus(bau, { x: o2[0], y, z: o2[2], yaw, b: b0, t: t0, stock, reife: m.reife, n: n2, gross: stock.length > 1 || haupt.size > 3 || b0 > 2.2, se: LG.seite[n2] });
-  an.forEach((li, j2) => {
-    const a2 = plan.W.th1[anbauten[j2]], d2 = b0 * 0.8, x = o2[0] + Math.cos(a2) * d2, z2 = o2[2] + Math.sin(a2) * d2;
-    haus(bau, { x, y: hoehe(x, z2), z: z2, yaw, b: b0 * 0.6, t: b0 * 0.43, stock: [li.map(farben)], reife: m.reife, n: n2, gross: false });
-  });
-  sch.forEach((li, j2) => {
-    const a2 = j2 * 2.39996 + n2, d2 = haupt.size ? b0 * (0.85 + 0.34 * Math.sqrt(j2)) : N3.rM[n2] * 0.28 * Math.sqrt(j2 + 0.2) * (sch.length > 4 ? 1.6 : 1.1), x = o2[0] + Math.cos(a2) * d2, z2 = o2[2] + Math.sin(a2) * d2;
-    haus(bau, { x, y: hoehe(x, z2), z: z2, yaw: a2, b: 0.9, t: 0.8, stock: [li.map(farben)], reife: m.reife, n: n2, gross: false });
+  bauwerk(bau, fkt, { x: o2[0], y, z: o2[2], yaw, b: b0, t: t0, stock, reife: m.reife, se });
+  const qu = se ? [se[1], -se[0]] : [1, 0], sv = se || [0, 1], neben = [...an, ...sch];
+  neben.forEach((li, j2) => {
+    const sp = 5, k2 = j2 % sp, r2 = Math.floor(j2 / sp), x = o2[0] + sv[0] * (t0 * 0.8 + 1 + r2 * 1.15) + qu[0] * ((k2 - (sp - 1) / 2) * 1.55), z2 = o2[2] + sv[1] * (t0 * 0.8 + 1 + r2 * 1.15) + qu[1] * ((k2 - (sp - 1) / 2) * 1.55);
+    nebenbau(bau, fkt, { x, y: hoehe(x, z2), z: z2, yaw, liste: li.map(farben), reife: m.reife });
   });
 });
-var MAT = { putz: pbr("clay_plaster", 0.5), holz: pbr("weathered_brown_planks", 0.8, { color: 6965808 }), stein: pbr("cobblestone_floor_04", 0.7, { color: 11049608 }), dach: pbr("clay_roof_tiles_02", 0.7), rahmen: new MeshStandardMaterial({ color: 2759698, roughness: 0.8, vertexColors: true }) };
+var MAT = { putz: pbr("clay_plaster", 0.5), holz: pbr("weathered_brown_planks", 0.8, { color: 6965808 }), stein: pbr("cobblestone_floor_04", 0.7, { color: 11049608 }), dach: pbr("clay_roof_tiles_02", 0.7), rahmen: new MeshStandardMaterial({ color: 2759698, roughness: 0.8, vertexColors: true }), bunt: new MeshStandardMaterial({ roughness: 0.6, vertexColors: true }), metall: new MeshStandardMaterial({ metalness: 0.75, roughness: 0.38, vertexColors: true }) };
 for (const a2 of Object.keys(MAT)) {
-  const g = bau.fertig(a2);
+  const g = bau.fertig(a2, mergeGeometries);
   if (!g) continue;
-  MAT[a2].side = a2 === "putz" ? DoubleSide : FrontSide;
+  MAT[a2].side = DoubleSide;
   const m = new Mesh(g, MAT[a2]);
   m.castShadow = true;
   m.receiveShadow = true;
@@ -76056,7 +76615,15 @@ async function streue(datei, zahl, rMin, rMax, gr, schatten, abstand = 1.4) {
 }
 sage("Das Dorf entsteht. B\xE4ume und Gras kommen dazu.");
 var R = LG.R;
-var ST = await Promise.all([streue(baum("Pine Medium", 11), klein2 ? 60 : 170, R * 0.95, R * 4, 8, true, 3), streue(baum("Oak Medium", 23), klein2 ? 40 : 110, R * 0.6, R * 2.8, 6, true, 2.4), streue(baum("Aspen Medium", 37), klein2 ? 40 : 110, R * 0.7, R * 3, 7, true, 2.4), streue("shrub_02", klein2 ? 80 : 220, R * 0.15, R * 2.2, 0.9, true, 1), streue("boulder_01", 70, R * 0.3, R * 2.5, 0.7, true, 1), streue("grass_medium_01", klein2 ? 300 : 1e3, 0, R * 1.5, 0.45, false, 0.2)]);
+var ST = await Promise.all([
+  /*BAEUME*/
+  streue(baum("Pine Medium", 11), klein2 ? 25 : 60, R * 0.95, R * 4, 8, true, 3),
+  streue(baum("Oak Medium", 23), klein2 ? 15 : 40, R * 0.6, R * 2.8, 6, true, 2.4),
+  streue(baum("Aspen Medium", 37), klein2 ? 15 : 40, R * 0.7, R * 3, 7, true, 2.4),
+  streue("shrub_02", klein2 ? 80 : 220, R * 0.15, R * 2.2, 0.9, true, 1),
+  streue("boulder_01", 8, R * 0.3, R * 2.5, 0.7, true, 1),
+  streue("grass_medium_01", klein2 ? 300 : 1e3, 0, R * 1.5, 0.45, false, 0.2)
+]);
 var farbeRoh = (g, c) => {
   const a2 = new Float32Array(g.attributes.position.count * 3);
   for (let i = 0; i < a2.length; i += 3) a2.set(c, i);
@@ -76098,66 +76665,191 @@ var schein = (x, y, z2, s, f2, a2 = 1) => {
   m.scale.setScalar(s);
   return m;
 };
-function baueGalaxie() {
-  const G = new Group(), D = galaxie(N3, arbeit), pl = D.planeten, Rg = N3.L.R, tubes = [], koepfe = [], o2 = [0, 0, 0], o22 = [0, 0, 0];
-  for (const q2 of D.monde) {
-    const p2 = pl[q2.planet], n2 = Math.max(3, Math.min(40, Math.ceil((q2.tau - q2.tauA) * 1.6))), pts = [];
-    for (let i = 0; i <= n2; i++) {
-      mondOrt(p2, q2, 0, q2.tauA + (q2.tau - q2.tauA) * (i / n2), o2);
-      pts.push(new Vector3(o2[0], o2[1], o2[2]));
-    }
-    const cur = new CatmullRomCurve3(pts), r2 = clamp3(p2.rM * 0.016, 0.018, 0.07), g = new TubeGeometry(cur, n2 * 2, r2, 5, false);
-    tubes.push(farbeRoh(g.index ? g.toNonIndexed() : g, q2.farbe.map((c) => c * 1.6)));
-    koepfe.push({ p: pts[0], r: r2 * 2.6, c: q2.farbe });
+function galaxieScheibe(Rg) {
+  const S2 = klein2 ? 1024 : 2048, c = document.createElement("canvas");
+  c.width = c.height = S2;
+  const x = c.getContext("2d"), im = x.createImageData(S2, S2), W2 = Rg * 1.7, vn = (a2, b2) => {
+    const i = Math.floor(a2), j2 = Math.floor(b2), u2 = a2 - i, v3 = b2 - j2, f2 = (t3) => t3 * t3 * (3 - 2 * t3), h2 = (p2, q2) => hash(p2 * 12.9 + q2 * 78.2);
+    return (h2(i, j2) * (1 - f2(u2)) + h2(i + 1, j2) * f2(u2)) * (1 - f2(v3)) + (h2(i, j2 + 1) * (1 - f2(u2)) + h2(i + 1, j2 + 1) * f2(u2)) * f2(v3);
+  }, fbm2 = (a2, b2) => vn(a2, b2) * 0.55 + vn(a2 * 2.1 + 3, b2 * 2.1) * 0.28 + vn(a2 * 4.3, b2 * 4.3 + 7) * 0.17, ARM = (r2) => Math.log(1 + r2 / (Rg * 0.11)) * 2.25;
+  for (let j2 = 0; j2 < S2; j2++) for (let i = 0; i < S2; i++) {
+    const px3 = (i / S2 - 0.5) * 2 * W2, pz2 = (j2 / S2 - 0.5) * 2 * W2, r2 = Math.hypot(px3, pz2), a2 = Math.atan2(pz2, px3), q2 = r2 / Rg;
+    if (q2 > 1.7) continue;
+    const d2 = (a2 - ARM(r2)) % Math.PI, ab = Math.abs(d2 < 0 ? d2 + Math.PI : d2) / Math.PI, m2 = Math.min(ab, 1 - ab) * 2, weit = 0.2 + 0.12 * q2, arm = Math.exp(-m2 * m2 / (weit * weit)), n2 = fbm2(px3 / Rg * 7 + 9, pz2 / Rg * 7), n22 = fbm2(px3 / Rg * 22, pz2 / Rg * 22 + 5), staub = Math.exp(-((m2 - weit * 0.9) ** 2) / 0.012) * smooth01(q2 * 4) * (0.3 + n22), scheibe = Math.exp(-q2 * 2.1), kern = Math.exp(-Math.pow(q2 / 0.16, 1.1)), h2 = scheibe * (0.22 + 1.5 * arm * (0.4 + n2)) * (1 - 0.75 * Math.min(1, staub)) * smooth01((1.7 - q2) * 3), jung = arm * smooth01(q2 * 3), rot = h2 * (0.62 - 0.2 * jung) + kern * 1.5, gr = h2 * (0.62 - 0.04 * jung) + kern * 1.18, bl = h2 * (0.68 + 0.5 * jung) + kern * 0.72, kl = Math.pow(n22, 5) * 14 * arm * scheibe, o2 = (j2 * S2 + i) * 4;
+    im.data[o2] = Math.min(255, 255 * (rot + kl));
+    im.data[o2 + 1] = Math.min(255, 255 * (gr + kl * 0.35));
+    im.data[o2 + 2] = Math.min(255, 255 * (bl + kl * 0.6));
+    im.data[o2 + 3] = 255;
   }
-  if (tubes.length) G.add(new Mesh(mergeGeometries(tubes), new MeshBasicMaterial({ vertexColors: true, fog: false })));
-  G.add(instanzen(kugelG, new MeshBasicMaterial({ fog: false }), koepfe, (k2, m, c) => {
-    m.compose(k2.p, Q.identity(), V1.setScalar(k2.r));
-    c.setRGB(k2.c[0] * 5, k2.c[1] * 5, k2.c[2] * 5);
-  }));
-  const tP = [...pl.keys()], kern = N3.werkeIn("mitte");
-  G.add(instanzen(kugelG, new MeshStandardMaterial({ roughness: 0.55, metalness: 0.05, fog: false }), tP, (i, m, c) => {
-    const p2 = pl[i];
-    planetOrt(p2, 0, o22);
-    m.compose(V2.set(o22[0], 0, o22[2]), Q.identity(), V1.setScalar(Math.max(0.07, p2.r)));
-    c.setRGB(p2.farbe[0], p2.farbe[1], p2.farbe[2]);
-  }));
-  N3.daecher.forEach((d2, j2) => {
-    const s = D.sonnen[j2];
-    if (!s) return;
-    const f2 = [d2.farbe[0] * 0.5 + 0.5, d2.farbe[1] * 0.5 + 0.45, d2.farbe[2] * 0.5 + 0.35], gr = Math.min(0.9, d2.R * 0.09), L2 = new PointLight(new Color(f2[0], f2[1], f2[2]), 60, 26, 1.6);
-    L2.position.set(s.x, 0.4, s.z);
-    G.add(L2);
-    const k2 = new Mesh(kugelG, new MeshBasicMaterial({ color: new Color(f2[0] * 6, f2[1] * 6, f2[2] * 6), fog: false }));
-    k2.position.set(s.x, 0, s.z);
-    k2.scale.setScalar(gr);
-    G.add(k2, schein(s.x, 0, s.z, gr * 9, f2, 0.5));
-  });
-  G.add(schein(0, 0, 0, Rg * 0.7, [1, 0.72, 0.42], 0.12));
-  const LK = new PointLight(16767136, 200, Rg, 1.4);
-  G.add(LK);
-  const punkte = (d2, gr) => {
+  x.putImageData(im, 0, 0);
+  const t2 = new CanvasTexture(c);
+  t2.colorSpace = SRGBColorSpace;
+  t2.anisotropy = 16;
+  const m = new Mesh(new PlaneGeometry(W2 * 2, W2 * 2), new MeshBasicMaterial({ map: t2, transparent: true, blending: AdditiveBlending, depthWrite: false, side: DoubleSide, fog: false }));
+  m.rotation.x = -Math.PI / 2;
+  m.position.y = -0.05;
+  return m;
+}
+var smooth01 = (t2) => {
+  t2 = clamp3(t2, 0, 1);
+  return t2 * t2 * (3 - 2 * t2);
+};
+function baueGalaxie() {
+  const G = new Group(), D = galaxie(N3, arbeit), pl = D.planeten, Rg = N3.L.R, S0 = new Group();
+  G.add(S0);
+  S0.add(galaxieScheibe(Rg));
+  const punkte = (d2, gr, hell) => {
     const g = new BufferGeometry(), n2 = d2.length / 8, p2 = new Float32Array(n2 * 3), c = new Float32Array(n2 * 3);
     for (let i = 0; i < n2; i++) {
       p2.set([d2[i * 8], d2[i * 8 + 1], d2[i * 8 + 2]], i * 3);
-      const a2 = d2[i * 8 + 7] * 5;
+      const a2 = d2[i * 8 + 7] * hell;
       c.set([d2[i * 8 + 4] * a2, d2[i * 8 + 5] * a2, d2[i * 8 + 6] * a2], i * 3);
     }
     g.setAttribute("position", new BufferAttribute(p2, 3));
     g.setAttribute("color", new BufferAttribute(c, 3));
     return new Points(g, new PointsMaterial({ vertexColors: true, size: gr, sizeAttenuation: false, transparent: true, blending: AdditiveBlending, depthWrite: false, fog: false }));
   };
-  G.add(punkte(sterne(Rg, klein2 ? 4e4 : 12e4), 1));
-  const ne = nebel(Rg, klein2 ? 160 : 420);
-  for (let i = 0; i < ne.length / 8; i++) G.add(schein(ne[i * 8], ne[i * 8 + 1], ne[i * 8 + 2], ne[i * 8 + 3] * 2.2, [ne[i * 8 + 4], ne[i * 8 + 5], ne[i * 8 + 6]], 0.05));
-  G.userData = { mitten: (j2) => {
+  S0.add(punkte(sterne(Rg, klein2 ? 5e4 : 16e4), 1, 2.6));
+  {
+    const ff = sterne(Rg * 14, klein2 ? 3e3 : 8e3, 5);
+    for (let i = 0; i < ff.length; i += 8) {
+      const a2 = hash(i * 1.7) * 6.283, b2 = hash(i * 2.9) * 2 - 1, r2 = Rg * 12;
+      ff[i] = Math.cos(a2) * Math.sqrt(1 - b2 * b2) * r2;
+      ff[i + 1] = b2 * r2;
+      ff[i + 2] = Math.sin(a2) * Math.sqrt(1 - b2 * b2) * r2;
+      ff[i + 7] = 0.2 + hash(i) * 0.5;
+    }
+    G.add(punkte(ff, 1, 1.6));
+  }
+  N3.daecher.forEach((d2, j2) => {
     const s = D.sonnen[j2];
-    return s ? [s.x, 1.6, s.z] : null;
-  }, mitte: [0, 2, 0], haeuser: tP.filter((i) => !N3.baum.material.has(i)).map((i) => {
-    planetOrt(pl[i], 0, o22);
-    return { n: i, x: o22[0], y: 0, z: o22[2], titel: B2.monde[i].titel, zahl: B2.monde[i].samen.length };
-  }), blick: [Rg * 0.55, Rg * 0.5, Rg * 0.95], ziel: [0, 0, 0], max: Rg * 4 };
-  G.userData.fern = true;
+    if (!s) return;
+    const f2 = [d2.farbe[0] * 0.4 + 0.6, d2.farbe[1] * 0.4 + 0.55, d2.farbe[2] * 0.4 + 0.45], gr = Math.min(0.55, d2.R * 0.05), L2 = new PointLight(new Color(f2[0], f2[1], f2[2]), 45, 30, 1.5);
+    L2.position.set(s.x, 0.3, s.z);
+    S0.add(L2);
+    const k2 = new Mesh(kugelG, new MeshBasicMaterial({ color: new Color(f2[0] * 7, f2[1] * 7, f2[2] * 7), fog: false }));
+    k2.position.set(s.x, 0, s.z);
+    k2.scale.setScalar(gr);
+    S0.add(k2, schein(s.x, 0, s.z, gr * 7, f2, 0.28));
+  });
+  const LK = new PointLight(16767136, 120, Rg, 1.4);
+  S0.add(LK);
+  const liste = [...pl.keys()].filter((i) => !pl[i].material), lage2 = (i) => {
+    const p2 = pl[i];
+    return [p2.sx, p2.sz, Math.hypot(p2.rx, p2.rz)];
+  }, bp = [], bc = [];
+  for (const i of liste) {
+    const [sx, sz, r2] = lage2(i), c = pl[i].farbe, zn = pl[i].wp ? 64 : 0;
+    for (let k2 = 0; k2 < zn; k2++) {
+      const a2 = k2 / zn * 6.2832, b2 = (k2 + 1) / zn * 6.2832;
+      bp.push(sx + Math.cos(a2) * r2, 0, sz + Math.sin(a2) * r2, sx + Math.cos(b2) * r2, 0, sz + Math.sin(b2) * r2);
+      bc.push(c[0] * 0.4, c[1] * 0.4, c[2] * 0.4, c[0] * 0.4, c[1] * 0.4, c[2] * 0.4);
+    }
+  }
+  const gb = new BufferGeometry();
+  gb.setAttribute("position", new Float32BufferAttribute(bp, 3));
+  gb.setAttribute("color", new Float32BufferAttribute(bc, 3));
+  S0.add(new LineSegments(gb, new LineBasicMaterial({ vertexColors: true, transparent: true, opacity: 0.55, blending: AdditiveBlending, depthWrite: false, fog: false })));
+  const pm = new InstancedMesh(new IcosahedronGeometry(1, 3), new MeshStandardMaterial({ roughness: 0.62, metalness: 0, fog: false, emissive: 1118481 }), liste.length), groesse = (i) => Math.max(0.09, pl[i].r * 0.7);
+  liste.forEach((i, k2) => {
+    const c = pl[i].farbe;
+    CC.setRGB(c[0], c[1], c[2]);
+    pm.setColorAt(k2, CC);
+  });
+  pm.frustumCulled = false;
+  S0.add(pm);
+  const beringt = liste.filter((i) => /Ring/.test(FUNKTIONEN[funktionVon(N3, i)].galaxie)), rg = new RingGeometry(1.4, 2.2, 40);
+  rg.rotateX(-Math.PI / 2);
+  const rm = new InstancedMesh(rg, new MeshBasicMaterial({ color: 13218698, transparent: true, opacity: 0.5, side: DoubleSide, depthWrite: false, fog: false }), beringt.length);
+  rm.frustumCulled = false;
+  S0.add(rm);
+  const ortP = (i, t2) => {
+    const p2 = pl[i], a2 = p2.wp * (t2 - p2.alt), c = Math.cos(a2), s = Math.sin(a2);
+    return [p2.sx + c * p2.rx - s * p2.rz, p2.sz + s * p2.rx + c * p2.rz];
+  };
+  const spiralen = /* @__PURE__ */ new Map(), o2 = [0, 0, 0], T0 = 0;
+  let alle = false;
+  function spirale(i) {
+    if (spiralen.has(i)) return spiralen.get(i);
+    const gr = new Group(), tubes = [], koepfe = [], p2 = pl[i], ort0 = ortP(i, T0);
+    for (const q2 of D.monde) {
+      if (q2.planet !== i) continue;
+      const n2 = Math.max(3, Math.min(40, Math.ceil((q2.tau - q2.tauA) * 1.6))), pts = [];
+      for (let k2 = 0; k2 <= n2; k2++) {
+        mondOrt(p2, q2, T0, q2.tauA + (q2.tau - q2.tauA) * (k2 / n2), o2);
+        pts.push(new Vector3(o2[0], o2[1], o2[2]));
+      }
+      const r2 = clamp3(p2.rM * 0.016, 0.018, 0.07), g = new TubeGeometry(new CatmullRomCurve3(pts), n2 * 2, r2, 5, false);
+      tubes.push(farbeRoh(g.index ? g.toNonIndexed() : g, q2.farbe.map((c) => c * 1.5)));
+      koepfe.push({ p: pts[0], r: r2 * 2.4, c: q2.farbe });
+    }
+    if (tubes.length) gr.add(new Mesh(mergeGeometries(tubes), new MeshBasicMaterial({ vertexColors: true, fog: false })));
+    if (koepfe.length) gr.add(instanzen(kugelG, new MeshBasicMaterial({ fog: false }), koepfe, (k2, m, c) => {
+      m.compose(k2.p, Q.identity(), V1.setScalar(k2.r));
+      c.setRGB(k2.c[0] * 4, k2.c[1] * 4, k2.c[2] * 4);
+    }));
+    gr.visible = false;
+    gr.userData.ort0 = ort0;
+    gr.userData.i = i;
+    S0.add(gr);
+    spiralen.set(i, gr);
+    return gr;
+  }
+  const haeuserG = liste.map((i) => ({ n: i, x: 0, y: 0, z: 0, titel: B2.monde[i].titel, zahl: B2.monde[i].samen.length })), still = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  let T3 = 40;
+  const E2 = new Vector3();
+  const tick = (dt) => {
+    if (!still) T3 += dt * 8;
+    const g = DREHUNG * T3;
+    S0.rotation.y = -g;
+    S0.updateMatrixWorld();
+    liste.forEach((i, k2) => {
+      const q2 = ortP(i, T3);
+      M4.compose(V2.set(q2[0], 0, q2[1]), Q.identity(), V1.setScalar(groesse(i)));
+      pm.setMatrixAt(k2, M4);
+      const w = V3.set(q2[0], 0, q2[1]).applyMatrix4(S0.matrixWorld), h2 = haeuserG[k2];
+      h2.x = w.x;
+      h2.z = w.z;
+      const s = spiralen.get(i);
+      if (s && s.visible) s.position.set(q2[0] - s.userData.ort0[0], 0, q2[1] - s.userData.ort0[1]);
+    });
+    pm.instanceMatrix.needsUpdate = true;
+    beringt.forEach((i, k2) => {
+      const q2 = ortP(i, T3);
+      M4.compose(V2.set(q2[0], 0, q2[1]), Q.setFromEuler(EU.set(0.35, 0, 0.2)), V1.setScalar(groesse(i)));
+      rm.setMatrixAt(k2, M4);
+    });
+    rm.instanceMatrix.needsUpdate = true;
+  };
+  const knopf = document.createElement("button");
+  knopf.id = "spiralknopf";
+  knopf.type = "button";
+  knopf.hidden = true;
+  document.body.append(knopf);
+  const beschrifte = () => {
+    knopf.textContent = alle ? "Spiralen aus" : "Alle Spiralen zeigen";
+    knopf.setAttribute("aria-pressed", alle ? "true" : "false");
+  };
+  beschrifte();
+  knopf.addEventListener("click", () => {
+    alle = !alle;
+    for (const i of liste) {
+      if (alle) spirale(i).visible = true;
+      else if (spiralen.has(i)) spiralen.get(i).visible = false;
+    }
+    beschrifte();
+    tick(0);
+  });
+  G.userData = { scheibe: S0, tick, knopf, tippe: (h2) => {
+    const s = spirale(h2.n);
+    s.visible = !s.visible;
+    tick(0);
+    return s.visible;
+  }, mitten: (j2) => {
+    const s = D.sonnen[j2];
+    return s ? [s.x, 1.1, s.z] : null;
+  }, mitte: [0, 2.4, 0], haeuser: haeuserG, blick: [Rg * 0.3, Rg * 1.25, Rg * 2], ziel: [0, 0, 0], max: Rg * 5, fern: true };
+  tick(0);
   return G;
 }
 function baueStadt(stil) {
@@ -76326,7 +77018,7 @@ var hochkant = innerWidth / innerHeight < 0.75;
     return m ? [m[0], hoehe(m[0], m[1]) + 4.2, m[1]] : null;
   }, mitte: [0, zi + 3.5, 0], haeuser, blick: [Math.cos(a2) * Math.cos(el) * dist, zi + Math.sin(el) * dist, Math.sin(a2) * Math.cos(el) * dist], ziel: [0, zi, 0], max: R * 6, sonne: true };
 }
-var WELTEN = { kosmos: { name: "Kosmos", taste: "k", baue: baueKosmos, satz: "Mitte = Zentrale, H\xFClle = Dach, Lichtkorn = Fassung.", glut: 0.7 }, garten: { name: "Garten", taste: "g", baue: baueGarten, satz: "Pflanze = Werk, Blatt und Bl\xFCte = Fassung, die Art folgt der Abstammung.", glut: 0.3 }, galaxie: { name: "Galaxie", taste: "m", baue: baueGalaxie, satz: "Sonne = Dach, Spirale = Werk, jedes St\xFCck eine Fassung, unten die \xE4lteste.", glut: 0.32 }, dorf: { name: "Dorf", taste: "d", gruppe: dorf, satz: "Stra\xDFe = Dach, Haus = Werk, helles Fenster = Fassung, Acker = Arbeit.", glut: 0.38 }, campus: { name: "Campus", taste: "c", baue: () => baueStadt("campus"), satz: "Turm = Werk, Etage = Zeitabschnitt, helles Fenster = Fassung.", glut: 0.4 }, buero: { name: "B\xFCro", taste: "o", baue: () => baueStadt("buero"), satz: "Riegel = Werk, Stra\xDFe = Dach, unten das \xC4lteste.", glut: 0.4 } };
+var WELTEN = { kosmos: { name: "Kosmos", taste: "k", baue: baueKosmos, satz: "Mitte = Zentrale, H\xFClle = Dach, Lichtkorn = Fassung.", glut: 0.7 }, garten: { name: "Garten", taste: "g", baue: baueGarten, satz: "Pflanze = Werk, Blatt und Bl\xFCte = Fassung, die Art folgt der Abstammung.", glut: 0.3 }, galaxie: { name: "Galaxie", taste: "m", baue: baueGalaxie, satz: "Sonne = Dach, Planet = Werk. Tippe auf einen Planeten: seine Spirale zeigt, was darin entstand.", glut: 0.3 }, dorf: { name: "Dorf", taste: "d", gruppe: dorf, satz: "Stra\xDFe = Dach, Haus = Werk, helles Fenster = Fassung, Acker = Arbeit.", glut: 0.38 }, campus: { name: "Campus", taste: "c", baue: () => baueStadt("campus"), satz: "Turm = Werk, Etage = Zeitabschnitt, helles Fenster = Fassung.", glut: 0.4 }, buero: { name: "B\xFCro", taste: "o", baue: () => baueStadt("buero"), satz: "Riegel = Werk, Stra\xDFe = Dach, unten das \xC4lteste.", glut: 0.4 } };
 var leiste = document.createElement("nav");
 leiste.id = "wahl";
 document.body.append(leiste);
@@ -76342,9 +77034,12 @@ var zeigeSatz = (a2, b2) => {
     satz.style.opacity = 0;
   }, 9e3);
 };
+var weltKey = "dorf";
 function geheZu(k2) {
   const W2 = WELTEN[k2];
   if (!W2 || jetzt === W2) return;
+  weltKey = k2;
+  if (jetzt && jetzt.gruppe.userData.knopf) jetzt.gruppe.userData.knopf.hidden = true;
   if (jetzt) {
     jetzt.gruppe.visible = false;
     jetzt.pos = camera.position.clone();
@@ -76356,6 +77051,7 @@ function geheZu(k2) {
   if (!W2.gruppe.parent) scene.add(W2.gruppe);
   W2.gruppe.visible = true;
   jetzt = W2;
+  if (W2.gruppe.userData.knopf) W2.gruppe.userData.knopf.hidden = false;
   const u2 = W2.gruppe.userData, fern = !!u2.fern;
   scene.background = fern ? new Color(0) : hdr;
   scene.environment = fern ? null : hdr;
@@ -76374,7 +77070,7 @@ function geheZu(k2) {
   }
   for (const b2 of leiste.children) b2.setAttribute("aria-pressed", b2.dataset.k === k2 ? "true" : "false");
   schilder = [...N3.daecher.map((d2, j2) => ({ t: d2.name, m: u2.mitten(j2) })), { t: N3.baum.mitte.name || "Zentrale", m: u2.mitte }].filter((s) => s.m).map((s) => ({ t: s.t, p: new Vector3(...s.m) }));
-  namenEl.innerHTML = "";
+  namenEl.querySelectorAll("span:not(.werk)").forEach((x) => x.remove());
   for (const s of schilder) {
     s.e = document.createElement("span");
     s.e.textContent = s.t;
@@ -76395,16 +77091,47 @@ addEventListener("keydown", (e2) => {
 });
 var schilder = [];
 var v2 = new Vector3();
+var wn = /* @__PURE__ */ new Map();
 function namen() {
   const b2 = [];
+  const nah = jetzt.gruppe.userData.haeuser || [], ab = camera.position.distanceTo(ctl.target);
+  const sch = jetzt.gruppe.userData.scheibe;
   for (const s of schilder) {
-    v2.copy(s.p).project(camera);
+    v2.copy(s.p);
+    if (sch) v2.applyMatrix4(sch.matrixWorld);
+    v2.project(camera);
     const x = (v2.x + 1) / 2 * innerWidth, y = (1 - v2.y) / 2 * innerHeight, w = s.e.offsetWidth, r2 = { x: x - w / 2, y: y - 9, w, h: 18 };
     const zu = v2.z > 1 || r2.x < 6 || r2.x + w > innerWidth - 6 || r2.y < 30 || r2.y > innerHeight - 110 || b2.some((o2) => r2.x < o2.x + o2.w + 8 && o2.x < r2.x + r2.w + 8 && r2.y < o2.y + o2.h && o2.y < r2.y + r2.h);
     s.e.style.opacity = zu ? "0" : ".92";
     if (!zu) {
       b2.push(r2);
       s.e.style.transform = `translate(${Math.round(r2.x)}px,${Math.round(r2.y)}px)`;
+    }
+  }
+  for (const h2 of nah) {
+    let e2 = wn.get(h2);
+    const d2 = camera.position.distanceTo(v2.set(h2.x, h2.y + 1.6, h2.z)), zeig = weltKey === "dorf" && d2 < 26 && !h2.mat;
+    if (!zeig) {
+      if (e2) e2.style.opacity = "0";
+      continue;
+    }
+    v2.project(camera);
+    if (v2.z > 1) {
+      if (e2) e2.style.opacity = "0";
+      continue;
+    }
+    if (!e2) {
+      e2 = document.createElement("span");
+      e2.className = "werk";
+      e2.textContent = kurz(h2.titel, 30);
+      namenEl.append(e2);
+      wn.set(h2, e2);
+    }
+    const x = (v2.x + 1) / 2 * innerWidth, y = (1 - v2.y) / 2 * innerHeight, w = e2.offsetWidth, r2 = { x: x - w / 2, y: y - 8, w, h: 16 }, zu = r2.x < 4 || r2.x + w > innerWidth - 4 || r2.y < 60 || r2.y > innerHeight - 90 || b2.some((o2) => r2.x < o2.x + o2.w + 4 && o2.x < r2.x + r2.w + 4 && r2.y < o2.y + o2.h && o2.y < r2.y + r2.h);
+    e2.style.opacity = zu ? "0" : ".85";
+    if (!zu) {
+      b2.push(r2);
+      e2.style.transform = `translate(${Math.round(r2.x)}px,${Math.round(r2.y)}px)`;
     }
   }
 }
@@ -76424,17 +77151,25 @@ canvas.addEventListener("pointerup", (e2) => {
       beste = h2;
     }
   }
-  if (beste) zeigeSatz(beste.titel, beste.mat ? "Lesematerial" : beste.zahl ? `${beste.zahl} ${beste.zahl === 1 ? "Fassung" : "Fassungen"}` : "nur die Ausgangsfassung");
+  if (beste) {
+    const tp = jetzt.gruppe.userData.tippe;
+    if (tp) tp(beste);
+    const f2 = FUNKTIONEN[funktionVon(N3, beste.n)], feld = weltKey === "dorf" ? "name" : weltKey;
+    zeigeSatz(`${f2[feld] || f2.name}: ${beste.titel}`, beste.mat ? "Lesematerial" : beste.zahl ? `${beste.zahl} ${beste.zahl === 1 ? "Fassung" : "Fassungen"}` : "nur die Ausgangsfassung");
+  }
 });
 addEventListener("resize", () => {
   camera.aspect = innerWidth / innerHeight;
   camera.updateProjectionMatrix();
   renderer.setSize(innerWidth, innerHeight);
 });
-if (/werkstatt/.test(location.search)) window.__welten = { renderer, camera, ctl, scene, geheZu };
+if (/werkstatt/.test(location.search)) window.__welten = { renderer, camera, ctl, scene, geheZu, WELTEN };
 geheZu(new URLSearchParams(location.search).get("welt") || "dorf");
+var uhr = new Clock();
 renderer.setAnimationLoop(() => {
+  const dt = Math.min(0.1, uhr.getDelta());
   ctl.update();
+  jetzt.gruppe.userData.tick && jetzt.gruppe.userData.tick(dt);
   pipe.render();
   namen();
 });

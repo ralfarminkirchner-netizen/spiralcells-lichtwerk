@@ -90,6 +90,13 @@ Ralf: Die Grafik reicht nicht, kein Feinschliff, ein anderes Kaliber, und zwar f
 - Server: neue Dateiarten `.hdr` und `.glb`; `blob:` für Bilder und Verbindungen in der Sicherheitsregel erlaubt. Das gilt für alle Seiten dieses Servers.
 - Bäume und Gras sind Grund und tragen nichts. Nicht auf einem echten Handy geprüft.
 
+## Schritt 15: Funktion statt gleicher Häuser, Galaxie als Galaxie (Ralf, 01.11.)
+Ralf: Gleiche Häuser sind sinnlos. Die Werke und Apps selbst sind die Vorlage für Gebäude und Objekte. Die Galaxie soll realistisch sein, mit Umlaufbahnen; die Spirale erscheint nur auf Knopfdruck.
+- `app/js/funktion.js`: jedes Werk bekommt aus Ordnung und Titel eine Funktion (24 Stück), mit Namen je Welt. Das ist eine Lesart und kein Beleg; Ralf korrigiert sie dort, an einer Stelle.
+- Dorf (`werkzeuge/neu/bauwerke.js`): eigene Gestalt je Funktion, etwa Rathaus, Schule, Musikhaus, Bibliothek, Sternwarte, Kapelle, Garage mit Rundkurs, Märchenhaus, Bildstock. Fassung bleibt genau ein helles Fenster, Dachfarbe die Reife. Nebenbauten stehen in Reihen hinter dem Hauptbau. Nah heran stehen die Namen der Werke da.
+- Galaxie: Scheibe mit Armen, Staub, Sternentstehung und Kern; Sonnen = Dächer; Planeten = Werke laufen auf gezeichneten Bahnen. Spirale nur auf Wunsch: Planet antippen oder Knopf für alle.
+- Offen: Die Funktion zeigt sich in Campus, Büro und Garten bisher nur im Namen beim Antippen, in der Galaxie zusätzlich als Ring. Die Lage im Dorf ist noch die Spirale aus Schritt 12, kein gewachsener Ortsplan. Innenräume und Lesen fehlen auf der neuen Engine.
+
 ## Prüfstand 01.11.
 - Geprüft im Browser bei 1280 x 800 und 390 x 844, auf der Datenkopie: alle Ansichten, Morph in Einzelbildern, Wähler, Textfassung, Werk öffnen und zurück. 60 Bilder je Sekunde am Mac (Grafik des Macs, nicht auf einem echten Handy). 0 schwarze Starts von 12. Bilder: `Development/Artifacts/lichtwerk-vergleich-20261101/lichtgrund/garten4` und `garten5`.
 - Offen: Laufende Bewegung nur in Standbildern beurteilt, nicht als Film. Nicht auf einem echten Handy geprüft. Namen überlappen teils die Marke. Die Innenräume sind noch schlichte Kisten: kein Glas, keine Möbel außer Tisch und Stuhl. Viele Werke haben nur eine Fassung, ihr Gebäude ist also einstöckig mit einem Tisch; das ist der Bestand.
