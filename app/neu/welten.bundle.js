@@ -77419,8 +77419,83 @@ function baueGalaxie() {
     const s = D.sonnen[j2];
     if (s && /FASKA/.test(d2.name)) S0.add(faskaSchild(s.x, 2.2, s.z, 4));
   });
+  const karten = [], BM = ["Bilder aus", "Bilder auf Planeten und Sonnen", "Bilder erst nah"], bildknopf = document.createElement("button");
+  let bildModus = 0;
+  bildknopf.id = "bildknopf";
+  bildknopf.type = "button";
+  bildknopf.hidden = true;
+  bildknopf.textContent = BM[0];
+  document.body.append(bildknopf);
+  bildknopf.addEventListener("click", () => {
+    bildModus = (bildModus + 1) % 3;
+    bildknopf.textContent = BM[bildModus];
+    bildknopf.setAttribute("aria-pressed", bildModus ? "true" : "false");
+  });
+  fetch(`${NEU}werkbilder/index.json`).then((r2) => r2.ok ? r2.json() : null).then((idx) => {
+    if (!idx || !Object.keys(idx).length) return;
+    bildknopf.dataset.da = "1";
+    const TL2 = new TextureLoader(), lade2 = (b2) => {
+      const t2 = TL2.load(`${NEU}werkbilder/${b2}`);
+      t2.colorSpace = SRGBColorSpace;
+      return t2;
+    };
+    const mk = (tex, w) => {
+      const sp = new Sprite(new SpriteMaterial({ map: tex, transparent: true, depthWrite: false, fog: false, toneMapped: false, opacity: 0 }));
+      sp.scale.set(w, w * 0.625, 1);
+      sp.visible = false;
+      S0.add(sp);
+      return sp;
+    };
+    for (const i of liste) {
+      const e2 = idx[B2.monde[i].id];
+      if (!e2) continue;
+      const w = clamp3(groesse(i) * 7, Rg * 0.02, Rg * 0.055);
+      karten.push({ art: "planet", i, w, y: groesse(i) + w * 0.4 + 0.5, s: mk(lade2(e2.bild), w) });
+    }
+    N3.daecher.forEach((d2, j2) => {
+      const so = D.sonnen[j2];
+      if (!so) return;
+      const es = N3.werkeIn(j2).map((i) => idx[B2.monde[i].id]).filter(Boolean).slice(0, 4);
+      if (!es.length) return;
+      const cv = document.createElement("canvas");
+      cv.width = 640;
+      cv.height = 400;
+      const cx = cv.getContext("2d");
+      cx.fillStyle = "#0a0806";
+      cx.fillRect(0, 0, 640, 400);
+      const tx = new CanvasTexture(cv);
+      tx.colorSpace = SRGBColorSpace;
+      es.forEach((e2, q2) => {
+        const im = new Image();
+        im.onload = () => {
+          const n2 = es.length, br = n2 === 1 ? 640 : 320, ho = n2 <= 2 ? 400 : 200, x = n2 === 1 ? 0 : q2 % 2 * 320, y = n2 <= 2 ? 0 : Math.floor(q2 / 2) * 200;
+          cx.drawImage(im, x, y, br, ho);
+          tx.needsUpdate = true;
+        };
+        im.src = `${NEU}werkbilder/${e2.bild}`;
+      });
+      const w = clamp3(Rg * 0.075, 2, 9);
+      karten.push({ art: "sonne", x: so.x, z: so.z, w, y: Math.min(0.55, d2.R * 0.05) + w * 0.4 + 1.2, s: mk(tx, w) });
+    });
+    bildknopf.hidden = weltKey !== "galaxie";
+  });
+  const bildTick = () => {
+    for (const k2 of karten) {
+      let a2 = 0;
+      if (bildModus) {
+        const p2 = k2.art === "planet" ? ortP(k2.i, T3) : [k2.x, k2.z];
+        k2.s.position.set(p2[0], k2.y, p2[1]);
+        const d2 = V3.copy(k2.s.position).applyMatrix4(S0.matrixWorld).distanceTo(camera.position);
+        a2 = bildModus === 1 ? 1 : 1 - clamp3((d2 - k2.w * 5) / (k2.w * 6), 0, 1);
+      }
+      const m = k2.s.material;
+      m.opacity += (a2 - m.opacity) * 0.15;
+      k2.s.visible = m.opacity > 0.02;
+    }
+  };
   G.userData = { scheibe: S0, tick: (dt) => {
     tick0(dt);
+    bildTick();
     liste.forEach((i, k2) => {
       const q2 = ortP(i, T3);
       marken[k2].position.set(q2[0], groesse(i) + 0.55, q2[1]);
@@ -77848,6 +77923,7 @@ function geheZu(k2) {
   if (jetzt) zeigeFaeden(null);
   weltKey = k2;
   if (jetzt && jetzt.gruppe.userData.knopf) jetzt.gruppe.userData.knopf.hidden = true;
+  if (jetzt && jetzt.gruppe.userData.knopf2) jetzt.gruppe.userData.knopf2.hidden = true;
   if (jetzt) {
     jetzt.gruppe.visible = false;
     jetzt.pos = camera.position.clone();
@@ -77860,6 +77936,7 @@ function geheZu(k2) {
   W2.gruppe.visible = true;
   jetzt = W2;
   if (W2.gruppe.userData.knopf) W2.gruppe.userData.knopf.hidden = false;
+  if (W2.gruppe.userData.knopf2 && W2.gruppe.userData.knopf2.dataset.da) W2.gruppe.userData.knopf2.hidden = false;
   const u2 = W2.gruppe.userData, fern = !!u2.fern;
   scene.background = fern ? new Color(0) : hdr;
   scene.environment = fern ? null : hdr;
