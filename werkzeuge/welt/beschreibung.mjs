@@ -18,6 +18,7 @@ const {Netz, arbeit} = await import('../../app/js/netz.js');
 const {FUNKTIONEN, funktionVon} = await import('../../app/js/funktion.js');
 const {ortsplan} = await import('../../app/js/ortsplan.js');
 const {etagen, alterVon} = await import('../../app/js/anlage.js');
+const {dorfBau} = await import('./dorfbau.mjs');
 
 const lies = async p => { const r = await fetch(DIENST + p, {headers: {Accept: 'application/json'}}); if(!r.ok) throw new Error(`${p}: ${r.status}`); return r.json(); };
 const [graph, ordnung] = await Promise.all([lies('/lichtwerk/graph'), lies('/lichtwerk/ordnung')]);
@@ -64,7 +65,9 @@ const welt = {format: 'lichtgrund-welt/1', erzeugt: new Date().toISOString(), qu
   hinweis: 'Funktion ist Ralfs korrigierbare Lesart aus app/js/funktion.js, kein Beleg.', zaehlung,
   stimmen: [...STIMMEN.map(s => ({name: s.name, farbe: s.hex})), {name: 'Ralf', farbe: '#e4dfcc'}, {name: 'Quelle', farbe: '#8fae62'}],
   reihenfolge: werke.map(w => w.id), daecher, werke, faeden};
-welt.pruefsumme = createHash('sha256').update(JSON.stringify({z: zaehlung, r: welt.reihenfolge, f: werke.map(w => w.fassungen.map(x => [x.id, x.eltern]))})).digest('hex');
+// Die Bauform gehört zur Beschreibung: jede Engine baut genau diese Maße
+welt.bau = {dorf: dorfBau(welt)};
+welt.pruefsumme = createHash('sha256').update(JSON.stringify({z: zaehlung, r: welt.reihenfolge, f: werke.map(w => w.fassungen.map(x => [x.id, x.eltern])), bau: welt.bau})).digest('hex');
 
 const ziel = resolve(WURZEL, 'welt/weltbeschreibung.json'); mkdirSync(dirname(ziel), {recursive: true});
 writeFileSync(ziel, JSON.stringify(welt, null, 1));

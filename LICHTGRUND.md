@@ -156,3 +156,12 @@ Ralf: Das Handy nicht über Unreal, sondern als handytaugliche Fassung mit eigen
 - Gemessen in kopflosem Chrome auf der Grafik des Macs: 58 Bilder je Sekunde bei 1280 x 800, 46 bei 390 x 844 mit dreifacher Auflösung. Auf keinem echten Handy geprüft.
 - Bäume: `tree_small_02` und `street_lamp_01` von Poly Haven (CC0) mit gltf-transform verkleinert und als Instanzen gezeichnet, weil Blender nicht erreichbar ist (der Verweis zeigt auf M2extern, dort liegt kein Blender mehr).
 - Offen: Nur das FASKA-Viertel, kein ganzes Dorf. Häuser sind sauber, aber schlicht, kein Kino. Die Wiese zeigt aus der Höhe noch ihre Kachel. Die Logotafel ist erst aus der Nähe lesbar. Gleiches Stück in Unreal fehlt noch.
+
+## Schritt 23: Die Bauform steht in der Weltbeschreibung (Ralf, 02.11.)
+Ralf: Das gleiche Prinzip soll 1:1 kohärent den Wechsel von Engine und Plattform überstehen. Fehler in Schritt 22: Hausmaße, Fensterplätze, Türen, Wege und Fahnen rechnete die Handy-Engine selbst. Unreal hätte sie neu erfunden, und die Fassungen wären auseinandergelaufen.
+- `werkzeuge/welt/dorfbau.mjs` rechnet die Bauform des ganzen Dorfs einmal und schreibt sie als `bau.dorf` in die Weltbeschreibung: je Haus Lage, Drehung, Breite, Tiefe, Höhe, Stockwerke, jedes Fenster mit seiner Fassung und Ort, jede Tür mit ihrer Ausgangsfrage, Beiwerk (Logotafel, Fahnen, Rundhalle, Modelle); dazu Plätze, Wege, Laternen, Bäume und die festen Regeln (Stockhöhe, Fenstermaß, Dachneigung, Logofarben). Meter, y oben; die Umrechnung für Unreal steht im Kopf der Datei. Die Prüfsumme umfasst die Bauform.
+- Eine Engine setzt nur noch Stoffe und Modelle auf diese Maße. `handy.js` erfindet keine Maße mehr und baut jetzt das ganze Dorf (138 Häuser), der Blick beginnt bei FASKA.
+- Überlappung: Die Lagen aus dem Ortsplan waren für die echten Hausmaße zu dicht. Ein größerer Maßstab für alles hätte das Dorf auf 11,7 aufgeblasen; stattdessen rücken nur sich berührende Häuser auseinander (Maßstab 3), die Ordnung bleibt.
+- Prüfung 18 von 18: zusätzlich kein Haus in einem anderen, jede Fassung ein Fenster, jede Ausgangsfrage eine Tür, und alle 541 Fenster, die das Handy wirklich gezeichnet hat, stehen auf 1 cm an ihrem Ort aus der Bauform.
+- Gemessen kopflos auf der Grafik des Macs, ganzes Dorf: 27 Bilder je Sekunde bei 1280 x 800, 36 bei 390 x 844 (dort ohne Baumschatten; nur Grafik). Weniger als vorher, weil jetzt alles steht. Kein echtes Handy.
+- Offen: Unreal liest die Bauform noch nicht. Häuser bleiben schlicht. Die 420 Bäume sind zu schwer fürs Handy und brauchen eine leichtere Stufe.

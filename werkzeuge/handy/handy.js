@@ -17,7 +17,6 @@ const sage = (a, b) => { satz.textContent = a; if(b){ const s = document.createE
 const W = await (await fetch('handy/welt.json', {cache: 'no-store'})).json();
 const DACH = new URLSearchParams(location.search).get('dach') || 'FASKA';
 const dach = W.daecher.find(d => d.name === DACH) || W.daecher[1];
-const nachId = new Map(W.werke.map(w => [w.id, w])), werke = dach.werke.map(id => nachId.get(id)).filter(w => w && w.dorf);
 ort.textContent = `${dach.name} · Dorf`;
 
 /* ---------- Bühne ---------- */
@@ -52,17 +51,18 @@ const teil = (g, m, schatten = true) => { const x = new THREE.Mesh(g, m); x.cast
 const PUTZ = stoff('painted_plaster_wall', {meter: 3}), LEHM = stoff('clay_plaster', {meter: 3, farbe: 0xfff4e4}), ZIEGEL = stoff('clay_roof_tiles_02', {meter: 2.2}),
   PFLASTER = stoff('cobblestone_floor_04', {meter: 2.5}), WIESE = stoff('aerial_grass_rock', {meter: 9}), HOLZ = stoff('weathered_brown_planks', {meter: 2}), BETON = stoff('anti_slip_concrete', {meter: 3, farbe: 0xb8b2a8});
 // Putzfarbe nach Funktion: Schule hell, Archiv steinern, Spielhof gelb, Musik warm; dieselbe Funktion, dieselbe Farbe
-const WAND = {schule: PUTZ, schularchiv: stoff('painted_plaster_wall', {meter: 3, farbe: 0xd9d4c8}), spielhof: stoff('painted_plaster_wall', {meter: 3, farbe: 0xf3dd9a}), musik: stoff('painted_plaster_wall', {meter: 3, farbe: 0xe9b88f}), sonst: LEHM};
+const WAND = {schule: PUTZ, schularchiv: stoff('painted_plaster_wall', {meter: 3, farbe: 0xd9d4c8}), spielhof: stoff('painted_plaster_wall', {meter: 3, farbe: 0xf3dd9a}), musik: stoff('painted_plaster_wall', {meter: 3, farbe: 0xe9b88f}), sonst: stoff('painted_plaster_wall', {meter: 3, farbe: 0xf1ebe0})};
 const RAHMEN = new THREE.MeshStandardMaterial({color: 0xf3efe6, roughness: 0.55}), STEIN = new THREE.MeshStandardMaterial({color: 0x8d8579, roughness: 0.9});
 // Licht im Fenster = Status der Fassung; jede Fassung genau ein Fenster
 const GLAS = {entwurf: [0xffc27a, 1.1], 'geprüft': [0xfff0d0, 1.9], grundformation: [0xffcf4a, 3.2], verworfen: [0x30343a, 0.0]};
 const glasStoff = Object.fromEntries(Object.entries(GLAS).map(([k, [c, e]]) => [k, new THREE.MeshStandardMaterial({color: 0x1c2228, roughness: 0.08, metalness: 0.2, emissive: c, emissiveIntensity: e})]));
 
 /* ---------- Boden ---------- */
-const mitte = werke.reduce((a, w) => [a[0] + w.dorf.x / werke.length, a[1] + w.dorf.z / werke.length], [0, 0]), M = 2.6;
-const lage = w => new THREE.Vector3((w.dorf.x - mitte[0]) * M, 0, (w.dorf.z - mitte[1]) * M);
 // Die Wiese bekommt große, ruhige Flecken (Rauschen in den Eckfarben), damit die Kachel nicht als Raster sichtbar wird
-{ const g = meterUV(new THREE.PlaneGeometry(900, 900, 150, 150).rotateX(-Math.PI / 2)), p = g.attributes.position, farbe = new Float32Array(p.count * 3);
+const BAU = W.bau.dorf, haeuser = W.werke.filter(w => BAU.haeuser[w.id]).map(w => ({w, h: BAU.haeuser[w.id]}));
+const fokus = BAU.plaetze.find(p => p.dach === dach.name) || BAU.plaetze[0], hier = haeuser.filter(x => dach.werke.includes(x.w.id));
+sonne.position.set(fokus.x - 60, 90, fokus.z + 45); sonne.target.position.set(fokus.x, 0, fokus.z);   // Schatten dort, wohin man schaut
+{ const g = meterUV(new THREE.PlaneGeometry(1400, 1400, 180, 180).rotateX(-Math.PI / 2).translate(fokus.x, 0, fokus.z)), p = g.attributes.position, farbe = new Float32Array(p.count * 3);
   const h = (x, z) => { const s = Math.sin(x * 127.1 + z * 311.7) * 43758.5453; return s - Math.floor(s); }, rausch = (x, z) => { const ix = Math.floor(x), iz = Math.floor(z), fx = x - ix, fz = z - iz, u = fx * fx * (3 - 2 * fx), v = fz * fz * (3 - 2 * fz);
     return (h(ix, iz) * (1 - u) + h(ix + 1, iz) * u) * (1 - v) + (h(ix, iz + 1) * (1 - u) + h(ix + 1, iz + 1) * u) * v; };
   for(let i = 0; i < p.count; i++){ const x = p.getX(i), z = p.getZ(i), n = rausch(x / 38, z / 38) * 0.6 + rausch(x / 11, z / 11) * 0.4, k = 0.72 + n * 0.5;
@@ -70,41 +70,27 @@ const lage = w => new THREE.Vector3((w.dorf.x - mitte[0]) * M, 0, (w.dorf.z - mi
   g.setAttribute('color', new THREE.BufferAttribute(farbe, 3)); const m = WIESE.clone(); m.vertexColors = true; for(const t of [m.map, m.normalMap, m.aoMap]) t.repeat.set(1 / 14, 1 / 14);
   S.add(teil(g, m, false)); }
 
-/* ---------- Häuser aus der Beschreibung ---------- */
-const STOCK = 3.2, SOCKEL = 0.5, treffer = [], gebaut = {name: 'Handy', pruefsumme: W.pruefsumme, teil: dach.name, werke: []};
+/* ---------- Häuser: genau die Maße aus der Weltbeschreibung, hier kommen nur Stoffe dazu ---------- */
+const R0 = BAU.regeln, treffer = [], gebaut = {name: 'Handy', pruefsumme: W.pruefsumme, werke: []};
 const fensterListe = Object.fromEntries(Object.keys(GLAS).map(k => [k, []])), rahmenListe = [];
-const altesteSchule = werke.filter(w => w.funktion.schluessel === 'schule').sort((a, b) => a.rang - b.rang)[0];
+const ort3 = (x, y, z, dreh) => new THREE.Matrix4().makeRotationY(dreh).setPosition(x, y, z);
 
-function haus(w){
-  const g = new THREE.Group(), p = lage(w); g.position.copy(p); g.rotation.y = w.dorf.drehung; S.add(g); g.updateMatrixWorld();
-  const stock = Math.max(1, w.dorf.stockwerke), proStock = Array.from({length: stock}, () => []);
-  w.fassungen.forEach(f => proStock[Math.min(stock - 1, f.dorfEtage)].push(f));
-  const meist = Math.max(1, ...proStock.map(l => l.length)), turm = false;
-  // Grundriss: höchstens vier Stockwerke, darum wird das Haus mit der Arbeit länger, bis jede Fassung ihr Fenster hat
-  const T = meist > 24 ? 8.4 : 6.6, plaetzeBei = b => 2 * Math.max(1, Math.floor((b - 1) / 1.8)) + 2 * Math.max(1, Math.floor((T - 1) / 1.8)) - 1;
-  let B = 7.2; while(plaetzeBei(B) < meist) B += 1.8;
-  const H = SOCKEL + stock * STOCK, wand = WAND[w.funktion.schluessel] || WAND.sonst;
-  g.add(teil(kiste(B + 0.3, SOCKEL, T + 0.3), BETON));
-  const koerper = teil(kiste(B, H - SOCKEL, T).translate(0, SOCKEL, 0), wand); koerper.userData.werk = w; treffer.push(koerper); g.add(koerper);
-  for(let k = 1; k < stock; k++) g.add(teil(kiste(B + 0.12, 0.16, T + 0.12).translate(0, SOCKEL + k * STOCK - 0.08, 0), RAHMEN, false));   // Gesims: hier beginnt ein neuer Zeitabschnitt
-  dach_(g, B, T, H, turm);
-  // Tür = Ausgangsfrage, vorn in der Mitte
-  w.ausgang.forEach((a, i) => { const x = (i - (w.ausgang.length - 1) / 2) * 1.6; g.add(teil(kiste(1.3, 2.3, 0.12).translate(x, SOCKEL, T / 2 + 0.02), HOLZ)); g.add(teil(kiste(1.9, 0.12, 0.9).translate(x, SOCKEL + 2.55, T / 2 + 0.45), RAHMEN)); });
-  // Fenster: Stockwerk für Stockwerk, vorn, rechts, hinten, links; im Erdgeschoss bleibt die Tür frei
-  const seiten = [[0, T / 2, 0, B], [B / 2, 0, Math.PI / 2, T], [0, -T / 2, Math.PI, B], [-B / 2, 0, -Math.PI / 2, T]];
+function haus({w, h}){
+  const g = new THREE.Group(); g.position.set(h.x, 0, h.z); g.rotation.y = h.drehung; S.add(g);
+  const B = h.breite, T = h.tiefe, H = h.hoehe, wand = WAND[h.wand] || WAND.sonst;
+  g.add(teil(kiste(B + 0.3, R0.sockel, T + 0.3), BETON));
+  const koerper = teil(kiste(B, H - R0.sockel, T).translate(0, R0.sockel, 0), wand); koerper.userData.werk = w; treffer.push(koerper); g.add(koerper);
+  for(let k = 1; k < h.stockwerke; k++) g.add(teil(kiste(B + 0.12, 0.16, T + 0.12).translate(0, R0.sockel + k * R0.stockhoehe - 0.08, 0), RAHMEN, false));   // Gesims: hier beginnt ein neuer Zeitabschnitt
+  satteldach(g, B, T, H);
   const ids = [];
-  proStock.forEach((liste, k) => { const plaetze = []; [0, 2, 1, 3].map(s => seiten[s]).forEach(([sx, sz, dreh, len], s) => { const n = Math.max(1, Math.floor((len - 1) / 1.8)); for(let j = 0; j < n; j++){ const u = (j - (n - 1) / 2) * 1.8; if(k === 0 && s === 0 && Math.abs(u) < 1.4) continue; plaetze.push({sx, sz, dreh, u}); } });
-    if(liste.length > plaetze.length) throw new Error('zu wenig Fensterplätze');   // nie zwei Fassungen in einem Fenster
-    liste.forEach((f, i) => { const pl = plaetze[i], y = SOCKEL + k * STOCK + 1.0, c = Math.cos(pl.dreh), s = Math.sin(pl.dreh);
-      const ox = pl.sx + c * pl.u, oz = pl.sz - s * pl.u, m = new THREE.Matrix4().makeRotationY(pl.dreh).setPosition(ox, y, oz), welt = new THREE.Matrix4().multiplyMatrices(g.matrixWorld, m);
-      fensterListe[GLAS[f.status] ? f.status : 'entwurf'].push({matrix: welt, f, w}); rahmenListe.push(welt); ids.push(f.id); }); });
+  for(const f of h.fenster){ const m = ort3(f.x, f.y, f.z, f.drehung), fa = w.fassungen.find(x => x.id === f.fassung); fensterListe[GLAS[f.licht] ? f.licht : 'entwurf'].push({matrix: m, f: fa, w}); rahmenListe.push(m); ids.push(f.fassung); }
+  for(const t of h.tueren){ const d = new THREE.Group(); d.position.set(t.x, t.y, t.z); d.rotation.y = t.drehung; S.add(d);
+    d.add(teil(kiste(R0.tuer.breite, R0.tuer.hoehe, 0.12).translate(0, 0, 0.02), HOLZ)); d.add(teil(kiste(1.9, 0.12, 0.9).translate(0, R0.tuer.hoehe + 0.25, 0.45), RAHMEN)); }
+  for(const b of h.beiwerk) beiwerk(b);
   gebaut.werke.push({id: w.id, fassungen: ids});
-  beiwerk(w, g, B, T, H);
 }
-function dach_(g, B, T, H, turm){
-  const ue = 0.45;
-  if(turm){ const d = teil(new THREE.ConeGeometry((B + ue * 2) * 0.72, B * 0.55, 4, 1).rotateY(Math.PI / 4).translate(0, H + B * 0.275, 0), ZIEGEL); meterUV(d.geometry); g.add(d); return; }
-  const h = (T / 2 + ue) * Math.tan(36 * Math.PI / 180), b = B / 2 + ue, t = T / 2 + ue;
+function satteldach(g, B, T, H){
+  const ue = R0.dach.ueberstand, h = (T / 2 + ue) * Math.tan(R0.dach.neigung * Math.PI / 180), b = B / 2 + ue, t = T / 2 + ue;
   const v = [-b, H, t, b, H, t, b, H + h, 0, -b, H, t, b, H + h, 0, -b, H + h, 0, b, H, -t, -b, H, -t, -b, H + h, 0, b, H, -t, -b, H + h, 0, b, H + h, 0];
   const dg = new THREE.BufferGeometry(); dg.setAttribute('position', new THREE.Float32BufferAttribute(v, 3)); dg.computeVertexNormals();
   const uv = []; for(let i = 0; i < v.length; i += 3) uv.push(v[i], Math.hypot(v[i + 1] - H, Math.abs(v[i + 2]) - t)); dg.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2)); dg.setAttribute('uv1', new THREE.Float32BufferAttribute(uv, 2));
@@ -114,62 +100,52 @@ function dach_(g, B, T, H, turm){
   g.add(teil(kiste(0.7, 1.6, 0.7).translate(B * 0.28, H + h * 0.45, -T * 0.12), STEIN));   // Schornstein
 }
 
-/* ---------- Was ein Werk ist, zeigt sich am Beiwerk ---------- */
+/* ---------- Beiwerk: Art und Ort aus der Beschreibung ---------- */
 const GL = new GLTFLoader(), modell = new Map();
 const lade = n => { if(!modell.has(n)) modell.set(n, GL.loadAsync(`${NEU}modelle/${n}.glb`).then(x => { x.scene.traverse(o => { if(o.isMesh){ o.castShadow = true; o.receiveShadow = true; } }); return x.scene; })); return modell.get(n); };
-// Viele gleiche Pflanzen: als Instanzen, ein Zeichenaufruf je Teilmodell (wichtig fürs Handy)
-const pflanzen = new Map(), pflanze = (n, x, z, dreh, gr) => { if(!pflanzen.has(n)) pflanzen.set(n, []); pflanzen.get(n).push(new THREE.Matrix4().compose(new THREE.Vector3(x, 0, z), new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), dreh), new THREE.Vector3(gr, gr, gr))); };
-const pflanzeAus = () => { for(const [n, li] of pflanzen) lade(n).then(m => { m.updateMatrixWorld(true); m.traverse(o => { if(!o.isMesh) return; const im = new THREE.InstancedMesh(o.geometry, o.material, li.length);
-  li.forEach((x, i) => im.setMatrixAt(i, new THREE.Matrix4().multiplyMatrices(x, o.matrixWorld))); im.castShadow = true; im.receiveShadow = true; S.add(im); }); }); };
-const stelle = (n, g, x, z, dreh = 0, gr = 1) => lade(n).then(m => { const c = m.clone(); c.position.set(x, 0, z); c.rotation.y = dreh; c.scale.setScalar(gr); g.add(c); });
-const LOGO = ['#bd182a', '#e25e2b', '#ffce05', '#44a735', '#3da6da'];
-function beiwerk(w, g, B, T, H){ const f = w.funktion.schluessel;
-  if(w === altesteSchule){ schild(g, T); LOGO.forEach((c, i) => fahne(g, -B / 2 - 1.2 - i * 1.5, T / 2 + 3.2, c)); stelle('standing_chalkboard_01', g, B / 2 + 1.5, T / 2 + 2, -0.5); }
-  if(f === 'schularchiv') stelle('wooden_bookshelf_worn', g, B / 2 + 1.3, T / 2 + 0.8, -Math.PI / 2, 0.9);
-  if(f === 'spielhof'){ stelle('rubber_duck_toy', g, 2, T / 2 + 2.5, 0.6, 3); stelle('painted_wooden_bench', g, -2.2, T / 2 + 2.6, 0); }
-  if(f === 'musik'){ const r = Math.min(B, T) * 0.42, h = Math.min(H, 4.2); const halle = teil(meterUV(new THREE.CylinderGeometry(r, r, h, 28)).translate(B / 2 + r * 0.7, h / 2, 0), LEHM); g.add(halle);
-    g.add(teil(meterUV(new THREE.SphereGeometry(r * 1.04, 28, 10, 0, Math.PI * 2, 0, Math.PI / 2)).translate(B / 2 + r * 0.7, h, 0), ZIEGEL)); stelle('portable_cassette_player', g, B / 2 + r * 1.9, T / 2 + 1, 0.4, 2); }
-  stelle('planter_box_01', g, B / 2 - 0.6, T / 2 + 1.1, 0); }
-function schild(g, T){ const img = new Image(); img.src = NEU + 'zeichen/faska.svg';
-  img.onload = () => { const c = document.createElement('canvas'); c.width = 1360; c.height = 400; const x = c.getContext('2d'); x.fillStyle = '#fbf8f1'; x.fillRect(0, 0, c.width, c.height); x.drawImage(img, 0, 0, c.width, c.height);
-    const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8;
-    const tafel = teil(new THREE.PlaneGeometry(4.2, 1.24), new THREE.MeshStandardMaterial({map: t, roughness: 0.6})); tafel.position.set(0, SOCKEL + 2.85, T / 2 + 0.95); g.add(tafel); }; }
-function fahne(g, x, z, farbe){ g.add(teil(new THREE.CylinderGeometry(0.05, 0.06, 7, 8).translate(x, 3.5, z), RAHMEN));
-  const fg = new THREE.PlaneGeometry(1.6, 1.0, 12, 4), p = fg.attributes.position; for(let i = 0; i < p.count; i++){ const u = p.getX(i) + 0.8; p.setZ(i, Math.sin(u * 3.1) * 0.12 * u); } fg.computeVertexNormals(); fg.translate(0.8, 6.3, 0);
-  const fl = teil(fg, new THREE.MeshStandardMaterial({color: farbe, roughness: 0.75, side: THREE.DoubleSide})); fl.position.set(x, 0, z); g.add(fl); }
+// Viele gleiche Modelle als Instanzen, ein Zeichenaufruf je Teilmodell (wichtig fürs Handy)
+const vorrat = new Map(), setze = (n, x, z, dreh = 0, gr = 1) => { if(!vorrat.has(n)) vorrat.set(n, []); vorrat.get(n).push(new THREE.Matrix4().compose(new THREE.Vector3(x, 0, z), new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), dreh), new THREE.Vector3(gr, gr, gr))); };
+const setzeAus = () => { for(const [n, li] of vorrat) lade(n).then(m => { m.updateMatrixWorld(true); m.traverse(o => { if(!o.isMesh) return; const im = new THREE.InstancedMesh(o.geometry, o.material, li.length);
+  li.forEach((x, i) => im.setMatrixAt(i, new THREE.Matrix4().multiplyMatrices(x, o.matrixWorld))); im.castShadow = !(klein && li.length > 40); im.receiveShadow = true; S.add(im); }); }); };   // am Handy werfen die vielen Bäume keinen Schatten: nur Grafik, kein Inhalt
+function beiwerk(b){
+  if(b.art.startsWith('modell:')) return setze(b.art.slice(7), b.x, b.z, b.drehung, b.groesse || 1);
+  if(b.art === 'rundhalle'){ const r = b.radius, h = b.hoehe; S.add(teil(meterUV(new THREE.CylinderGeometry(r, r, h, 28)).translate(b.x, h / 2, b.z), WAND.musik)); S.add(teil(meterUV(new THREE.SphereGeometry(r * 1.04, 28, 10, 0, Math.PI * 2, 0, Math.PI / 2)).translate(b.x, h, b.z), ZIEGEL)); return; }
+  if(b.art === 'fahne'){ const g = new THREE.Group(); g.position.set(b.x, 0, b.z); g.rotation.y = b.drehung; S.add(g); g.add(teil(new THREE.CylinderGeometry(0.05, 0.06, b.mast, 8).translate(0, b.mast / 2, 0), RAHMEN));
+    const fg = new THREE.PlaneGeometry(1.6, 1.0, 12, 4), p = fg.attributes.position; for(let i = 0; i < p.count; i++){ const u = p.getX(i) + 0.8; p.setZ(i, Math.sin(u * 3.1) * 0.12 * u); } fg.computeVertexNormals(); fg.translate(0.8, b.mast - 0.7, 0);
+    g.add(teil(fg, new THREE.MeshStandardMaterial({color: b.farbe, roughness: 0.75, side: THREE.DoubleSide}))); return; }
+  if(b.art === 'logotafel'){ const img = new Image(); img.src = `${NEU}zeichen/${b.zeichen}.svg`;
+    img.onload = () => { const c = document.createElement('canvas'); c.width = 1360; c.height = 400; const x = c.getContext('2d'); x.fillStyle = '#fbf8f1'; x.fillRect(0, 0, c.width, c.height); x.drawImage(img, 0, 0, c.width, c.height);
+      const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8; const tafel = teil(new THREE.PlaneGeometry(b.breite, b.hoehe), new THREE.MeshStandardMaterial({map: t, roughness: 0.6}));
+      tafel.position.set(b.x, b.y, b.z); tafel.rotation.y = b.drehung; S.add(tafel); }; }
+}
 
-werke.forEach(haus);
+haeuser.forEach(haus);
 // Fenster als Instanzen: ein Ding je Fassung, Rahmen und Glas
 const fensterTreffer = [];
-for(const [st, li] of Object.entries(fensterListe)){ if(!li.length) continue; const im = new THREE.InstancedMesh(new THREE.PlaneGeometry(1.0, 1.4).translate(0, 0.7, 0.03), glasStoff[st], li.length);
+for(const [st, li] of Object.entries(fensterListe)){ if(!li.length) continue; const im = new THREE.InstancedMesh(new THREE.PlaneGeometry(R0.fenster.breite, R0.fenster.hoehe).translate(0, R0.fenster.hoehe / 2, 0.03), glasStoff[st], li.length);
   li.forEach((x, i) => im.setMatrixAt(i, x.matrix)); im.userData.fenster = li; S.add(im); fensterTreffer.push(im); }
 { const leiste = (w, h, x, y) => new THREE.BoxGeometry(w, h, 0.12).translate(x, y, 0.06), fr = mergeGeometries([leiste(1.24, 0.12, 0, 1.46), leiste(1.24, 0.12, 0, -0.06), leiste(0.12, 1.6, -0.56, 0.7), leiste(0.12, 1.6, 0.56, 0.7), leiste(1.0, 0.06, 0, 0.95), leiste(0.06, 1.4, 0, 0.7)]);
   const bank = new THREE.BoxGeometry(1.4, 0.08, 0.3).translate(0, -0.12, 0.15), im = new THREE.InstancedMesh(fr, RAHMEN, rahmenListe.length), ib = new THREE.InstancedMesh(bank, STEIN, rahmenListe.length);
   rahmenListe.forEach((m, i) => { im.setMatrixAt(i, m); ib.setMatrixAt(i, m); }); im.castShadow = ib.castShadow = true; S.add(im, ib); }
+// Was hier wirklich steht, aus den gezeichneten Instanzen gelesen: für die Prüfung gegen die Beschreibung
+const lage3 = new THREE.Vector3(), lagen = new Map(); for(const im of fensterTreffer) im.userData.fenster.forEach((x, i) => { const m = new THREE.Matrix4(); im.getMatrixAt(i, m); lage3.setFromMatrixPosition(m); lagen.set(x.f.id, [lage3.x, lage3.y, lage3.z].map(v => Math.round(v * 1000) / 1000)); });
+gebaut.werke.forEach(x => { x.fenster = x.fassungen.map(id => lagen.get(id)); });
 
-/* ---------- Wege: vom Schulhof zu jedem Werk, Bäume und Laternen am Rand ---------- */
-const hof = altesteSchule ? lage(altesteSchule) : new THREE.Vector3();
-{ const platz = teil(meterUV(new THREE.CircleGeometry(16, 48).rotateX(-Math.PI / 2)), PFLASTER, false); platz.position.set(hof.x, 0.02, hof.z); S.add(platz); }
-werke.forEach((w, i) => { if(w === altesteSchule) return; const p = lage(w), d = p.clone().sub(hof), L = d.length(), weg = teil(meterUV(new THREE.PlaneGeometry(2.4, L).rotateX(-Math.PI / 2)), PFLASTER, false);
-  weg.position.set((p.x + hof.x) / 2, 0.015 + i * 0.0005, (p.z + hof.z) / 2); weg.rotation.y = Math.atan2(d.x, d.z); S.add(weg);
-  if(i % 2) stelle('street_lamp_01', S, weg.position.x + Math.cos(weg.rotation.y) * 1.8, weg.position.z - Math.sin(weg.rotation.y) * 1.8, weg.rotation.y, 1); });
-// Bäume sind Grund und tragen nichts: auf festen Plätzen am Rand, nie auf einem Haus
-const kernX = werke.reduce((a, w) => a + lage(w).x, 0) / werke.length, kernZ = werke.reduce((a, w) => a + lage(w).z, 0) / werke.length;
-{ let r = 1; const zufall = () => (r = (r * 16807) % 2147483647) / 2147483647, frei = (x, z) => werke.every(w => lage(w).distanceTo(new THREE.Vector3(x, 0, z)) > 13) && Math.hypot(x - hof.x, z - hof.z) > 18;
-  // Baumgruppen statt Streuung: ein Hain um das Viertel, ein paar Hofbäume dazwischen
-  let n = 0; const ziel = klein ? 46 : 90; for(let k = 0; k < 2000 && n < ziel; k++){ const gr = Math.floor(zufall() * 9), a = gr / 9 * Math.PI * 2 + zufall() * 0.5, d = 70 + zufall() * 70 + (k % 3) * 8, x = kernX + Math.cos(a) * d, z = kernZ + Math.sin(a) * d;
-    if(!frei(x, z)) continue; n++; pflanze('tree_small_02', x, z, zufall() * 6, 2.2 + zufall() * 1.4); }
-  for(let k = 0; k < 600 && n < ziel + 14; k++){ const x = kernX + (zufall() - 0.5) * 110, z = kernZ + (zufall() - 0.5) * 110; if(frei(x, z)){ n++; pflanze('tree_small_02', x, z, zufall() * 6, 2.0 + zufall() * 1.0); } }
-  for(let k = 0; k < (klein ? 40 : 80); k++){ const x = kernX + (zufall() - 0.5) * 150, z = kernZ + (zufall() - 0.5) * 150; if(frei(x, z)) pflanze('shrub_02', x, z, zufall() * 6, 1.4 + zufall() * 0.8); } }
-pflanzeAus();
+/* ---------- Plätze, Wege, Laternen, Bäume ---------- */
+for(const p of BAU.plaetze){ const pl = teil(meterUV(new THREE.CircleGeometry(p.radius, 48).rotateX(-Math.PI / 2)), PFLASTER, false); pl.position.set(p.x, 0.02, p.z); S.add(pl); }
+BAU.wege.forEach((g, i) => { const [ax, az] = g.von, [bx, bz] = g.nach, L = Math.hypot(bx - ax, bz - az), weg = teil(meterUV(new THREE.PlaneGeometry(g.breite, L).rotateX(-Math.PI / 2)), PFLASTER, false);
+  weg.position.set((ax + bx) / 2, 0.015 + (i % 7) * 0.0005, (az + bz) / 2); weg.rotation.y = Math.atan2(bx - ax, bz - az); S.add(weg); });
+for(const l of BAU.laternen) setze('street_lamp_01', l.x, l.z, l.drehung);
+for(const b of BAU.baeume) setze(b.art.slice(7), b.x, b.z, b.drehung, b.groesse);
+setzeAus();
 
 /* ---------- Blick und Tippen ---------- */
 // Der erste Blick zeigt das ganze Viertel, schräg von oben, mit dem Schulhof vorn
-const box = new THREE.Box3(); werke.forEach(w => box.expandByPoint(lage(w))); const kern = box.getCenter(new THREE.Vector3()), weite = box.getSize(new THREE.Vector3()).length() * 0.5 + 18;
+const box = new THREE.Box3(); hier.forEach(({h}) => box.expandByPoint(new THREE.Vector3(h.x, 0, h.z))); const hof = new THREE.Vector3(fokus.x, 0, fokus.z); const kern = box.getCenter(new THREE.Vector3()), weite = box.getSize(new THREE.Vector3()).length() * 0.5 + 18;
 const C = new OrbitControls(K, canvas); C.enableDamping = true; C.maxPolarAngle = 1.4; C.minDistance = 8; C.maxDistance = 320; C.target.copy(kern).add(new THREE.Vector3(0, 2, 0));
 const blick = hof.clone().sub(kern).setY(0).normalize(), abst = weite / Math.tan(K.fov * Math.PI / 360) * (klein ? 0.95 : 0.75);
 K.position.copy(kern).addScaledVector(blick.lengthSq() ? blick : new THREE.Vector3(0, 0, 1), abst * 0.78).add(new THREE.Vector3(0, abst * 0.62, 0)); C.update();
-sage(`${dach.name}: ${werke.length} Werke, ${gebaut.werke.reduce((a, w) => a + w.fassungen.length, 0)} Fassungen`, 'Jedes Fenster ist eine Fassung, unten die älteste. Antippen nennt sie.');
+sage(`${dach.name}: ${hier.length} Werke, ${hier.reduce((a, x) => a + x.h.fenster.length, 0)} Fassungen`, 'Jedes Fenster ist eine Fassung, unten die älteste. Antippen nennt sie.');
 const ray = new THREE.Raycaster(), zeiger = new THREE.Vector2(); let unten = null;
 canvas.addEventListener('pointerdown', e => { unten = [e.clientX, e.clientY]; });
 canvas.addEventListener('pointerup', e => { if(!unten || Math.hypot(e.clientX - unten[0], e.clientY - unten[1]) > 6) return;
