@@ -145,3 +145,14 @@ Ralf: Zwei Fassungen, ein Inhalt. Unreal am Mac, eine Handy-Fassung; beide lesen
 - `werkzeuge/welt/pruefe.mjs`: zählt unabhängig im rohen Bestand nach, prüft die Regeln (jedes Werk in genau einem Dach, jede Fassung genau einmal, unten das Älteste, Eltern nur im eigenen Werk und älter) und vergleicht jede übergebene Liste dessen, was Mac oder Handy gebaut haben. Läuft grün: 10 von 10.
 - Funktion bleibt Ralfs korrigierbare Lesart aus `funktion.js`, kein Beleg; das steht auch in der Datei.
 - Offen: Lagen für Galaxie, Campus, Büro und Garten stehen noch nicht in der Beschreibung, nur die Lage im Dorf. Noch keine Fassung liest die Datei; die Prüfung von Mac und Handy ist vorbereitet, aber ohne gebaute Liste.
+
+## Schritt 22: Handy-Fassung mit eigener Engine, erstes Stück FASKA (Ralf, 02.11.)
+Ralf: Das Handy nicht über Unreal, sondern als handytaugliche Fassung mit eigener Engine.
+- `app/handy.html`, Quelle `werkzeuge/handy/handy.js`, Bauen mit `node werkzeuge/handy/baue.mjs`. three.js 0.187 mit WebGL 2 als Zeichenwerkzeug; Gestalt, Häuser und Bedienung sind neu, nicht aus der verworfenen Fassung übernommen. Die Seite liest nur `handy/welt.json`, eine unveränderte Kopie der Weltbeschreibung (nicht in Git), und rechnet keine eigenen Inhalte.
+- Dorf: Haus = Werk an seiner Lage aus der Beschreibung. Stockwerk = Zeitabschnitt, unten das Älteste, höchstens vier. Mehr Arbeit macht das Haus länger. Jede Fassung ist genau ein Fenster, das Licht zeigt ihren Status, die Tür ist die Ausgangsfrage. Gesimse trennen die Zeitabschnitte. Putzfarbe nach Funktion.
+- FASKA: Die älteste Schule des Dachs trägt die Tafel mit dem echten Logo und fünf Fahnen in den Logofarben, davor Schulhof und Tafel. Wege führen vom Schulhof zu jedem Werk. Musik mit Rundhalle, Spielhof mit Bank und Ente, Archiv mit Regal.
+- Weltbeschreibung ergänzt: `dorf.stockwerke` (höchstens vier) und `dorfEtage` je Fassung, damit Mac und Handy dieselben Stockwerke bauen. Gleichstand bei gleicher Zeit folgt dem Bestand wie `etagen()`; vorher widersprachen sich Reihenfolge und Stockwerk, die Prüfung hat das gefunden.
+- Prüfung: 15 von 15 grün, darunter die Liste, die die Seite wirklich gebaut hat (14 Werke, 323 Fassungen, je ein Fenster, gleiche Folge).
+- Gemessen in kopflosem Chrome auf der Grafik des Macs: 58 Bilder je Sekunde bei 1280 x 800, 46 bei 390 x 844 mit dreifacher Auflösung. Auf keinem echten Handy geprüft.
+- Bäume: `tree_small_02` und `street_lamp_01` von Poly Haven (CC0) mit gltf-transform verkleinert und als Instanzen gezeichnet, weil Blender nicht erreichbar ist (der Verweis zeigt auf M2extern, dort liegt kein Blender mehr).
+- Offen: Nur das FASKA-Viertel, kein ganzes Dorf. Häuser sind sauber, aber schlicht, kein Kino. Die Wiese zeigt aus der Höhe noch ihre Kachel. Die Logotafel ist erst aus der Nähe lesbar. Gleiches Stück in Unreal fehlt noch.

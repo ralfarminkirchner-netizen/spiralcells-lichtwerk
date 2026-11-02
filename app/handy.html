@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Lichtgrund Handy</title>
+<style>
+html,body{margin:0;height:100%;background:#1b1d20;overflow:hidden;color:#f6efe2;font:300 15px/1.45 "Avenir Next","Futura",system-ui,sans-serif}
+#welt{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none}
+#ort{position:fixed;left:16px;top:calc(14px + env(safe-area-inset-top,0px));letter-spacing:.2em;font-size:12px;text-transform:uppercase;text-shadow:0 1px 8px #000;pointer-events:none}
+#satz{position:fixed;left:16px;right:16px;bottom:calc(24px + env(safe-area-inset-bottom,0px));text-align:center;letter-spacing:.04em;font-size:clamp(15px,1vw + 9px,19px);text-shadow:0 1px 10px #000,0 0 3px #000;pointer-events:none;text-wrap:balance}
+#satz small{display:block;opacity:.8;font-size:.78em;margin-top:2px}
+</style>
+</head>
+<body>
+<canvas id="welt"></canvas>
+<div id="ort"></div>
+<div id="satz" aria-live="polite">Das Dorf entsteht</div>
+<script type="module" src="handy/handy.bundle.js"></script>
+</body>
+</html>

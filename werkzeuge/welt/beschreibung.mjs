@@ -36,16 +36,19 @@ const werke = B.monde.map((m, n) => {
   const material = N.baum.material.has(n), bz = N.bezirk(n), f = funktionVon(N, n), plan = N.mini[n].plan;
   const bereich = typeof bz === 'number' ? (N.daecher[bz].bereiche.find(b => b.werke.includes(n)) || {}).name || null : null;
   // Fassungen in Zeitfolge: unten das Älteste. Eltern nur, wo die Abstammung belegt ist (nicht lose).
-  const folge = m.samen.map((s, i) => i).sort((a, b) => (m.samen[a].zeit - m.samen[b].zeit) || m.samen[a].id.localeCompare(m.samen[b].id));
+  // Gleichstand (gemeinsam übernommene Fassungen haben dieselbe Zeit): Reihenfolge des Bestands, genau wie etagen() in anlage.js
+  const folge = m.samen.map((s, i) => i).sort((a, b) => ((m.samen[a].zeit || 0) - (m.samen[b].zeit || 0)) || a - b);
   const E = material ? [] : etagen(m, N.mini[n].ar ?? 0.5, 16);
   const etageVon = new Map(); E.forEach((e, k) => e.fassungen.forEach(i => etageVon.set(i, k)));
+  // Im Dorf höchstens vier Stockwerke (wie innen.js): mehr Arbeit macht das Haus dort länger, nicht höher
+  const ED = material ? [] : etagen(m, N.mini[n].ar ?? 0.5, 4), dorfEtage = new Map(); ED.forEach((e, k) => e.fassungen.forEach(i => dorfEtage.set(i, k)));
   const fassungen = folge.map(i => { const s = m.samen[i], el = plan && !plan.lose[i] && plan.W.eltern[i] >= 0 ? m.samen[plan.W.eltern[i]].id : null;
-    return {id: s.id, name: s.label, stimme: stimmeName(s.stimme), zeit: iso(s.zeit), zeichen: s.laenge, status: s.status, form: !!s.form, eltern: el, etage: etageVon.get(i) ?? 0}; });
+    return {id: s.id, name: s.label, stimme: stimmeName(s.stimme), zeit: iso(s.zeit), zeichen: s.laenge, status: s.status, form: !!s.form, eltern: el, etage: etageVon.get(i) ?? 0, dorfEtage: dorfEtage.get(i) ?? 0}; });
   const p = LG.pos[n];
   return {id: m.id, titel: m.titel, rang: rang.get(n), bezirk: bezirkName(bz), bereich, material,
     funktion: {schluessel: f, ...FUNKTIONEN[f]}, reife: m.reife, arbeit: material || !m.samen.length ? 0 : r3(arbeit(m)),
     stimmen: [...new Set(m.samen.map(s => stimmeName(s.stimme)))].sort(), stockwerke: Math.max(1, E.length),
-    dorf: p ? {x: r3(p[0]), z: r3(p[2]), drehung: r3(LG.yaw ? LG.yaw[n] : 0)} : null,
+    dorf: p ? {x: r3(p[0]), z: r3(p[2]), drehung: r3(LG.yaw ? LG.yaw[n] : 0), stockwerke: Math.max(1, ED.length)} : null,
     ausgang: m.keim.map(v => ({id: v.id, name: v.label || 'Ausgangsfrage', zeit: v.created_at || null})), fassungen};
 }).sort((a, b) => a.rang - b.rang);
 

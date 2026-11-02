@@ -30,6 +30,8 @@ soll(W.werke.every(w => imDach.get(w.id) === 1), 'jedes Werk steht in genau eine
 soll(W.daecher.length === W.zaehlung.daecher, `${W.zaehlung.daecher} Dächer`);
 const alle = W.werke.flatMap(w => w.fassungen.map(f => f.id)); soll(new Set(alle).size === alle.length && alle.length === W.zaehlung.fassungen, 'jede Fassung genau einmal');
 soll(W.werke.every(w => w.fassungen.every((f, i) => !i || (w.fassungen[i - 1].zeit || '') <= (f.zeit || ''))), 'in jedem Werk unten das Älteste');
+soll(W.werke.every(w => w.fassungen.every((f, i) => !i || (w.fassungen[i - 1].etage <= f.etage && w.fassungen[i - 1].dorfEtage <= f.dorfEtage))), 'Stockwerke steigen mit der Zeit, auch im Dorf mit höchstens vier');
+soll(W.werke.every(w => !w.dorf || w.dorf.stockwerke <= 4), 'im Dorf höchstens vier Stockwerke');
 soll(W.werke.every(w => { const pos = new Map(w.fassungen.map((f, i) => [f.id, i])); return w.fassungen.every((f, i) => f.eltern == null || (pos.has(f.eltern) && pos.get(f.eltern) < i)); }), 'Verzweigung nur innerhalb des Werks, Eltern älter als das Kind');
 soll(W.reihenfolge.length === W.werke.length && W.reihenfolge.every((id, i) => W.werke[i].id === id), 'Reihenfolge der Werke steht fest');
 const stimmen = [...new Set(W.werke.flatMap(w => w.fassungen.map(f => f.stimme)))].sort(); soll(JSON.stringify(stimmen) === JSON.stringify(W.zaehlung.stimmen), `Stimmen: ${stimmen.join(', ')}`);
@@ -37,11 +39,14 @@ const stimmen = [...new Set(W.werke.flatMap(w => w.fassungen.map(f => f.stimme))
 // 3. was jede Fassung wirklich gebaut hat: {name, pruefsumme, werke: [{id, fassungen: [id…]}]}
 for(const pfad of args){
   if(!existsSync(pfad)){ fehler.push(`${pfad} fehlt`); continue; }
-  const G = JSON.parse(readFileSync(pfad, 'utf8')), wer = G.name || pfad;
+  const G = JSON.parse(readFileSync(pfad, 'utf8')), teil = G.teil ? W.daecher.find(d => d.name === G.teil) : null, wer = (G.name || pfad) + (teil ? ` (nur ${teil.name})` : '');
+  if(G.teil && !teil){ fehler.push(`${wer}: Dach ${G.teil} gibt es nicht`); continue; }
+  // Ein Teilstück (ein Dach) muss genau dessen Werke in der Reihenfolge des Dachs enthalten
+  const sollWerke = teil ? teil.werke.map(id => W.werke.find(w => w.id === id)) : W.werke;
   soll(G.pruefsumme === W.pruefsumme, `${wer}: liest dieselbe Weltbeschreibung`);
-  soll(G.werke.length === W.werke.length && G.werke.every((w, i) => w.id === W.werke[i].id), `${wer}: dieselben ${W.werke.length} Werke in derselben Reihenfolge`);
+  soll(G.werke.length === sollWerke.length && G.werke.every((w, i) => w.id === sollWerke[i].id), `${wer}: dieselben ${sollWerke.length} Werke in derselben Reihenfolge`);
   const nach = new Map(G.werke.map(w => [w.id, w.fassungen]));
-  soll(W.werke.every(w => JSON.stringify(nach.get(w.id) || []) === JSON.stringify(w.fassungen.map(f => f.id))), `${wer}: jede Fassung genau ein Ding, in derselben Folge`);
+  soll(sollWerke.every(w => JSON.stringify(nach.get(w.id) || []) === JSON.stringify(w.fassungen.map(f => f.id))), `${wer}: jede Fassung genau ein Ding, in derselben Folge`);
 }
 
 for(const s of ok) console.log('  ja    ' + s);

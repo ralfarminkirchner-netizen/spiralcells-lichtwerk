@@ -6,5 +6,5 @@ __pycache__/
 *.py[cod]
 .DS_Store
 # Die Weltbeschreibung enthält Titel und Fassungsnamen aus dem Bestand: wird lokal erzeugt, nie eingecheckt.
-welt/
-app/handy/welt.json
+/welt/
+/app/handy/welt.json
