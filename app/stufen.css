@@ -90,3 +90,4 @@ svg text{text-anchor:middle;pointer-events:none;font-family:"Avenir Next","Helve
 /* einheitlich: was ein Bild hat, zeigt es; was keins hat, ist hell mit Namen – keine grauen Scheiben */
 .kn.app:not(.mitbild) circle,.kn.werk:not(.mitbild) circle{fill:#efe9dd;stroke:var(--ast-hell)}
 .kn.app:not(.mitbild) .name,.kn.app:not(.mitbild) .menge,.kn.werk:not(.mitbild) .name,.kn.werk:not(.mitbild) .menge{fill:var(--tinte);stroke:none}
+.blatttext b.zwischen{display:block;margin-top:.4em}

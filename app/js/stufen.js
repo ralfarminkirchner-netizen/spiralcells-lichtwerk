@@ -74,7 +74,7 @@ function ding(k, seite){
   // die Dinge mit Bild (Apps, Werke) tragen große Kreise, damit ihre Bilder schon von weitem zu sehen sind
   const R = groesse(k.wert), r = R * (k.art === 'ort' || k.art === 'bereich' || k.art === 'varianten' ? 0.8 : k.art === 'gespraeche' || k.art === 'zeit' ? 0.5 : k.bild ? 1.7 : 1), kreis = {typ: 'kreis', k, x: 0, y: -r, r};
   const K = krone(k.kinder, seite, k, null);
-  dreh(K, 0, 0, 0, KRONE * R / K.h.R);
+  dreh(K, 0, 0, 0, KRONE * R * (k.art === 'gespraeche' ? 2.6 : 1) / K.h.R);   // das Laub der Gespräche steht groß und dicht
   let hoch = 2 * r; const unten = {cx: 0, cy: -r, R: r};
   for(let i = 0; i < 60 && stossen(unten, ID, K.h, {c: 1, s: 0, tx: 0, ty: -hoch}, 0); i++) hoch += r * 0.12;
   dreh(K, 0, 0, -hoch);
@@ -104,7 +104,22 @@ function zweig(reihe, seite, eltern){
   return verbinde(gs, [ast, ...prims]);
 }
 
+/* Laub (Ralf, 08.11.: „dichtes Laub“): die Gespräche eines Themas wachsen als Spiralrosette, Blatt neben Blatt im goldenen
+   Winkel wie bei einer Sonnenblume. Innen das älteste Gespräch, außen das jüngste; jedes Blatt zeigt nach außen. */
+const GOLD = Math.PI * (3 - Math.sqrt(5));
+function rosette(reihe, eltern){
+  const r = Math.max(...reihe.map(blattR)), c = r * 0.98, prims = [];
+  const Rro = c * Math.sqrt(reihe.length + 1.5) + r * 1.4;
+  reihe.forEach((k, i) => {
+    const a = i * GOLD + OBEN, rho = c * Math.sqrt(i + 1.5);
+    prims.push({typ: 'blatt', k, x: Math.cos(a) * rho, y: -Rro + Math.sin(a) * rho, r: blattR(k), dir: a});
+  });
+  const ast = {typ: 'ast', pts: [[0, 0], [0, -Rro * 0.3], [0, -Rro * 0.6], [0, -Rro + c]], w0: r * 0.4, w1: r * 0.12, wem: eltern};
+  return verbinde([], [ast, ...prims]);
+}
+
 function krone(reihe, seite, eltern, meide){
+  if(eltern.art === 'gespraeche' && reihe.every(blattArt)) return rosette(reihe, eltern);
   if(reihe.length > 1 && eltern.art !== 'buendel-fassung' && reihe.every(k => blattArt(k) || k.art === 'buendel-fassung')) return zweig(reihe, seite, eltern);
   if(reihe.length === 1) return gabelung([{G: ding(reihe[0], seite), th: 0, m: reihe[0].wert, wem: reihe[0]}], meide, eltern);
   if(FAECHER && eltern.art === 'wurzel'){   // am Stamm die Orte, an einem Ort seine Apps: alle auf einmal aufgefächert, wie die Hauptäste einer breiten Krone
@@ -415,9 +430,9 @@ function lies(s, x0, y0, x1, y1){
   for(const [k, d] of offen) if(!jetzt.has(k)){ d.remove(); offen.delete(k); }
 }
 function gesagt(t){
-  return esc(t.replace(/^#\s.*$/m, '').replace(/^---\s*$/gm, '')).split(/\n{2,}/).map(p => p.trim()).filter(Boolean).map(p => {
+  return esc(t.replace(/^#\s.*$/m, '').replace(/^---\s*$/gm, '').replace(/^```.*$/gm, '')).split(/\n{2,}/).map(p => p.trim()).filter(Boolean).map(p => {
     p = p.replace(/\*\*(Du|ChatGPT|Claude|Assistant|User):\*\*/, (m, w) => `<b class="${w === 'Du' || w === 'User' ? 'du' : 'ki'}">${w === 'User' ? 'Du' : w}</b> `)
-      .replace(/\*\*(.+?)\*\*/g, '<b>$1</b>').replace(/\n/g, '<br>');
+      .replace(/\*\*(.+?)\*\*/g, '<b>$1</b>').replace(/^#{1,6}\s+(.*)$/gm, '<b class="zwischen">$1</b>').replace(/`([^`]+)`/g, '$1').replace(/\n/g, '<br>');
     return `<p>${p}</p>`; }).join('');
 }
 

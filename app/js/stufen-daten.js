@@ -10,7 +10,7 @@ import {ORTSARTEN, FOLGE} from './ortsgraph.js';
 
 export const BIS = 9;           // so viele Dinge stehen auf einer Stufe einzeln, dazu ein Bündel: das Bündel ist wieder dieselbe Spirale (fraktal)
 export const MINDESTENS = 400;  // so viel zählt eine Fassung ohne Text
-export const GESPRAECH = 500;   // so viel zählt ein Gespräch: es ist ein Blatt am Thema, kein eigenes Werk
+export const GESPRAECH = 1500;   // so viel zählt ein Gespräch: es ist ein Blatt am Thema, kein eigenes Werk
 export const blattArt = k => k.art === 'fassung' || k.art === 'gespraech';
 const zeitVon = k => k.von === Infinity || k.von == null ? Infinity : k.von;
 
@@ -39,7 +39,8 @@ function buendle(k, wort){
   if(blattArt(k)) return k;
   for(const c of k.kinder) buendle(c, wort);
   // die Zeitäste der Gespräche bündeln nicht: ein Jahr hat zwölf Monate, ein Monat trägt alle seine Blätter am Zweig
-  if((k.art === 'zeit' || k.art === 'gespraeche' || (k.art === 'werk' && k.kinder.every(c => c.art === 'zeit'))) && (k.kinder.every(c => c.art === 'zeit') || k.kinder.length <= 60)) return k;
+  if(k.art === 'gespraeche') return k;
+  if((k.art === 'zeit' || (k.art === 'werk' && k.kinder.every(c => c.art === 'zeit'))) && (k.kinder.every(c => c.art === 'zeit') || k.kinder.length <= 60)) return k;
   if(k.kinder.length > BIS + 1){
     // Orte und Bereiche in einem Ort bleiben immer sichtbar; gebündelt wird nur, was darüber hinaus klein ist
     const fest = k.kinder.filter(c => c.art === 'ort' || c.art === 'bereich'), lose = k.kinder.filter(c => !fest.includes(c));
@@ -111,7 +112,7 @@ export function spiralbaum(g, bilder = {}, gespraeche = []){
     aeste = [...aeste, ...ohneAeste];
     return aeste.length === 1 ? aeste[0].kinder : aeste;
   };
-  const ast = (liste, wo) => liste && liste.length ? [{art: 'gespraeche', name: 'Gespräche', auch: [], kinder: nachZeit(liste.map(gespraechBlatt), 'gespraeche:' + wo), schluessel: 'gespraeche:' + wo}] : [];
+  const ast = (liste, wo) => liste && liste.length ? [{art: 'gespraeche', name: 'Gespräche', auch: [], kinder: liste.map(gespraechBlatt), schluessel: 'gespraeche:' + wo}] : [];   // als Spiralrosette gezeichnet: innen das Älteste, außen das Jüngste
 
   /* Ein Knoten und alles, was zu ihm gehört – so tief, wie die Kanten reichen */
   function knoten(id, art, weg){
