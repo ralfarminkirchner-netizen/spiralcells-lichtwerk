@@ -19,9 +19,9 @@ const namenEl = $('#namen'), svg = $('#baum'), welt = svg.querySelector('.welt')
    dorthin ist so lang, wie die Krone groß ist. So wächst nichts in Fremdes, und jeder Ast ist ein verkleinerter Baum. */
 const alle = [], aeste = [];          // aeste: [Polygonpunkte, Besitzer]
 const groesse = w => 2.4 * Math.pow(Math.max(w, 1), 0.2);   // flacher als zuvor: ein großer Ort ist größer, aber kein Riese   // Kreis eines Dings aus seiner Menge
-const BREIT = 0.26;                   // Astdicke je Kreisgröße der getragenen Menge
-const SPREIZ = 1.1;                   // Öffnung einer Gabel
-const ROLLT = 5;                      // so wenige Geschwister rollen sich an der Spitze ein
+const BREIT = 0.3;                    // Astdicke je Kreisgröße der getragenen Menge
+const SPREIZ = 0.9;                   // Öffnung einer Gabel
+const ROLLT = 6;                      // so wenige Geschwister rollen sich an der Spitze ein
 const OBEN = -Math.PI / 2;
 const DREH = 0.17;                   // Spiraldrehung je Gabel (Ralf: „mehr diese Spiraldrehung“)
 const FAECHER = false;               // Orte als Fächer am Stamm (verworfen: ein Besen, kein Baum)
@@ -172,12 +172,12 @@ function gabelung(teile, meide, wem){
   }
   teile.forEach((t, j) => dreh(t.G, t.th, L[j].bx, L[j].by));
   // zwei Äste wachsen nebeneinander aus dem einen heraus: jeder beginnt an seiner Seite, ihre Außenkanten setzen die des Mutterasts fort
-  if(L.length === 2){
+  if(L.length === 2 && Math.abs(teile[0].th) < 0.9 && Math.abs(teile[1].th) < 0.9){   // nur bei sanften Gabeln; in engen Einrollungen stünden die Ecken heraus
     const [a, b] = teile[0].th <= teile[1].th ? [L[0], L[1]] : [L[1], L[0]], wa = a.ast.w0, wb = b.ast.w0;
     for(const [l, sx] of [[a, -wb * 0.42], [b, wa * 0.42]]) { l.ast.pts[0] = [l.ast.pts[0][0] + sx, l.ast.pts[0][1]]; l.ast.pts[1] = [l.ast.pts[1][0] + sx * 0.6, l.ast.pts[1][1]]; }
   }
   const G = verbinde(teile.map(t => t.G), [...L.map(l => l.ast), {typ: 'knoten', x: 0, y: 0, r: Math.max(...L.map(l => l.ast.w0)) * 0.56, wem}]);
-  G.fuss = L.length === 2 ? (L[0].ast.w0 + L[1].ast.w0) * 0.86 : L[0].ast.w0;
+  G.fuss = L.length === 2 ? (L[0].ast.w0 + L[1].ast.w0) * 0.95 : L[0].ast.w0;
   return G;
 }
 
@@ -424,11 +424,11 @@ function lesbar(){
     if(!k.text) continue;
     const da = k.x + k.r > x0 && k.x - k.r < x1 && k.y + k.r > y0 && k.y - k.r < y1;
     const px = k.r * s * (blattArt(k) ? 0.22 : k.fs);
-    const gabel = ['ort', 'bereich', 'varianten', 'gespraeche', 'zeit'].includes(k.art), an = da && px >= (k.art === 'ort' ? 16 : gabel ? 8.5 : 10.5) && px <= (gabel ? 160 : 48);   // Orte und Bereiche tragen ihren Namen auch groß
+    const gabel = ['ort', 'bereich', 'varianten', 'gespraeche', 'zeit'].includes(k.art), an = da && px >= (k.art === 'ort' ? 16 : gabel ? 8.5 : k.bild ? 9 : 10.5) && px <= (gabel ? 160 : 48);   // Orte und Bereiche tragen ihren Namen auch groß
     if(k.textAn !== an){ k.text.style.display = an ? '' : 'none'; if(k.menge) k.menge.style.display = an && px >= 14 ? '' : 'none'; k.textAn = an; }
     else if(an && k.menge) k.menge.style.display = px >= 14 ? '' : 'none';
     // ohne Schild bleibt das eigene Material, das den Namen seiner App trägt: der steht schon darüber
-    k.klein = da && !an && (px < 10.5 || k.art === 'ort') && !blattArt(k) && !(k.eigen && k.eltern && k.eltern.name === k.name) && (k.eltern === fokus || (k.eltern && k.eltern.eltern === fokus && k.r * s >= 7)) ? (k.eltern === fokus ? 2 : 1) : 0;
+    k.klein = da && !an && (px < (k.bild ? 9 : 10.5) || k.art === 'ort') && !blattArt(k) && !(k.eigen && k.eltern && k.eltern.name === k.name) && (k.eltern === fokus || (k.eltern && k.eltern.eltern === fokus && k.r * s >= 7)) ? (k.eltern === fokus ? 2 : 1) : 0;
     // Schärfe nach Nähe (LOD): aus der Ferne ein kleines Bild, ab etwa 120 Bildpunkten Kreis ein scharfes
     if(k.bildEl && da && k.r * s >= 4){ const w = k.r * s * 2 * (devicePixelRatio || 1) > 260 ? 960 : 240;
       if(k.bildW < w || !k.bildW){ k.bildW = w; const url = `/lichtwerk/bild?w=${w}&pfad=${encodeURIComponent(k.bild)}`;
@@ -450,7 +450,7 @@ function lesbar(){
     // was auf dieser Stufe steht, bekommt immer seinen Namen: findet sich kein ganz freier Platz, darf das Schild über Ästen und kleinen Kreisen liegen, nie über einem anderen Schild
     const schildFrei = ([x, y]) => ![...belegt.slice(kreise), ...hart].some(q => x < q[2] && x + bw > q[0] && y < q[3] && y + bh > q[1]);
     // ein Ort trägt seinen Namen immer mitten im eigenen Kreis, nie daneben
-    const l = k.art === 'ort' ? [[sx - bw / 2, sy - bh / 2], [sx - bw / 2, sy + sr + 2], [sx - bw / 2, sy - sr - bh - 2]].find(schildFrei) || [sx - bw / 2, sy - bh / 2] : lagen.find(p => imBild(p) && frei(p)) || (k.klein === 2 ? lagen.find(p => imBild(p) && schildFrei(p)) : null); if(!l) continue;
+    const l = k.art === 'ort' ? [[sx - bw / 2, sy - bh / 2], [sx - bw / 2, sy + sr + 2], [sx - bw / 2, sy - sr - bh - 2]].find(schildFrei) || [sx - bw / 2, sy - bh / 2] : lagen.find(p => imBild(p) && frei(p)) || (k.klein === 2 ? lagen.slice(0, 8).find(p => imBild(p) && schildFrei(p)) : null); if(!l) continue;   // Ersatzplatz nur direkt am eigenen Kreis
     belegt.push([l[0], l[1], l[0] + bw, l[1] + bh]);
     html.push(`<div class="nm${k.art === 'ort' ? ' ortname' : ''}" data-nr="${k.nr}" style="left:${l[0]}px;top:${l[1]}px;width:${bw}px"><b>${esc(k.name)}</b>${knapp ? '' : `<span>${esc(unterzeile(k))}</span>`}</div>`);
   }
