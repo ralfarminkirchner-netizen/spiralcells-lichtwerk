@@ -67,3 +67,5 @@ svg text{text-anchor:middle;pointer-events:none;font-family:"Avenir Next","Helve
 .kn.bereich circle{fill:#eef3ea;stroke:#4f7a52}
 .kn.ort .name,.kn.ort .menge,.kn.bereich .name,.kn.bereich .menge{fill:var(--tinte);stroke:none}
 .kn.bereich .name{fill:#2f5532}
+.kn.varianten circle{fill:#f4efe2;stroke:#9a7b4f}
+.kn.varianten .name,.kn.varianten .menge{fill:#5d4526;stroke:none}

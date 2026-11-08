@@ -16,7 +16,8 @@ function graph(){
 test('Stellen liegen im eigenen Material der App, Zwischenstände und Gleichnamige sind je ein Werk', () => {
   const b = spiralbaum(graph()), musik = b.kinder.find(o => o.name === 'MUSiC'), narben = musik.kinder[0];
   const namen = narben.kinder.map(c => c.name).sort();
-  assert.deepEqual(namen, ['Invaria 2', 'Lied', 'Narben']);
+  assert.deepEqual(namen, ['Lied', 'Narben', 'Varianten']);   // Zwischenstände mit gemeinsamem Vornamen stehen auf dem Varianten-Ast
+  assert.deepEqual(narben.kinder.find(c => c.art === 'varianten').kinder.map(c => c.name), ['Invaria 2']);
   const eigen = narben.kinder.find(c => c.eigen);
   assert.equal(eigen.kinder.length, 3);   // die App selbst und zwei Stellen
   assert.equal(narben.kinder.find(c => c.name === 'Lied').kinder.length, 2);

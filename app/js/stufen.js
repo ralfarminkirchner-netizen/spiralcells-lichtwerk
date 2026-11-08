@@ -72,7 +72,7 @@ function ding(k, seite){
   // so wird alles Tiefere von selbst immer kleiner
   // ein Ort ist nur die Gabel, an der seine Apps hängen: sein Kreis bleibt klein, die Krone bekommt den Platz
   // die Dinge mit Bild (Apps, Werke) tragen große Kreise, damit ihre Bilder schon von weitem zu sehen sind
-  const R = groesse(k.wert), r = R * (k.art === 'ort' || k.art === 'bereich' ? 0.8 : k.bild ? 1.7 : 1), kreis = {typ: 'kreis', k, x: 0, y: -r, r};
+  const R = groesse(k.wert), r = R * (k.art === 'ort' || k.art === 'bereich' || k.art === 'varianten' ? 0.8 : k.bild ? 1.7 : 1), kreis = {typ: 'kreis', k, x: 0, y: -r, r};
   const K = krone(k.kinder, seite, k, null);
   dreh(K, 0, 0, 0, KRONE * R / K.h.R);
   let hoch = 2 * r; const unten = {cx: 0, cy: -r, R: r};
@@ -84,7 +84,27 @@ const teil = (l, seite, eltern) => l.length === 1 ? ding(l[0], seite) : krone(l,
 const menge = l => l.reduce((s, k) => s + k.wert, 0);
 
 /* Eine Krone: Geschwister teilen sich an Gabeln, an der Spitze rollt sich der Ast ein */
+/* Ralf, 08.11.: was mehrere Fassungen hat, bekommt einen eigenen Ast, auf dem sie gezeigt werden. Die Fassungen eines
+   Werks hängen nebeneinander an einem Zweig, abwechselnd links und rechts, die früheste unten, die jüngste an der Spitze. */
+function zweig(reihe, seite, eltern){
+  const blaetter = reihe.filter(k => k.art === 'fassung'), rest = reihe.filter(k => k.art !== 'fassung');
+  const rs = blaetter.map(k => groesse(k.wert) * (k.bild ? 1.5 : 0.8)), rmax = Math.max(...rs), schritt = rmax * 1.05;
+  const prims = [];
+  let y = -rmax * 0.6;
+  blaetter.forEach((k, i) => {
+    const letzt = i === blaetter.length - 1 && !rest.length, s = (i % 2 ? 1 : -1) * seite;
+    const dir = letzt ? OBEN : OBEN + s * 0.95, r = rs[i];
+    prims.push({typ: 'blatt', k, x: Math.cos(dir) * r, y: y + Math.sin(dir) * r, r, dir});
+    if(!letzt) y -= schritt;
+  });
+  const L = -y, gs = [];
+  for(const b of rest){ const G = ding(b, seite); dreh(G, 0, 0, -L); gs.push(G); }
+  const ast = {typ: 'ast', pts: [[0, 0], [seite * rmax * 0.15, -L * 0.35], [-seite * rmax * 0.15, -L * 0.7], [0, -L]], w0: rmax * 0.32, w1: rmax * 0.1, wem: eltern};
+  return verbinde(gs, [ast, ...prims]);
+}
+
 function krone(reihe, seite, eltern, meide){
+  if(reihe.length > 1 && eltern.art !== 'buendel-fassung' && reihe.every(k => k.art === 'fassung' || k.art === 'buendel-fassung')) return zweig(reihe, seite, eltern);
   if(reihe.length === 1) return gabelung([{G: ding(reihe[0], seite), th: 0, m: reihe[0].wert, wem: reihe[0]}], meide, eltern);
   if(FAECHER && eltern.art === 'wurzel'){   // am Stamm die Orte, an einem Ort seine Apps: alle auf einmal aufgefächert, wie die Hauptäste einer breiten Krone
     const n = reihe.length, weit = Math.min(1.35, 0.32 * (n - 1));
@@ -291,8 +311,8 @@ function lesbar(){
         else { const vor = new Image(); vor.onload = () => k.bildEl.setAttribute('href', url); vor.src = url; } } }   // das scharfe erst zeigen, wenn es da ist
   }
   // Was auf dieser Stufe steht, bleibt nie namenlos: ist sein Kreis noch zu klein, steht der Name daneben
-  const html = [], belegt = [];
-  for(const k of alle) if(k.r * s > 3 && k.art !== 'fassung' && k.art !== 'wurzel' && k.form && !k.form.classList.contains('fern')){ const sx = (k.x - blick.x) * s + blick.mx, sy = (k.y - blick.y) * s + blick.my, sr = k.r * s; belegt.push([sx - sr, sy - sr, sx + sr, sy + sr]); }
+  const html = [], belegt = [], hart = [];   // hart: Kreise, in denen ein Name steht – darüber liegt nie ein Schild
+  for(const k of alle) if(k.r * s > 3 && k.art !== 'fassung' && k.art !== 'wurzel' && k.form && !k.form.classList.contains('fern')){ const sx = (k.x - blick.x) * s + blick.mx, sy = (k.y - blick.y) * s + blick.my, sr = k.r * s; belegt.push([sx - sr, sy - sr, sx + sr, sy + sr]); if(k.textAn) hart.push([sx - sr, sy - sr, sx + sr, sy + sr]); }
   const kreise = belegt.length;
   for(const k of alle.filter(q => q.klein).sort((a, b) => b.klein - a.klein || b.r - a.r)){   // erst die Stufe selbst, dann die nächste; die Größten zuerst
     const sx = (k.x - blick.x) * s + blick.mx, sy = (k.y - blick.y) * s + blick.my, sr = k.r * s, knapp = SCHMAL(), bw = Math.min(knapp ? 150 : 180, 16 + Math.max([...k.name].length * 8.4, knapp ? 0 : zeichenWort(k.zeichen).length * 6.8)), bh = (knapp ? 6 : 20) + 17 * Math.ceil([...k.name].length * 8.4 / (bw - 16));
@@ -303,7 +323,7 @@ function lesbar(){
     const frei = ([x, y]) => !belegt.some(q => x < q[2] && x + bw > q[0] && y < q[3] && y + bh > q[1]);
     // findet ein Schild keinen freien Platz, bleibt es weg, statt ein anderes zu verdecken; beim Hineinzoomen erscheint es
     // was auf dieser Stufe steht, bekommt immer seinen Namen: findet sich kein ganz freier Platz, darf das Schild über Ästen und kleinen Kreisen liegen, nie über einem anderen Schild
-    const schildFrei = ([x, y]) => !belegt.slice(kreise).some(q => x < q[2] && x + bw > q[0] && y < q[3] && y + bh > q[1]);
+    const schildFrei = ([x, y]) => ![...belegt.slice(kreise), ...hart].some(q => x < q[2] && x + bw > q[0] && y < q[3] && y + bh > q[1]);
     const l = lagen.find(p => imBild(p) && frei(p)) || (k.klein === 2 ? lagen.find(p => imBild(p) && schildFrei(p)) : null); if(!l) continue;
     belegt.push([l[0], l[1], l[0] + bw, l[1] + bh]);
     html.push(`<div class="nm" data-nr="${k.nr}" style="left:${l[0]}px;top:${l[1]}px;width:${bw}px"><b>${esc(k.name)}</b>${knapp ? '' : `<span>${esc(zeichenWort(k.zeichen))}</span>`}</div>`);

@@ -104,8 +104,14 @@ export function spiralbaum(g, bilder = {}){
       if(gr.ids.length === 1 && (runter.get(gr.ids[0]) || []).some(c => !weiter.has(c))) return knoten(gr.ids[0], 'app', weiter);
       const teile = [...new Set(gr.titel)];
       const blt = gr.ids.flatMap(i => blaetter(i).map(b => teile.length > 1 ? {...b, name: b.werk === b.name ? b.werk : `${b.werk} · ${b.name}`} : b));
-      return {art: 'werk', name: key, teile, auch: [...new Set(gr.ids.flatMap(orteNamen))], kinder: blt, schluessel: 'werk:' + [...gr.ids].sort().join('+'), ids: gr.ids};
+      const variante = teile.length > 1 || gr.ids.some(i => /variante/i.test((W.get(i) || {}).work_type || ''));
+      return {art: 'werk', name: key, teile, variante, auch: [...new Set(gr.ids.flatMap(orteNamen))], kinder: blt, schluessel: 'werk:' + [...gr.ids].sort().join('+'), ids: gr.ids};
     });
+    // Ralf, 08.11.: „alles, von dem es mehrere Varianten gibt, auch einen eigenen Ast, auf dem diese gezeigt werden“ –
+    // die Varianten einer App stehen zusammen auf einem Ast, getrennt von ihren übrigen Werken
+    const varianten = kinder.filter(c => c.variante);
+    if(varianten.length){ kinder.splice(0, kinder.length, ...kinder.filter(c => !c.variante),
+      {art: 'varianten', name: 'Varianten', auch: [], kinder: varianten, schluessel: 'varianten:' + id, ids: [id]}); }
     if(eigen.length) kinder.push({art: 'werk', name: nm, eigen: true, teile: [], auch: orteNamen(id), kinder: eigen, schluessel: 'eigen:' + id, ids: [id]});
     return {art: 'app', name: nm, auch: orteNamen(id), kinder, schluessel: 'app:' + id, ids: [id]};
   }
@@ -116,7 +122,7 @@ export function spiralbaum(g, bilder = {}){
   const orte = oben.map(id => knoten(id, 'ort', new Set()));
   const wurzel = {art: 'wurzel', name: 'Alle Orte', kinder: orte.slice(), schluessel: 'wurzel'};   // zaehle sortiert nach Menge, die Folge bleibt in orte
   zaehle(wurzel); wurzel.kinder = orte.filter(o => o.kinder.length);   // Orte bleiben in der festen Folge; leere fallen weg
-  for(const o of wurzel.kinder) buendle(o, {ort: 'kleinere Apps', bereich: 'kleinere Apps', app: 'kleinere Werke', werk: 'weitere Fassungen', buendel: 'kleinere'});
+  for(const o of wurzel.kinder) buendle(o, {ort: 'kleinere Apps', bereich: 'kleinere Apps', app: 'kleinere Werke', werk: 'weitere Fassungen', varianten: 'weitere Varianten', buendel: 'kleinere'});
   verteileBilder(wurzel);
   return wurzel;
 }
@@ -163,5 +169,6 @@ export function zahlWort(k){
   if(k.art === 'app') return `${n(k.anzahl, 'Werk', 'Werke')} · ${n(k.fassungen, 'Fassung', 'Fassungen')}`;
   if(k.art === 'bereich') return `${n(k.anzahl, 'App', 'Apps')} · ${n(k.fassungen, 'Fassung', 'Fassungen')}`;
   if(k.art === 'fassung') return zeichenWort(k.zeichen);
+  if(k.art === 'varianten') return `${n(k.anzahl, 'Variante', 'Varianten')} · ${n(k.fassungen, 'Fassung', 'Fassungen')}`;
   return n(k.fassungen, 'Fassung', 'Fassungen');
 }
