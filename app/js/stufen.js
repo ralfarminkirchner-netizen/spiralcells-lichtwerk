@@ -1,8 +1,9 @@
-/* Der Spiralbaum, fraktal (Ralf, 08.11.2026: „Was hat das mit Fraktalität zu tun? Mit dem Vorbild?“).
+/* Der Spiralbaum als Baum (Ralf, 08.11.2026: „Der Baum muss all die Äste tragen mit ihren immer kleineren
+   Verästelungen“ – kein gedrehter Ast).
 
-   Jeder Ast rollt sich zu einer Spirale ein. Von ihr zweigen die Teile ab, das größte zuerst, und jedes Teil
-   ist wieder derselbe Ast: es rollt sich ein, seine Teile zweigen ab, bis zu den Blättern. Dieselbe Form auf
-   jeder Stufe, nur kleiner. Ein Werk rollt seine Fassungen in Zeitfolge auf, die früheste zuerst.
+   Ein Stamm trägt alle Orte. Er gabelt sich, jede Gabel teilt die Menge in zwei etwa gleiche Hälften, bis jeder
+   Ast einen Ort trägt. Hinter jedem Ort wächst seine eigene Krone nach demselben Gesetz: Apps, dahinter Werke,
+   an den Spitzen die Fassungen als Blätter. Dieselbe Gabel auf jeder Stufe, nur kleiner: fraktal.
    Man zoomt stufenlos hinein; Namen stehen in den Kreisen und wachsen mit, sichtbar erst, wenn sie lesbar sind. */
 
 import {spiralbaum, zahlWort, zeichenWort, zeitWort} from './stufen-daten.js';
@@ -13,8 +14,8 @@ const namenEl = $('#namen'), svg = $('#baum'), welt = svg.querySelector('.welt')
 
 /* ---------- Wuchs ---------- */
 const alle = [], aeste = [];          // aeste: [Polygonpunkte, Besitzer]
-const W0 = 0.1;                       // Astbreite je Länge
-const anteil = s => 0.16 + 0.8 * Math.sqrt(s);
+const W0 = 0.11;                      // Astbreite je Länge
+const SPREIZ = 0.95;                  // so weit gehen zwei Äste an einer Gabel auseinander
 
 /* Ein Bogen von P in Richtung a, Länge l, Drehung t, Breite von b0 auf b1: ein gefülltes, sich verjüngendes Band */
 function bogen(P, a, l, t, b0, b1, wem){
@@ -30,26 +31,31 @@ function bogen(P, a, l, t, b0, b1, wem){
 
 // Gewicht im Bild: die Wurzel der Menge, damit Kleines sichtbar bleibt und Großes trotzdem größer ist
 const gw = k => Math.sqrt(k.wert), gewicht = l => l.reduce((s, k) => s + gw(k), 0);
+const laenge = s => Math.max(0.34, Math.sqrt(s)) * 0.9;   // Anteil an der Menge → Länge des Asts
 
-/* Eine Reihe Geschwister: das erste zweigt ab, der Rest rollt sich weiter ein */
-function wachse(reihe, P, a, L, seite, eltern){
-  if(!reihe.length) return;
-  if(reihe.length === 1){ stiel(reihe[0], P, a, L, seite, eltern); return; }
-  const ganz = gewicht(reihe), s0 = gw(reihe[0]) / ganz, l0 = L * anteil(s0), lr = L * anteil(1 - s0);
-  const schritt = Math.max(L * 0.24, l0 * 1.05);
-  const [Q, a2] = bogen(P, a, schritt, seite * Math.min(0.55, 1.5 * schritt / L), L * W0, lr * W0, eltern);
-  stiel(reihe[0], Q, a2 - seite * 0.75, l0, -seite, eltern);
-  wachse(reihe.slice(1), Q, a2 + seite * 0.1, lr, seite, eltern);
+/* Eine Gabel: die Geschwister teilen sich in zwei Äste von etwa gleicher Menge, die Reihenfolge bleibt.
+   Der schwerere Ast geht gerader, der leichtere weicht weiter aus – wie bei einem gewachsenen Baum. */
+function gabel(reihe, P, a, L, eltern){
+  if(reihe.length === 1){ wachse(reihe, P, a, L, eltern); return; }
+  const ganz = gewicht(reihe); let i = 1, acc = gw(reihe[0]);
+  while(i < reihe.length - 1 && Math.abs(acc + gw(reihe[i]) - ganz / 2) < Math.abs(acc - ganz / 2)) acc += gw(reihe[i++]);
+  const sA = acc / ganz, sB = 1 - sA;
+  wachse(reihe.slice(0, i), P, a - SPREIZ * sB, L * laenge(sA), eltern, -1);
+  wachse(reihe.slice(i), P, a + SPREIZ * sA, L * laenge(sB), eltern, 1);
 }
 
-/* Ein Ding auf seinem Stiel: ein Kreis (Ort, App, Werk) oder ein Blatt (Fassung). Hinter dem Kreis wachsen seine Teile */
-function stiel(k, P, a, L, seite, eltern){
+/* Ein Ast: er wächst ein Stück und gabelt sich, bis er ein einzelnes Ding trägt */
+function wachse(reihe, P, a, L, eltern, seite = 0){
+  const ein = reihe.length === 1 ? reihe[0] : null;
+  const [Q, a2] = bogen(P, a, L * (ein ? 0.55 : 1), seite * 0.12, L * W0, L * W0 * 0.82, ein || eltern);
+  if(!ein){ gabel(reihe, Q, a2, L, eltern); return; }
+  const k = ein;
   Object.assign(k, {eltern, nr: alle.length, tiefe: eltern ? eltern.tiefe + 1 : 0}); alle.push(k);
-  const [Q, a2] = bogen(P, a, L * 0.42, seite * 0.3, L * W0, L * W0 * 0.8, k);
-  if(k.art === 'fassung'){ Object.assign(k, {x: Q[0] + Math.cos(a2) * L * 0.2, y: Q[1] + Math.sin(a2) * L * 0.2, r: L * 0.2, dir: a2}); return; }
-  const r = L * 0.4;
+  if(k.art === 'fassung'){ Object.assign(k, {x: Q[0] + Math.cos(a2) * L * 0.3, y: Q[1] + Math.sin(a2) * L * 0.3, r: L * 0.3, dir: a2}); return; }
+  const r = L * 0.46;
   Object.assign(k, {x: Q[0] + Math.cos(a2) * r, y: Q[1] + Math.sin(a2) * r, r, dir: a2});
-  if(k.kinder && k.kinder.length) wachse(k.kinder, [Q[0] + Math.cos(a2) * 2 * r, Q[1] + Math.sin(a2) * 2 * r], a2 + seite * 0.25, L * 0.88, seite, k);
+  // hinter dem Kreis trägt das Ding seine eigene Krone, nach demselben Gesetz
+  if(k.kinder && k.kinder.length) gabel(k.kinder, [Q[0] + Math.cos(a2) * 1.9 * r, Q[1] + Math.sin(a2) * 1.9 * r], a2, L * 0.95, k);
 }
 
 /* Umriss jedes Teilbaums, für das Hineinfahren */
@@ -221,8 +227,8 @@ addEventListener('resize', () => { W = innerWidth; H = innerHeight; if(fokus){ b
   try {
     const baum = spiralbaum(await (await fetch('/api/graph')).json());
     Object.assign(baum, {nr: alle.length, tiefe: 0, eltern: null, x: 0, y: 0, r: 0}); alle.push(baum);
-    const [Q, a] = bogen([0, 0], -Math.PI / 2 - 0.15, 50, -0.55, 100 * W0 * 1.4, 100 * W0, baum);   // der Stamm
-    wachse(baum.kinder, Q, a, 100, 1, baum);
+    const [Q, a] = bogen([0, 0], -Math.PI / 2, 48, 0.04, 19, 14, baum);   // der Stamm trägt alle Orte
+    gabel(baum.kinder, Q, a, 110, baum);
     umrisse(); zeichne();
     $('#lade').hidden = true;
     const finde = () => { let k = baum; for(const t of location.hash.slice(1).split('/').filter(Boolean).map(decodeURIComponent)){ const n = (k.kinder || []).find(c => c.name === t); if(!n) break; k = n; } return k; };
