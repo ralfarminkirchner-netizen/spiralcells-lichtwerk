@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Spiralbaum</title>
+<meta name="description" content="Ralfs Werke als Spiralbaum: Orte, Apps, Werke und Fassungen, Stufe für Stufe.">
+<link rel="stylesheet" href="/stufen.css">
+</head>
+<body>
+<header class="kopf">
+  <nav class="pfad" aria-label="Wo du bist"></nav>
+</header>
+<main class="flaeche">
+  <svg id="baum" role="img" aria-label="Spiralbaum der Werke"><g class="welt"><g class="aeste"></g><g class="knoten"></g></g></svg>
+  <div id="namen" aria-hidden="true"></div>
+</main>
+<section class="karte" aria-live="polite">
+  <button class="hoch" type="button" hidden><span aria-hidden="true">←</span> <span class="hoch-satz">zurück</span></button>
+  <div class="karte-text">
+    <h1 class="karte-name"></h1>
+    <p class="karte-menge"></p>
+    <p class="karte-auch"></p>
+  </div>
+  <ul class="karte-liste" aria-label="Was hier liegt"></ul>
+</section>
+<p class="ruhe" id="lade">Der Spiralbaum wird aus dem Fundus gelesen …</p>
+<script type="module" src="/js/stufen.js"></script>
+</body>
+</html>

@@ -1,0 +1,63 @@
+:root{
+  --grund:#f3efe6; --ast:#7b7670; --ast-hell:#a9a39b; --knoten:#77726c; --knoten-rand:#d8d2c8;
+  --ort:#5f5a55; --werk:#8d877f; --schrift:#fff; --tinte:#2c2925; --leise:#6b655d;
+  --belegt:#c8873a; --offen:#b7b1a8; --karte:#fffdf8;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--grund);color:var(--tinte);font:16px/1.35 "Avenir Next","Helvetica Neue",system-ui,sans-serif;overflow:hidden;-webkit-text-size-adjust:100%}
+.flaeche{position:fixed;inset:0;touch-action:none}
+#baum{width:100%;height:100%;display:block;cursor:grab}
+#baum.zieht{cursor:grabbing}
+.ast{fill:none;stroke:var(--ast);stroke-linecap:round}
+.ast.saum{stroke-dasharray:2 3;stroke:var(--ast-hell)}
+.kn{cursor:pointer}
+.kn circle{fill:var(--knoten);stroke:var(--knoten-rand)}
+.kn.ort circle{fill:var(--ort)}
+.kn.werk circle{fill:var(--werk)}
+.kn.wurzel circle{fill:#4b4743}
+.kn.buendel circle,.kn.buendel-fassung circle{fill:var(--grund);stroke:var(--ast);stroke-dasharray:4 3}
+.kn.verschraenkt circle{stroke:var(--belegt)}
+.blatt{cursor:pointer;stroke:#fff;stroke-opacity:.7}
+.blatt.belegt{fill:var(--belegt)}
+.blatt.offen{fill:var(--offen)}
+.blatt.gewaehlt{stroke:var(--tinte);stroke-opacity:1}
+
+#namen{position:fixed;inset:0;pointer-events:none}
+.nm{position:absolute;transform:translate(-50%,-50%);text-align:center;color:var(--schrift);pointer-events:none;line-height:1.15;overflow-wrap:break-word;hyphens:manual}
+.nm b{display:block;font-weight:600;letter-spacing:.01em}
+.nm span{display:block;opacity:.88;margin-top:.25em}
+.nm.unter{pointer-events:auto;cursor:pointer;transform:none;color:var(--tinte);background:var(--karte);border-radius:8px;padding:3px 8px;box-shadow:0 1px 4px rgba(60,50,40,.18)}
+.nm.unter b{font-weight:600}
+.nm .menge{font-size:12.5px;color:var(--leise);opacity:1;margin-top:1px;white-space:nowrap}
+.nm.unter.buendel{color:var(--leise)}
+.nm.innen.buendel,.nm.innen.buendel-fassung{color:var(--tinte)}
+
+.kopf{position:fixed;top:0;left:0;right:0;padding:max(12px,env(safe-area-inset-top)) 16px 10px;z-index:3;pointer-events:none;background:linear-gradient(var(--grund) 60%,transparent)}
+.pfad{display:flex;flex-wrap:wrap;gap:4px 6px;align-items:center;pointer-events:auto;font-size:15px}
+.pfad button{font:inherit;border:0;background:none;color:var(--leise);padding:6px 2px;cursor:pointer;min-height:36px}
+.pfad button:last-child{color:var(--tinte);font-weight:600}
+.pfad i{color:var(--ast-hell);font-style:normal}
+
+.karte{position:fixed;left:16px;bottom:max(16px,env(safe-area-inset-bottom));z-index:3;max-width:min(440px,calc(100vw - 32px));background:var(--karte);border-radius:14px;box-shadow:0 6px 24px rgba(60,50,40,.14);padding:12px 16px 14px}
+.karte-name{font-size:20px;margin:0 0 4px;line-height:1.2}
+.karte-menge{margin:0;color:var(--leise);font-size:15px}
+.karte-auch{margin:4px 0 0;color:var(--belegt);font-size:15px}
+.karte-auch:empty{display:none}
+.hoch{font:inherit;font-size:15px;border:0;background:none;color:var(--leise);padding:4px 0 8px;cursor:pointer;min-height:36px}
+.ruhe{position:fixed;inset:auto 0 45% 0;text-align:center;color:var(--leise)}
+.ruhe[hidden]{display:none}
+.karte-liste{display:none}
+@media (max-width:600px){
+  .karte{right:0;left:0;bottom:0;max-width:none;border-radius:16px 16px 0 0;height:46vh;display:flex;flex-direction:column;padding:10px 16px max(10px,env(safe-area-inset-bottom))}
+  .karte-name{font-size:18px}
+  .karte-liste{display:block;list-style:none;margin:8px -16px 0;padding:0;overflow-y:auto;flex:1;border-top:1px solid #e6e0d6}
+  .karte-liste button{display:grid;grid-template-columns:28px 1fr;grid-template-rows:auto auto;column-gap:10px;width:100%;text-align:left;font:inherit;border:0;border-bottom:1px solid #eee8de;background:none;padding:9px 16px;cursor:pointer;color:var(--tinte)}
+  .karte-liste b{font-weight:600;font-size:16px;line-height:1.25}
+  .karte-liste span{grid-column:2;color:var(--leise);font-size:14px}
+  .karte-liste .p{grid-row:1/3;align-self:center;justify-self:center;width:var(--g);height:var(--g);border-radius:50%;background:var(--knoten)}
+  .karte-liste .p.belegt{background:var(--belegt);border-radius:50% 0 50% 50%}
+  .karte-liste .p.offen{background:var(--offen);border-radius:50% 0 50% 50%}
+}
+
+.fern{opacity:.22;transition:opacity .4s}
+.kn,.blatt,.ast{transition:opacity .4s}
