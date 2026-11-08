@@ -97,7 +97,8 @@ function krone(reihe, seite, eltern, meide){
     const gw = k => Math.sqrt(k.wert), ganz = reihe.reduce((s, k) => s + gw(k), 0); let i = 1, acc = gw(reihe[0]);
     while(i < reihe.length - 1 && Math.abs(acc + gw(reihe[i]) - ganz / 2) < Math.abs(acc - ganz / 2)) acc += gw(reihe[i++]);
     const a = acc / ganz; A = reihe.slice(0, i); B = reihe.slice(i);
-    thA = -SPREIZ * (0.25 + 0.75 * (1 - a)); thB = SPREIZ * (0.25 + 0.75 * a); sA = -1; sB = 1;
+    const sp = eltern.art === 'wurzel' ? 1.45 : SPREIZ;   // am Stamm öffnen sich die Gabeln weit: so steht die Krone breit und der Stamm bleibt kurz
+    thA = -sp * (0.25 + 0.75 * (1 - a)); thB = sp * (0.25 + 0.75 * a); sA = -1; sB = 1;
   }
   return gabelung([{G: teil(A, sA, eltern), th: thA, m: menge(A), wem: A.length === 1 ? A[0] : eltern},
                    {G: teil(B, sB, eltern), th: thB, m: menge(B), wem: B.length === 1 ? B[0] : eltern}], meide, eltern);
@@ -113,7 +114,7 @@ function gabelung(teile, meide, wem){
     return {l, bx, by, T, ast, stiel: stiel.length ? umkreis(stiel) : null};
   };
   // jeder Ast hat seine eigene Länge: wer anstößt, rückt hinaus; stoßen beide Kronen, rücken beide
-  const lam = teile.map(() => 0.3); let L;
+  const lam = teile.map(() => 0.12); let L;   // kurz beginnen: ein Ast wird nur so lang, wie er muss
   for(let i = 0; i < 120; i++){
     L = teile.map((t, j) => lage(t, lam[j])); const luft = 0.04 * Math.min(...teile.map(t => t.G.h.R));
     const weiter = teile.map(() => false);
@@ -148,7 +149,10 @@ const rund = (x, y, r) => Array.from({length: 16}, (_, i) => [x + Math.cos(i * M
 // alle Flächen im selben Drehsinn, sonst stanzen sich überlappende Äste gegenseitig Löcher
 const gleichsinnig = P => { let a = 0; for(let i = 0; i < P.length; i++){ const [x0, y0] = P[i], [x1, y1] = P[(i + 1) % P.length]; a += x0 * y1 - x1 * y0; } return a < 0 ? P.reverse() : P; };
 function pflanze(baum){
-  const K = krone(baum.kinder, 1, baum, null), wg = DICK * K.h.R, T = K.h.R * 0.16;
+  const K = krone(baum.kinder, 1, baum, null), wg = DICK * K.h.R;
+  // der Stamm ist kurz (Ralf: „der Baumstamm ist zu lang“), aber lang genug, dass keine Krone in den Boden hängt
+  let tief = 0; for(const f of K.formen) tief = Math.max(tief, f.typ === 'ast' ? Math.max(...f.pts.map(p => p[1])) + f.w0 : f.y + f.r);
+  const T = Math.max(K.h.R * 0.07, tief + K.h.R * 0.03);
   dreh(K, 0, 0, -T);
   const formen = [...K.formen,
     {typ: 'ast', stamm: true, pts: [[0, 0], [-wg * 0.25, -T * 0.35], [wg * 0.2, -T * 0.7], [0, -T]], w0: wg * 2.6, w1: wg * 1.05, wem: baum},
@@ -289,15 +293,18 @@ function lesbar(){
   // Was auf dieser Stufe steht, bleibt nie namenlos: ist sein Kreis noch zu klein, steht der Name daneben
   const html = [], belegt = [];
   for(const k of alle) if(k.r * s > 3 && k.art !== 'fassung' && k.art !== 'wurzel' && k.form && !k.form.classList.contains('fern')){ const sx = (k.x - blick.x) * s + blick.mx, sy = (k.y - blick.y) * s + blick.my, sr = k.r * s; belegt.push([sx - sr, sy - sr, sx + sr, sy + sr]); }
+  const kreise = belegt.length;
   for(const k of alle.filter(q => q.klein).sort((a, b) => b.klein - a.klein || b.r - a.r)){   // erst die Stufe selbst, dann die nächste; die Größten zuerst
     const sx = (k.x - blick.x) * s + blick.mx, sy = (k.y - blick.y) * s + blick.my, sr = k.r * s, knapp = SCHMAL(), bw = Math.min(knapp ? 150 : 180, 16 + Math.max([...k.name].length * 8.4, knapp ? 0 : zeichenWort(k.zeichen).length * 6.8)), bh = (knapp ? 6 : 20) + 17 * Math.ceil([...k.name].length * 8.4 / (bw - 16));
     const lagen = [];
-    for(const d of [2, 10, 22]) lagen.push([sx - bw / 2, sy + sr + d], [sx - bw / 2, sy - sr - d - bh], [sx + sr + d, sy - bh / 2], [sx - sr - d - bw, sy - bh / 2],
+    for(const d of k.klein === 2 ? [2, 10, 22, 36] : [2, 7]) lagen.push(   // Schilder der Stufe darunter bleiben dicht an ihrem Kreis, sonst gehören sie scheinbar zu einem anderen[sx - bw / 2, sy + sr + d], [sx - bw / 2, sy - sr - d - bh], [sx + sr + d, sy - bh / 2], [sx - sr - d - bw, sy - bh / 2],
       [sx + sr * .7 + d, sy + sr * .7 + d], [sx - sr * .7 - d - bw, sy + sr * .7 + d], [sx + sr * .7 + d, sy - sr * .7 - d - bh], [sx - sr * .7 - d - bw, sy - sr * .7 - d - bh]);
     const imBild = ([x, y]) => x >= 6 && x + bw <= W - 6 && y >= oben() && y + bh <= H - unten() + 20;
     const frei = ([x, y]) => !belegt.some(q => x < q[2] && x + bw > q[0] && y < q[3] && y + bh > q[1]);
     // findet ein Schild keinen freien Platz, bleibt es weg, statt ein anderes zu verdecken; beim Hineinzoomen erscheint es
-    const l = lagen.find(p => imBild(p) && frei(p)); if(!l) continue;
+    // was auf dieser Stufe steht, bekommt immer seinen Namen: findet sich kein ganz freier Platz, darf das Schild über Ästen und kleinen Kreisen liegen, nie über einem anderen Schild
+    const schildFrei = ([x, y]) => !belegt.slice(kreise).some(q => x < q[2] && x + bw > q[0] && y < q[3] && y + bh > q[1]);
+    const l = lagen.find(p => imBild(p) && frei(p)) || (k.klein === 2 ? lagen.find(p => imBild(p) && schildFrei(p)) : null); if(!l) continue;
     belegt.push([l[0], l[1], l[0] + bw, l[1] + bh]);
     html.push(`<div class="nm" data-nr="${k.nr}" style="left:${l[0]}px;top:${l[1]}px;width:${bw}px"><b>${esc(k.name)}</b>${knapp ? '' : `<span>${esc(zeichenWort(k.zeichen))}</span>`}</div>`);
   }
