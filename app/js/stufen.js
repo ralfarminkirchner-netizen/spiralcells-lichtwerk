@@ -299,7 +299,7 @@ function lesbar(){
     if(!k.text) continue;
     const da = k.x + k.r > x0 && k.x - k.r < x1 && k.y + k.r > y0 && k.y - k.r < y1;
     const px = k.r * s * (k.art === 'fassung' ? 0.22 : k.fs);
-    const an = da && px >= (k.art === 'ort' || k.art === 'bereich' ? 8.5 : 10.5) && px <= 48;
+    const gabel = k.art === 'ort' || k.art === 'bereich' || k.art === 'varianten', an = da && px >= (gabel ? 8.5 : 10.5) && px <= (gabel ? 160 : 48);   // Orte und Bereiche tragen ihren Namen auch groß
     if(k.textAn !== an){ k.text.style.display = an ? '' : 'none'; if(k.menge) k.menge.style.display = an && px >= 14 ? '' : 'none'; k.textAn = an; }
     else if(an && k.menge) k.menge.style.display = px >= 14 ? '' : 'none';
     // ohne Schild bleibt das eigene Material, das den Namen seiner App trägt: der steht schon darüber
