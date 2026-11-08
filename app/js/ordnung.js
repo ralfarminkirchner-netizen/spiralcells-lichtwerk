@@ -27,17 +27,33 @@ export function ordne(B, O){
   // Die Datei wird von Hand gepflegt: nur Texte und {werk: Text} gelten, alles andere wird als „fehlt“ gemeldet, nie als Ausnahme
   const text = r => typeof r === 'string' ? r : r && typeof r === 'object' && typeof r.werk === 'string' ? r.werk : null;
   const reihe = x => Array.isArray(x) ? x : [], obj = x => x && typeof x === 'object' && !Array.isArray(x) ? x : null;
+  // Aus dem Fundus (Ordnung als Graph): ein Eintrag {id} trifft genau sein Werk; steht es schon, wird es an dieser Stelle ein Spiegel
+  const perId = new Map(monde.map((m, i) => [m.id, i])), istId = r => r && typeof r === 'object' && typeof r.id === 'string';
+  const spiegel = [];   // {i, ebene: 'mitte'|'dach', dach, bereich}
   const vergeben = new Set(), finde = ref => { if(typeof ref !== 'string' || !ref.trim()) return -1;
     const kandidaten = (schl.get(key(ref)) || []).filter(i => !vergeben.has(i)); if(!kandidaten.length) return -1;
     vergeben.add(kandidaten[0]); return kandidaten[0]; };
   const suche = ref => { if(typeof ref !== 'string' || !ref.trim()) return -1; const c = schl.get(key(ref)) || []; return c.length ? c[0] : -1; };   // nur nachsehen, nichts vergeben
   const fehlt = [];
-  const liste = refs => reihe(refs).map(r => { const t = text(r), i = finde(t); if(i < 0) fehlt.push(t == null ? 'unlesbarer Eintrag' : t); return i; }).filter(i => i >= 0);
+  const liste = (refs, wo) => reihe(refs).map(r => {
+    if(istId(r)){ const i = perId.get(r.id); if(i == null){ fehlt.push('Werk aus dem Fundus fehlt im Bestand'); return -1; }
+      if(vergeben.has(i)){ if(wo) spiegel.push({i, ...wo}); return -1; } vergeben.add(i); return i; }
+    const t = text(r), i = finde(t); if(i < 0) fehlt.push(t == null ? 'unlesbarer Eintrag' : t); return i; }).filter(i => i >= 0);
   const o = obj(O) || {}, om = obj(o.mitte) || {}, name = (x, n) => typeof x === 'string' && x.trim() ? x.trim() : n;
-  const mitte = {name: name(om.name, 'Zentrale'), satz: name(om.satz, ''), werke: liste(om.werke)};
+  const mitte = {name: name(om.name, 'Zentrale'), satz: name(om.satz, ''), werke: liste(om.werke, {ebene: 'mitte'})};
   const daecher = reihe(o.daecher).map(obj).filter(Boolean).map((d, j) => ({name: name(d.name, `Dach ${j + 1}`), satz: name(d.satz, ''),
-      bereiche: reihe(d.bereiche).map(obj).filter(Boolean).map((b, k) => ({name: name(b.name, `Bereich ${k + 1}`), satz: name(b.satz, ''), werke: liste(b.werke)})).filter(b => b.werke.length)}))
-    .filter(d => d.bereiche.length);
+      bereiche: reihe(d.bereiche).map(obj).filter(Boolean).map((b, k) => ({name: name(b.name, `Bereich ${k + 1}`), satz: name(b.satz, ''), werke: liste(b.werke, {ebene: 'dach', dach: j, bereich: k}), spiegel: []}))}));
+  // Ein Bereich nur aus Spiegeln bleibt stehen: er zeigt Werke, die hier ebenso hingehören
+  for(const s of spiegel) if(s.ebene === 'dach') daecher[s.dach].bereiche[s.bereich].spiegel.push(s.i);
+  const leer = b => !b.werke.length && !b.spiegel.length;
+  daecher.forEach((d, j) => { d.bereiche = d.bereiche.filter(b => !leer(b)); });
+  const behalten = daecher.filter(d => d.bereiche.length);
+  daecher.length = 0; daecher.push(...behalten);
+  // Spiegel mit ihrem endgültigen Ort, nachdem Leeres entfallen ist
+  const spiegelListe = [];
+  mitte.spiegel = spiegel.filter(s => s.ebene === 'mitte').map(s => s.i);
+  mitte.spiegel.forEach(i => spiegelListe.push({i, ebene: 'mitte'}));
+  daecher.forEach((d, di) => d.bereiche.forEach((b, bi) => b.spiegel.forEach(i => spiegelListe.push({i, ebene: 'dach', dach: di, bereich: bi}))));
   // Lesematerial: an einem Werk (dann wandert es mit ihm) oder an einem Dach
   const material = new Map();   // Mondindex → Ziel {werk: i} | {dach: name}
   for(const q of reihe(o.material).map(obj).filter(Boolean)){ const i = finde(text(q)); if(i < 0){ fehlt.push(text(q) || 'unlesbarer Eintrag'); continue; }
@@ -50,7 +66,10 @@ export function ordne(B, O){
   daecher.forEach((d, di) => d.bereiche.forEach((b, bi) => b.werke.forEach(i => { ort[i] = {ebene: 'dach', dach: di, bereich: bi}; })));
   for(const [i, z] of material) ort[i] = {ebene: 'material', ...z};
   ohne.forEach(i => { ort[i] = {ebene: 'ohne'}; });
-  return {mitte, daecher, material, ohne, ort, fehlt, bestaetigt: !!o.bestaetigt, stand: o.stand || null};
+  // Wo ein Werk überall steht: sein Ort und seine Spiegel (für „auch in …“ und die Wahl an jedem Ort)
+  const spiegelVon = new Map(); spiegelListe.forEach((s, k) => { if(!spiegelVon.has(s.i)) spiegelVon.set(s.i, []); spiegelVon.get(s.i).push(k); });
+  return {mitte, daecher, material, ohne, ort, fehlt, spiegel: spiegelListe, spiegelVon, auch: o.auch instanceof Map ? o.auch : new Map(), unterApps: o.unterApps instanceof Map ? o.unterApps : new Map(),
+    quelle: o.quelle === 'fundus' ? 'fundus' : 'datei', bestaetigt: !!o.bestaetigt, stand: o.stand || null};
 }
 
 /* ------------------------------------------------------------- Lage im Raum
@@ -74,11 +93,16 @@ function phyllo(radien, gap){
 export function lage(baum, rWerk, opt = {}){
   const gapW = opt.gapWerk ?? 0.35, gapB = opt.gapBereich ?? 0.8, gapD = opt.gapDach ?? 2.2;
   const pos = new Array(rWerk.length).fill(null);
-  const bereichsKreis = werke => { const ord = werke.slice(); const r = ord.map(i => rWerk[i]); const p = phyllo(r, gapW); return {werke: ord, rel: p.pos, R: Math.max(p.R, 0.8)}; };
+  // Spiegel bekommen ihren Platz im Bereich wie ein Werk, nach den eigenen Werken: dasselbe Werk, ein zweiter Ort
+  const spiegelPos = new Array((baum.spiegel || []).length).fill(null), spK = new Map();
+  (baum.spiegel || []).forEach((x, k) => spK.set(x.ebene === 'mitte' ? `m|${x.i}` : `${x.dach}|${x.bereich}|${x.i}`, k));
+  const bereichsKreis = (werke, spiegel = [], sch = null) => { const ord = werke.slice(), sp = spiegel.slice(); const r = [...ord, ...sp].map(i => rWerk[i]); const p = phyllo(r, gapW);
+    return {werke: ord, spiegel: sp, sch, rel: p.pos, R: Math.max(p.R, 0.8)}; };
+  const setzeSpiegel = (b, x, z, weit = 1) => b.spiegel.forEach((i, k) => { const q = b.rel[b.werke.length + k], s = spK.get(b.sch(i)); if(s != null) spiegelPos[s] = [x + q[0] * weit, opt.hoehe ?? 0, z + q[1] * weit]; });
   // Dächer: Bereiche als Kreise im Dach, der Rand eng um sie
-  const dk = baum.daecher.map(d => { const bs = d.bereiche.map(b => bereichsKreis(b.werke)); const p = phyllo(bs.map(b => b.R), gapB); return {bs, rel: p.pos, R: p.R + 0.3}; });
+  const dk = baum.daecher.map((d, di) => { const bs = d.bereiche.map((b, bi) => bereichsKreis(b.werke, b.spiegel || [], i => `${di}|${bi}|${i}`)); const p = phyllo(bs.map(b => b.R), gapB); return {bs, rel: p.pos, R: p.R + 0.3}; });
   // Die Mitte ist so groß wie ein großes Dach: sie trägt das Ganze und muss als Kern lesbar sein
-  const mk = bereichsKreis(baum.mitte.werke), Rm = Math.max(3.2, mk.R * 1.25, 0.7 * Math.max(0, ...dk.map(x => x.R)));
+  const mk = bereichsKreis(baum.mitte.werke, baum.mitte.spiegel || [], i => `m|${i}`), Rm = Math.max(3.2, mk.R * 1.25, 0.7 * Math.max(0, ...dk.map(x => x.R)));
   // „Ohne Dach“ ist ein Bezirk wie die Dächer: abgesetzt durch seine Gestalt, nicht durch Ferne
   const ohneK = bereichsKreis(baum.ohne);
   const kreise = dk.map(x => x.R); if(baum.ohne.length) kreise.push(ohneK.R);
@@ -97,9 +121,9 @@ export function lage(baum, rWerk, opt = {}){
   const y = opt.hoehe ?? 0;
   // Die Werke der Mitte füllen ihre Fläche, statt in ihrem Kern zu klumpen
   const weit = Math.max(1, Rm * 0.62 / Math.max(0.01, mk.R));
-  mk.werke.forEach((i, k) => { pos[i] = [mk.rel[k][0] * weit, y, mk.rel[k][1] * weit]; });
+  mk.werke.forEach((i, k) => { pos[i] = [mk.rel[k][0] * weit, y, mk.rel[k][1] * weit]; }); setzeSpiegel(mk, 0, 0, weit);
   const daecher = dk.map((x, j) => { const c = D[j];
-    const bereiche = x.bs.map((b, bi) => { const bc = [c[0] + x.rel[bi][0], c[1] + x.rel[bi][1]]; b.werke.forEach((i, k) => { pos[i] = [bc[0] + b.rel[k][0], y, bc[1] + b.rel[k][1]]; }); return {mitte: [bc[0], y, bc[1]], R: b.R}; });
+    const bereiche = x.bs.map((b, bi) => { const bc = [c[0] + x.rel[bi][0], c[1] + x.rel[bi][1]]; b.werke.forEach((i, k) => { pos[i] = [bc[0] + b.rel[k][0], y, bc[1] + b.rel[k][1]]; }); setzeSpiegel(b, bc[0], bc[1]); return {mitte: [bc[0], y, bc[1]], R: b.R}; });
     return {mitte: [c[0], y, c[1]], R: x.R, bereiche}; });
   ohneK.werke.forEach((i, k) => { pos[i] = [ohneMitte[0] + ohneK.rel[k][0], y, ohneMitte[1] + ohneK.rel[k][1]]; });
   // Lesematerial sitzt dicht an seinem Werk, sonst am Rand seines Dachs
@@ -111,5 +135,5 @@ export function lage(baum, rWerk, opt = {}){
       pos[i] = [p[0] + Math.cos(a) * d, y, p[2] + Math.sin(a) * d]; }
     else { const dj = baum.daecher.findIndex(d => d.name === z.dach); const c = dj >= 0 ? daecher[dj] : {mitte: [0, y, 0], R: Rm}; const a = i * GOLD; pos[i] = [c.mitte[0] + Math.cos(a) * c.R * 0.92, y, c.mitte[2] + Math.sin(a) * c.R * 0.92]; }
   }
-  return {pos, mitte: {mitte: [0, y, 0], R: Rm}, daecher, ohne: baum.ohne.length ? {mitte: [ohneMitte[0], y, ohneMitte[1]], R: ohneK.R} : null, R: Rall};
+  return {pos, spiegel: spiegelPos, mitte: {mitte: [0, y, 0], R: Rm}, daecher, ohne: baum.ohne.length ? {mitte: [ohneMitte[0], y, ohneMitte[1]], R: ohneK.R} : null, R: Rall};
 }

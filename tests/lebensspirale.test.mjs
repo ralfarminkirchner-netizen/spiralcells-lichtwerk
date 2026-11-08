@@ -56,9 +56,13 @@ test('Bezüge: jede gespeicherte Verbindung zwischen zwei Werken kommt genau ein
   // im Netz: jede gespeicherte genau einmal, als Faden mit durchgezogenem Strich
   const imNetz = [];
   for(const f of N.faeden) for(const e of f.kanten) if(e.fundus) imNetz.push(e.schluessel);
+  // Kanten der Ordnung (Ralf, 08.11.: „gehört zu“ zu App oder Ort) kommen als Lage an, nicht als Faden
+  const lage = N.ordnungsKanten || new Set();
+  for(const k of lage) assert.ok(erwartet.has(k), 'nur gespeicherte Kanten ordnen');
   const gesp = imNetz.filter(s => erwartet.has(s));
-  assert.equal(gesp.length, erwartet.size, 'keine doppelt, keine fehlt');
-  assert.deepEqual(new Set(gesp), erwartet);
+  assert.equal(gesp.length + lage.size, erwartet.size, 'keine doppelt, keine fehlt');
+  assert.ok(!gesp.some(s => lage.has(s)), 'eine Ordnungskante ist nie zugleich Faden');
+  assert.deepEqual(new Set([...gesp, ...lage]), erwartet);
   for(const f of N.faeden) assert.equal(!!f.abgeleitet, f.typ === 'nahe', 'nur Berechnetes heißt „nahe“');
   for(const f of N.faeden) if(!f.abgeleitet) for(const e of f.kanten) assert.ok(!e.abgeleitet);
   // die Fassungskanten aus Mooncells-Form bleiben vollständig

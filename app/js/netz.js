@@ -16,6 +16,7 @@ import {wuchs, rangRadien} from './wuchs.js';
 import {fundusBezuege} from './bezuege.js';
 import {strecke, fassungBei, windungen} from './menge.js';
 import {ordne, lage} from './ordnung.js';
+import {hatOrtsgraph, ordnungAusGraph, istOrdnungskante} from './ortsgraph.js';
 import {alsformen} from './alsformen.js';
 import {gelaende, PFLANZE} from './gelaende.js';
 import {galaxie, planetOrt, galaxieZiele, DREHUNG} from './mondbahn.js';
@@ -80,7 +81,8 @@ function mischFarbe(mini, werke){ let r = 0, g = 0, b = 0, n = 0;
 export class Netz {
   constructor(B, O){
     this.B = B; const N = B.monde.length; this.N = N;
-    this.baum = ordne(B, O);
+    // Stehen die Orte im Fundus (Ralfs Ordnung als Graph), gelten sie; die Datei liefert dann nur noch das Lesematerial
+    this.baum = ordne(B, hatOrtsgraph(B.roh) ? ordnungAusGraph(B.roh, O) : O);
     // Größe heißt: viel darin. Ein Werk nur mit seiner Ausgangsfassung ist eine Knospe, kein leerer Kreis
     this.rM = B.monde.map(m => { if(!m.samen.length) return 0.42;
       const zeichen = m.samen.reduce((a, s) => a + s.laenge, 0), k = clamp(Math.round(10 + 7 * Math.sqrt(m.samen.length + 1) + Math.sqrt(zeichen) / 30), 12, 140);
@@ -89,6 +91,8 @@ export class Netz {
     for(const i of this.baum.material.keys()) this.rM[i] = 0.32;
     this.L = lage(this.baum, this.rM.map(r => r * 1.1), {gapWerk: 0.3, gapBereich: 0.35, gapDach: 1.4});
     this.pos = this.L.pos.map((p, i) => [p[0], (hash(i * 3.7) - 0.5) * 0.25, p[2]]);
+    // Spiegel: dasselbe Werk an einem weiteren seiner Orte. Es steht dort wie das Werk, nur ohne eigenen Leib im Bestand
+    this.spiegel = this.baum.spiegel.map((x, k) => ({...x, pos: this.L.spiegel[k] ? [this.L.spiegel[k][0], 0, this.L.spiegel[k][2]] : null}));
     this.ort = this.pos.map(p => [...p]);   // wo ein Werk gerade steht: im Kosmos sein Platz, in der Landschaft auf dem Boden
     this.mini = B.monde.map((m, i) => this.baum.material.has(i) ? {ar: 0, pts: new Float32Array(0), ptsG: new Float32Array(0), stiel: new Float32Array(0), stengel: new Float32Array(0), haut: new Float32Array(0), H: 0, plan: null} : miniWuchs(m, this.rM[i], i + 1));
     this.land = gelaende({R: this.L.R, mitte: this.L.mitte, ohne: this.L.ohne, daecher: this.baum.daecher.map((d, j) => ({...this.L.daecher[j], arbeit: d.bereiche.flatMap(b => b.werke).reduce((a, i) => a + arbeit(B.monde[i]), 0)}))});
@@ -117,7 +121,10 @@ export class Netz {
        „kannte“ über Werkgrenzen) kommen als eigene Fäden dazu. Berechnete Nähe ist ein Faden „nahe“: gestrichelt, nie
        gebündelt, nur am gewählten Werk sichtbar. Zum Folgen trägt jede Kante je Seite eine Fassung ihres Werks. */
     const vertreter = id => { const m = B.mondVon.get(id); return m ? ((m.samen[0] || m.keim[0] || {}).id || null) : null; };
-    for(const x of fundusBezuege(B.roh)){ const a = idx.get(x.von), b = idx.get(x.nach); if(a == null || b == null) continue;
+    // Die Kanten der Ordnung („gehört zu“ zu einer App oder einem Ort) zeigt die Lage, nicht ein Faden
+    const ordnet = hatOrtsgraph(B.roh) ? istOrdnungskante(B.roh) : () => false; this.ordnungsKanten = new Set();
+    for(const x of fundusBezuege(B.roh)){ if(ordnet(x)){ this.ordnungsKanten.add(x.schluessel); continue; }
+      const a = idx.get(x.von), b = idx.get(x.nach); if(a == null || b == null) continue;
       const fliesst = x.typ === 'remixt-aus' || x.typ === 'erweitert', von = fliesst ? b : a, nach = fliesst ? a : b, k = `${von}>${nach}:${x.typ}`;
       const e = {id: x.schluessel, schluessel: x.schluessel, fundus: true, abgeleitet: !x.gespeichert, edge_type: x.typ, art: x.art,
         from_variant_id: B.fassungen.has(x.knotenVon) ? x.knotenVon : vertreter(x.von), to_variant_id: B.fassungen.has(x.knotenZu) ? x.knotenZu : vertreter(x.nach)};
@@ -254,6 +261,22 @@ export function baueNetz(N, U, wall, vis, aktiv, aktivDetail){
       screenRing(mt, N.rM[n] * 2.0, c, 0.34 * vis * fade); }
     U.monde[n] = toScreen(o[0], o[1], o[2]);
   }
+  /* Spiegel: dasselbe Werk an einem weiteren seiner Orte (Ralf, 08.11.: eine Quelle, an jedem Ort dasselbe Werk).
+     Es trägt dieselbe Spirale wie an seinem ersten Ort, leiser, mit offenem Ring als Zeichen „steht auch anderswo“.
+     Ist das Werk gewählt oder berührt, leuchtet es an jedem Ort, und ein gepunkteter Faden führt zu seinem ersten Ort.
+     Nur im Kosmos: Landschaft, Dorf und Galaxie stellen jedes Werk an einen einzigen Platz. */
+  const spA = vis * (1 - stilK) * (1 - gk) * (1 - ge) * (1 - le); U.spiegel.length = N.spiegel.length;
+  for(let k = 0; k < N.spiegel.length; k++){ const x = N.spiegel[k], n = x.i, o = x.pos; U.spiegel[k] = null; if(!o || spA < 0.01 || N.baum.material.has(n)) continue;
+    const bz = x.ebene === 'mitte' ? 'mitte' : x.dach, an = n === selM || n === hov || n === aktiv, dachHell = imDach == null ? 1 : bz === imDach ? 1.15 : 0.25;
+    const dc = Math.hypot(o[0] - cx, o[1] - cyy, o[2] - cz), a = spA * sstep(CAM.S * 0.03, CAM.S * 0.3, dc) * dachHell * (fokus ? (fokus.has(n) ? 1.2 : 0.14) : 1) * (an ? 1.6 : 1);
+    const pts = N.mini[n].pts, st = N.mini[n].stiel, sz = Math.max(0.17 * Math.max(0.7, N.rM[n]), CAM.S * 0.0042);
+    for(let p = 0; p < st.length / 6; p += 2) P(o[0] + st[p * 6], o[1], o[2] + st[p * 6 + 2], sz * 0.5, st[p * 6 + 3], st[p * 6 + 4], st[p * 6 + 5], a * 0.4 * korn);
+    for(let p = 0; p < pts.length / 6; p += 3) P(o[0] + pts[p * 6], o[1] + pts[p * 6 + 1], o[2] + pts[p * 6 + 2], sz * 0.8, pts[p * 6 + 3], pts[p * 6 + 4], pts[p * 6 + 5], a * 0.35 * korn);
+    P(o[0], o[1], o[2], 0.2, KEIMC[0], KEIMC[1], KEIMC[2], a * 0.6);
+    const mt = [o[0], o[1] + N.rM[n] * 0.2, o[2]]; screenRing(mt, N.rM[n] * 1.3, SILVER, (an ? 0.5 : 0.22) * a, 0.72);
+    if(an){ const h = N.ort[n], d = Math.hypot(h[0] - o[0], h[2] - o[2]), schritte = Math.min(160, Math.max(8, Math.round(d * 2.2)));
+      for(let q = 1; q < schritte; q++){ const t = q / schritte; P(mix(o[0], h[0], t), mix(o[1], h[1], t), mix(o[2], h[2], t), CAM.S * 0.0022, SILVER[0], SILVER[1], SILVER[2], 0.5 * spA); } }
+    U.spiegel[k] = toScreen(o[0], o[1], o[2]); }
   // Fäden zwischen Werken: Typ, Richtung, Verwendung. Einzeln nur im Bezirk oder an der Wahl, sonst gebündelt
   U.knoten.length = N.faeden.length; U.buendelKnoten.length = 0;
   const fz = Math.max(0.11, CAM.S * 0.004), wahl = selM >= 0;   // ist ein Werk gewählt, treten die übrigen Fäden zurück

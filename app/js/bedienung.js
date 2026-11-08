@@ -19,6 +19,7 @@ import {werkFarbe} from './verschraenkung.js';
 import {appSource} from './materialraum.js';
 import {wechsle, werkDerAuswahl, mitWerk, werkAus} from './auswahl.js';
 import {menge} from './menge.js';
+import {auchSatz} from './ortsgraph.js';
 
 const $ = s => document.querySelector(s);
 const canvas = $('#gl'), lineEl = $('#line'), markeEl = $('#marke'), leseEl = $('#lese'), siegelEl = $('#siegel'), hintEl = $('#hint'), ortEl = $('#zurueck');
@@ -61,6 +62,9 @@ export function stummeStimmen(m){ if(!m || m.stimmen.length < 2 || m.kopplung ==
 export const SPIRAL_SATZ = 'Jede Spirale ist so lang wie ihr Material, eine Windung je zehnmal mehr; durchgezogen mit belegter Zeit, gepunktet ohne.';
 export function netzSatz(B){
   const N = W.N, d = N && N.baum ? N.baum.daecher.length : 0;
+  if(d && N.baum.quelle === 'fundus'){ const ohne = N.baum.ohne.length, sp = new Set(N.baum.spiegel.map(x => x.i)).size;
+    return `Die Mitte, darum ${N.daecher.map(x => x.name).join(', ')}; darin die Apps mit ihren Werken` + (sp ? `. ${Zahlwort(sp)} Werke stehen an mehreren Orten, an jedem als dasselbe Werk` : '') + (ohne ? `, ${zahlwort(ohne)} noch ohne Ort.` : '.')
+      + (N.baum.bestaetigt ? '' : ' Diese Ordnung ist ein Vorschlag aus dem Fundus, noch nicht von dir bestätigt.') + ' ' + SPIRAL_SATZ; }
   if(d){ const ohne = N.baum.ohne.length;
     return `Die Zentrale in der Mitte, ${zahlwort(d)} ${d === 1 ? 'Dach' : 'Dächer'} darum` + (ohne ? `, ${zahlwort(ohne)} Werke noch ohne Dach.` : '.') + (N.baum.bestaetigt ? '' : ' Diese Ordnung ist ein Vorschlag, noch nicht von dir bestätigt.') + ' ' + SPIRAL_SATZ; }
   const mit = B.monde.filter(m => m.stimmen.length).length;
@@ -105,6 +109,8 @@ export function markeFuer(sel){
   if(sel.art === 'kopf'){ const v = STIMMEN[sel.i]; return [v.name, `${v.rolle} · ${v.schrift} · tippen zeigt ihre Spur allein`]; }
   if(sel.art === 'mond'){ const nv = m.stimmen.length;
     const teile = [nv ? `${Zahlwort(nv)} ${nv === 1 ? 'Stimme' : 'Stimmen'}` : 'ohne Stimmen', `${m.samen.length + m.keim.length} ${m.samen.length + m.keim.length === 1 ? 'Ausprägung' : 'Ausprägungen'}`, menge(m).satz, m.reife];
+    { const N = W.N, orte = N && N.baum.auch.get(m.id); if(orte){ const b = U.dach, hier = b === 'mitte' ? N.baum.mitte.name : typeof b === 'number' && N.daecher[b] ? N.daecher[b].name : orte[0]; teile.unshift(auchSatz(orte, hier)); }
+      const apps = N && N.baum.unterApps.get(m.id); if(apps) teile.unshift('in den Apps ' + apps.join(' und ')); }
     const A = W.N && W.N.als; if(A && A.hat(sel.i)) teile.push(alsSatz(A, sel.i));
     if(gleich(U.sel, sel)) teile.push('tippen öffnet');
     return [m.titel, teile.join(' · ')]; }
@@ -112,9 +118,10 @@ export function markeFuer(sel){
   if(sel.art === 'spur' && W.N && W.N.als && W.N.als.spuren[sel.i]){ const [t, s] = spurMarke(W.N.als, sel.i); return [t, s + (gleich(U.sel, sel) && U.stufe < 2 ? ' · tippen liest' : '')]; }
   if(sel.art === 'tuer'){ const t = W.N.tueren[sel.i]; return [t.satz, t.wach ? 'wach · noch einmal tippen öffnet' : 'ruht gerade']; }
   if(sel.art === 'mitte'){ const b = W.N.baum, n = W.N.werkeIn('mitte').length; return [b.mitte.name || 'Zentrale', [`die Mitte · ${n} ${n === 1 ? 'Werk' : 'Werke'} · ${b.daecher.length} ${b.daecher.length === 1 ? 'Dach' : 'Dächer'} darum`, gleich(U.sel, sel) ? 'tippen fährt hinein' : ''].filter(Boolean).join(' · ')]; }
-  if(sel.art === 'ohne'){ const n = W.N.werkeIn('ohne').length; return ['ohne Dach', [`${n} ${n === 1 ? 'Werk' : 'Werke'}, noch keinem Dach belegt zugeordnet`, gleich(U.sel, sel) ? 'tippen fährt hinein' : ''].filter(Boolean).join(' · ')]; }
+  if(sel.art === 'ohne'){ const n = W.N.werkeIn('ohne').length, f = W.N.baum.quelle === 'fundus'; return [f ? 'ohne Ort' : 'ohne Dach', [`${n} ${n === 1 ? 'Werk' : 'Werke'}, noch ${f ? 'keinem Ort' : 'keinem Dach belegt'} zugeordnet`, gleich(U.sel, sel) ? 'tippen fährt hinein' : ''].filter(Boolean).join(' · ')]; }
   if(sel.art === 'dach'){ const d = W.N.daecher[sel.i], n = d.bereiche.reduce((a, x) => a + x.werke.length, 0), kn = W.N.knospenIn(sel.i), fi = W.N.innen.get(sel.i) || 0;
-    const werke = `${n} ${n === 1 ? 'Werk' : 'Werke'} in ${d.bereiche.length} ${d.bereiche.length === 1 ? 'Bereich' : 'Bereichen'}` + (kn ? `, ${kn} davon nur mit ihrer Ausgangsfassung` : '');
+    const app = W.N.baum.quelle === 'fundus', sp = d.bereiche.reduce((a, x) => a + (x.spiegel || []).length, 0);
+    const werke = `${n} ${n === 1 ? 'Werk' : 'Werke'} in ${d.bereiche.length} ${d.bereiche.length === 1 ? (app ? 'App' : 'Bereich') : (app ? 'Apps' : 'Bereichen')}` + (sp ? `, dazu ${sp} ${sp === 1 ? 'Werk' : 'Werke'}, ${sp === 1 ? 'das' : 'die'} auch anderswo ${sp === 1 ? 'steht' : 'stehen'}` : '') + (kn ? `, ${kn} davon nur mit ihrer Ausgangsfassung` : '');
     return [d.name, [d.satz, werke, fi ? `${fi} ${fi === 1 ? 'Verbindung' : 'Verbindungen'} darin` : '', gleich(U.sel, sel) ? 'tippen fährt hinein' : ''].filter(Boolean).join(' · ')]; }
   if(sel.art === 'faden'){ const f = W.N.faeden[sel.i], A = W.B.monde[f.von], Bm = W.B.monde[f.nach];
     const satz = {'remixt-aus': `„${kurz(Bm.titel, 40)}“ übernimmt Material aus „${kurz(A.titel, 40)}“`, 'erweitert': `„${kurz(Bm.titel, 40)}“ erweitert „${kurz(A.titel, 40)}“`}[f.typ]
@@ -448,7 +455,10 @@ function trefferKeim(sx, sy){ const Z = W.Z; if(!Z || U.netK > 0.4 || !Z.m.keim.
 function trefferKopf(sx, sy){ let best = -1, bd = 40 * 40; const src = U.netK > 0.6 ? U.bigHeads : U.heads;
   for(let i = 0; i < 5; i++){ const h = src[i]; if(!h || h[2] <= 0) continue; const d = (h[0] - sx) ** 2 + (h[1] - sy) ** 2; if(d < bd){ bd = d; best = i; } } return best; }
 function trefferMond(sx, sy){ if(U.netK < 0.5) return -1; let best = -1, bd = 34 * 34;
-  for(let n = 0; n < U.monde.length; n++){ const h = U.monde[n]; if(!h || h[2] <= 0) continue; const d = (h[0] - sx) ** 2 + (h[1] - sy) ** 2; if(d < bd){ bd = d; best = n; } } return best; }
+  for(let n = 0; n < U.monde.length; n++){ const h = U.monde[n]; if(!h || h[2] <= 0) continue; const d = (h[0] - sx) ** 2 + (h[1] - sy) ** 2; if(d < bd){ bd = d; best = n; } }
+  // Ein Spiegel ist dasselbe Werk: wer ihn antippt, wählt das Werk, an jedem seiner Orte
+  const sp = W.N ? W.N.spiegel : []; for(let k = 0; k < U.spiegel.length; k++){ const h = U.spiegel[k]; if(!h || h[2] <= 0) continue; const d = (h[0] - sx) ** 2 + (h[1] - sy) ** 2; if(d < bd){ bd = d; best = sp[k].i; } }
+  return best; }
 function trefferTuer(sx, sy){ if(U.netK < 0.5) return -1; let best = -1, bd = 36 * 36;
   for(let i = 0; i < U.tueren.length; i++){ const h = U.tueren[i]; if(!h || h[2] <= 0) continue; const d = (h[0] - sx) ** 2 + (h[1] - sy) ** 2; if(d < bd){ bd = d; best = i; } } return best; }
 

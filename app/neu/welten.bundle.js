@@ -75483,6 +75483,85 @@ var HDRLoader = class extends DataTextureLoader {
   }
 };
 
+// ../../app/js/ortsgraph.js
+var ORTSARTEN = /* @__PURE__ */ new Set(["Oberdach", "Mitte", "Tragwerk", "Sammlung"]);
+var FOLGE = ["Mitte", "MiND-BODY-SOUL", "GAMES", "MUSiC", "EDUCATiON", "WRiTING", "ARTS", "PERSONAL", "Tragwerk", "Zur Pr\xFCfung"];
+var SATZ = {
+  "Mitte": "die Zentrale und ihre Werkzeuge",
+  "Tragwerk": "die Werke, die in vielen Apps mitwirken",
+  "Zur Pr\xFCfung": "noch nicht sicher eingeordnet"
+};
+var istOrt = (w) => !!w && ORTSARTEN.has(w.work_type);
+function hatOrtsgraph(g) {
+  return !!(g && Array.isArray(g.works) && g.works.some(istOrt) && g.fundus && Array.isArray(g.fundus.kanten) && g.fundus.kanten.some((k2) => k2.art === "geh\xF6rt zu" && k2.form === "B"));
+}
+function ortsgraph(g) {
+  const W2 = new Map((g.works || []).map((w) => [w.id, w])), hoch = /* @__PURE__ */ new Map();
+  for (const k2 of g.fundus && g.fundus.kanten || []) {
+    if (k2.art !== "geh\xF6rt zu" || k2.form !== "B" || !k2.gespeichert || !W2.has(k2.von) || !W2.has(k2.zu) || k2.von === k2.zu) continue;
+    if (!hoch.has(k2.von)) hoch.set(k2.von, /* @__PURE__ */ new Set());
+    hoch.get(k2.von).add(k2.zu);
+  }
+  const rang = (w) => {
+    const r2 = FOLGE.indexOf(w.title);
+    return r2 < 0 ? FOLGE.length : r2;
+  };
+  const orte = [...W2.values()].filter(istOrt).sort((a2, b2) => rang(a2) - rang(b2) || String(a2.title).localeCompare(String(b2.title), "de"));
+  const ortVon = new Map(orte.map((o2) => [o2.id, o2]));
+  const apps = /* @__PURE__ */ new Map();
+  for (const [von, zu] of hoch) for (const z2 of zu) if (ortVon.has(z2) && !istOrt(W2.get(von))) {
+    if (!apps.has(von)) apps.set(von, /* @__PURE__ */ new Set());
+    apps.get(von).add(z2);
+  }
+  const unter = new Map([...apps.keys()].map((a2) => [a2, []]));
+  for (const [von, zu] of hoch) for (const z2 of zu) if (unter.has(z2) && z2 !== von && !apps.has(von)) unter.get(z2).push(von);
+  const orteVon = /* @__PURE__ */ new Map();
+  const nimm = (id, o2) => {
+    if (!orteVon.has(id)) orteVon.set(id, []);
+    const l = orteVon.get(id);
+    if (!l.includes(o2)) l.push(o2);
+  };
+  for (const [a2, os] of apps) for (const o2 of os) nimm(a2, o2);
+  for (const [a2, ws] of unter) for (const w of ws) for (const o2 of apps.get(a2)) nimm(w, o2);
+  for (const l of orteVon.values()) l.sort((p2, q2) => rang(ortVon.get(p2)) - rang(ortVon.get(q2)));
+  return { W: W2, orte, apps, unter, orteVon, name: (id) => (W2.get(id) || {}).title || "" };
+}
+function ordnungAusGraph(g, alt) {
+  const G = ortsgraph(g), alt0 = alt && typeof alt === "object" ? alt : {};
+  const titel = (id) => G.name(id), sortiert = (ids) => [...new Set(ids)].sort((a2, b2) => titel(a2).localeCompare(titel(b2), "de"));
+  const bereicheVon = (o2) => sortiert([...G.apps].filter(([, os]) => os.has(o2.id)).map(([a2]) => a2)).map((a2) => ({ name: titel(a2), werke: [{ id: a2 }, ...sortiert(G.unter.get(a2)).map((id) => ({ id }))] }));
+  const mitteOrt = G.orte.find((o2) => o2.work_type === "Mitte");
+  const mitte = {
+    name: mitteOrt ? mitteOrt.title : "Mitte",
+    satz: SATZ.Mitte,
+    werke: mitteOrt ? bereicheVon(mitteOrt).flatMap((b2) => b2.werke) : []
+  };
+  const daecher = G.orte.filter((o2) => o2 !== mitteOrt).map((o2) => ({ name: o2.title, satz: SATZ[o2.title] || "", bereiche: bereicheVon(o2) })).filter((d2) => d2.bereiche.length);
+  const auch = /* @__PURE__ */ new Map();
+  for (const [id, os] of G.orteVon) if (os.length > 1) auch.set(id, os.map((o2) => G.name(o2)));
+  const unterApps = /* @__PURE__ */ new Map();
+  const appsVon = /* @__PURE__ */ new Map();
+  for (const [a2, ws] of G.unter) for (const w of ws) {
+    if (!appsVon.has(w)) appsVon.set(w, []);
+    appsVon.get(w).push(G.name(a2));
+  }
+  for (const [w, as] of appsVon) if (as.length > 1) unterApps.set(w, as.sort((p2, q2) => p2.localeCompare(q2, "de")));
+  return {
+    bestaetigt: false,
+    quelle: "fundus",
+    stand: "Aus dem Fundus: Orte und \u201Egeh\xF6rt zu\u201C, von Ralf noch zu best\xE4tigen.",
+    mitte,
+    daecher,
+    material: Array.isArray(alt0.material) ? alt0.material : [],
+    auch,
+    unterApps
+  };
+}
+function istOrdnungskante(g) {
+  const G = ortsgraph(g), ort2 = new Set(G.orte.map((o2) => o2.id));
+  return (x) => x.art === "geh\xF6rt zu" && x.gespeichert && (ort2.has(x.nach) || G.apps.has(x.nach)) && (G.orteVon.has(x.von) || G.apps.has(x.von));
+}
+
 // ../../app/js/daten.js
 var STIMMEN = [
   { key: "claude", name: "Claude", rolle: "Systemleitung und Tragwerk", schrift: "bindend", hex: "#ffb45c", muster: /^claude/i },
@@ -75594,6 +75673,7 @@ function bestand(graph) {
   }
   const monde = [];
   for (const w of g.works) {
+    if (ORTSARTEN.has(w.work_type)) continue;
     const p2 = proWerk.get(w.id), fs = p2.fassungen.slice().sort((a2, b2) => ms(a2.created_at) - ms(b2.created_at));
     const lage2 = /* @__PURE__ */ new Map();
     if (fs.some((v3) => v3.fundus)) {
@@ -75799,7 +75879,7 @@ var HERKUNFT = ["erweitert", "remixt-aus"];
 var gruppeVon = (s) => typeof s.stimme === "number" ? s.stimme : s.stimme === MENSCH ? "mensch" : "quelle";
 function wuchs(m, opt = {}) {
   const sam = m.samen, n2 = sam.length;
-  const masse = opt.masse || sam.map((s) => s.form ? 1 : 1 + Math.sqrt(Math.max(1, s.laenge)) / 40);
+  const masse2 = opt.masse || sam.map((s) => s.form ? 1 : 1 + Math.sqrt(Math.max(1, s.laenge)) / 40);
   const idx = new Map(sam.map((s, i) => [s.id, i])), keimIds = new Set(m.keim.map((v3) => v3.id));
   const eltern = new Int32Array(n2).fill(FREI), art = new Array(n2).fill("frei");
   for (let i = 0; i < n2; i++) {
@@ -75876,7 +75956,7 @@ function wuchs(m, opt = {}) {
   for (let i = 0; i < n2; i++) {
     const p2 = eltern[i];
     s0[i] = p2 >= 0 ? s1[p2] + 0.15 : art[i] === "frei" ? 0.9 : 0.3;
-    s1[i] = s0[i] + masse[i];
+    s1[i] = s0[i] + masse2[i];
   }
   const gruppen = /* @__PURE__ */ new Map();
   for (const L2 of m.stimmen || []) gruppen.set(L2, []);
@@ -76017,7 +76097,7 @@ function wuchs(m, opt = {}) {
     zweigVon[i] = z2;
     reihe[i] = j2 + 1;
   }));
-  return { n: n2, eltern, art, kinder, wurzeln, breite, tiefe: tiefe2, s0, s1, th0, th1, spann, familie, wechsel, sektoren, lese: lese2, zweige, zweigVon, reihe, masse };
+  return { n: n2, eltern, art, kinder, wurzeln, breite, tiefe: tiefe2, s0, s1, th0, th1, spann, familie, wechsel, sektoren, lese: lese2, zweige, zweigVon, reihe, masse: masse2 };
 }
 
 // ../../app/js/zelle.js
@@ -76117,6 +76197,35 @@ function fundusBezuege(g) {
   return raus;
 }
 
+// ../../app/js/menge.js
+var MINDESTENS = 400;
+var masse = (s) => Math.max(MINDESTENS, Math.max(0, s.laenge || 0));
+function windungen(gesamt) {
+  return gesamt > 0 ? Math.min(5, Math.max(0.3, Math.log10(gesamt / 100))) : 0;
+}
+function strecke(samen) {
+  const n2 = samen.length, gesamt = samen.reduce((a2, s) => a2 + masse(s), 0), von = new Float64Array(n2), bis = new Float64Array(n2);
+  let lauf = 0, saumAb = 1;
+  for (let i = 0; i < n2; i++) {
+    von[i] = gesamt ? lauf / gesamt : 0;
+    lauf += masse(samen[i]);
+    bis[i] = gesamt ? lauf / gesamt : 1;
+    if (samen[i].saum && saumAb === 1) saumAb = von[i];
+  }
+  return { gesamt, von, bis, saumAb };
+}
+function fassungBei(st, t2) {
+  const { von, bis } = st;
+  let a2 = 0, b2 = bis.length - 1;
+  if (b2 < 0) return -1;
+  while (a2 < b2) {
+    const m = a2 + b2 >> 1;
+    if (bis[m] < t2) a2 = m + 1;
+    else b2 = m;
+  }
+  return t2 < von[a2] ? Math.max(0, a2 - 1) : a2;
+}
+
 // ../../app/js/ordnung.js
 var GOLD3 = 137.50776 * Math.PI / 180;
 function werkSchluessel(w) {
@@ -76138,6 +76247,8 @@ function ordne(B3, O2) {
   const key = (ref) => ref.startsWith("ordner:") || ref.startsWith("titel:") ? ref : "titel:" + ref.trim().toLowerCase();
   const text = (r2) => typeof r2 === "string" ? r2 : r2 && typeof r2 === "object" && typeof r2.werk === "string" ? r2.werk : null;
   const reihe = (x) => Array.isArray(x) ? x : [], obj = (x) => x && typeof x === "object" && !Array.isArray(x) ? x : null;
+  const perId = new Map(monde.map((m, i) => [m.id, i])), istId = (r2) => r2 && typeof r2 === "object" && typeof r2.id === "string";
+  const spiegel = [];
   const vergeben = /* @__PURE__ */ new Set(), finde = (ref) => {
     if (typeof ref !== "string" || !ref.trim()) return -1;
     const kandidaten = (schl.get(key(ref)) || []).filter((i) => !vergeben.has(i));
@@ -76151,18 +76262,43 @@ function ordne(B3, O2) {
     return c.length ? c[0] : -1;
   };
   const fehlt = [];
-  const liste = (refs) => reihe(refs).map((r2) => {
+  const liste = (refs, wo) => reihe(refs).map((r2) => {
+    if (istId(r2)) {
+      const i2 = perId.get(r2.id);
+      if (i2 == null) {
+        fehlt.push("Werk aus dem Fundus fehlt im Bestand");
+        return -1;
+      }
+      if (vergeben.has(i2)) {
+        if (wo) spiegel.push({ i: i2, ...wo });
+        return -1;
+      }
+      vergeben.add(i2);
+      return i2;
+    }
     const t2 = text(r2), i = finde(t2);
     if (i < 0) fehlt.push(t2 == null ? "unlesbarer Eintrag" : t2);
     return i;
   }).filter((i) => i >= 0);
   const o2 = obj(O2) || {}, om = obj(o2.mitte) || {}, name = (x, n2) => typeof x === "string" && x.trim() ? x.trim() : n2;
-  const mitte = { name: name(om.name, "Zentrale"), satz: name(om.satz, ""), werke: liste(om.werke) };
+  const mitte = { name: name(om.name, "Zentrale"), satz: name(om.satz, ""), werke: liste(om.werke, { ebene: "mitte" }) };
   const daecher = reihe(o2.daecher).map(obj).filter(Boolean).map((d2, j2) => ({
     name: name(d2.name, `Dach ${j2 + 1}`),
     satz: name(d2.satz, ""),
-    bereiche: reihe(d2.bereiche).map(obj).filter(Boolean).map((b2, k2) => ({ name: name(b2.name, `Bereich ${k2 + 1}`), satz: name(b2.satz, ""), werke: liste(b2.werke) })).filter((b2) => b2.werke.length)
-  })).filter((d2) => d2.bereiche.length);
+    bereiche: reihe(d2.bereiche).map(obj).filter(Boolean).map((b2, k2) => ({ name: name(b2.name, `Bereich ${k2 + 1}`), satz: name(b2.satz, ""), werke: liste(b2.werke, { ebene: "dach", dach: j2, bereich: k2 }), spiegel: [] }))
+  }));
+  for (const s of spiegel) if (s.ebene === "dach") daecher[s.dach].bereiche[s.bereich].spiegel.push(s.i);
+  const leer = (b2) => !b2.werke.length && !b2.spiegel.length;
+  daecher.forEach((d2, j2) => {
+    d2.bereiche = d2.bereiche.filter((b2) => !leer(b2));
+  });
+  const behalten = daecher.filter((d2) => d2.bereiche.length);
+  daecher.length = 0;
+  daecher.push(...behalten);
+  const spiegelListe = [];
+  mitte.spiegel = spiegel.filter((s) => s.ebene === "mitte").map((s) => s.i);
+  mitte.spiegel.forEach((i) => spiegelListe.push({ i, ebene: "mitte" }));
+  daecher.forEach((d2, di) => d2.bereiche.forEach((b2, bi) => b2.spiegel.forEach((i) => spiegelListe.push({ i, ebene: "dach", dach: di, bereich: bi }))));
   const material = /* @__PURE__ */ new Map();
   for (const q2 of reihe(o2.material).map(obj).filter(Boolean)) {
     const i = finde(text(q2));
@@ -76185,7 +76321,26 @@ function ordne(B3, O2) {
   ohne.forEach((i) => {
     ort2[i] = { ebene: "ohne" };
   });
-  return { mitte, daecher, material, ohne, ort: ort2, fehlt, bestaetigt: !!o2.bestaetigt, stand: o2.stand || null };
+  const spiegelVon = /* @__PURE__ */ new Map();
+  spiegelListe.forEach((s, k2) => {
+    if (!spiegelVon.has(s.i)) spiegelVon.set(s.i, []);
+    spiegelVon.get(s.i).push(k2);
+  });
+  return {
+    mitte,
+    daecher,
+    material,
+    ohne,
+    ort: ort2,
+    fehlt,
+    spiegel: spiegelListe,
+    spiegelVon,
+    auch: o2.auch instanceof Map ? o2.auch : /* @__PURE__ */ new Map(),
+    unterApps: o2.unterApps instanceof Map ? o2.unterApps : /* @__PURE__ */ new Map(),
+    quelle: o2.quelle === "fundus" ? "fundus" : "datei",
+    bestaetigt: !!o2.bestaetigt,
+    stand: o2.stand || null
+  };
 }
 function phyllo(radien, gap) {
   const n2 = radien.length, pos = [];
@@ -76218,18 +76373,24 @@ function phyllo(radien, gap) {
 function lage(baum2, rWerk, opt = {}) {
   const gapW = opt.gapWerk ?? 0.35, gapB = opt.gapBereich ?? 0.8, gapD = opt.gapDach ?? 2.2;
   const pos = new Array(rWerk.length).fill(null);
-  const bereichsKreis = (werke) => {
-    const ord2 = werke.slice();
-    const r2 = ord2.map((i) => rWerk[i]);
+  const spiegelPos = new Array((baum2.spiegel || []).length).fill(null), spK = /* @__PURE__ */ new Map();
+  (baum2.spiegel || []).forEach((x, k2) => spK.set(x.ebene === "mitte" ? `m|${x.i}` : `${x.dach}|${x.bereich}|${x.i}`, k2));
+  const bereichsKreis = (werke, spiegel = [], sch = null) => {
+    const ord2 = werke.slice(), sp = spiegel.slice();
+    const r2 = [...ord2, ...sp].map((i) => rWerk[i]);
     const p2 = phyllo(r2, gapW);
-    return { werke: ord2, rel: p2.pos, R: Math.max(p2.R, 0.8) };
+    return { werke: ord2, spiegel: sp, sch, rel: p2.pos, R: Math.max(p2.R, 0.8) };
   };
-  const dk = baum2.daecher.map((d2) => {
-    const bs = d2.bereiche.map((b2) => bereichsKreis(b2.werke));
+  const setzeSpiegel = (b2, x, z2, weit2 = 1) => b2.spiegel.forEach((i, k2) => {
+    const q2 = b2.rel[b2.werke.length + k2], s = spK.get(b2.sch(i));
+    if (s != null) spiegelPos[s] = [x + q2[0] * weit2, opt.hoehe ?? 0, z2 + q2[1] * weit2];
+  });
+  const dk = baum2.daecher.map((d2, di) => {
+    const bs = d2.bereiche.map((b2, bi) => bereichsKreis(b2.werke, b2.spiegel || [], (i) => `${di}|${bi}|${i}`));
     const p2 = phyllo(bs.map((b2) => b2.R), gapB);
     return { bs, rel: p2.pos, R: p2.R + 0.3 };
   });
-  const mk = bereichsKreis(baum2.mitte.werke), Rm = Math.max(3.2, mk.R * 1.25, 0.7 * Math.max(0, ...dk.map((x) => x.R)));
+  const mk = bereichsKreis(baum2.mitte.werke, baum2.mitte.spiegel || [], (i) => `m|${i}`), Rm = Math.max(3.2, mk.R * 1.25, 0.7 * Math.max(0, ...dk.map((x) => x.R)));
   const ohneK = bereichsKreis(baum2.ohne);
   const kreise = dk.map((x) => x.R);
   if (baum2.ohne.length) kreise.push(ohneK.R);
@@ -76261,6 +76422,7 @@ function lage(baum2, rWerk, opt = {}) {
   mk.werke.forEach((i, k2) => {
     pos[i] = [mk.rel[k2][0] * weit, y, mk.rel[k2][1] * weit];
   });
+  setzeSpiegel(mk, 0, 0, weit);
   const daecher = dk.map((x, j2) => {
     const c = D[j2];
     const bereiche = x.bs.map((b2, bi) => {
@@ -76268,6 +76430,7 @@ function lage(baum2, rWerk, opt = {}) {
       b2.werke.forEach((i, k2) => {
         pos[i] = [bc[0] + b2.rel[k2][0], y, bc[1] + b2.rel[k2][1]];
       });
+      setzeSpiegel(b2, bc[0], bc[1]);
       return { mitte: [bc[0], y, bc[1]], R: b2.R };
     });
     return { mitte: [c[0], y, c[1]], R: x.R, bereiche };
@@ -76289,7 +76452,7 @@ function lage(baum2, rWerk, opt = {}) {
       pos[i] = [c.mitte[0] + Math.cos(a2) * c.R * 0.92, y, c.mitte[2] + Math.sin(a2) * c.R * 0.92];
     }
   }
-  return { pos, mitte: { mitte: [0, y, 0], R: Rm }, daecher, ohne: baum2.ohne.length ? { mitte: [ohneMitte[0], y, ohneMitte[1]], R: ohneK.R } : null, R: Rall };
+  return { pos, spiegel: spiegelPos, mitte: { mitte: [0, y, 0], R: Rm }, daecher, ohne: baum2.ohne.length ? { mitte: [ohneMitte[0], y, ohneMitte[1]], R: ohneK.R } : null, R: Rall };
 }
 
 // ../../app/js/alsformen.js
@@ -76878,7 +77041,7 @@ function arbeit(m) {
   return clamp3(Math.log2(1 + m.samen.length + zeichen / 2e3) / Math.log2(201), 0, 1);
 }
 function miniWuchs(m, rM, seed) {
-  const n2 = m.samen.length, W2 = n2 ? wuchs(m) : null, w = arbeit(m), turns = 0.45 + 2.6 * w, weite = 0.3 + 0.5 * w, H = rM * (2.2 + 6.5 * w);
+  const n2 = m.samen.length, W2 = n2 ? wuchs(m) : null, w = arbeit(m), ST2 = strecke(m.samen), turns = windungen(ST2.gesamt), weite = 0.3 + 0.5 * w, H = rM * (2.2 + 6.5 * w);
   const bahn = (t2) => {
     const a2 = -Math.PI * 0.73 + t2 * TAU * turns, r2 = rM * (0.07 + weite * Math.pow(t2, 0.8));
     return [r2 * Math.cos(a2), r2 * Math.sin(a2), a2];
@@ -76886,7 +77049,7 @@ function miniWuchs(m, rM, seed) {
   const schritt = Math.max(1, Math.ceil(n2 / 160)), pts = [], stiel = [];
   const G = n2 ? pflanze(m, W2, rM, H) : { lage: new Float32Array(0), stengel: new Float32Array(0) }, ptsG = [], korn = new Float32Array(n2 * 2);
   for (let i = 0; i < n2; i++) {
-    const s = m.samen[i], t2 = n2 === 1 ? 1 : i / (n2 - 1);
+    const s = m.samen[i], t2 = n2 === 1 ? 1 : (ST2.von[i] + ST2.bis[i]) / 2;
     let [x, z2, a2] = bahn(t2);
     const sw2 = W2.eltern[i] >= 0 ? W2.kinder[W2.eltern[i]] : null;
     if (sw2 && sw2.length > 1) {
@@ -76902,11 +77065,13 @@ function miniWuchs(m, rM, seed) {
       ptsG.push(G.lage[i * 3], G.lage[i * 3 + 1], G.lage[i * 3 + 2]);
     }
   }
+  const saum2 = [];
   if (n2) {
-    const q2 = Math.round(clamp3(rM * 12 * turns, 10, 110));
+    const q2 = Math.round(clamp3(rM * 30 * turns, 16, 240));
     for (let j2 = 0; j2 <= q2; j2++) {
-      const [x, z2] = bahn(j2 / q2), c = m.samen[Math.round(j2 / q2 * (n2 - 1))], f2 = typeof c.stimme === "number" ? SEEDC2[c.stimme] : DUSTC;
+      const t2 = j2 / q2, [x, z2] = bahn(t2), c = m.samen[fassungBei(ST2, t2)], f2 = typeof c.stimme === "number" ? SEEDC2[c.stimme] : c.form || c.stimme === MENSCH ? SILVER : DUSTC;
       stiel.push(x, 0, z2, f2[0], f2[1], f2[2]);
+      saum2.push(t2 > ST2.saumAb ? 1 : 0);
     }
   }
   const hn = Math.round(clamp3(rM * 26, 40, 96)), p3 = hash(seed * 1.3) * TAU, p5 = hash(seed * 2.1) * TAU, haut = [];
@@ -76915,7 +77080,7 @@ function miniWuchs(m, rM, seed) {
     let u2 = (a2 / Math.PI - 1.01) / 0.7, hell2 = u2 >= 0 && u2 <= 1 ? Math.sin(Math.PI * u2) : 0;
     haut.push(r2 * Math.cos(a2), r2 * Math.sin(a2) * 0.94, hell2);
   }
-  return { ar: w, korn, pts: new Float32Array(pts), ptsG: new Float32Array(ptsG), stiel: new Float32Array(stiel), stengel: G.stengel, haut: new Float32Array(haut), H, plan: n2 ? { lage: G.lage, W: W2, lose: Array.from({ length: n2 }, (_2, i) => W2.art[i] === "frei" || W2.art[i] === "reihe"), tiefste: Math.max(...W2.tiefe) } : null };
+  return { ar: w, korn, pts: new Float32Array(pts), ptsG: new Float32Array(ptsG), stiel: new Float32Array(stiel), stielSaum: Uint8Array.from(saum2), stengel: G.stengel, haut: new Float32Array(haut), H, plan: n2 ? { lage: G.lage, W: W2, lose: Array.from({ length: n2 }, (_2, i) => W2.art[i] === "frei" || W2.art[i] === "reihe"), tiefste: Math.max(...W2.tiefe) } : null };
 }
 function mischFarbe(mini, werke) {
   let r2 = 0, g = 0, b2 = 0, n2 = 0;
@@ -76935,7 +77100,7 @@ var Netz = class {
     this.B = B3;
     const N4 = B3.monde.length;
     this.N = N4;
-    this.baum = ordne(B3, O2);
+    this.baum = ordne(B3, hatOrtsgraph(B3.roh) ? ordnungAusGraph(B3.roh, O2) : O2);
     this.rM = B3.monde.map((m) => {
       if (!m.samen.length) return 0.42;
       const zeichen = m.samen.reduce((a2, s) => a2 + s.laenge, 0), k2 = clamp3(Math.round(10 + 7 * Math.sqrt(m.samen.length + 1) + Math.sqrt(zeichen) / 30), 12, 140);
@@ -76944,6 +77109,7 @@ var Netz = class {
     for (const i of this.baum.material.keys()) this.rM[i] = 0.32;
     this.L = lage(this.baum, this.rM.map((r2) => r2 * 1.1), { gapWerk: 0.3, gapBereich: 0.35, gapDach: 1.4 });
     this.pos = this.L.pos.map((p2, i) => [p2[0], (hash(i * 3.7) - 0.5) * 0.25, p2[2]]);
+    this.spiegel = this.baum.spiegel.map((x, k2) => ({ ...x, pos: this.L.spiegel[k2] ? [this.L.spiegel[k2][0], 0, this.L.spiegel[k2][2]] : null }));
     this.ort = this.pos.map((p2) => [...p2]);
     this.mini = B3.monde.map((m, i) => this.baum.material.has(i) ? { ar: 0, pts: new Float32Array(0), ptsG: new Float32Array(0), stiel: new Float32Array(0), stengel: new Float32Array(0), haut: new Float32Array(0), H: 0, plan: null } : miniWuchs(m, this.rM[i], i + 1));
     this.land = gelaende({ R: this.L.R, mitte: this.L.mitte, ohne: this.L.ohne, daecher: this.baum.daecher.map((d2, j2) => ({ ...this.L.daecher[j2], arbeit: d2.bereiche.flatMap((b2) => b2.werke).reduce((a2, i) => a2 + arbeit(B3.monde[i]), 0) })) });
@@ -76984,7 +77150,13 @@ var Netz = class {
       const m = B3.mondVon.get(id);
       return m ? (m.samen[0] || m.keim[0] || {}).id || null : null;
     };
+    const ordnet = hatOrtsgraph(B3.roh) ? istOrdnungskante(B3.roh) : () => false;
+    this.ordnungsKanten = /* @__PURE__ */ new Set();
     for (const x of fundusBezuege(B3.roh)) {
+      if (ordnet(x)) {
+        this.ordnungsKanten.add(x.schluessel);
+        continue;
+      }
       const a2 = idx.get(x.von), b2 = idx.get(x.nach);
       if (a2 == null || b2 == null) continue;
       const fliesst = x.typ === "remixt-aus" || x.typ === "erweitert", von = fliesst ? b2 : a2, nach = fliesst ? a2 : b2, k2 = `${von}>${nach}:${x.typ}`;

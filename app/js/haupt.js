@@ -70,23 +70,27 @@ function werkNamen(belegt){
     for(const b of bz){ const s = document.createElement('span'); s.className = 'bereich'; s.textContent = b.name; werkEl.append(s); }
     const dname = typeof U.dach === 'number' ? W.N.daecher[U.dach].name : null;
     for(const i of W.N.werkeIn(U.dach)){ const s = document.createElement('span'), mat = W.N.baum.material.has(i); s.className = mat ? 'material' : 'werk'; s.dataset.i = i;
-      s.textContent = kurz(ohneDachName(W.B.monde[i].titel, dname), 30) + (mat ? ' · Lesematerial' : ''); s.style.opacity = '0'; werkEl.append(s); } }
+      s.textContent = kurz(ohneDachName(W.B.monde[i].titel, dname), 30) + (mat ? ' · Lesematerial' : ''); s.style.opacity = '0'; werkEl.append(s); }
+    // Spiegel in diesem Bezirk: dasselbe Werk, das auch anderswo steht; sein Name trägt den Ort, an dem es zuerst steht
+    W.N.spiegel.forEach((x, k) => { if((x.ebene === 'mitte' ? 'mitte' : x.dach) !== U.dach) return; const s = document.createElement('span'); s.className = 'werk spiegel'; s.dataset.k = k;
+      const o = W.N.bezirk(x.i), erst = o === 'mitte' ? W.N.baum.mitte.name : typeof o === 'number' ? W.N.daecher[o].name : '';
+      s.textContent = kurz(W.B.monde[x.i].titel, CAM.cssW < 480 ? 16 : 30) + (erst && erst !== dname ? ' · auch in ' + erst : ''); s.style.opacity = '0'; werkEl.append(s); }); }
   const frei = r => !belegt.some(q => r.x < q.x + q.w + 6 && q.x < r.x + r.w + 6 && r.y < q.y + q.h + 2 && q.y < r.y + r.h + 2);
   // Erst unter dem Werk, dann darüber, dann seitlich; erst wenn alles belegt ist, schweigt der Name
   const zeige = (el, p, lagen) => { if(!p || p[2] <= 0){ el.style.opacity = '0'; return; } const w = el.offsetWidth || 80, h = 14;
     for(const [dx, dy] of lagen){ const x = clamp(p[0] - w / 2 + dx * (w / 2 + 14), 8, CAM.cssW - w - 8), y = p[1] + dy, r = {x, y, w, h};
       if(!frei(r) || y < 56 || y > CAM.cssH - 70) continue; belegt.push(r);
-      el.style.transform = `translate(${Math.round(x)}px,${Math.round(y)}px)`; el.style.opacity = String((clamp((U.netK - 0.6) * 2.5, 0, 1) * clamp(U.dachK * 1.5, 0, 1) * (el.className === 'werk' ? 0.9 : 0.8)).toFixed(2)); return; }
+      el.style.transform = `translate(${Math.round(x)}px,${Math.round(y)}px)`; el.style.opacity = String((clamp((U.netK - 0.6) * 2.5, 0, 1) * clamp(U.dachK * 1.5, 0, 1) * (el.className === 'werk' ? 0.9 : el.className === 'werk spiegel' ? 0.7 : 0.8)).toFixed(2)); return; }
     el.style.opacity = '0'; };
   let k = 0; const bs = U.bereicheSchirm || [];
   for(const el of werkEl.children){ if(el.className === 'bereich'){ zeige(el, bs[k++], [[0, 4], [0, 20]]); continue; }
-    const i = Number(el.dataset.i), p = U.monde[i], rp = Math.min(40, W.N.rM[i] / Math.max(0.01, CAM.S) * CAM.cssH * 0.35);
+    const i = el.dataset.k != null ? W.N.spiegel[Number(el.dataset.k)].i : Number(el.dataset.i), p = el.dataset.k != null ? U.spiegel[Number(el.dataset.k)] : U.monde[i], rp = Math.min(40, W.N.rM[i] / Math.max(0.01, CAM.S) * CAM.cssH * 0.35);
     zeige(el, p, [[0, 6 + rp], [0, -rp - 20], [1, -7], [-1, -7]]); }
 }
 /* Die Namen der Dächer und der Mitte stehen im Netz leise am Bild: sie sind die Orientierung */
 function dachNamen(){ if(!dachEl || !W.N) return; dachEl.innerHTML = '';
   const neu = (t, k) => { const s = document.createElement('span'); s.textContent = t; s.className = k; s.style.opacity = '0'; dachEl.append(s); };
-  neu(W.N.baum.mitte.name || 'Zentrale', 'mitte'); for(const d of W.N.daecher) neu(d.name, 'dach'); if(W.N.L.ohne) neu('ohne Dach', 'ohne'); }
+  neu(W.N.baum.mitte.name || 'Zentrale', 'mitte'); for(const d of W.N.daecher) neu(d.name, 'dach'); if(W.N.L.ohne) neu(W.N.baum.quelle === 'fundus' ? 'ohne Ort' : 'ohne Dach', 'ohne'); }
 function tuerNamen(){ tuerEl.innerHTML = ''; for(const t of (W.N ? W.N.tueren : [])){ const s = document.createElement('span'); s.textContent = t.wach ? t.name : t.name + ' ruht'; s.style.opacity = '0'; tuerEl.append(s); } }
 /* In einem großen Übernahmefächer stehen die Familien (Namensanfang der Fassungen) leise außen an ihrem Bogen, je Fächer einmal;
    was sich überdeckt, schweigt */
@@ -160,8 +164,10 @@ function oeffneMond(i, opt = {}){
 /* In ein Dach hinein und wieder hinaus: die Kamera fährt, die anderen Dächer treten zurück */
 function insDach(j){ if(!W.N || !W.N.bezirkZiel(j)) return; U.dach = j; U.als = null; B.waehle(null);
   const n = W.N.werkeIn(j).length, wort = `${n} ${n === 1 ? 'Werk' : 'Werke'}`;
-  const satz = j === 'mitte' ? `${W.N.baum.mitte.name}: ${wort} in der Mitte.` : j === 'ohne' ? `Ohne Dach: ${wort}, noch keinem Dach zugeordnet.`
-    : `${W.N.daecher[j].name}: ${wort} in ${W.N.daecher[j].bereiche.length} ${W.N.daecher[j].bereiche.length === 1 ? 'Bereich' : 'Bereichen'}.`;
+  const f = W.N.baum.quelle === 'fundus', sp = W.N.spiegel.filter(x => (x.ebene === 'mitte' ? 'mitte' : x.dach) === j).length;
+  const auch = sp ? ` Dazu ${sp} ${sp === 1 ? 'Werk, das' : 'Werke, die'} auch anderswo ${sp === 1 ? 'steht' : 'stehen'}, leiser gezeichnet.` : '';
+  const satz = (j === 'mitte' ? `${W.N.baum.mitte.name}: ${wort} in der Mitte.` : j === 'ohne' ? (f ? `Ohne Ort: ${wort}, noch keinem Ort zugeordnet.` : `Ohne Dach: ${wort}, noch keinem Dach zugeordnet.`)
+    : `${W.N.daecher[j].name}: ${wort} in ${W.N.daecher[j].bereiche.length} ${W.N.daecher[j].bereiche.length === 1 ? (f ? 'App' : 'Bereich') : (f ? 'Apps' : 'Bereichen')}.`) + auch;
   B.zeile(satz); B.ansage(satz + ' Pfeile wählen ein Werk, Escape führt hinaus.'); }
 /* Alsformen: ein Gegenstand mit allen Zusammenhängen, in denen er teilnimmt (als Mond),
    oder ein Werk mit seiner Entstehung und dem, was um es kreist (als Planet).

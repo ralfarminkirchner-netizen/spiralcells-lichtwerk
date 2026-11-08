@@ -5,6 +5,7 @@
    Läuft im Browser und in Node (für ABBILDUNG.md und Tests).
    ===================================================================== */
 
+import {ORTSARTEN} from './ortsgraph.js';
 export const STIMMEN = [
   {key:'claude',      name:'Claude',      rolle:'Systemleitung und Tragwerk', schrift:'bindend',  hex:'#ffb45c', muster:/^claude/i},
   {key:'codex',       name:'Codex',       rolle:'Architektur und Prüfung',    schrift:'getaktet', hex:'#38c8ff', muster:/^codex/i},
@@ -112,6 +113,7 @@ export function bestand(graph){
 
   const monde = [];
   for(const w of g.works){
+    if(ORTSARTEN.has(w.work_type)) continue;   // Orte der Ordnung (Oberdach, Mitte, Tragwerk, Sammlung) sind keine Werke
     const p = proWerk.get(w.id), fs = p.fassungen.slice().sort((a,b) => ms(a.created_at) - ms(b.created_at));
     /* Aus dem Fundus: die Lage bestimmt allein die belegte Zeit (technik.zeit.sortierung). Undatiertes liegt im Saum,
        hinter allem Datierten, in der Reihenfolge des Hinzufügens; es bekommt kein Alter, nur eine Lage. */
