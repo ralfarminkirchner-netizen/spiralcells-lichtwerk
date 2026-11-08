@@ -12,64 +12,149 @@ const NS = 'http://www.w3.org/2000/svg';
 const $ = s => document.querySelector(s);
 const namenEl = $('#namen'), svg = $('#baum'), welt = svg.querySelector('.welt'), aesteG = svg.querySelector('.aeste'), knotenG = svg.querySelector('.knoten');
 
-/* ---------- Wuchs ---------- */
+/* ---------- Wuchs ----------
+   Von innen nach außen: jede Krone wird zuerst ganz gebaut und weiß dann, wie viel Platz sie braucht (ihr Umkreis).
+   An einer Gabel werden zwei Kronen so weit auseinander gesetzt, dass ihre Umkreise sich nicht berühren; der Ast
+   dorthin ist so lang, wie die Krone groß ist. So wächst nichts in Fremdes, und jeder Ast ist ein verkleinerter Baum. */
 const alle = [], aeste = [];          // aeste: [Polygonpunkte, Besitzer]
-const W0 = 0.11;                      // Astbreite je Länge
-const SPREIZ = 0.95;                  // so weit gehen zwei Äste an einer Gabel auseinander
+const groesse = w => 0.9 * Math.pow(Math.max(w, 1), 0.35);   // Kreis eines Dings aus seiner Menge
+const BREIT = 0.26;                   // Astdicke je Kreisgröße der getragenen Menge
+const SPREIZ = 1.1;                   // Öffnung einer Gabel
+const ROLLT = 3;                      // so wenige Geschwister rollen sich an der Spitze ein
+const OBEN = -Math.PI / 2;
+const DICK = 0.055;
+const KRONE = 3.4;                    // Kronenhalbmesser je Kreishalbmesser                   // Astdicke je Kronenhalbmesser
 
-/* Ein Bogen von P in Richtung a, Länge l, Drehung t, Breite von b0 auf b1: ein gefülltes, sich verjüngendes Band */
-function bogen(P, a, l, t, b0, b1, wem){
-  const n = 10, L = [], R = []; let [x, y] = P, d = a;
-  for(let i = 0; i <= n; i++){
-    const b = (b0 + (b1 - b0) * i / n) / 2, nx = -Math.sin(d), ny = Math.cos(d);
-    L.push([x + nx * b, y + ny * b]); R.push([x - nx * b, y - ny * b]);
-    if(i < n){ x += Math.cos(d + t / n / 2) * l / n; y += Math.sin(d + t / n / 2) * l / n; d += t / n; }
+/* Platz: jede Form hat einen Umkreis, jede Krone einen Umkreis um die ihrer Teile. Zwei Kronen berühren sich nur,
+   wenn sich zwei ihrer Formen berühren – geprüft wird von außen nach innen, also genau und trotzdem schnell. */
+function umkreis(kids){
+  let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+  for(const n of kids){ x0 = Math.min(x0, n.cx - n.R); y0 = Math.min(y0, n.cy - n.R); x1 = Math.max(x1, n.cx + n.R); y1 = Math.max(y1, n.cy + n.R); }
+  const cx = (x0 + x1) / 2, cy = (y0 + y1) / 2; let R = 0;
+  for(const n of kids) R = Math.max(R, Math.hypot(n.cx - cx, n.cy - cy) + n.R);
+  return {cx, cy, R, kids};
+}
+function formKreise(f){
+  if(f.typ === 'kreis' || f.typ === 'knoten') return [{cx: f.x, cy: f.y, R: f.r}];
+  if(f.typ === 'blatt') return [{cx: f.x + Math.cos(f.dir) * f.r * 0.25, cy: f.y + Math.sin(f.dir) * f.r * 0.25, R: f.r * 1.3}];
+  const len = Math.hypot(f.pts[3][0] - f.pts[0][0], f.pts[3][1] - f.pts[0][1]), n = Math.max(2, Math.ceil(len / (f.w0 * 3 + 1e-9)));
+  return Array.from({length: n}, (_, i) => { const [x, y] = bezier(f.pts, (i + 0.5) / n); return {cx: x, cy: y, R: f.w0 / 2 + len / n / 2}; });
+}
+function verbinde(Gs, prims){
+  const pk = prims.flatMap(formKreise), h = umkreis([...Gs.map(g => g.h), ...pk]);
+  return {formen: [...Gs.flatMap(g => g.formen), ...prims], hs: [...Gs.flatMap(g => g.hs), ...pk, h], h};
+}
+function dreh(G, w, tx, ty, m = 1){
+  const c = Math.cos(w) * m, s = Math.sin(w) * m, p = ([x, y]) => [x * c - y * s + tx, x * s + y * c + ty];
+  for(const f of G.formen){ if(f.typ === 'ast'){ f.pts = f.pts.map(p); f.w0 *= m; f.w1 *= m; } else { [f.x, f.y] = p([f.x, f.y]); f.r *= m; if(f.dir != null) f.dir += w; } }
+  for(const n of G.hs){ [n.cx, n.cy] = p([n.cx, n.cy]); n.R *= m; }
+}
+const ID = {c: 1, s: 0, tx: 0, ty: 0};
+const tp = (T, x, y) => [x * T.c - y * T.s + T.tx, x * T.s + y * T.c + T.ty];
+function stossen(a, Ta, b, Tb, luft){
+  const [ax, ay] = tp(Ta, a.cx, a.cy), [bx, by] = tp(Tb, b.cx, b.cy);
+  if(Math.hypot(ax - bx, ay - by) >= a.R + b.R + luft) return false;
+  if(!a.kids && !b.kids) return true;
+  if(a.kids && (!b.kids || a.R >= b.R)) return a.kids.some(k => stossen(k, Ta, b, Tb, luft));
+  return b.kids.some(k => stossen(a, Ta, k, Tb, luft));
+}
+/* ein Ast als weiche Kurve: er verlässt die Gabel in Richtung des Mutterasts und biegt in seine eigene Richtung */
+const kurve = (B, a0, a1, l) => [[0, 0], [Math.cos(a0) * l * 0.45, Math.sin(a0) * l * 0.45], [B[0] - Math.cos(a1) * l * 0.35, B[1] - Math.sin(a1) * l * 0.35], B];
+
+/* Ein Ding: Kreis (oder Blatt) mit dem Fuß im Ursprung; über dem Kreis seine eigene Krone */
+function ding(k, seite){
+  if(k.art === 'fassung'){ const r = groesse(k.wert) * 0.8; return verbinde([], [{typ: 'blatt', k, x: 0, y: -r, r, dir: OBEN}]); }
+  if(!(k.kinder && k.kinder.length)){ const r = groesse(k.wert); return verbinde([], [{typ: 'kreis', k, x: 0, y: -r, r}]); }
+  // der Kreis wächst mit seiner Krone, damit er sie tragen kann und sein Name hineinpasst
+  // wie beim Vorbild: die Krone bekommt die Größe, die ihrer Menge zusteht, egal wie viele Teile sie hat;
+  // so wird alles Tiefere von selbst immer kleiner
+  const r = groesse(k.wert), kreis = {typ: 'kreis', k, x: 0, y: -r, r};
+  const K = krone(k.kinder, seite, k, null);
+  dreh(K, 0, 0, 0, KRONE * r / K.h.R);
+  let hoch = 2 * r; const unten = {cx: 0, cy: -r, R: r};
+  for(let i = 0; i < 60 && stossen(unten, ID, K.h, {c: 1, s: 0, tx: 0, ty: -hoch}, 0); i++) hoch += r * 0.12;
+  dreh(K, 0, 0, -hoch);
+  return verbinde([K], [kreis]);
+}
+const teil = (l, seite, eltern) => l.length === 1 ? ding(l[0], seite) : krone(l, seite, eltern, null);
+const menge = l => l.reduce((s, k) => s + k.wert, 0);
+
+/* Eine Krone: Geschwister teilen sich an Gabeln, an der Spitze rollt sich der Ast ein */
+function krone(reihe, seite, eltern, meide){
+  if(reihe.length === 1) return gabelung([{G: ding(reihe[0], seite), th: 0, m: reihe[0].wert, wem: reihe[0]}], meide, eltern);
+  const rollt = reihe.every(k => k.art === 'fassung') || (reihe.length <= ROLLT && eltern.art !== 'wurzel');
+  let A, B, thA, thB, sA, sB;
+  if(rollt){ A = reihe.slice(0, 1); B = reihe.slice(1); thA = -seite * 1.0; thB = seite * 0.38; sA = -seite; sB = seite; }
+  else {
+    const gw = k => Math.sqrt(k.wert), ganz = reihe.reduce((s, k) => s + gw(k), 0); let i = 1, acc = gw(reihe[0]);
+    while(i < reihe.length - 1 && Math.abs(acc + gw(reihe[i]) - ganz / 2) < Math.abs(acc - ganz / 2)) acc += gw(reihe[i++]);
+    const a = acc / ganz; A = reihe.slice(0, i); B = reihe.slice(i);
+    thA = -SPREIZ * (0.25 + 0.75 * (1 - a)); thB = SPREIZ * (0.25 + 0.75 * a); sA = -1; sB = 1;
   }
-  aeste.push([L.concat(R.reverse()), wem]);
-  return [[x, y], d];
+  return gabelung([{G: teil(A, sA, eltern), th: thA, m: menge(A), wem: A.length === 1 ? A[0] : eltern},
+                   {G: teil(B, sB, eltern), th: thB, m: menge(B), wem: B.length === 1 ? B[0] : eltern}], meide, eltern);
 }
 
-// Gewicht im Bild: die Wurzel der Menge, damit Kleines sichtbar bleibt und Großes trotzdem größer ist
-const gw = k => Math.sqrt(k.wert), gewicht = l => l.reduce((s, k) => s + gw(k), 0);
-const laenge = s => Math.max(0.34, Math.sqrt(s)) * 0.9;   // Anteil an der Menge → Länge des Asts
-
-/* Eine Gabel: die Geschwister teilen sich in zwei Äste von etwa gleicher Menge, die Reihenfolge bleibt.
-   Der schwerere Ast geht gerader, der leichtere weicht weiter aus – wie bei einem gewachsenen Baum. */
-function gabel(reihe, P, a, L, eltern, seite = 1){
-  if(reihe.length === 1){ wachse(reihe, P, a, L, eltern, seite); return; }
-  // an der Spitze rollt sich der Ast ein (Ralf: „Spitzen rollen sich ein“), die Fassungen eines Werks immer
-  if((reihe.length <= ROLLT && eltern.art !== 'wurzel') || reihe.every(k => k.art === 'fassung')){ rolle(reihe, P, a, L, seite || 1, eltern); return; }
-  const ganz = gewicht(reihe); let i = 1, acc = gw(reihe[0]);
-  while(i < reihe.length - 1 && Math.abs(acc + gw(reihe[i]) - ganz / 2) < Math.abs(acc - ganz / 2)) acc += gw(reihe[i++]);
-  const sA = acc / ganz, sB = 1 - sA;
-  wachse(reihe.slice(0, i), P, a - SPREIZ * sB, L * laenge(sA), eltern, -1);
-  wachse(reihe.slice(i), P, a + SPREIZ * sA, L * laenge(sB), eltern, 1);
+/* Die Gabel: Äste so lang machen, bis die Kronen einander, die Äste und den Kreis darunter nicht berühren */
+function gabelung(teile, meide, wem){
+  const breite = t => Math.max(BREIT * groesse(t.m), DICK * t.G.h.R);   // ein Ast ist so dick, wie seine Krone groß ist
+  const lage = (t, lam) => { const l = Math.max(lam * t.G.h.R, breite(t) * 2), a = t.th * 0.6, bx = Math.sin(a) * l, by = -Math.cos(a) * l;
+    const T = {c: Math.cos(t.th), s: Math.sin(t.th), tx: bx, ty: by};
+    const ast = {typ: 'ast', pts: kurve([bx, by], OBEN, OBEN + t.th, l), w0: breite(t) * 1.12, w1: breite(t) * 0.92, wem: t.wem};
+    const stiel = formKreise(ast).slice(1);
+    return {l, bx, by, T, ast, stiel: stiel.length ? umkreis(stiel) : null};
+  };
+  // jeder Ast hat seine eigene Länge: wer anstößt, rückt hinaus; stoßen beide Kronen, rücken beide
+  const lam = teile.map(() => 0.3); let L;
+  for(let i = 0; i < 120; i++){
+    L = teile.map((t, j) => lage(t, lam[j])); const luft = 0.04 * Math.min(...teile.map(t => t.G.h.R));
+    const weiter = teile.map(() => false);
+    if(L.length === 2){
+      if(stossen(teile[0].G.h, L[0].T, teile[1].G.h, L[1].T, luft)){ weiter[0] = weiter[1] = true; }
+      else {
+        if(L[0].stiel && stossen(L[0].stiel, ID, teile[1].G.h, L[1].T, luft)) weiter[1] = true;
+        if(L[1].stiel && stossen(L[1].stiel, ID, teile[0].G.h, L[0].T, luft)) weiter[0] = true;
+      }
+    }
+    if(meide) teile.forEach((t, j) => { if(stossen(meide, ID, t.G.h, L[j].T, luft)) weiter[j] = true; });
+    if(!weiter.some(Boolean)) break;
+    weiter.forEach((w, j) => { if(w) lam[j] *= 1.08; });
+  }
+  teile.forEach((t, j) => dreh(t.G, t.th, L[j].bx, L[j].by));
+  return verbinde(teile.map(t => t.G), [...L.map(l => l.ast), {typ: 'knoten', x: 0, y: 0, r: Math.max(...L.map(l => l.ast.w0)) * 0.56, wem}]);
 }
 
-/* Die Spitze: sie rollt sich zur Spirale ein, das größte Teil zweigt zuerst ab, der Rest rollt weiter */
-const ROLLT = 3;
-const anteil = s => 0.16 + 0.8 * Math.sqrt(s);
-function rolle(reihe, P, a, L, seite, eltern){
-  if(reihe.length === 1){ wachse(reihe, P, a, L, eltern, seite); return; }
-  const ganz = gewicht(reihe), s0 = gw(reihe[0]) / ganz, l0 = L * anteil(s0), lr = L * anteil(1 - s0);
-  const schritt = Math.max(L * 0.24, l0 * 0.8);
-  const [Q, a2] = bogen(P, a, schritt, seite * Math.min(0.8, 2 * schritt / L), L * W0 * 0.8, lr * W0 * 0.8, eltern);
-  wachse([reihe[0]], Q, a2 - seite * 0.8, l0, eltern, -seite);
-  rolle(reihe.slice(1), Q, a2 + seite * 0.12, lr, seite, eltern);
+/* Formen in Zeichenflächen: Äste als sich verjüngende Bänder, Knoten als runde Gelenke */
+function bezier(P, t){ const u = 1 - t; return [0, 1].map(i => u * u * u * P[0][i] + 3 * u * u * t * P[1][i] + 3 * u * t * t * P[2][i] + t * t * t * P[3][i]); }
+function band(f){
+  const n = 18, L = [], R = [];
+  for(let i = 0; i <= n; i++){
+    const t = i / n, [x, y] = bezier(f.pts, t), [xa, ya] = bezier(f.pts, Math.max(0, t - 0.01)), [xb, yb] = bezier(f.pts, Math.min(1, t + 0.01));
+    const d = Math.hypot(xb - xa, yb - ya) || 1, nx = -(yb - ya) / d, ny = (xb - xa) / d;
+    const b = (f.stamm ? f.w1 + (f.w0 - f.w1) * Math.pow(1 - t, 3) : f.w0 + (f.w1 - f.w0) * t) / 2;
+    L.push([x + nx * b, y + ny * b]); R.push([x - nx * b, y - ny * b]);
+  }
+  return L.concat(R.reverse());
 }
+const rund = (x, y, r) => Array.from({length: 16}, (_, i) => [x + Math.cos(i * Math.PI / 8) * r, y + Math.sin(i * Math.PI / 8) * r]);
 
-/* Ein Ast: er wächst ein Stück und gabelt sich, bis er ein einzelnes Ding trägt */
-function wachse(reihe, P, a, L, eltern, seite = 0){
-  const ein = reihe.length === 1 ? reihe[0] : null;
-  const [Q, a2] = bogen(P, a, L * (ein ? 0.55 : 1), seite * 0.12, L * W0, L * W0 * 0.82, ein || eltern);
-  if(!ein){ gabel(reihe, Q, a2, L, eltern, seite); return; }
-  const k = ein;
-  Object.assign(k, {eltern, nr: alle.length, tiefe: eltern ? eltern.tiefe + 1 : 0}); alle.push(k);
-  if(k.art === 'fassung'){ Object.assign(k, {x: Q[0] + Math.cos(a2) * L * 0.3, y: Q[1] + Math.sin(a2) * L * 0.3, r: L * 0.3, dir: a2}); return; }
-  const r = L * 0.46;
-  Object.assign(k, {x: Q[0] + Math.cos(a2) * r, y: Q[1] + Math.sin(a2) * r, r, dir: a2});
-  // hinter dem Kreis trägt das Ding seine eigene Krone, nach demselben Gesetz
-  if(k.kinder && k.kinder.length) gabel(k.kinder, [Q[0] + Math.cos(a2) * 1.9 * r, Q[1] + Math.sin(a2) * 1.9 * r], a2, L * 0.95, k, seite);
+// alle Flächen im selben Drehsinn, sonst stanzen sich überlappende Äste gegenseitig Löcher
+const gleichsinnig = P => { let a = 0; for(let i = 0; i < P.length; i++){ const [x0, y0] = P[i], [x1, y1] = P[(i + 1) % P.length]; a += x0 * y1 - x1 * y0; } return a < 0 ? P.reverse() : P; };
+function pflanze(baum){
+  const K = krone(baum.kinder, 1, baum, null), wg = DICK * K.h.R, T = K.h.R * 0.36;
+  dreh(K, 0, 0, -T);
+  const formen = [...K.formen,
+    {typ: 'ast', stamm: true, pts: [[0, 0], [-wg * 0.25, -T * 0.35], [wg * 0.2, -T * 0.7], [0, -T]], w0: wg * 2.6, w1: wg * 1.05, wem: baum},
+    {typ: 'knoten', x: 0, y: -T, r: wg * 0.53, wem: baum}];
+  for(const sx of [-1, 1]) formen.push({typ: 'ast', pts: [[sx * wg * 0.3, -T * 0.08], [sx * wg * 0.9, -T * 0.02], [sx * wg * 1.4, T * 0.005], [sx * wg * 1.9, T * 0.01]], w0: wg * 0.55, w1: wg * 0.08, wem: baum});
+  Object.assign(baum, {x: 0, y: 0, r: 0});
+  for(const f of formen){
+    if(f.typ === 'ast') aeste.push([gleichsinnig(band(f)), f.wem]);
+    else if(f.typ === 'knoten') aeste.push([gleichsinnig(rund(f.x, f.y, f.r)), f.wem]);
+    else Object.assign(f.k, {x: f.x, y: f.y, r: f.r, dir: f.dir});
+  }
+  const ordne = (k, eltern) => { Object.assign(k, {eltern, nr: alle.length, tiefe: eltern ? eltern.tiefe + 1 : 0}); alle.push(k); for(const c of k.kinder || []) ordne(c, k); };
+  ordne(baum, null);
 }
 
 /* Umriss jedes Teilbaums, für das Hineinfahren */
@@ -149,16 +234,17 @@ function lesbar(){
   // Was auf dieser Stufe steht, bleibt nie namenlos: ist sein Kreis noch zu klein, steht der Name daneben
   const html = [], belegt = [];
   for(const k of alle) if((k.eltern === fokus || k === fokus) && k.r * s > 4 && k.art !== 'fassung'){ const sx = (k.x - blick.x) * s + blick.mx, sy = (k.y - blick.y) * s + blick.my, sr = k.r * s; belegt.push([sx - sr, sy - sr, sx + sr, sy + sr]); }
-  for(const k of alle) if(k.klein){
-    const sx = (k.x - blick.x) * s + blick.mx, sy = (k.y - blick.y) * s + blick.my, sr = k.r * s, bw = Math.min(180, 16 + Math.max([...k.name].length * 8.4, zeichenWort(k.zeichen).length * 6.8)), bh = 20 + 17 * Math.ceil([...k.name].length * 8.4 / (bw - 16));
+  for(const k of alle.filter(q => q.klein).sort((a, b) => b.r - a.r)){   // die Größten zuerst
+    const sx = (k.x - blick.x) * s + blick.mx, sy = (k.y - blick.y) * s + blick.my, sr = k.r * s, knapp = SCHMAL(), bw = Math.min(knapp ? 150 : 180, 16 + Math.max([...k.name].length * 8.4, knapp ? 0 : zeichenWort(k.zeichen).length * 6.8)), bh = (knapp ? 6 : 20) + 17 * Math.ceil([...k.name].length * 8.4 / (bw - 16));
     const lagen = [];
     for(const d of [2, 14, 30, 50]) lagen.push([sx - bw / 2, sy + sr + d], [sx - bw / 2, sy - sr - d - bh], [sx + sr + d, sy - bh / 2], [sx - sr - d - bw, sy - bh / 2],
       [sx + sr * .7 + d, sy + sr * .7 + d], [sx - sr * .7 - d - bw, sy + sr * .7 + d], [sx + sr * .7 + d, sy - sr * .7 - d - bh], [sx - sr * .7 - d - bw, sy - sr * .7 - d - bh]);
     const imBild = ([x, y]) => x >= 6 && x + bw <= W - 6 && y >= oben() && y + bh <= H - unten() + 20;
     const frei = ([x, y]) => !belegt.some(q => x < q[2] && x + bw > q[0] && y < q[3] && y + bh > q[1]);
-    const l = lagen.find(p => imBild(p) && frei(p)) || lagen.find(imBild) || lagen[0];
+    // findet ein Schild keinen freien Platz, bleibt es weg, statt ein anderes zu verdecken; beim Hineinzoomen erscheint es
+    const l = lagen.find(p => imBild(p) && frei(p)); if(!l) continue;
     belegt.push([l[0], l[1], l[0] + bw, l[1] + bh]);
-    html.push(`<div class="nm" data-nr="${k.nr}" style="left:${l[0]}px;top:${l[1]}px;width:${bw}px"><b>${esc(k.name)}</b><span>${esc(zeichenWort(k.zeichen))}</span></div>`);
+    html.push(`<div class="nm" data-nr="${k.nr}" style="left:${l[0]}px;top:${l[1]}px;width:${bw}px"><b>${esc(k.name)}</b>${knapp ? '' : `<span>${esc(zeichenWort(k.zeichen))}</span>`}</div>`);
   }
   namenEl.innerHTML = html.join('');
 }
@@ -240,9 +326,7 @@ addEventListener('resize', () => { W = innerWidth; H = innerHeight; if(fokus){ b
 (async () => {
   try {
     const baum = spiralbaum(await (await fetch('/api/graph')).json());
-    Object.assign(baum, {nr: alle.length, tiefe: 0, eltern: null, x: 0, y: 0, r: 0}); alle.push(baum);
-    const [Q, a] = bogen([0, 0], -Math.PI / 2, 48, 0.04, 19, 14, baum);   // der Stamm trägt alle Orte
-    gabel(baum.kinder, Q, a, 110, baum);
+    pflanze(baum);
     umrisse(); zeichne();
     $('#lade').hidden = true;
     const finde = () => { let k = baum; for(const t of location.hash.slice(1).split('/').filter(Boolean).map(decodeURIComponent)){ const n = (k.kinder || []).find(c => c.name === t); if(!n) break; k = n; } return k; };
