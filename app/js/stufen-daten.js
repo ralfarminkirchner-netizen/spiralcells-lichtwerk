@@ -56,7 +56,7 @@ export function spiralbaum(g){
       von: t ?? Infinity, bis: t ?? -Infinity, datiert: t == null ? 0 : 1, schluessel: v.id}; };
   const blaetter = id => (fassungenVon.get(id) || []).map(v => blatt(v, G.name(id)))
     .sort((a, b) => (a.von === Infinity) - (b.von === Infinity) || a.von - b.von || a.name.localeCompare(b.name, 'de'));
-  const orteNamen = id => (G.orteVon.get(id) || []).map(o => G.name(o));
+  const orteNamen = id => (G.orteVon.get(id) || []).map(o => G.name(o) === 'Mitte' ? 'Tragwerk System' : G.name(o));
 
   const appKnoten = (a, ortName) => {
     const name = G.name(a), eigen = blaetter(a), gruppen = new Map();
@@ -81,11 +81,13 @@ export function spiralbaum(g){
     return {art: 'app', name, auch: orteNamen(a), kinder, schluessel: 'app:' + a, ids: [a]};
   };
 
-  const orte = G.orte.map(o => ({art: 'ort', name: o.title, ortsart: o.work_type,
+  // Ralf, 08.11.: „nenne das, was bisher Mitte heißt, Tragwerk System“ – im Fundus heißt der Ort noch „Mitte“
+  const anzeige = t => ({Mitte: 'Tragwerk System'})[t] || t;
+  const orte = G.orte.map(o => ({art: 'ort', name: anzeige(o.title), ortsart: o.work_type,
     kinder: [...G.apps].filter(([, os]) => os.has(o.id)).map(([a]) => appKnoten(a, o.title)), schluessel: 'ort:' + o.id}));
   const wurzel = {art: 'wurzel', name: 'Alle Orte', kinder: orte, schluessel: 'wurzel'};
   // Orte bleiben in Ralfs fester Folge, darum erst zählen, dann die Folge zurücksetzen
-  zaehle(wurzel); wurzel.kinder = orte.slice().sort((a, b) => G.orte.findIndex(o => o.title === a.name) - G.orte.findIndex(o => o.title === b.name));
+  zaehle(wurzel); wurzel.kinder = orte.slice().sort((a, b) => G.orte.findIndex(o => anzeige(o.title) === a.name) - G.orte.findIndex(o => anzeige(o.title) === b.name));
   buendle(wurzel, {ort: 'kleinere Apps', app: 'kleinere Werke', werk: 'weitere Fassungen', buendel: 'kleinere'});
   wurzel.kinder = wurzel.kinder.filter(o => o.kinder.length);
   return wurzel;
