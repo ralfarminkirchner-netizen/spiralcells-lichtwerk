@@ -65,9 +65,9 @@ ENTSTEHUNG_FELDER = {"work_id", "title", "body", "kind", "author_id", "variant_i
 BELEG_UNKLAR = ("Ob der Beleg gespeichert wurde, ist gerade unklar. "
                 "Bitte lade den Bestand neu, bevor du erneut speicherst.")
 LESEN = {"/api/graph", "/api/health", "/api/agents"}
-# Spiralbaum: Bilder, die in Fassungen genannt sind (absolute Pfade auf dem Arbeitslaufwerk)
-BILD_IN_TEXT = re.compile(r'(/+Volumes/ThunderBolt4_2TB/[^"\s)\]<>]+?\.(?:png|jpe?g|webp))', re.I)
-_bilder = {"t": 0.0, "erlaubt": set()}
+# Spiralbaum: Bilder, die der Fundus selbst einer Fassung zuordnet (technik.bilder in den Notizen)
+ZELLEN = "/Volumes/ThunderBolt4_2TB/MiNDLAXY/SPiRALCELLS/Zellen"
+_bilder = {"t": 0.0, "je": {}, "erlaubt": set()}
 BILDCHEN = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "protokolle", "bildchen")   # protokolle/ ist nicht in Git
 _bilder_lock = threading.Lock()
 UMGEBUNG = [  # nur Lebenszeichen; TiSCH (9030) wird nie angefragt, er kostet Geld
@@ -80,6 +80,52 @@ TYPEN = {".html": "text/html; charset=utf-8", ".js": "text/javascript; charset=u
          ".png": "image/png", ".jpg": "image/jpeg", ".hdr": "application/octet-stream", ".glb": "model/gltf-binary", ".ico": "image/x-icon", ".txt": "text/plain; charset=utf-8"}
 CSP = ("default-src 'self'; img-src 'self' data: blob:; connect-src 'self' blob:; style-src 'self' 'unsafe-inline'; "
        "script-src 'self'; font-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'")
+
+
+def _masse(je: dict) -> None:
+    """Breite und Höhe jedes Bilds (für Schärfe und Ausschnitt), einmal mit sips gemessen und im Zwischenlager behalten."""
+    lager = os.path.join(BILDCHEN, "masse.json")
+    try:
+        with open(lager, encoding="utf-8") as f:
+            alt = json.load(f)
+    except (OSError, ValueError):
+        alt = {}
+    pfade = [b["pfad"] for l in je.values() for b in l]
+    zeit = {}
+    for p in pfade:
+        try:
+            zeit[p] = os.path.getmtime(p)
+        except OSError:
+            zeit[p] = None
+    fehlt = [p for p in pfade if zeit[p] is not None and (p not in alt or alt[p][0] != zeit[p])]
+    for i in range(0, len(fehlt), 200):
+        try:
+            aus = subprocess.run(["/usr/bin/sips", "-g", "pixelWidth", "-g", "pixelHeight", *fehlt[i:i + 200]],
+                                 capture_output=True, text=True, timeout=120).stdout
+        except (OSError, subprocess.SubprocessError):
+            break
+        jetzt, wh = None, {}
+        for zeile in aus.splitlines() + ["/"]:
+            if not zeile.startswith(" "):
+                if jetzt in zeit and "pixelWidth" in wh and "pixelHeight" in wh:
+                    alt[jetzt] = [zeit[jetzt], wh["pixelWidth"], wh["pixelHeight"]]
+                jetzt, wh = zeile.strip(), {}
+            elif ":" in zeile:
+                k, v = zeile.split(":", 1)
+                if v.strip().isdigit():
+                    wh[k.strip()] = int(v)
+    if fehlt:
+        try:
+            os.makedirs(BILDCHEN, exist_ok=True)
+            with open(lager, "w", encoding="utf-8") as f:
+                json.dump(alt, f)
+        except OSError:
+            pass
+    for l in je.values():
+        for b in l:
+            m = alt.get(b["pfad"])
+            if m and m[0] == zeit.get(b["pfad"]):
+                b["b"], b["h"] = m[1], m[2]
 
 
 class Fehler(Exception):
@@ -596,18 +642,43 @@ class Lichtwerk(BaseHTTPRequestHandler):
     def do_HEAD(self):
         self.do_GET()
 
-    def _bild(self, pfad: str) -> None:
+    @staticmethod
+    def _bilder_lesen() -> dict:
+        """Je Fassung (Kennung) die Bilder, die ihr der Fundus zuordnet; gelesen aus den Notizen, nie geschrieben."""
         with _bilder_lock:
-            alt = time.time() - _bilder["t"] > 120
-        if alt:
-            status, roh = self._oben("GET", "/api/graph")
-            if status != 200:
-                raise Fehler(503, "SPiRALCELLS ruht gerade.")
-            erlaubt = set()
-            for m in BILD_IN_TEXT.finditer(roh.decode("utf-8", "replace")):
-                erlaubt.add(m.group(1).replace("\\/", "/").lstrip("/"))
-            with _bilder_lock:
-                _bilder.update(t=time.time(), erlaubt=erlaubt)
+            if time.time() - _bilder["t"] < 120:
+                return _bilder["je"]
+        je = {}
+        for ordner in sorted(os.listdir(ZELLEN)) if os.path.isdir(ZELLEN) else []:
+            pfad = os.path.join(ZELLEN, ordner)
+            if not os.path.isdir(pfad):
+                continue
+            for name in os.listdir(pfad):
+                if not name.endswith(".md"):
+                    continue
+                try:
+                    with open(os.path.join(pfad, name), encoding="utf-8", errors="replace") as f:
+                        kopf = f.read(60000).split("\n---", 1)[0]
+                except OSError:
+                    continue
+                m = re.search(r"^technik: (\{.*\})\s*$", kopf, re.M)
+                if not m:
+                    continue
+                try:
+                    t = json.loads(m.group(1))
+                except ValueError:
+                    continue
+                bilder = [{"pfad": b["pfad"], "text": str(b.get("beschriftung") or "")[:200]} for b in (t.get("bilder") or [])
+                          if isinstance(b, dict) and isinstance(b.get("pfad"), str) and os.path.splitext(b["pfad"])[1].lower() in (".png", ".jpg", ".jpeg", ".webp")]
+                if bilder and t.get("kennung"):
+                    je[t["kennung"]] = bilder
+        _masse(je)
+        with _bilder_lock:
+            _bilder.update(t=time.time(), je=je, erlaubt={b["pfad"].lstrip("/") for l in je.values() for b in l})
+        return je
+
+    def _bild(self, pfad: str, breite: str = "240") -> None:
+        self._bilder_lesen()
         rein = pfad.lstrip("/")
         with _bilder_lock:
             bekannt = rein in _bilder["erlaubt"]
@@ -615,11 +686,12 @@ class Lichtwerk(BaseHTTPRequestHandler):
         if not bekannt or not os.path.isfile(datei) or os.path.realpath(datei) != os.path.normpath(datei):
             raise Fehler(404, "Dieses Bild gibt es im Fundus nicht.")
         # ein kleines Vorschaubild (240 Pixel), einmal gemacht und im Zwischenlager behalten; geht das nicht, das Original
-        klein = os.path.join(BILDCHEN, hashlib.sha256(datei.encode("utf-8")).hexdigest()[:32] + ".jpg")
+        px = "960" if breite == "960" else "240"   # zwei Schärfen: aus der Ferne klein, von nah scharf
+        klein = os.path.join(BILDCHEN, hashlib.sha256(datei.encode("utf-8")).hexdigest()[:32] + "-" + px + ".jpg")
         if not os.path.isfile(klein) or os.path.getmtime(klein) < os.path.getmtime(datei):
             os.makedirs(BILDCHEN, exist_ok=True)
             try:
-                subprocess.run(["/usr/bin/sips", "-s", "format", "jpeg", "-Z", "240", datei, "--out", klein],
+                subprocess.run(["/usr/bin/sips", "-s", "format", "jpeg", "-s", "formatOptions", "82", "-Z", px, datei, "--out", klein],
                                stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=20, check=True)
             except (OSError, subprocess.SubprocessError):
                 klein = None
@@ -697,8 +769,11 @@ class Lichtwerk(BaseHTTPRequestHandler):
                     self._json(200, {"daecher": [], "bestaetigt": False})
             elif pfad == "/lichtwerk/neu":
                 self._neu(parse_qs(teile.query).get("seit", [""])[0])
-            elif pfad == "/lichtwerk/bild":   # Spiralbaum: nur Bilder, die eine Fassung im Fundus nennt, nur lesen
-                self._bild(parse_qs(teile.query).get("pfad", [""])[0])
+            elif pfad == "/lichtwerk/bild":   # Spiralbaum: nur Bilder, die der Fundus einer Fassung zuordnet, nur lesen
+                q = parse_qs(teile.query)
+                self._bild(q.get("pfad", [""])[0], q.get("w", ["240"])[0])
+            elif pfad == "/lichtwerk/bilder":
+                self._json(200, self._bilder_lesen())
             elif pfad in ("/", "/index.html"):
                 self._datei(os.path.join(APP, "index.html"))
             else:

@@ -49,3 +49,14 @@ test('der Baum folgt den Kanten beliebig tief: Bereich unter Ort, Ort unter Ort;
   const tw = b.kinder.find(o => o.name === 'Tragwerk System').kinder[0];
   assert.equal(tw.art, 'ort'); assert.equal(tw.kinder[0].name, 'SOFTWERK');
 });
+
+test('jedes Bild steht nur einmal im Baum, unscharfe nirgends, Blätter zeigen ihr eigenes', () => {
+  const g = graph(), bild = (n, b = 1200, h = 800) => ({pfad: '/bilder/' + n + '.png', text: n, b, h});
+  const bilder = {fa: [bild('a1'), bild('a2')], fs1: [bild('s1')], fd1: [bild('d1'), bild('klein', 200, 150)], fd2: [bild('d2')]};
+  const b = spiralbaum(g, bilder), alle = [], lauf = k => { alle.push(k); (k.kinder || []).forEach(lauf); }; lauf(b);
+  const gezeigt = alle.filter(k => k.bild).map(k => k.bild);
+  assert.equal(new Set(gezeigt).size, gezeigt.length);
+  assert.ok(!gezeigt.includes('/bilder/klein.png'));
+  assert.equal(alle.find(k => k.name === 'Narben' && k.art === 'app').bild, '/bilder/a1.png');
+  for(const k of alle.filter(k => k.art === 'fassung' && k.bild)) assert.ok(k.bilder.some(x => x.pfad === k.bild));
+});

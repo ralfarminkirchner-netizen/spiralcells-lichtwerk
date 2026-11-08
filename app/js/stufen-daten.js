@@ -24,10 +24,6 @@ function zaehle(k){
   for(const c of k.kinder){ zaehle(c); zeichen += c.zeichen; fassungen += c.fassungen; wert += c.wert; datiert += c.datiert;
     if(c.von < von) von = c.von; if(c.bis > bis) bis = c.bis; }
   Object.assign(k, {anzahl: k.anzahl ?? k.kinder.length, zeichen, fassungen, wert: Math.max(wert, MINDESTENS), von, bis, datiert});
-  // ein Bild für den Kreis: bei Fassungen das jüngste, sonst das des größten Teils, das eins hat
-  const mitBild = k.kinder.filter(c => c.bild);
-  k.bild = mitBild.length ? (k.kinder.every(c => c.art === 'fassung') ? mitBild.reduce((a, b) => (b.von !== Infinity && (a.von === Infinity || b.von >= a.von) ? b : a)).bild
-    : mitBild.reduce((a, b) => b.wert > a.wert ? b : a).bild) : null;
   // Fassungen bleiben in ihrer Zeitfolge (die Spirale beginnt mit der frühesten), alles andere nach Menge
   if(k.kinder.every(c => c.art === 'fassung'))
     k.kinder.sort((a, b) => (a.von === Infinity) - (b.von === Infinity) || a.von - b.von || a.name.localeCompare(b.name, 'de'));
@@ -53,11 +49,9 @@ function buendle(k, wort){
   return k;
 }
 
-// Bilder, die eine Fassung nennt (absolute Pfade auf dem Arbeitslaufwerk); ausgeliefert nur über /lichtwerk/bild
-const BILD = /(\/+Volumes\/ThunderBolt4_2TB\/[^"\s)\]<>]+?\.(?:png|jpe?g|webp))/i;
 const vorname = t => { const i = t.indexOf(' · '); return i > 0 ? t.slice(0, i).trim() : ''; };
 
-export function spiralbaum(g){
+export function spiralbaum(g, bilder = {}){
   const W = new Map((g.works || []).map(w => [w.id, w])), name = id => ((W.get(id) || {}).title || '').trim();
   // die Kanten „gehört zu“, ohne ersetzte (der Fundus überschreibt nicht, er ersetzt)
   const hoch = new Map(), runter = new Map(), dazu = (m, k, v) => { if(!m.has(k)) m.set(k, []); if(!m.get(k).includes(v)) m.get(k).push(v); };
@@ -70,8 +64,7 @@ export function spiralbaum(g){
   const fassungenVon = new Map();
   for(const v of g.variants || []){ const w = zweig.get(v.worktree_id); if(!w) continue; if(!fassungenVon.has(w)) fassungenVon.set(w, []); fassungenVon.get(w).push(v); }
   const blatt = (v, werkName) => { const zeichen = (v.content || '').length, t = sortierDatum(v);
-    const m = (v.content || '').match(BILD);
-    return {art: 'fassung', name: (v.label || '').trim() || werkName, werk: werkName, zeichen, fassungen: 1, wert: Math.max(MINDESTENS, zeichen), bild: m ? '/' + m[1].replace(/^\/+/, '') : null,
+    return {art: 'fassung', name: (v.label || '').trim() || werkName, werk: werkName, zeichen, fassungen: 1, wert: Math.max(MINDESTENS, zeichen), bilder: bilder[v.id] || [],
       von: t ?? Infinity, bis: t ?? -Infinity, datiert: t == null ? 0 : 1, schluessel: v.id}; };
   const blaetter = id => (fassungenVon.get(id) || []).map(v => blatt(v, name(id)))
     .sort((a, b) => (a.von === Infinity) - (b.von === Infinity) || a.von - b.von || a.name.localeCompare(b.name, 'de'));
@@ -124,7 +117,32 @@ export function spiralbaum(g){
   const wurzel = {art: 'wurzel', name: 'Alle Orte', kinder: orte.slice(), schluessel: 'wurzel'};   // zaehle sortiert nach Menge, die Folge bleibt in orte
   zaehle(wurzel); wurzel.kinder = orte.filter(o => o.kinder.length);   // Orte bleiben in der festen Folge; leere fallen weg
   for(const o of wurzel.kinder) buendle(o, {ort: 'kleinere Apps', bereich: 'kleinere Apps', app: 'kleinere Werke', werk: 'weitere Fassungen', buendel: 'kleinere'});
+  verteileBilder(wurzel);
   return wurzel;
+}
+
+/* Bilder (Ralf, 08.11.: „immer das gleiche Bild für mehrere Dinge … noch schlechter geht es ja wohl nicht“, später:
+   „wirklich extrem viele Bilder, die aber alle die richtigen sein sollen“). Ein Bild gehört der Fassung, der es der
+   Fundus zuordnet, und steht nur einmal im Baum. Zuerst wählt die App (ihr eigenes Material, sonst ihr größtes Werk),
+   dann jedes Werk (seine jüngste Fassung), zuletzt jedes Blatt das nächste eigene Bild seiner Fassung. Unscharfe
+   Bilder (kürzere Seite unter SCHARF Pixel) stehen nirgends. Orte und Bereiche bekommen keins geliehen. */
+export const SCHARF = 360;
+const scharf = b => !(b.b && b.h) || Math.min(b.b, b.h) >= SCHARF;
+function verteileBilder(wurzel){
+  const benutzt = new Set();
+  const jungZuerst = l => l.slice().sort((a, b) => (b.von === Infinity ? -Infinity : b.von) - (a.von === Infinity ? -Infinity : a.von));
+  const fassungenUnter = k => k.art === 'fassung' ? [k] : (k.kinder || []).flatMap(fassungenUnter);
+  const nimm = kandidaten => { for(const f of kandidaten) for(const b of f.bilder || []) if(scharf(b) && !benutzt.has(b.pfad)){ benutzt.add(b.pfad); return b; } return null; };
+  const gib = (k, b) => { if(b) Object.assign(k, {bild: b.pfad, bildText: b.text, bildHoch: b.b && b.h ? b.h / b.b : 1}); };
+  const stufe = [wurzel], blaetter = [];
+  while(stufe.length){   // Stufe für Stufe: was weiter außen steht, wählt zuerst
+    const k = stufe.shift();
+    if(k.art === 'app'){ const eigen = (k.kinder || []).find(c => c.eigen);
+      gib(k, nimm([...jungZuerst(eigen ? fassungenUnter(eigen) : []), ...(k.kinder || []).flatMap(c => jungZuerst(fassungenUnter(c)))])); }
+    else if(k.art === 'werk') gib(k, nimm(jungZuerst(fassungenUnter(k))));
+    for(const c of k.kinder || []) (c.art === 'fassung' ? blaetter : stufe).push(c);
+  }
+  for(const f of blaetter) gib(f, nimm([f]));
 }
 
 /* Wie viel, in Worten: Zahlen und belegte Zeit, ohne Kennungen */

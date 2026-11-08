@@ -24,7 +24,7 @@ html,body{margin:0;height:100%;background:var(--grund);color:var(--tinte);font:1
 svg text{text-anchor:middle;pointer-events:none;font-family:"Avenir Next","Helvetica Neue",system-ui,sans-serif}
 .kn .name{fill:#fff;font-weight:600}
 .kn .menge{fill:#fff;fill-opacity:.9}
-.kn.kn circle.schleier{fill:rgba(32,28,24,.42);stroke:none;pointer-events:none}
+.kn.kn circle.schleier{fill:rgba(32,28,24,.2);stroke:none;pointer-events:none}
 .kn .bild{pointer-events:none}
 .kn.buendel .name,.kn.buendel .menge{fill:var(--tinte)}
 .blatt .name{fill:#3a2a12;font-weight:600}
@@ -58,3 +58,12 @@ svg text{text-anchor:middle;pointer-events:none;font-family:"Avenir Next","Helve
 
 .fern{opacity:.3;transition:opacity .5s}
 .ast,.kn,.blatt{transition:opacity .5s}
+.boden{fill:#d8ccb4}
+.kn .name,.blatt.mitbild .name{paint-order:stroke;stroke:rgba(25,20,15,.55);stroke-width:.14em;stroke-linejoin:round}
+.blatt.mitbild .name{fill:#fff}
+.blatt path.schleier{fill:rgba(32,28,24,.16);stroke:none;pointer-events:none}
+/* Orte und Bereiche sind Gabeln, keine Bilder: hell, mit Rinde als Rand, der Name dunkel darin */
+.kn.ort circle,.kn.wurzel circle{fill:#f7f1e6;stroke:var(--ast)}
+.kn.bereich circle{fill:#eef3ea;stroke:#4f7a52}
+.kn.ort .name,.kn.ort .menge,.kn.bereich .name,.kn.bereich .menge{fill:var(--tinte);stroke:none}
+.kn.bereich .name{fill:#2f5532}
