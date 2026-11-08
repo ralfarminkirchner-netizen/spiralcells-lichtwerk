@@ -17,6 +17,7 @@ import {teilnahmeMarke, spurMarke, alsSatz, zellSatz, STAND_SATZ} from './alsfor
 import {quellAdresse, quellFassung, quellName} from './quelle.js';
 import {werkFarbe} from './verschraenkung.js';
 import {appSource} from './materialraum.js';
+import {wechsle, werkDerAuswahl, mitWerk, werkAus} from './auswahl.js';
 
 const $ = s => document.querySelector(s);
 const canvas = $('#gl'), lineEl = $('#line'), markeEl = $('#marke'), leseEl = $('#lese'), siegelEl = $('#siegel'), hintEl = $('#hint'), ortEl = $('#zurueck');
@@ -92,7 +93,7 @@ export function setzeMarke(sx, sy){
 
 export function markeFuer(sel){
   const m = sel.mond;
-  if(sel.art === 'same'){ const s = m.samen[sel.i]; const teile = [nameVon(W.B.agenten.get(s.fassung.author_id)), datum(s.zeit)];
+  if(sel.art === 'same'){ const s = m.samen[sel.i]; const teile = [nameVon(W.B.agenten.get(s.fassung.author_id)), s.saum ? 'ohne belegte Zeit' : s.zeitSatz || datum(s.zeit)];
     if(s.form) teile.push('Form ohne Modell'); else { if(s.modus) teile.push(MODUS_SATZ[s.modus]); if(s.status !== 'entwurf') teile.push(STATUS_SATZ[s.status]); }
     const her = herkunftSatz(sel); if(her) teile.push(her);
     if(U.stufe < 2 && gleich(U.sel, sel)) teile.push('tippen liest');
@@ -410,6 +411,7 @@ export function schliesseSiegel(){ stoppeHalten(siegelEl); const innen = siegelE
 export function waehle(sel, stufe){
   if(!(sel && sel.art === 'faden' && U.sel && U.sel.art === 'faden' && U.sel.i === sel.i)) U.fadenK = 0;   // ein anderer Faden beginnt bei seiner ersten Verbindung
   U.sel = sel; U.stufe = sel ? (stufe || 1) : 0;
+  if(sel && sel.art === 'mond' && W.namen && W.namen[sel.i]){ try{ history.replaceState(null, '', mitWerk(location.hash, W.namen[sel.i]) || location.pathname + location.search); }catch(e){} }   // das gewählte Werk steht lesbar in der Adresse
   U.linkedSeeds = null;
   if(sel && sel.art === 'same'){ const m = sel.mond, id = m.samen[sel.i].id, idx = new Map(m.samen.map((s, i) => [s.id, i])), set = new Set();
     for(const f of m.faeden){ if(f.von === id && idx.has(f.nach)) set.add(idx.get(f.nach)); if(f.nach === id && idx.has(f.von)) set.add(idx.get(f.von)); }
@@ -636,6 +638,7 @@ export function installiere(a){
   $('#snd').addEventListener('click', () => { const on = klangToggle(); const b = $('#snd'); b.setAttribute('aria-pressed', on ? 'true' : 'false'); b.setAttribute('aria-label', on ? 'Klang ausschalten' : 'Klang einschalten'); activity(); });
   $('#seite').addEventListener('click', () => { seite(); activity(); });
   $('#spiralknopf').addEventListener('click', () => { spirale(); activity(); });
+  { const zw = $('#zuwelten'); if(zw) zw.addEventListener('click', () => { zw.href = 'welten.html' + mitWerk('', werkAus(location.hash)); }); }   // dasselbe Werk auf der Seite mit der neuen Grafik
   $('#ansichtknopf').addEventListener('click', () => { const w = $('#ansichten'); w.hidden = !w.hidden; $('#ansichtknopf').setAttribute('aria-expanded', w.hidden ? 'false' : 'true'); activity(); });
   document.querySelectorAll('#ansichten button').forEach(b => b.addEventListener('click', () => { const a = b.dataset.a; if(a === 'kosmos'){ if(U.imText) textfassung(false); if(U.ansicht !== 'kosmos') ansicht(U.ansicht); } else if(a === U.ansicht && !U.imText){ /* bleibt */ } else ansicht(a); $('#ansichten').hidden = true; activity(); }));
   $('#netzknopf').addEventListener('click', () => { if(U.netT > 0.5 && W.Z) api.zurZelle(); else api.zumNetz(); activity(); });
@@ -660,15 +663,21 @@ function zoomAuf(z){
 /* Dieselben Werke, andere Darstellung. Am Bestand ändert sich nichts */
 const ANSICHT = {kosmos: () => netzSatz(W.B), licht: () => 'Lichtansicht: dieselben Werke, die Spirale steigt als Pflanze aus Licht auf.', garten: () => 'Derselbe Mechanismus als Garten: Bäume und Ranken wachsen aus der Abstammung, Blätter, Blüten und Früchte sind Fassungen, das Mycel sind die Verbindungen.', galaxie: () => 'Sonne = Dach, Spirale = Werk, jedes Lichtstück eine Fassung, unten die älteste.',
   dorf: () => 'Straße = Dach, Haus = Werk, helles Fenster = Fassung. Tippe auf ein Haus und geh hinein.', campus: () => 'Derselbe Mechanismus als Campus: jeder Turm ein Werk, jede Etage ein Zeitabschnitt, jedes helle Fenster eine Fassung. Tippe auf ein Gebäude und geh hinein.', buero: () => 'Derselbe Mechanismus als Bürokomplex: Riegel an Straßen, unten das Älteste, oben das Jüngste. Tippe auf ein Gebäude und geh hinein.'};
-function ansicht(a){ if(U.netT < 0.5 && a !== 'text') return;
-  if(a === 'text'){ textfassung(!U.imText); return; } if(U.imText) textfassung(false);
-  U.ansicht = U.ansicht === a ? 'kosmos' : a; const v = U.ansicht, ort = v === 'dorf' || v === 'campus' || v === 'buero';
+/* Ein Wechsel nimmt nur das gewählte Werk mit (auch aus der offenen Zelle heraus); jede Welt zeigt es in ihrer eigenen Gestalt */
+function ansicht(a){
+  const werk = werkDerAuswahl(U.sel, U.netT < 0.5 && W.Z ? W.aktiv : null);
+  if(U.netT < 0.5) api.zumNetz();   // aus der Zelle hinaus; die neue Welt beginnt außen, am Werk
+  const z = wechsle({welt: U.imText ? 'text' : U.ansicht, werk, zelle: false}, a);
+  if(z.welt === 'text'){ textfassung(true, z.werk); return; } if(U.imText) textfassung(false);
+  if(a === 'text'){ if(z.werk != null) waehle({art: 'mond', i: z.werk, mond: W.B.monde[z.werk]}, 1); wahlZeigen(); return; }
+  U.ansicht = z.welt; const v = U.ansicht, ort = v === 'dorf' || v === 'campus' || v === 'buero';
   U.gartenT = v === 'licht' || v === 'garten' || ort ? 1 : 0; U.landT = v === 'garten' || ort ? 1 : 0; U.galT = v === 'galaxie' ? 1 : 0; U.stilZiel = ort ? v : null; if(!U.stil && ort){ U.stil = v; U.bauK = 0; }
-  waehle(null); wahlZeigen(); ansichtSagen(); }
+  if(z.werk != null){ api.insDach(W.N.bezirk(z.werk)); waehle({art: 'mond', i: z.werk, mond: W.B.monde[z.werk]}, 1); } else waehle(null);   // der Blick steht im Bezirk des Werks
+  wahlZeigen(); ansichtSagen(z.werk); }
 /* Der Satz einer Welt erklärt sie und tritt dann zurück, damit er die Welt nicht verdeckt */
-function ansichtSagen(){ const satz = ANSICHT[U.ansicht](); zeile(satz); clearTimeout(U.satzUhr); if(U.ansicht !== 'kosmos') U.satzUhr = setTimeout(() => { if(lineText === satz) zeile(''); }, 9000); }
+function ansichtSagen(werk){ const satz = ANSICHT[U.ansicht]() + (werk != null ? ` Gewählt bleibt „${kurz(W.B.monde[werk].titel, 60)}“.` : ''); zeile(satz); clearTimeout(U.satzUhr); if(U.ansicht !== 'kosmos') U.satzUhr = setTimeout(() => { if(lineText === satz) zeile(''); }, 9000); }
 function wahlZeigen(){ document.querySelectorAll('#ansichten button').forEach(b => { b.setAttribute('aria-pressed', (U.imText ? b.dataset.a === 'text' : b.dataset.a === U.ansicht) ? 'true' : 'false'); }); }
-function textfassung(an){ U.imText = an; const el = $('#textgrund'); el.hidden = !an; if(an){ zeichneText(el, W.N, i => { textfassung(false); api.oeffneMond(i, {}); }, () => textfassung(false)); el.focus({preventScroll: true}); } else canvas.focus({preventScroll: true}); wahlZeigen(); }
+function textfassung(an, werk = null){ U.imText = an; const el = $('#textgrund'); el.hidden = !an; if(an){ zeichneText(el, W.N, i => { textfassung(false); api.oeffneMond(i, {}); }, () => textfassung(false), werk); if(werk == null) el.focus({preventScroll: true}); } else canvas.focus({preventScroll: true}); wahlZeigen(); }
 /* In ein Gebäude hinein: das Ganze im Schnitt, dann Etage für Etage */
 function hineingehen(n){ const o = W.N.ort[n]; U.innen = {n, stil: U.stil, etage: -1, wahl: null, plan: innenPlan(W.N, n, U.stil, [o[0], 0, o[2]])}; U.innenT = 1; U.sel = null; document.body.classList.add('imhaus'); etageSagen(); }
 function hinausgehen(){ U.innenT = 0; U.ausHaus = false; waehle(null); ansichtSagen(); }

@@ -173,6 +173,8 @@ button{font:inherit;color:inherit}
 #ansichten button{all:unset;box-sizing:border-box;display:flex;justify-content:space-between;gap:26px;min-height:40px;align-items:center;padding:0 12px;border-radius:6px;color:var(--ink-soft);font-size:14px;letter-spacing:.06em;cursor:pointer}
 #ansichten button:hover,#ansichten button:focus-visible{background:rgba(255,246,224,.08);color:var(--ink)}
 #ansichten button[aria-pressed="true"]{color:var(--ink);background:rgba(255,246,224,.12)}
+#ansichten a{box-sizing:border-box;display:flex;min-height:40px;align-items:center;padding:0 12px;border-radius:6px;color:var(--ink-soft);font-size:14px;letter-spacing:.06em;text-decoration:none;border-top:1px solid rgba(255,246,224,.12);margin-top:4px}
+#ansichten a:hover,#ansichten a:focus-visible{background:rgba(255,246,224,.08);color:var(--ink)}
 #ansichten kbd{font:inherit;font-size:11px;opacity:.55}
 #textgrund{position:fixed;inset:0;z-index:40;color-scheme:light;background:#fff;color:#000;overflow:auto;padding:12px;font:15px/1.4 monospace;outline:0;-webkit-overflow-scrolling:touch}
 #textgrund[hidden]{display:none}

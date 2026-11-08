@@ -1,4 +1,4 @@
-// node_modules/three/build/three.core.js
+// ../../../spiralcells-lichtwerk-lichtgrund/werkzeuge/neu/node_modules/three/build/three.core.js
 var REVISION = "187";
 var MOUSE = { LEFT: 0, MIDDLE: 1, RIGHT: 2, ROTATE: 0, DOLLY: 1, PAN: 2 };
 var TOUCH = { ROTATE: 0, PAN: 1, DOLLY_PAN: 2, DOLLY_ROTATE: 3 };
@@ -23009,7 +23009,7 @@ if (typeof window !== "undefined") {
   }
 }
 
-// node_modules/three/build/three.tsl.js
+// ../../../spiralcells-lichtwerk-lichtgrund/werkzeuge/neu/node_modules/three/build/three.tsl.js
 var NodeShaderStage = {
   VERTEX: "vertex",
   FRAGMENT: "fragment"
@@ -38043,7 +38043,7 @@ var getShIrradianceAt = /* @__PURE__ */ Fn(([normal, shCoefficients]) => {
   return result;
 });
 
-// node_modules/three/build/three.webgpu.js
+// ../../../spiralcells-lichtwerk-lichtgrund/werkzeuge/neu/node_modules/three/build/three.webgpu.js
 var _defaultValues$d = /* @__PURE__ */ new LineBasicMaterial();
 var LineBasicNodeMaterial = class extends NodeMaterial {
   static get type() {
@@ -67097,7 +67097,7 @@ LightProbe.registerNode(LightProbeNode);
 IESSpotLight.registerNode(IESSpotLightNode);
 ProjectorLight.registerNode(ProjectorLightNode);
 
-// node_modules/three/examples/jsm/tsl/display/GTAONode.js
+// ../../../spiralcells-lichtwerk-lichtgrund/werkzeuge/neu/node_modules/three/examples/jsm/tsl/display/GTAONode.js
 var _quadMesh2 = /* @__PURE__ */ new QuadMesh();
 var _size3 = /* @__PURE__ */ new Vector2();
 var _temporalRotations = [60, 300, 180, 240, 120, 0];
@@ -67373,7 +67373,7 @@ function generateMagicSquare(size) {
 }
 var ao = (depthNode, normalNode, camera2) => new GTAONode(nodeObject(depthNode), nodeObject(normalNode), camera2);
 
-// node_modules/three/examples/jsm/tsl/display/BloomNode.js
+// ../../../spiralcells-lichtwerk-lichtgrund/werkzeuge/neu/node_modules/three/examples/jsm/tsl/display/BloomNode.js
 var _quadMesh3 = /* @__PURE__ */ new QuadMesh();
 var _size4 = /* @__PURE__ */ new Vector2();
 var _BlurDirectionX = /* @__PURE__ */ new Vector2(1, 0);
@@ -67627,7 +67627,1366 @@ var lerpBloomFactor = Fn(({ factor, radius }) => {
 }, { factor: "float", radius: "float", return: "float" });
 var bloom = (node, strength, radius, threshold) => new BloomNode(nodeObject(node), strength, radius, threshold);
 
-// node_modules/three/examples/jsm/controls/OrbitControls.js
+// node_modules/three/build/three.webgpu.js
+var worldStart2 = varyingProperty("vec3", "worldStart");
+var worldEnd2 = varyingProperty("vec3", "worldEnd");
+var lineDistance2 = varyingProperty("float", "lineDistance");
+var worldPos2 = varyingProperty("vec4", "worldPos");
+var trimSegmentAlpha2 = Fn(({ start, end }) => {
+  const a2 = cameraProjectionMatrix.element(2).element(2);
+  const b2 = cameraProjectionMatrix.element(3).element(2);
+  const nearEstimate = a2.greaterThan(0).select(b2.negate().div(a2.add(1)), b2.mul(-0.5).div(a2));
+  return nearEstimate.sub(start.z).div(end.z.sub(start.z));
+}, { start: "vec4", end: "vec4", return: "float" });
+var closestLineToLine2 = Fn(({ p1, p2, p3, p4 }) => {
+  const p13 = p1.sub(p3);
+  const p43 = p4.sub(p3);
+  const p21 = p2.sub(p1);
+  const d1343 = p13.dot(p43);
+  const d4321 = p43.dot(p21);
+  const d1321 = p13.dot(p21);
+  const d4343 = p43.dot(p43);
+  const d2121 = p21.dot(p21);
+  const denom = d2121.mul(d4343).sub(d4321.mul(d4321));
+  const numer = d1343.mul(d4321).sub(d1321.mul(d4343));
+  const mua = numer.div(denom).clamp();
+  const mub = d1343.add(d4321.mul(mua)).div(d4343).clamp();
+  return vec2(mua, mub);
+}, { p1: "vec3", p2: "vec3", p3: "vec3", p4: "vec3", return: "vec2" });
+var mvpLine2 = Fn(({ material }) => {
+  const useDash = material._useDash;
+  const useWorldUnits = material._useWorldUnits;
+  const instanceStart = attribute("instanceStart");
+  const instanceEnd = attribute("instanceEnd");
+  const start = vec4(modelViewMatrix.mul(vec4(instanceStart, 1))).toVar("start");
+  const end = vec4(modelViewMatrix.mul(vec4(instanceEnd, 1))).toVar("end");
+  let distanceStart, distanceEnd;
+  if (useDash) {
+    distanceStart = float(attribute("instanceDistanceStart")).toVar("distanceStart");
+    distanceEnd = float(attribute("instanceDistanceEnd")).toVar("distanceEnd");
+  }
+  if (useWorldUnits) {
+    worldStart2.assign(start.xyz);
+    worldEnd2.assign(end.xyz);
+  }
+  const aspect2 = viewport.z.div(viewport.w);
+  const perspective = cameraProjectionMatrix.element(2).element(3).equal(-1);
+  If(perspective, () => {
+    If(start.z.lessThan(0).and(end.z.greaterThan(0)), () => {
+      const alpha = trimSegmentAlpha2({ start, end });
+      end.assign(vec4(mix(start.xyz, end.xyz, alpha), end.w));
+      if (useDash) {
+        distanceEnd.assign(mix(distanceStart, distanceEnd, alpha));
+      }
+    }).ElseIf(end.z.lessThan(0).and(start.z.greaterThanEqual(0)), () => {
+      const alpha = trimSegmentAlpha2({ start: end, end: start });
+      start.assign(vec4(mix(end.xyz, start.xyz, alpha), start.w));
+      if (useDash) {
+        distanceStart.assign(mix(distanceEnd, distanceStart, alpha));
+      }
+    });
+  });
+  if (useDash) {
+    const dashScaleNode = material.dashScaleNode ? float(material.dashScaleNode) : materialLineScale;
+    const offsetNode = material.offsetNode ? float(material.offsetNode) : materialLineDashOffset;
+    let lineDist = positionGeometry.y.lessThan(0.5).select(dashScaleNode.mul(distanceStart), dashScaleNode.mul(distanceEnd));
+    lineDist = lineDist.add(offsetNode);
+    lineDistance2.assign(lineDist);
+  }
+  const clipStart = cameraProjectionMatrix.mul(start);
+  const clipEnd = cameraProjectionMatrix.mul(end);
+  const ndcStart = clipStart.xyz.div(clipStart.w);
+  const ndcEnd = clipEnd.xyz.div(clipEnd.w);
+  const dir = ndcEnd.xy.sub(ndcStart.xy).toVar();
+  dir.x.assign(dir.x.mul(aspect2));
+  dir.assign(dir.normalize());
+  const clip = vec4().toVar();
+  if (useWorldUnits) {
+    const worldDir = end.xyz.sub(start.xyz).normalize();
+    const tmpFwd = perspective.select(mix(start.xyz, end.xyz, 0.5).normalize(), vec3(0, 0, -1));
+    const worldUp = worldDir.cross(tmpFwd).normalize();
+    const worldFwd = worldDir.cross(worldUp);
+    worldPos2.assign(positionGeometry.y.lessThan(0.5).select(start, end));
+    const hw = materialLineWidth.mul(0.5);
+    worldPos2.addAssign(vec4(positionGeometry.x.lessThan(0).select(worldUp.mul(hw), worldUp.mul(hw).negate()), 0));
+    if (!useDash) {
+      worldPos2.addAssign(vec4(positionGeometry.y.lessThan(0.5).select(worldDir.mul(hw).negate(), worldDir.mul(hw)), 0));
+      worldPos2.addAssign(vec4(worldFwd.mul(hw), 0));
+      If(positionGeometry.y.greaterThan(1).or(positionGeometry.y.lessThan(0)), () => {
+        worldPos2.subAssign(vec4(worldFwd.mul(2).mul(hw), 0));
+      });
+    }
+    clip.assign(cameraProjectionMatrix.mul(worldPos2));
+    const clipPose = vec3().toVar();
+    clipPose.assign(positionGeometry.y.lessThan(0.5).select(ndcStart, ndcEnd));
+    If(clip.w.greaterThan(0), () => {
+      clip.z.assign(clipPose.z.mul(clip.w));
+    });
+  } else {
+    const offset = vec2(dir.y, dir.x.negate()).toVar("offset");
+    dir.x.assign(dir.x.div(aspect2));
+    offset.x.assign(offset.x.div(aspect2));
+    offset.assign(positionGeometry.x.lessThan(0).select(offset.negate(), offset));
+    If(positionGeometry.y.lessThan(0), () => {
+      offset.assign(offset.sub(dir));
+    }).ElseIf(positionGeometry.y.greaterThan(1), () => {
+      offset.assign(offset.add(dir));
+    });
+    offset.assign(offset.mul(materialLineWidth));
+    offset.assign(offset.div(viewport.w.div(screenDPR)));
+    clip.assign(positionGeometry.y.lessThan(0.5).select(clipStart, clipEnd));
+    offset.assign(offset.mul(clip.w));
+    clip.assign(clip.add(vec4(offset, 0, 0)));
+  }
+  return clip;
+})();
+var alphaLine2 = Fn(({ material, renderer: renderer2 }) => {
+  const useAlphaToCoverage = material._useAlphaToCoverage;
+  const useDash = material._useDash;
+  const useWorldUnits = material._useWorldUnits;
+  const vUv = uv$1();
+  if (useDash) {
+    const dashSizeNode = material.dashSizeNode ? float(material.dashSizeNode) : materialLineDashSize;
+    const gapSizeNode = material.gapSizeNode ? float(material.gapSizeNode) : materialLineGapSize;
+    dashSize.assign(dashSizeNode);
+    gapSize.assign(gapSizeNode);
+    vUv.y.lessThan(-1).or(vUv.y.greaterThan(1)).discard();
+    lineDistance2.mod(dashSize.add(gapSize)).greaterThan(dashSize).discard();
+  }
+  const alpha = float(1).toVar("alpha");
+  if (useWorldUnits) {
+    const len = float().toVar();
+    const orthographic = cameraProjectionMatrix.element(2).element(3).notEqual(-1).toConst();
+    If(orthographic, () => {
+      const lineDir = worldEnd2.xy.sub(worldStart2.xy);
+      const t2 = worldPos2.xy.sub(worldStart2.xy).dot(lineDir).div(lineDir.dot(lineDir)).clamp();
+      len.assign(worldStart2.xy.add(lineDir.mul(t2)).sub(worldPos2.xy).length());
+    }).Else(() => {
+      const rayEnd = worldPos2.xyz.normalize().mul(1e5);
+      const lineDir = worldEnd2.sub(worldStart2);
+      const params = closestLineToLine2({ p1: worldStart2, p2: worldEnd2, p3: vec3(0, 0, 0), p4: rayEnd });
+      const p1 = worldStart2.add(lineDir.mul(params.x));
+      const p2 = rayEnd.mul(params.y);
+      const delta = p1.sub(p2);
+      len.assign(delta.length());
+    });
+    const norm = len.div(materialLineWidth);
+    if (!useDash) {
+      if (useAlphaToCoverage && renderer2.currentSamples > 0) {
+        const dnorm = norm.fwidth();
+        alpha.assign(smoothstep2(dnorm.negate().add(0.5), dnorm.add(0.5), norm).oneMinus());
+      } else {
+        norm.greaterThan(0.5).discard();
+      }
+    }
+  } else {
+    if (useAlphaToCoverage && renderer2.currentSamples > 0) {
+      const a2 = vUv.x;
+      const b2 = vUv.y.greaterThan(0).select(vUv.y.sub(1), vUv.y.add(1));
+      const len2 = a2.mul(a2).add(b2.mul(b2));
+      const dlen = float(len2.fwidth()).toVar("dlen");
+      If(vUv.y.abs().greaterThan(1), () => {
+        alpha.assign(smoothstep2(dlen.oneMinus(), dlen.add(1), len2).oneMinus());
+      });
+    } else {
+      If(vUv.y.abs().greaterThan(1), () => {
+        const a2 = vUv.x;
+        const b2 = vUv.y.greaterThan(0).select(vUv.y.sub(1), vUv.y.add(1));
+        const len2 = a2.mul(a2).add(b2.mul(b2));
+        len2.greaterThan(1).discard();
+      });
+    }
+  }
+  return alpha;
+})();
+var clearcoatF02 = vec3(0.04);
+var clearcoatF902 = float(1);
+var scatteringDensity2 = property("vec3");
+var linearDepthRay2 = property("float");
+var outgoingRayLight2 = property("vec3");
+var NodeFunctionInput2 = class {
+  /**
+   * Constructs a new node function input.
+   *
+   * @param {string} type - The input type.
+   * @param {string} name - The input name.
+   * @param {?number} [count=null] - If the input is an Array, count will be the length.
+   * @param {('in'|'out'|'inout')} [qualifier=''] - The parameter qualifier (only relevant for GLSL).
+   * @param {boolean} [isConst=false] - Whether the input uses a const qualifier or not (only relevant for GLSL).
+   */
+  constructor(type, name, count = null, qualifier = "", isConst = false) {
+    this.type = type;
+    this.name = name;
+    this.count = count;
+    this.qualifier = qualifier;
+    this.isConst = isConst;
+  }
+};
+NodeFunctionInput2.isNodeFunctionInput = true;
+var AmbientLightNode2 = class extends AnalyticLightNode {
+  static get type() {
+    return "AmbientLightNode";
+  }
+  /**
+   * Constructs a new ambient light node.
+   *
+   * @param {?AmbientLight} [light=null] - The ambient light source.
+   */
+  constructor(light = null) {
+    super(light);
+  }
+  setup({ context: context2 }) {
+    context2.irradiance.addAssign(this.colorNode);
+  }
+};
+var DirectionalLightNode2 = class extends AnalyticLightNode {
+  static get type() {
+    return "DirectionalLightNode";
+  }
+  /**
+   * Constructs a new directional light node.
+   *
+   * @param {?DirectionalLight} [light=null] - The directional light source.
+   */
+  constructor(light = null) {
+    super(light);
+  }
+  setupDirect() {
+    const lightColor = this.colorNode;
+    const lightDirection = lightTargetDirection(this.light);
+    return { lightDirection, lightColor };
+  }
+};
+var HemisphereLightNode2 = class extends AnalyticLightNode {
+  static get type() {
+    return "HemisphereLightNode";
+  }
+  /**
+   * Constructs a new hemisphere light node.
+   *
+   * @param {?HemisphereLight} [light=null] - The hemisphere light source.
+   */
+  constructor(light = null) {
+    super(light);
+    this.lightPositionNode = lightPosition(light);
+    this.lightDirectionNode = this.lightPositionNode.normalize();
+    this.groundColorNode = uniform(new Color()).setGroup(renderGroup);
+  }
+  /**
+   * Overwritten to updated hemisphere light specific uniforms.
+   *
+   * @param {NodeFrame} frame - A reference to the current node frame.
+   */
+  update(frame) {
+    const { light } = this;
+    super.update(frame);
+    this.lightPositionNode.object3d = light;
+    this.groundColorNode.value.copy(light.groundColor).multiplyScalar(light.intensity);
+  }
+  setup(builder) {
+    const { colorNode, groundColorNode, lightDirectionNode } = this;
+    const dotNL = normalWorld.dot(lightDirectionNode);
+    const hemiDiffuseWeight = dotNL.mul(0.5).add(0.5);
+    const irradiance = mix(groundColorNode, colorNode, hemiDiffuseWeight);
+    builder.context.irradiance.addAssign(irradiance);
+  }
+};
+var SpotLightNode2 = class extends AnalyticLightNode {
+  static get type() {
+    return "SpotLightNode";
+  }
+  /**
+   * Constructs a new spot light node.
+   *
+   * @param {?SpotLight} [light=null] - The spot light source.
+   */
+  constructor(light = null) {
+    super(light);
+    this.coneCosNode = uniform(0).setGroup(renderGroup);
+    this.penumbraCosNode = uniform(0).setGroup(renderGroup);
+    this.cutoffDistanceNode = uniform(0).setGroup(renderGroup);
+    this.decayExponentNode = uniform(0).setGroup(renderGroup);
+    this.colorNode = uniform(this.color).setGroup(renderGroup);
+  }
+  /**
+   * Overwritten to updated spot light specific uniforms.
+   *
+   * @param {NodeFrame} frame - A reference to the current node frame.
+   */
+  update(frame) {
+    super.update(frame);
+    const { light } = this;
+    this.coneCosNode.value = Math.cos(light.angle);
+    this.penumbraCosNode.value = Math.cos(light.angle * (1 - light.penumbra));
+    this.cutoffDistanceNode.value = light.distance;
+    this.decayExponentNode.value = light.decay;
+  }
+  /**
+   * Computes the spot attenuation for the given angle.
+   *
+   * @param {NodeBuilder} builder - The node builder.
+   * @param {Node<float>} angleCosine - The angle to compute the spot attenuation for.
+   * @return {Node<float>} The spot attenuation.
+   */
+  getSpotAttenuation(builder, angleCosine) {
+    const { coneCosNode, penumbraCosNode } = this;
+    return smoothstep2(coneCosNode, penumbraCosNode, angleCosine);
+  }
+  getLightCoord(builder) {
+    const properties = builder.getNodeProperties(this);
+    let projectionUV = properties.projectionUV;
+    if (projectionUV === void 0) {
+      projectionUV = lightProjectionUV(this.light, builder.context.positionWorld);
+      properties.projectionUV = projectionUV;
+    }
+    return projectionUV;
+  }
+  setupDirect(builder) {
+    const { colorNode, cutoffDistanceNode, decayExponentNode, light } = this;
+    const lightVector = this.getLightVector(builder);
+    const lightDirection = lightVector.normalize();
+    const angleCos = lightDirection.dot(lightTargetDirection(light));
+    const spotAttenuation = this.getSpotAttenuation(builder, angleCos);
+    const lightDistance = lightVector.length();
+    const lightAttenuation = getDistanceAttenuation({
+      lightDistance,
+      cutoffDistance: cutoffDistanceNode,
+      decayExponent: decayExponentNode
+    });
+    let lightColor = colorNode.mul(spotAttenuation).mul(lightAttenuation);
+    let projected, lightCoord;
+    if (light.colorNode) {
+      lightCoord = this.getLightCoord(builder);
+      projected = light.colorNode(lightCoord);
+    } else if (light.map) {
+      lightCoord = this.getLightCoord(builder);
+      projected = texture(light.map, lightCoord.xy).onRenderUpdate(() => light.map);
+    }
+    if (projected) {
+      const inSpotLightMap = lightCoord.mul(2).sub(1).abs().lessThan(1).all();
+      lightColor = inSpotLightMap.select(lightColor.mul(projected), lightColor);
+    }
+    return { lightColor, lightDirection };
+  }
+};
+var IESSpotLightNode2 = class extends SpotLightNode2 {
+  static get type() {
+    return "IESSpotLightNode";
+  }
+  /**
+   * Constructs a new IES spot light node.
+   *
+   * @param {?SpotLight} [light=null] - The spot light source.
+   */
+  constructor(light = null) {
+    super(light);
+    this._iesTextureNode = null;
+  }
+  /**
+   * Overwrites the default implementation to compute an IES conform spot attenuation.
+   *
+   * @param {NodeBuilder} builder - The node builder.
+   * @param {Node<float>} angleCosine - The angle to compute the spot attenuation for.
+   * @return {Node<float>} The spot attenuation.
+   */
+  getSpotAttenuation(builder, angleCosine) {
+    const iesMap = this.light.iesMap;
+    let spotAttenuation = null;
+    if (iesMap && iesMap.isTexture === true) {
+      const lightCoord = this.getLightCoord(builder).sub(0.5);
+      this._iesTextureNode = texture(iesMap);
+      const texelInset = float(0.5).div(vec2(textureSize(this._iesTextureNode)));
+      const twistAngle = remap(atan(lightCoord.y, lightCoord.x), -Math.PI, Math.PI).add(texelInset.y);
+      const tiltAngle = remap(angleCosine.acos(), 0, Math.PI, texelInset.x, float(1).sub(texelInset.x));
+      spotAttenuation = this._iesTextureNode.sample(vec2(tiltAngle, twistAngle)).level(0).r;
+    } else {
+      spotAttenuation = super.getSpotAttenuation(builder, angleCosine);
+    }
+    return spotAttenuation;
+  }
+  /**
+   * Overwritten to update the IES spot light texture.
+   *
+   * @param {NodeFrame} frame - A reference to the current node frame.
+   */
+  update(frame) {
+    super.update(frame);
+    if (this._iesTextureNode !== null && this.light.iesMap) {
+      this._iesTextureNode.value = this.light.iesMap;
+    }
+  }
+};
+var LightProbeNode2 = class extends AnalyticLightNode {
+  static get type() {
+    return "LightProbeNode";
+  }
+  /**
+   * Constructs a new light probe node.
+   *
+   * @param {?LightProbe} [light=null] - The light probe.
+   */
+  constructor(light = null) {
+    super(light);
+    const array2 = [];
+    for (let i = 0; i < 9; i++) array2.push(new Vector3());
+    this.lightProbe = uniformArray(array2).setGroup(renderGroup);
+  }
+  /**
+   * Overwritten to updated light probe specific uniforms.
+   *
+   * @param {NodeFrame} frame - A reference to the current node frame.
+   */
+  update(frame) {
+    const { light } = this;
+    super.update(frame);
+    for (let i = 0; i < 9; i++) {
+      this.lightProbe.array[i].copy(light.sh.coefficients[i]).multiplyScalar(light.intensity);
+    }
+  }
+  setup(builder) {
+    const irradiance = getShIrradianceAt(normalWorld, this.lightProbe);
+    builder.context.irradiance.addAssign(irradiance);
+  }
+};
+var sdBox2 = /* @__PURE__ */ Fn(([p2, b2]) => {
+  const d2 = p2.abs().sub(b2);
+  return length(max(d2, 0)).add(min(max(d2.x, d2.y), 0));
+}, { p: "vec2", b: "vec2", return: "float" });
+var ProjectorLightNode2 = class extends SpotLightNode2 {
+  static get type() {
+    return "ProjectorLightNode";
+  }
+  update(frame) {
+    super.update(frame);
+    const light = this.light;
+    this.penumbraCosNode.value = Math.min(Math.cos(light.angle * (1 - light.penumbra)), 0.99999);
+    if (light.aspect === null) {
+      let aspect2 = 1;
+      if (light.map !== null) {
+        aspect2 = light.map.width / light.map.height;
+      }
+      light.shadow.aspect = aspect2;
+    } else {
+      light.shadow.aspect = light.aspect;
+    }
+  }
+  /**
+   * Overwrites the default implementation to compute projection attenuation.
+   *
+   * @param {NodeBuilder} builder - The node builder.
+   * @return {Node<float>} The spot attenuation.
+   */
+  getSpotAttenuation(builder) {
+    const attenuation = float(0);
+    const penumbraCos = this.penumbraCosNode;
+    const spotLightCoord = lightShadowMatrix(this.light).mul(builder.context.positionWorld || positionWorld);
+    If(spotLightCoord.w.greaterThan(0), () => {
+      const projectionUV = spotLightCoord.xyz.div(spotLightCoord.w);
+      const boxDist = sdBox2(projectionUV.xy.sub(vec2(0.5)), vec2(0.5));
+      const angleFactor = div(-1, sub(1, acos(penumbraCos)).sub(1));
+      attenuation.assign(saturate(boxDist.mul(-2).mul(angleFactor)));
+    });
+    return attenuation;
+  }
+};
+var _matrix43 = /* @__PURE__ */ new Matrix4();
+var _ltcLib2 = null;
+var RectAreaLightNode2 = class extends AnalyticLightNode {
+  static get type() {
+    return "RectAreaLightNode";
+  }
+  /**
+   * Constructs a new rect area light node.
+   *
+   * @param {?RectAreaLight} [light=null] - The rect area light source.
+   */
+  constructor(light = null) {
+    super(light);
+    this.halfHeight = uniform(new Vector3()).setGroup(renderGroup);
+    this.halfWidth = uniform(new Vector3()).setGroup(renderGroup);
+    this.updateType = NodeUpdateType.RENDER;
+  }
+  /**
+   * Overwritten to updated rect area light specific uniforms.
+   *
+   * @param {NodeFrame} frame - A reference to the current node frame.
+   */
+  update(frame) {
+    super.update(frame);
+    const { light } = this;
+    _matrix43.extractRotation(light.matrixWorld);
+    this.halfWidth.value.set(light.width * 0.5, 0, 0);
+    this.halfHeight.value.set(0, light.height * 0.5, 0);
+    this.halfWidth.value.applyMatrix4(_matrix43);
+    this.halfHeight.value.applyMatrix4(_matrix43);
+  }
+  setupDirectRectArea(builder) {
+    let ltc_1, ltc_2;
+    if (builder.isAvailable("float32Filterable")) {
+      ltc_1 = texture(_ltcLib2.LTC_FLOAT_1);
+      ltc_2 = texture(_ltcLib2.LTC_FLOAT_2);
+    } else {
+      ltc_1 = texture(_ltcLib2.LTC_HALF_1);
+      ltc_2 = texture(_ltcLib2.LTC_HALF_2);
+    }
+    const { colorNode, light } = this;
+    const lightPosition2 = lightViewPosition(light);
+    const halfWidth = cameraViewMatrix.mul(vec4(this.halfWidth, 0)).xyz;
+    const halfHeight = cameraViewMatrix.mul(vec4(this.halfHeight, 0)).xyz;
+    return {
+      lightColor: colorNode,
+      lightPosition: lightPosition2,
+      halfWidth,
+      halfHeight,
+      ltc_1,
+      ltc_2
+    };
+  }
+  /**
+   * Used to configure the internal BRDF approximation texture data.
+   *
+   * @param {RectAreaLightTexturesLib} ltc - The BRDF approximation texture data.
+   */
+  static setLTC(ltc) {
+    _ltcLib2 = ltc;
+  }
+};
+var NodeFunction2 = class {
+  /**
+   * Constructs a new node function.
+   *
+   * @param {string} type - The node type. This type is the return type of the node function.
+   * @param {Array<NodeFunctionInput>} inputs - The function's inputs.
+   * @param {string} [name=''] - The function's name.
+   * @param {string} [precision=''] - The precision qualifier.
+   */
+  constructor(type, inputs, name = "", precision = "") {
+    this.type = type;
+    this.inputs = inputs;
+    this.name = name;
+    this.precision = precision;
+  }
+  /**
+   * This method returns the native code of the node function.
+   *
+   * @abstract
+   * @param {string} name - The function's name.
+   * @return {string} A shader code.
+   */
+  getCode() {
+    warn("Abstract function.");
+  }
+};
+NodeFunction2.isNodeFunction = true;
+var _shadowSide2 = { [FrontSide]: BackSide, [BackSide]: FrontSide, [DoubleSide]: DoubleSide };
+var glslPolyfills2 = {
+  textureGather: new CodeNode(
+    /* glsl */
+    `
+vec4 tsl_textureGather( const int comp, sampler2D map, vec2 coord, ivec2 offset, bool flipY ) {
+	if ( flipY ) offset.y = - offset.y;
+	vec2 size = vec2( textureSize( map, 0 ) );
+	vec2 st = floor( coord * size + vec2( offset ) - 0.5 );
+	vec4 ij = vec4( st + 0.5, st + 1.5 ) / size.xyxy;
+	vec4 ret = vec4(
+		textureLod( map, ij.xw, 0.0 )[ comp ],
+		textureLod( map, ij.zw, 0.0 )[ comp ],
+		textureLod( map, ij.zy, 0.0 )[ comp ],
+		textureLod( map, ij.xy, 0.0 )[ comp ]
+	);
+	return flipY ? ret.wzyx : ret;
+}
+`
+  ),
+  textureGatherArray: new CodeNode(
+    /* glsl */
+    `
+vec4 tsl_textureGather_array( const int comp, sampler2DArray map, vec3 coord, ivec2 offset, bool flipY ) {
+	if ( flipY ) offset.y = - offset.y;
+	vec2 size = vec2( textureSize( map, 0 ).xy );
+	vec2 st = floor( coord.xy * size + vec2( offset ) - 0.5 );
+	vec4 ij = vec4( st + 0.5, st + 1.5 ) / size.xyxy;
+	vec4 ret = vec4(
+		textureLod( map, vec3( ij.xw, coord.z ), 0.0 )[ comp ],
+		textureLod( map, vec3( ij.zw, coord.z ), 0.0 )[ comp ],
+		textureLod( map, vec3( ij.zy, coord.z ), 0.0 )[ comp ],
+		textureLod( map, vec3( ij.xy, coord.z ), 0.0 )[ comp ]
+	);
+	return flipY ? ret.wzyx : ret;
+}
+`
+  ),
+  textureGatherCompare: new CodeNode(
+    /* glsl */
+    `
+vec4 tsl_textureGatherCompare( sampler2DShadow map, vec2 coord, ivec2 offset, float ref, bool flipY ) {
+	if ( flipY ) offset.y = - offset.y;
+	vec2 size = vec2( textureSize( map, 0 ) );
+	vec2 st = floor( coord * size + vec2( offset ) - 0.5 );
+	vec4 ij = vec4( st + 0.5, st + 1.5 ) / size.xyxy;
+	vec4 ret = vec4(
+		textureLod( map, vec3( ij.xw, ref ), 0.0 ),
+		textureLod( map, vec3( ij.zw, ref ), 0.0 ),
+		textureLod( map, vec3( ij.zy, ref ), 0.0 ),
+		textureLod( map, vec3( ij.xy, ref ), 0.0 )
+	);
+	return flipY ? ret.wzyx : ret;
+}
+`
+  ),
+  textureGatherCompareArray: new CodeNode(
+    /* glsl */
+    `
+vec4 tsl_textureGatherCompare_array( sampler2DArrayShadow map, vec3 coord, ivec2 offset, float ref, bool flipY ) {
+	if ( flipY ) offset.y = - offset.y;
+	vec2 size = vec2( textureSize( map, 0 ).xy );
+	vec2 st = floor( coord.xy * size + vec2( offset ) - 0.5 );
+	vec4 ij = vec4( st + 0.5, st + 1.5 ) / size.xyxy;
+	vec4 ret = vec4(
+		texture( map, vec4( ij.xw, coord.z, ref ) ),
+		texture( map, vec4( ij.zw, coord.z, ref ) ),
+		texture( map, vec4( ij.zy, coord.z, ref ) ),
+		texture( map, vec4( ij.xy, coord.z, ref ) )
+	);
+	return flipY ? ret.wzyx : ret;
+}
+`
+  ),
+  floatpack_snorm_4x8: new CodeNode(
+    /* glsl */
+    "uint tsl_packSnorm4x8( vec4 v ) { uvec4 u = uvec4( ivec4( round( clamp( v, -1.0, 1.0 ) * 127.0 ) ) & 0xff ); return u.x | u.y << 8 | u.z << 16 | u.w << 24; }"
+  ),
+  floatpack_unorm_4x8: new CodeNode(
+    /* glsl */
+    "uint tsl_packUnorm4x8( vec4 v ) { uvec4 u = uvec4( round( clamp( v, 0.0, 1.0 ) * 255.0 ) ); return u.x | u.y << 8 | u.z << 16 | u.w << 24; }"
+  ),
+  floatunpack_snorm_4x8: new CodeNode(
+    /* glsl */
+    "vec4 tsl_unpackSnorm4x8( uint x ) { return max( vec4( ivec4( x << 24, x << 16, x << 8, x ) >> 24 ) / 127.0, -1.0 ); }"
+  ),
+  floatunpack_unorm_4x8: new CodeNode(
+    /* glsl */
+    "vec4 tsl_unpackUnorm4x8( uint x ) { return vec4( uvec4( x, x >> 8, x >> 16, x >> 24 ) & 0xffu ) / 255.0; }"
+  )
+};
+var GPUShaderStage2 = typeof self !== "undefined" && self.GPUShaderStage ? self.GPUShaderStage : { VERTEX: 1, FRAGMENT: 2, COMPUTE: 4 };
+var GPUBindGroupDescriptor2 = class {
+  constructor() {
+    this.label = "";
+    this.layout = null;
+    this.entries = [];
+  }
+  /**
+   * Resets the descriptor to its default state. The internal `entries` array
+   * is emptied without releasing its backing storage.
+   */
+  reset() {
+    this.label = "";
+    this.layout = null;
+    this.entries.length = 0;
+  }
+};
+var GPUBufferDescriptor2 = class {
+  constructor() {
+    this.label = "";
+    this.size = 0;
+    this.usage = 0;
+    this.mappedAtCreation = false;
+  }
+  /**
+   * Resets the descriptor to its default state.
+   */
+  reset() {
+    this.label = "";
+    this.size = 0;
+    this.usage = 0;
+    this.mappedAtCreation = false;
+  }
+};
+var GPUCommandEncoderDescriptor2 = class {
+  constructor() {
+    this.label = "";
+  }
+  /**
+   * Resets the descriptor to its default state.
+   */
+  reset() {
+    this.label = "";
+  }
+};
+var GPURenderBundleEncoderDescriptor2 = class {
+  constructor() {
+    this.label = "";
+    this.colorFormats = null;
+    this.depthStencilFormat = void 0;
+    this.sampleCount = 1;
+    this.depthReadOnly = false;
+    this.stencilReadOnly = false;
+  }
+  /**
+   * Resets the descriptor to its default state.
+   */
+  reset() {
+    this.label = "";
+    this.colorFormats = null;
+    this.depthStencilFormat = void 0;
+    this.sampleCount = 1;
+    this.depthReadOnly = false;
+    this.stencilReadOnly = false;
+  }
+};
+var GPURenderPassColorAttachment2 = class {
+  constructor() {
+    this.view = null;
+    this.depthSlice = void 0;
+    this.resolveTarget = void 0;
+    this.clearValue = void 0;
+    this.loadOp = void 0;
+    this.storeOp = void 0;
+  }
+  /**
+   * Resets the descriptor to its default state.
+   */
+  reset() {
+    this.view = null;
+    this.depthSlice = void 0;
+    this.resolveTarget = void 0;
+    this.clearValue = void 0;
+    this.loadOp = void 0;
+    this.storeOp = void 0;
+  }
+};
+var GPURenderPassDescriptor2 = class {
+  constructor() {
+    this.label = "";
+    this.colorAttachments = [];
+    this.depthStencilAttachment = void 0;
+    this.occlusionQuerySet = void 0;
+    this.timestampWrites = void 0;
+    this.maxDrawCount = 5e7;
+  }
+  /**
+   * Resets the descriptor to its default state. The internal `colorAttachments`
+   * array is emptied without releasing its backing storage.
+   */
+  reset() {
+    this.label = "";
+    this.colorAttachments.length = 0;
+    this.depthStencilAttachment = void 0;
+    this.occlusionQuerySet = void 0;
+    this.timestampWrites = void 0;
+    this.maxDrawCount = 5e7;
+  }
+};
+var GPURenderPipelineDescriptor2 = class {
+  constructor() {
+    this.label = "";
+    this.layout = null;
+    this.vertex = null;
+    this.primitive = {};
+    this.depthStencil = void 0;
+    this.multisample = new GPUMultisampleState2();
+    this.fragment = null;
+  }
+  /**
+   * Resets the descriptor to its default state.
+   */
+  reset() {
+    this.label = "";
+    this.layout = null;
+    this.vertex = null;
+    this.primitive = {};
+    this.depthStencil = void 0;
+    this.multisample.reset();
+    this.fragment = null;
+  }
+};
+var GPUMultisampleState2 = class {
+  constructor() {
+    this.count = 1;
+    this.mask = 4294967295;
+    this.alphaToCoverageEnabled = false;
+  }
+  /**
+   * Resets the state to its default values.
+   */
+  reset() {
+    this.count = 1;
+    this.mask = 4294967295;
+    this.alphaToCoverageEnabled = false;
+  }
+};
+var GPUShaderModuleDescriptor2 = class {
+  constructor() {
+    this.label = "";
+    this.code = "";
+    this.compilationHints = [];
+  }
+  /**
+   * Resets the descriptor to its default state.
+   */
+  reset() {
+    this.label = "";
+    this.code = "";
+    this.compilationHints.length = 0;
+  }
+};
+var GPUTextureDescriptor2 = class {
+  constructor() {
+    this.label = "";
+    this.size = { width: 0, height: 1, depthOrArrayLayers: 1 };
+    this.mipLevelCount = 1;
+    this.sampleCount = 1;
+    this.dimension = "2d";
+    this.format = void 0;
+    this.usage = void 0;
+    this.viewFormats = [];
+    this.textureBindingViewDimension = void 0;
+  }
+  /**
+   * Resets the descriptor to its default state.
+   */
+  reset() {
+    this.label = "";
+    this.size.width = 0;
+    this.size.height = 1;
+    this.size.depthOrArrayLayers = 1;
+    this.mipLevelCount = 1;
+    this.sampleCount = 1;
+    this.dimension = "2d";
+    this.format = void 0;
+    this.usage = void 0;
+    this.viewFormats.length = 0;
+    this.textureBindingViewDimension = void 0;
+  }
+};
+var GPUTextureViewDescriptor2 = class {
+  constructor() {
+    this.label = "";
+    this.format = void 0;
+    this.dimension = void 0;
+    this.usage = 0;
+    this.aspect = "all";
+    this.baseMipLevel = 0;
+    this.mipLevelCount = void 0;
+    this.baseArrayLayer = 0;
+    this.arrayLayerCount = void 0;
+    this.swizzle = "rgba";
+  }
+  /**
+   * Resets the descriptor to its default state.
+   */
+  reset() {
+    this.label = "";
+    this.format = void 0;
+    this.dimension = void 0;
+    this.usage = 0;
+    this.aspect = "all";
+    this.baseMipLevel = 0;
+    this.mipLevelCount = void 0;
+    this.baseArrayLayer = 0;
+    this.arrayLayerCount = void 0;
+    this.swizzle = "rgba";
+  }
+};
+var _bindGroupDescriptor$12 = new GPUBindGroupDescriptor2();
+var _bufferDescriptor$52 = new GPUBufferDescriptor2();
+var _commandEncoderDescriptor$42 = new GPUCommandEncoderDescriptor2();
+var _renderBundleEncoderDescriptor$12 = new GPURenderBundleEncoderDescriptor2();
+var _renderPassDescriptor2 = new GPURenderPassDescriptor2();
+var _renderPipelineDescriptor$12 = new GPURenderPipelineDescriptor2();
+var _colorAttachment2 = new GPURenderPassColorAttachment2();
+var _shaderModuleDescriptor$12 = new GPUShaderModuleDescriptor2();
+var _textureDescriptor$22 = new GPUTextureDescriptor2();
+var _viewDescriptor$22 = new GPUTextureViewDescriptor2();
+var GPUSamplerDescriptor2 = class {
+  constructor() {
+    this.label = "";
+    this.addressModeU = "clamp-to-edge";
+    this.addressModeV = "clamp-to-edge";
+    this.addressModeW = "clamp-to-edge";
+    this.magFilter = "nearest";
+    this.minFilter = "nearest";
+    this.mipmapFilter = "nearest";
+    this.lodMinClamp = 0;
+    this.lodMaxClamp = 32;
+    this.compare = void 0;
+    this.maxAnisotropy = 1;
+  }
+  /**
+   * Resets the descriptor to its default state.
+   */
+  reset() {
+    this.label = "";
+    this.addressModeU = "clamp-to-edge";
+    this.addressModeV = "clamp-to-edge";
+    this.addressModeW = "clamp-to-edge";
+    this.magFilter = "nearest";
+    this.minFilter = "nearest";
+    this.mipmapFilter = "nearest";
+    this.lodMinClamp = 0;
+    this.lodMaxClamp = 32;
+    this.compare = void 0;
+    this.maxAnisotropy = 1;
+  }
+};
+var GPUTexelCopyTextureInfo2 = class {
+  constructor() {
+    this.texture = null;
+    this.mipLevel = 0;
+    this.origin = { x: 0, y: 0, z: 0 };
+    this.aspect = "all";
+  }
+  /**
+   * Resets the descriptor to its default state.
+   */
+  reset() {
+    this.texture = null;
+    this.mipLevel = 0;
+    this.origin.x = 0;
+    this.origin.y = 0;
+    this.origin.z = 0;
+    this.aspect = "all";
+  }
+};
+var GPUTexelCopyBufferInfo2 = class {
+  constructor() {
+    this.buffer = null;
+    this.offset = 0;
+    this.bytesPerRow = void 0;
+    this.rowsPerImage = void 0;
+  }
+  /**
+   * Resets the descriptor to its default state.
+   */
+  reset() {
+    this.buffer = null;
+    this.offset = 0;
+    this.bytesPerRow = void 0;
+    this.rowsPerImage = void 0;
+  }
+};
+var GPUTexelCopyBufferLayout2 = class {
+  constructor() {
+    this.offset = 0;
+    this.bytesPerRow = void 0;
+    this.rowsPerImage = void 0;
+  }
+  /**
+   * Resets the descriptor to its default state.
+   */
+  reset() {
+    this.offset = 0;
+    this.bytesPerRow = void 0;
+    this.rowsPerImage = void 0;
+  }
+};
+var GPUCopyExternalImageSourceInfo2 = class {
+  constructor() {
+    this.source = null;
+    this.origin = { x: 0, y: 0 };
+    this.flipY = false;
+  }
+  /**
+   * Resets the descriptor to its default state.
+   */
+  reset() {
+    this.source = null;
+    this.origin.x = 0;
+    this.origin.y = 0;
+    this.flipY = false;
+  }
+};
+var GPUCopyExternalImageDestInfo2 = class extends GPUTexelCopyTextureInfo2 {
+  constructor() {
+    super();
+    this.colorSpace = "srgb";
+    this.premultipliedAlpha = false;
+  }
+  /**
+   * Resets the descriptor to its default state.
+   */
+  reset() {
+    super.reset();
+    this.colorSpace = "srgb";
+    this.premultipliedAlpha = false;
+  }
+};
+var GPUExtent3D2 = class {
+  constructor() {
+    this.width = 0;
+    this.height = 1;
+    this.depthOrArrayLayers = 1;
+  }
+  /**
+   * Resets the descriptor to its default state.
+   */
+  reset() {
+    this.width = 0;
+    this.height = 1;
+    this.depthOrArrayLayers = 1;
+  }
+};
+var _bufferDescriptor$42 = new GPUBufferDescriptor2();
+var _commandEncoderDescriptor$32 = new GPUCommandEncoderDescriptor2();
+var _samplerDescriptor2 = new GPUSamplerDescriptor2();
+var _texelCopyTextureInfo2 = new GPUTexelCopyTextureInfo2();
+var _texelCopyBufferInfo2 = new GPUTexelCopyBufferInfo2();
+var _texelCopyBufferLayout2 = new GPUTexelCopyBufferLayout2();
+var _copyExternalImageSourceInfo2 = new GPUCopyExternalImageSourceInfo2();
+var _copyExternalImageDestInfo2 = new GPUCopyExternalImageDestInfo2();
+var _textureDescriptor$12 = new GPUTextureDescriptor2();
+var _extent3D$12 = new GPUExtent3D2();
+var _compareToWebGPU2 = {
+  [NeverCompare]: "never",
+  [LessCompare]: "less",
+  [EqualCompare]: "equal",
+  [LessEqualCompare]: "less-equal",
+  [GreaterCompare]: "greater",
+  [GreaterEqualCompare]: "greater-equal",
+  [AlwaysCompare]: "always",
+  [NotEqualCompare]: "not-equal"
+};
+var accessNames2 = {
+  [NodeAccess.READ_ONLY]: "read",
+  [NodeAccess.WRITE_ONLY]: "write",
+  [NodeAccess.READ_WRITE]: "read_write"
+};
+var wrapNames2 = {
+  [RepeatWrapping]: "repeat",
+  [ClampToEdgeWrapping]: "clamp",
+  [MirroredRepeatWrapping]: "mirror"
+};
+var gpuShaderStageLib2 = {
+  "vertex": GPUShaderStage2.VERTEX,
+  "fragment": GPUShaderStage2.FRAGMENT,
+  "compute": GPUShaderStage2.COMPUTE
+};
+var wgslPolyfill2 = {
+  tsl_xor: new CodeNode("fn tsl_xor( a : bool, b : bool ) -> bool { return ( a || b ) && !( a && b ); }"),
+  mod_float: new CodeNode("fn tsl_mod_float( x : f32, y : f32 ) -> f32 { return x - y * floor( x / y ); }"),
+  mod_vec2: new CodeNode("fn tsl_mod_vec2( x : vec2f, y : vec2f ) -> vec2f { return x - y * floor( x / y ); }"),
+  mod_vec3: new CodeNode("fn tsl_mod_vec3( x : vec3f, y : vec3f ) -> vec3f { return x - y * floor( x / y ); }"),
+  mod_vec4: new CodeNode("fn tsl_mod_vec4( x : vec4f, y : vec4f ) -> vec4f { return x - y * floor( x / y ); }"),
+  equals_bool: new CodeNode("fn tsl_equals_bool( a : bool, b : bool ) -> bool { return a == b; }"),
+  equals_bvec2: new CodeNode("fn tsl_equals_bvec2( a : vec2f, b : vec2f ) -> vec2<bool> { return vec2<bool>( a.x == b.x, a.y == b.y ); }"),
+  equals_bvec3: new CodeNode("fn tsl_equals_bvec3( a : vec3f, b : vec3f ) -> vec3<bool> { return vec3<bool>( a.x == b.x, a.y == b.y, a.z == b.z ); }"),
+  equals_bvec4: new CodeNode("fn tsl_equals_bvec4( a : vec4f, b : vec4f ) -> vec4<bool> { return vec4<bool>( a.x == b.x, a.y == b.y, a.z == b.z, a.w == b.w ); }"),
+  repeatWrapping_float: new CodeNode("fn tsl_repeatWrapping_float( coord: f32 ) -> f32 { return fract( coord ); }"),
+  mirrorWrapping_float: new CodeNode("fn tsl_mirrorWrapping_float( coord: f32 ) -> f32 { let mirrored = fract( coord * 0.5 ) * 2.0; return 1.0 - abs( 1.0 - mirrored ); }"),
+  clampWrapping_float: new CodeNode("fn tsl_clampWrapping_float( coord: f32 ) -> f32 { return clamp( coord, 0.0, 1.0 ); }"),
+  inverse_mat2: new CodeNode(
+    /* wgsl */
+    `
+fn tsl_inverse_mat2( m : mat2x2<f32> ) -> mat2x2<f32> {
+
+	let det = m[ 0 ][ 0 ] * m[ 1 ][ 1 ] - m[ 0 ][ 1 ] * m[ 1 ][ 0 ];
+
+	return mat2x2<f32>(
+		m[ 1 ][ 1 ], - m[ 0 ][ 1 ],
+		- m[ 1 ][ 0 ], m[ 0 ][ 0 ]
+	) * ( 1.0 / det );
+
+}
+`
+  ),
+  inverse_mat3: new CodeNode(
+    /* wgsl */
+    `
+fn tsl_inverse_mat3( m : mat3x3<f32> ) -> mat3x3<f32> {
+
+	let a00 = m[ 0 ][ 0 ]; let a01 = m[ 0 ][ 1 ]; let a02 = m[ 0 ][ 2 ];
+	let a10 = m[ 1 ][ 0 ]; let a11 = m[ 1 ][ 1 ]; let a12 = m[ 1 ][ 2 ];
+	let a20 = m[ 2 ][ 0 ]; let a21 = m[ 2 ][ 1 ]; let a22 = m[ 2 ][ 2 ];
+
+	let b01 = a22 * a11 - a12 * a21;
+	let b11 = - a22 * a10 + a12 * a20;
+	let b21 = a21 * a10 - a11 * a20;
+
+	let det = a00 * b01 + a01 * b11 + a02 * b21;
+
+	return mat3x3<f32>(
+		b01, ( - a22 * a01 + a02 * a21 ), ( a12 * a01 - a02 * a11 ),
+		b11, ( a22 * a00 - a02 * a20 ), ( - a12 * a00 + a02 * a10 ),
+		b21, ( - a21 * a00 + a01 * a20 ), ( a11 * a00 - a01 * a10 )
+	) * ( 1.0 / det );
+
+}
+`
+  ),
+  inverse_mat4: new CodeNode(
+    /* wgsl */
+    `
+fn tsl_inverse_mat4( m : mat4x4<f32> ) -> mat4x4<f32> {
+
+	let a00 = m[ 0 ][ 0 ]; let a01 = m[ 0 ][ 1 ]; let a02 = m[ 0 ][ 2 ]; let a03 = m[ 0 ][ 3 ];
+	let a10 = m[ 1 ][ 0 ]; let a11 = m[ 1 ][ 1 ]; let a12 = m[ 1 ][ 2 ]; let a13 = m[ 1 ][ 3 ];
+	let a20 = m[ 2 ][ 0 ]; let a21 = m[ 2 ][ 1 ]; let a22 = m[ 2 ][ 2 ]; let a23 = m[ 2 ][ 3 ];
+	let a30 = m[ 3 ][ 0 ]; let a31 = m[ 3 ][ 1 ]; let a32 = m[ 3 ][ 2 ]; let a33 = m[ 3 ][ 3 ];
+
+	let b00 = a00 * a11 - a01 * a10;
+	let b01 = a00 * a12 - a02 * a10;
+	let b02 = a00 * a13 - a03 * a10;
+	let b03 = a01 * a12 - a02 * a11;
+	let b04 = a01 * a13 - a03 * a11;
+	let b05 = a02 * a13 - a03 * a12;
+	let b06 = a20 * a31 - a21 * a30;
+	let b07 = a20 * a32 - a22 * a30;
+	let b08 = a20 * a33 - a23 * a30;
+	let b09 = a21 * a32 - a22 * a31;
+	let b10 = a21 * a33 - a23 * a31;
+	let b11 = a22 * a33 - a23 * a32;
+
+	let det = b00 * b11 - b01 * b10 + b02 * b09 + b03 * b08 - b04 * b07 + b05 * b06;
+
+	return mat4x4<f32>(
+		a11 * b11 - a12 * b10 + a13 * b09,
+		a02 * b10 - a01 * b11 - a03 * b09,
+		a31 * b05 - a32 * b04 + a33 * b03,
+		a22 * b04 - a21 * b05 - a23 * b03,
+		a12 * b08 - a10 * b11 - a13 * b07,
+		a00 * b11 - a02 * b08 + a03 * b07,
+		a32 * b02 - a30 * b05 - a33 * b01,
+		a20 * b05 - a22 * b02 + a23 * b01,
+		a10 * b10 - a11 * b08 + a13 * b06,
+		a01 * b08 - a00 * b10 - a03 * b06,
+		a30 * b04 - a31 * b02 + a33 * b00,
+		a21 * b02 - a20 * b04 - a23 * b00,
+		a11 * b07 - a10 * b09 - a12 * b06,
+		a00 * b09 - a01 * b07 + a02 * b06,
+		a31 * b01 - a30 * b03 - a32 * b00,
+		a20 * b03 - a21 * b01 + a22 * b00
+	) * ( 1.0 / det );
+
+}
+`
+  ),
+  biquadraticTexture: new CodeNode(
+    /* wgsl */
+    `
+fn tsl_biquadraticTexture( map : texture_2d<f32>, coord : vec2f, iRes : vec2u, level : u32 ) -> vec4f {
+
+	let res = vec2f( iRes );
+
+	let uvScaled = coord * res;
+	let uvWrapping = ( ( uvScaled % res ) + res ) % res;
+
+	// https://www.shadertoy.com/view/WtyXRy
+
+	let uv = uvWrapping - 0.5;
+	let iuv = floor( uv );
+	let f = fract( uv );
+
+	let rg1 = textureLoad( map, vec2u( iuv + vec2( 0.5, 0.5 ) ) % iRes, level );
+	let rg2 = textureLoad( map, vec2u( iuv + vec2( 1.5, 0.5 ) ) % iRes, level );
+	let rg3 = textureLoad( map, vec2u( iuv + vec2( 0.5, 1.5 ) ) % iRes, level );
+	let rg4 = textureLoad( map, vec2u( iuv + vec2( 1.5, 1.5 ) ) % iRes, level );
+
+	return mix( mix( rg1, rg2, f.x ), mix( rg3, rg4, f.x ), f.y );
+
+}
+`
+  ),
+  biquadraticTextureArray: new CodeNode(
+    /* wgsl */
+    `
+fn tsl_biquadraticTexture_array( map : texture_2d_array<f32>, coord : vec2f, iRes : vec2u, layer : u32, level : u32 ) -> vec4f {
+
+	let res = vec2f( iRes );
+
+	let uvScaled = coord * res;
+	let uvWrapping = ( ( uvScaled % res ) + res ) % res;
+
+	// https://www.shadertoy.com/view/WtyXRy
+
+	let uv = uvWrapping - 0.5;
+	let iuv = floor( uv );
+	let f = fract( uv );
+
+	let rg1 = textureLoad( map, vec2u( iuv + vec2( 0.5, 0.5 ) ) % iRes, layer, level );
+	let rg2 = textureLoad( map, vec2u( iuv + vec2( 1.5, 0.5 ) ) % iRes, layer, level );
+	let rg3 = textureLoad( map, vec2u( iuv + vec2( 0.5, 1.5 ) ) % iRes, layer, level );
+	let rg4 = textureLoad( map, vec2u( iuv + vec2( 1.5, 1.5 ) ) % iRes, layer, level );
+
+	return mix( mix( rg1, rg2, f.x ), mix( rg3, rg4, f.x ), f.y );
+
+}
+`
+  )
+};
+var diagnostics2 = "";
+if ((typeof navigator !== "undefined" && /Firefox|Deno/g.test(navigator.userAgent)) !== true) {
+  diagnostics2 += "diagnostic( off, derivative_uniformity );\n";
+}
+var _bufferDescriptor$32 = new GPUBufferDescriptor2();
+var _commandEncoderDescriptor$22 = new GPUCommandEncoderDescriptor2();
+var typedArraysToVertexFormatPrefix2 = /* @__PURE__ */ new Map([
+  [Int8Array, ["sint8", "snorm8"]],
+  [Uint8Array, ["uint8", "unorm8"]],
+  [Int16Array, ["sint16", "snorm16"]],
+  [Uint16Array, ["uint16", "unorm16"]],
+  [Int32Array, ["sint32"]],
+  [Uint32Array, ["uint32"]],
+  [Float32Array, ["float32"]]
+]);
+if (typeof Float16Array !== "undefined") {
+  typedArraysToVertexFormatPrefix2.set(Float16Array, ["float16"]);
+}
+var _tail2 = new Uint8Array(4);
+var _bindGroupDescriptor2 = new GPUBindGroupDescriptor2();
+var _bufferDescriptor$22 = new GPUBufferDescriptor2();
+var _viewDescriptor$12 = new GPUTextureViewDescriptor2();
+var GPUComputePipelineDescriptor2 = class {
+  constructor() {
+    this.label = "";
+    this.layout = null;
+    this.compute = null;
+  }
+  /**
+   * Resets the descriptor to its default state.
+   */
+  reset() {
+    this.label = "";
+    this.layout = null;
+    this.compute = null;
+  }
+};
+var GPUPipelineLayoutDescriptor2 = class {
+  constructor() {
+    this.label = "";
+    this.bindGroupLayouts = null;
+  }
+  /**
+   * Resets the descriptor to its default state.
+   */
+  reset() {
+    this.label = "";
+    this.bindGroupLayouts = null;
+  }
+};
+var _computePipelineDescriptor2 = new GPUComputePipelineDescriptor2();
+var _pipelineLayoutDescriptor2 = new GPUPipelineLayoutDescriptor2();
+var _renderBundleEncoderDescriptor2 = new GPURenderBundleEncoderDescriptor2();
+var _renderPipelineDescriptor2 = new GPURenderPipelineDescriptor2();
+var GPUQuerySetDescriptor2 = class {
+  constructor() {
+    this.label = "";
+    this.type = void 0;
+    this.count = 0;
+  }
+  /**
+   * Resets the descriptor to its default state.
+   */
+  reset() {
+    this.label = "";
+    this.type = void 0;
+    this.count = 0;
+  }
+};
+var _bufferDescriptor$12 = new GPUBufferDescriptor2();
+var _commandEncoderDescriptor$12 = new GPUCommandEncoderDescriptor2();
+var _querySetDescriptor$12 = new GPUQuerySetDescriptor2();
+var GPUComputePassDescriptor2 = class {
+  constructor() {
+    this.label = "";
+    this.timestampWrites = void 0;
+  }
+  /**
+   * Resets the descriptor to its default state.
+   */
+  reset() {
+    this.label = "";
+    this.timestampWrites = void 0;
+  }
+};
+var GPURenderPassTimestampWrites2 = class {
+  constructor() {
+    this.querySet = null;
+    this.beginningOfPassWriteIndex = void 0;
+    this.endOfPassWriteIndex = void 0;
+  }
+  /**
+   * Resets the descriptor to its default state.
+   */
+  reset() {
+    this.querySet = null;
+    this.beginningOfPassWriteIndex = void 0;
+    this.endOfPassWriteIndex = void 0;
+  }
+};
+var _bufferDescriptor2 = new GPUBufferDescriptor2();
+var _commandEncoderDescriptor2 = new GPUCommandEncoderDescriptor2();
+var _computePassDescriptor2 = new GPUComputePassDescriptor2();
+var _querySetDescriptor2 = new GPUQuerySetDescriptor2();
+var _shaderModuleDescriptor2 = new GPUShaderModuleDescriptor2();
+var _renderPassTimestampWrites2 = new GPURenderPassTimestampWrites2();
+var _texelCopyTextureInfoSrc2 = new GPUTexelCopyTextureInfo2();
+var _texelCopyTextureInfoDst2 = new GPUTexelCopyTextureInfo2();
+var _textureDescriptor2 = new GPUTextureDescriptor2();
+var _viewDescriptor2 = new GPUTextureViewDescriptor2();
+var _extent3D2 = new GPUExtent3D2();
+var IESSpotLight2 = class extends SpotLight {
+  /**
+   * Constructs a new IES spot light.
+   *
+   * @param {(number|Color|string)} [color=0xffffff] - The light's color.
+   * @param {number} [intensity=1] - The light's strength/intensity measured in candela (cd).
+   * @param {number} [distance=0] - Maximum range of the light. `0` means no limit.
+   * @param {number} [angle=Math.PI/3] - Maximum angle of light dispersion from its direction whose upper bound is `Math.PI/2`.
+   * @param {number} [penumbra=0] - Percent of the spotlight cone that is attenuated due to penumbra. Value range is `[0,1]`.
+   * @param {number} [decay=2] - The amount the light dims along the distance of the light.
+   */
+  constructor(color2, intensity, distance2, angle, penumbra, decay) {
+    super(color2, intensity, distance2, angle, penumbra, decay);
+    this.iesMap = null;
+  }
+  copy(source, recursive) {
+    super.copy(source, recursive);
+    this.iesMap = source.iesMap;
+    return this;
+  }
+};
+var ProjectorLight2 = class extends SpotLight {
+  /**
+   * Constructs a new projector light.
+   *
+   * @param {(number|Color|string)} [color=0xffffff] - The light's color.
+   * @param {number} [intensity=1] - The light's strength/intensity measured in candela (cd).
+   * @param {number} [distance=0] - Maximum range of the light. `0` means no limit.
+   * @param {number} [angle=Math.PI/3] - Maximum angle of light dispersion from its direction whose upper bound is `Math.PI/2`.
+   * @param {number} [penumbra=0] - Percent of the spotlight cone that is attenuated due to penumbra. Value range is `[0,1]`.
+   * @param {number} [decay=2] - The amount the light dims along the distance of the light.
+   */
+  constructor(color2, intensity, distance2, angle, penumbra, decay) {
+    super(color2, intensity, distance2, angle, penumbra, decay);
+    this.aspect = null;
+  }
+  copy(source, recursive) {
+    super.copy(source, recursive);
+    this.aspect = source.aspect;
+    return this;
+  }
+};
+PointLight.registerNode(PointLightNode);
+DirectionalLight.registerNode(DirectionalLightNode2);
+RectAreaLight.registerNode(RectAreaLightNode2);
+SpotLight.registerNode(SpotLightNode2);
+AmbientLight.registerNode(AmbientLightNode2);
+HemisphereLight.registerNode(HemisphereLightNode2);
+LightProbe.registerNode(LightProbeNode2);
+IESSpotLight2.registerNode(IESSpotLightNode2);
+ProjectorLight2.registerNode(ProjectorLightNode2);
+PointLight.registerNode(PointLightNode);
+DirectionalLight.registerNode(DirectionalLightNode2);
+RectAreaLight.registerNode(RectAreaLightNode2);
+SpotLight.registerNode(SpotLightNode2);
+AmbientLight.registerNode(AmbientLightNode2);
+HemisphereLight.registerNode(HemisphereLightNode2);
+LightProbe.registerNode(LightProbeNode2);
+IESSpotLight2.registerNode(IESSpotLightNode2);
+ProjectorLight2.registerNode(ProjectorLightNode2);
+
+// ../../../spiralcells-lichtwerk-lichtgrund/werkzeuge/neu/node_modules/three/examples/jsm/controls/OrbitControls.js
 var _changeEvent = { type: "change" };
 var _startEvent = { type: "start" };
 var _endEvent = { type: "end" };
@@ -68549,7 +69908,7 @@ function interceptControlUp(event) {
   }
 }
 
-// node_modules/@dgreenheck/ez-tree/build/ez-tree.es.js
+// ../../../spiralcells-lichtwerk-lichtgrund/werkzeuge/neu/node_modules/@dgreenheck/ez-tree/build/ez-tree.es.js
 var F = Object.defineProperty;
 var n = (D, C3, A) => C3 in D ? F(D, C3, { enumerable: true, configurable: true, writable: true, value: A }) : D[C3] = A;
 var N2 = (D, C3, A) => n(D, typeof C3 != "symbol" ? C3 + "" : C3, A);
@@ -71019,7 +72378,7 @@ var DE = class extends Group {
   }
 };
 
-// node_modules/three/examples/jsm/utils/BufferGeometryUtils.js
+// ../../../spiralcells-lichtwerk-lichtgrund/werkzeuge/neu/node_modules/three/examples/jsm/utils/BufferGeometryUtils.js
 function mergeGeometries(geometries, useGroups = false) {
   const isIndexed = geometries[0].index !== null;
   const attributesUsed = new Set(Object.keys(geometries[0].attributes));
@@ -71233,7 +72592,7 @@ function toTrianglesDrawMode(geometry, drawMode) {
   }
 }
 
-// node_modules/three/examples/jsm/utils/SkeletonUtils.js
+// ../../../spiralcells-lichtwerk-lichtgrund/werkzeuge/neu/node_modules/three/examples/jsm/utils/SkeletonUtils.js
 function clone(source) {
   const sourceLookup = /* @__PURE__ */ new Map();
   const cloneLookup = /* @__PURE__ */ new Map();
@@ -71263,7 +72622,7 @@ function parallelTraverse(a2, b2, callback) {
   }
 }
 
-// node_modules/three/examples/jsm/loaders/GLTFLoader.js
+// ../../../spiralcells-lichtwerk-lichtgrund/werkzeuge/neu/node_modules/three/examples/jsm/loaders/GLTFLoader.js
 var GLTFLoader = class extends Loader {
   /**
    * Constructs a new glTF loader.
@@ -73879,7 +75238,7 @@ function addPrimitiveAttributes(geometry, primitiveDef, parser) {
   });
 }
 
-// node_modules/three/examples/jsm/loaders/HDRLoader.js
+// ../../../spiralcells-lichtwerk-lichtgrund/werkzeuge/neu/node_modules/three/examples/jsm/loaders/HDRLoader.js
 var HDRLoader = class extends DataTextureLoader {
   /**
       * Constructs a new RGBE/HDR loader.
@@ -74236,6 +75595,22 @@ function bestand(graph) {
   const monde = [];
   for (const w of g.works) {
     const p2 = proWerk.get(w.id), fs = p2.fassungen.slice().sort((a2, b2) => ms(a2.created_at) - ms(b2.created_at));
+    const lage2 = /* @__PURE__ */ new Map();
+    if (fs.some((v3) => v3.fundus)) {
+      const belegt = (v3) => v3.fundus && v3.fundus.sortierung ? ms(v3.fundus.sortierung) || null : null;
+      fs.sort((a2, b2) => {
+        const x = belegt(a2), y = belegt(b2);
+        return x != null && y != null ? x - y || ms(a2.created_at) - ms(b2.created_at) : x != null ? -1 : y != null ? 1 : 0;
+      });
+      let letzte = 0, rang = 0;
+      for (const v3 of fs) {
+        const t2 = belegt(v3);
+        if (t2 != null) {
+          letzte = t2;
+          lage2.set(v3.id, { zeit: t2, saum: false });
+        } else lage2.set(v3.id, { zeit: letzte + ++rang, saum: true });
+      }
+    }
     let keimIds = new Set(fs.filter((v3) => briefing.has(v3.id)).map((v3) => v3.id));
     if (keimIds.size) {
       const keimBaeume = new Set(fs.filter((v3) => keimIds.has(v3.id)).map((v3) => v3.worktree_id));
@@ -74251,7 +75626,10 @@ function bestand(graph) {
         id: v3.id,
         fassung: v3,
         stimme: stimmeVon(A.get(v3.author_id)),
-        zeit: ms(v3.created_at),
+        zeit: lage2.has(v3.id) ? lage2.get(v3.id).zeit : ms(v3.created_at),
+        saum: lage2.has(v3.id) && lage2.get(v3.id).saum,
+        zeitSatz: v3.fundus && v3.fundus.zeit && v3.fundus.zeit !== "offen" ? menschlich(v3.fundus.zeit) : null,
+        // die belegte Zeit als Satz, ohne erfundene Uhrzeit
         // ein Form-Korn: kein Status, der anderswo gesetzt wurde, und Licht nach dem sichtbaren Wortlaut, nicht nach den Bytes der Seite
         status: form ? "entwurf" : v3.status || "entwurf",
         laenge: form ? sichtbarerText(v3.content).length : (v3.content || "").length,
@@ -74680,6 +76058,65 @@ var kS = new Float32Array(SPK);
 var PAPIERC = lin("#f7f5f0");
 var STIELC = lin("#cfc6b4");
 
+// ../../app/js/bezuege.js
+var TYP = {
+  "remixt aus": "remixt-aus",
+  "erweitert": "erweitert",
+  "verweist auf": "verweist-auf",
+  "testet": "testet",
+  "widerspricht": "widerspricht",
+  "geh\xF6rt zu": "geh\xF6rt-zu",
+  "folgt auf": "folgt-auf",
+  "kannte beim Entstehen": "kannte",
+  "stammt aus": "stammt-aus",
+  "baut auf": "baut-auf",
+  "gemeinsamer Bestand": "gemeinsamer-bestand",
+  "wirkt mit in": "wirkt-mit-in",
+  "ist Baustein von": "ist-baustein-von",
+  "bewertet": "bewertet",
+  "Alternative zu": "alternative-zu",
+  "vorgezogen vor": "vorgezogen-vor",
+  "passt zu": "passt-zu"
+};
+var typVon = (art) => TYP[art] || String(art || "").toLowerCase().replace(/\s+/g, "-");
+function werkVonKnoten(g) {
+  const werk = /* @__PURE__ */ new Map();
+  for (const w of g.works || []) werk.set(w.id, w.id);
+  const zweig = new Map((g.worktrees || []).map((t2) => [t2.id, t2.work_id]));
+  for (const v3 of g.variants || []) {
+    const w = zweig.get(v3.worktree_id);
+    if (w) werk.set(v3.id, w);
+  }
+  const kanten = g.fundus && g.fundus.kanten || [];
+  for (let runde = 0; runde < 6; runde++) {
+    let neu = 0;
+    for (const k2 of kanten) {
+      if (!k2.gespeichert || k2.form !== "A") continue;
+      if (!werk.has(k2.von) && werk.has(k2.zu) && ["stammt aus", "geh\xF6rt zu", "betrifft"].includes(k2.art)) {
+        werk.set(k2.von, werk.get(k2.zu));
+        neu++;
+      }
+    }
+    if (!neu) break;
+  }
+  return werk;
+}
+function fundusBezuege(g) {
+  if (!g || !g.fundus || !Array.isArray(g.fundus.kanten)) return [];
+  const werk = werkVonKnoten(g), varianten = new Set((g.variants || []).map((v3) => v3.id)), raus = [];
+  for (const k2 of g.fundus.kanten) {
+    const a2 = werk.get(k2.von), b2 = werk.get(k2.zu);
+    if (a2 == null || b2 == null || a2 === b2) continue;
+    if (k2.gespeichert) {
+      if (Array.isArray(k2.relation) && k2.relation[0] === "B" && varianten.has(k2.von) && varianten.has(k2.zu)) continue;
+      raus.push({ von: a2, nach: b2, art: k2.art, typ: typVon(k2.art), gespeichert: true, knotenVon: k2.von, knotenZu: k2.zu, schluessel: JSON.stringify(k2.relation) });
+    } else {
+      raus.push({ von: a2, nach: b2, art: k2.art, typ: "nahe", grund: k2.art, gespeichert: false, knotenVon: k2.von, knotenZu: k2.zu, schluessel: [k2.von, k2.zu, k2.art].join("|") });
+    }
+  }
+  return raus;
+}
+
 // ../../app/js/ordnung.js
 var GOLD3 = 137.50776 * Math.PI / 180;
 function werkSchluessel(w) {
@@ -75105,9 +76542,9 @@ function pflanzen(N4) {
     const leg = (art2, a2, b2, breite, c, wann) => I.push(o2[0], o2[2], ty, n2, a2[0], a2[1], a2[2], art2, b2[0], b2[1], b2[2], breite, c[0], c[1], c[2], wann, a2[0], a2[2]);
     const kurve = (a2, b2, biegung, b0, b1, c, wann) => {
       let vor = a2;
-      const teile = 4, qx = (b2[2] - a2[2]) * biegung, qz = (a2[0] - b2[0]) * biegung;
-      for (let s = 1; s <= teile; s++) {
-        const t2 = s / teile, w = Math.sin(Math.PI * t2), q2 = [mix2(a2[0], b2[0], t2) + qx * w, mix2(a2[1], b2[1], t2), mix2(a2[2], b2[2], t2) + qz * w];
+      const teile2 = 4, qx = (b2[2] - a2[2]) * biegung, qz = (a2[0] - b2[0]) * biegung;
+      for (let s = 1; s <= teile2; s++) {
+        const t2 = s / teile2, w = Math.sin(Math.PI * t2), q2 = [mix2(a2[0], b2[0], t2) + qx * w, mix2(a2[1], b2[1], t2), mix2(a2[2], b2[2], t2) + qz * w];
         leg(STIEL, vor, q2, mix2(b0, b1, t2), c, wann);
         vor = q2;
       }
@@ -75301,10 +76738,10 @@ function bauteile(W2, zahl) {
 function etagen(m, ar = 0.5, hoechstens = 16) {
   const ord2 = m.samen.map((_2, i) => i).sort((a2, b2) => (m.samen[a2].zeit || 0) - (m.samen[b2].zeit || 0)), n2 = ord2.length;
   if (!n2) return [];
-  const F2 = Math.min(n2, hoechstens, Math.max(1, Math.round(1 + (hoechstens - 1) * ar * ar * 1.25))), tag = (t2) => t2 ? new Date(t2).toISOString().slice(0, 10) : "ohne Datum", raus = [];
+  const F2 = Math.min(n2, hoechstens, Math.max(1, Math.round(1 + (hoechstens - 1) * ar * ar * 1.25))), tag = (t2) => t2 ? new Date(t2).toISOString().slice(0, 10) : "ohne Datum", tagS = (s) => s.saum ? "ohne Datum" : tag(s.zeit), raus = [];
   for (let k2 = 0; k2 < F2; k2++) {
     const li = ord2.slice(Math.floor(k2 * n2 / F2), Math.floor((k2 + 1) * n2 / F2));
-    raus.push({ von: tag(m.samen[li[0]].zeit), bis: tag(m.samen[li[li.length - 1]].zeit), fassungen: li });
+    raus.push({ von: tagS(m.samen[li[0]]), bis: tagS(m.samen[li[li.length - 1]]), fassungen: li });
   }
   return raus;
 }
@@ -75543,6 +76980,29 @@ var Netz = class {
       if (e2.usage) f2.verwendung++;
       buendel.set(k2, f2);
     }
+    const vertreter = (id) => {
+      const m = B3.mondVon.get(id);
+      return m ? (m.samen[0] || m.keim[0] || {}).id || null : null;
+    };
+    for (const x of fundusBezuege(B3.roh)) {
+      const a2 = idx.get(x.von), b2 = idx.get(x.nach);
+      if (a2 == null || b2 == null) continue;
+      const fliesst = x.typ === "remixt-aus" || x.typ === "erweitert", von = fliesst ? b2 : a2, nach = fliesst ? a2 : b2, k2 = `${von}>${nach}:${x.typ}`;
+      const e2 = {
+        id: x.schluessel,
+        schluessel: x.schluessel,
+        fundus: true,
+        abgeleitet: !x.gespeichert,
+        edge_type: x.typ,
+        art: x.art,
+        from_variant_id: B3.fassungen.has(x.knotenVon) ? x.knotenVon : vertreter(x.von),
+        to_variant_id: B3.fassungen.has(x.knotenZu) ? x.knotenZu : vertreter(x.nach)
+      };
+      const f2 = buendel.get(k2) || { von, nach, typ: x.typ, kanten: [], verwendung: 0, abgeleitet: !x.gespeichert, gruende: /* @__PURE__ */ new Set() };
+      f2.kanten.push(e2);
+      if (!x.gespeichert) f2.gruende.add(x.grund);
+      buendel.set(k2, f2);
+    }
     this.faeden = [...buendel.values()];
     for (const f2 of this.faeden) f2.kanten.sort((p2, q2) => (q2.usage ? 1 : 0) - (p2.usage ? 1 : 0));
     const bk = (b2) => b2 === "mitte" || b2 === "ohne" ? b2 : "d" + b2, bm = /* @__PURE__ */ new Map();
@@ -75552,6 +77012,7 @@ var Netz = class {
       const a2 = this.bezirk(f2.von), b2 = this.bezirk(f2.nach);
       f2.bzVon = a2;
       f2.bzNach = b2;
+      if (f2.abgeleitet) return;
       if (a2 === b2) {
         this.innen.set(a2, (this.innen.get(a2) || 0) + f2.kanten.length);
         return;
@@ -75617,9 +77078,11 @@ var STIL = {
   // warmes Weiß, nie Gold: Gold bleibt Ralfs Kristallisieren
   "erweitert": { c: WG, a: 0.42, fluss: "material" },
   "verweist-auf": { c: mixc(WG, SILVER, 0.5), a: 0.3, fluss: "zeigt" },
-  "testet": { c: mixc(SILVER, WG, 0.3), a: 0.34, fluss: "zeigt", strich: true },
+  "testet": { c: mixc(SILVER, WG, 0.3), a: 0.34, fluss: "zeigt" },
   "widerspricht": { c: ASCHE, a: 0.4, luecke: true },
-  "geh\xF6rt-zu": { c: SILVER, a: 0.28, strich: true }
+  "geh\xF6rt-zu": { c: SILVER, a: 0.24 },
+  // Gestrichelt ist allein, was berechnet und nie gespeichert ist (Grundgesetz 07.11.)
+  "nahe": { c: mixc(SILVER, WG, 0.5), a: 0.26, strich: true }
 };
 
 // ../../app/js/bauplan.js
@@ -76700,6 +78163,50 @@ function appSource(value) {
   return data?.format === "moonfingers.app-source.v1" && typeof data.summary === "string" && typeof data.scope === "string" && Array.isArray(data.sections) && data.sections.every((section) => section && typeof section.content === "string") ? data : null;
 }
 
+// ../../app/js/auswahl.js
+var lesbar = (v3) => typeof v3 === "string" && /^[a-z0-9-]{1,90}$/.test(v3);
+function mitWerk(hash3, name) {
+  const q2 = new URLSearchParams(String(hash3 || "").replace(/^#/, ""));
+  q2.delete("werk");
+  if (lesbar(name)) q2.set("werk", name);
+  const s = q2.toString();
+  return s ? "#" + s : "";
+}
+function werkAus(hash3) {
+  const q2 = new URLSearchParams(String(hash3 || "").replace(/^#/, "")), alle = q2.getAll("werk");
+  return alle.length === 1 && lesbar(alle[0]) ? alle[0] : null;
+}
+
+// ../../app/js/link.js
+var MONAT = ["jan", "feb", "maerz", "apr", "mai", "juni", "juli", "aug", "sep", "okt", "nov", "dez"];
+function grundname(titel) {
+  const s = String(titel || "").toLowerCase().replace(/ä/g, "ae").replace(/ö/g, "oe").replace(/ü/g, "ue").replace(/ß/g, "ss").normalize("NFKD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+  return s.slice(0, 60).replace(/-+$/, "") || "mond";
+}
+function teile(t2) {
+  const f2 = new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", year: "numeric", month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit", hourCycle: "h23" });
+  const p2 = Object.fromEntries(f2.formatToParts(new Date(t2)).map((x) => [x.type, x.value]));
+  return { tag: `${Number(p2.day)}-${MONAT[Number(p2.month) - 1]}`, zeit: `${p2.hour}${p2.minute}` };
+}
+function namen(monde) {
+  const nachZeit = monde.map((m, i) => ({ i, t: Date.parse(m.werk ? m.werk.created_at : m.created_at) || 0, g: grundname(m.titel ?? m.title) })).sort((a2, b2) => a2.t - b2.t || a2.i - b2.i);
+  const vergeben = /* @__PURE__ */ new Set(), aus = new Array(monde.length);
+  for (const x of nachZeit) {
+    let name = x.g;
+    if (vergeben.has(name)) {
+      const { tag, zeit } = teile(x.t);
+      name = `${x.g}-${tag}`;
+      if (vergeben.has(name)) name = `${x.g}-${tag}-${zeit}`;
+      let k2 = 2;
+      const basis = name;
+      while (vergeben.has(name)) name = `${basis}-${k2++}`;
+    }
+    vergeben.add(name);
+    aus[x.i] = name;
+  }
+  return aus;
+}
+
 // welten.js
 var satz = document.getElementById("satz");
 var namenEl = document.getElementById("namen");
@@ -77075,12 +78582,12 @@ async function streue(datei, zahl, rMin, rMax, gr, schatten, abstand = 1.4, wo =
     gruppe2 = datei;
     datei = "baum" + datei.options.seed;
   }
-  const gltf = { scene: gruppe2 }, teile = [];
+  const gltf = { scene: gruppe2 }, teile2 = [];
   gltf.scene.updateMatrixWorld(true);
   gltf.scene.traverse((o2) => {
-    if (o2.isMesh) teile.push(o2);
+    if (o2.isMesh) teile2.push(o2);
   });
-  if (!teile.length) return 0;
+  if (!teile2.length) return 0;
   const box = new Box3().setFromObject(gltf.scene), hoch = box.max.y - box.min.y || 1, orte = [], M = new Matrix4(), q2 = new Quaternion(), e2 = new Euler();
   let v3 = 0;
   while (orte.length < zahl && v3++ < zahl * 30) {
@@ -77089,7 +78596,7 @@ async function streue(datei, zahl, rMin, rMax, gr, schatten, abstand = 1.4, wo =
     if (bel.some((h2) => (h2.x - x) ** 2 + (h2.z - z2) ** 2 < (abstand + 1.6) ** 2)) continue;
     orte.push([x, wo.flach ? 0 : wo.gruppe && !wo.boden ? 0 : hoehe(x, z2), z2, gr * (0.7 + 0.7 * hash(s + 2)) / hoch, hash(s + 3) * 6.28]);
   }
-  for (const t2 of teile) {
+  for (const t2 of teile2) {
     const I = new InstancedMesh(t2.geometry, t2.material, orte.length);
     t2.material.side = DoubleSide;
     orte.forEach((o2, i) => {
@@ -77963,7 +79470,8 @@ function geheZu(k2) {
     s.e.textContent = s.t;
     namenEl.append(s.e);
   }
-  zeigeSatz(W2.satz, "Ziehen dreht, Rad oder zwei Finger zoomen, Tippen nennt das Werk.");
+  if (gemerkt != null) zeigeGewaehlt(!W2.pos);
+  else zeigeSatz(W2.satz, "Ziehen dreht, Rad oder zwei Finger zoomen, Tippen nennt das Werk.");
 }
 for (const [k2, W2] of Object.entries(WELTEN)) {
   const b2 = document.createElement("button");
@@ -77977,10 +79485,15 @@ addEventListener("keydown", (e2) => {
   if (haus.drin) return;
   for (const [k2, W2] of Object.entries(WELTEN)) if (e2.key === W2.taste) geheZu(k2);
 });
+var zuSeite = document.createElement("a");
+zuSeite.textContent = "Zelle und Text";
+zuSeite.href = "index.html";
+zuSeite.className = "zuseite";
+leiste.append(zuSeite);
 var schilder = [];
 var v2 = new Vector3();
 var wn = /* @__PURE__ */ new Map();
-function namen() {
+function namen2() {
   const b2 = [];
   const nah = jetzt.gruppe.userData.haeuser || [], ab = camera.position.distanceTo(ctl.target);
   const sch = jetzt.gruppe.userData.scheibe;
@@ -78210,6 +79723,32 @@ addEventListener("keydown", (e2) => {
 });
 var gemerkt = null;
 var faeden = null;
+var NAMEN = namen(B2.monde);
+var merkeWerk = (n2) => {
+  gemerkt = n2;
+  try {
+    history.replaceState(null, "", location.pathname + location.search + (n2 != null && NAMEN[n2] ? mitWerk(location.hash, NAMEN[n2]) : ""));
+  } catch (e2) {
+  }
+  zuSeite.href = "index.html" + (n2 != null && NAMEN[n2] ? mitWerk("", NAMEN[n2]) : "");
+};
+function zeigeGewaehlt(blick) {
+  if (gemerkt == null) return;
+  const h2 = (jetzt.gruppe.userData.haeuser || []).find((x) => x.n === gemerkt);
+  if (!h2) return;
+  const fz = zeigeFaeden(gemerkt), tp = jetzt.gruppe.userData.tippe;
+  if (tp && !(jetzt.gruppe.userData.spirale_an || /* @__PURE__ */ new Set()).has(gemerkt)) {
+    tp(h2);
+    (jetzt.gruppe.userData.spirale_an ||= /* @__PURE__ */ new Set()).add(gemerkt);
+  }
+  if (blick) {
+    const d2 = camera.position.clone().sub(ctl.target);
+    ctl.target.set(h2.x, h2.y, h2.z);
+    camera.position.copy(ctl.target).add(d2.setLength(Math.min(d2.length(), Math.max(14, jetzt.gruppe.userData.max * 0.12))));
+  }
+  const f2 = FUNKTIONEN[funktionVon(N3, h2.n)], feld = weltKey === "dorf" ? "name" : weltKey;
+  zeigeSatz(`${f2[feld] || f2.name}: ${h2.titel}`, `Gew\xE4hlt bleibt dieses Werk${fz ? ` \xB7 ${fz} ${fz === 1 ? "Faden" : "F\xE4den"}` : ""}.`);
+}
 function zeigeFaeden(n2) {
   if (faeden) {
     faeden.parent && faeden.parent.remove(faeden);
@@ -78224,9 +79763,13 @@ function zeigeFaeden(n2) {
     if (f2.von !== n2 && f2.nach !== n2) continue;
     const b2 = nach.get(f2.von === n2 ? f2.nach : f2.von);
     if (!b2) continue;
+    const d2 = Math.hypot(a2.x - b2.x, a2.z - b2.z), m = new Vector3((a2.x + b2.x) / 2, Math.max(a2.y, b2.y) + 2 + d2 * 0.22, (a2.z + b2.z) / 2), kurve = new QuadraticBezierCurve3(new Vector3(a2.x, a2.y, a2.z), m, new Vector3(b2.x, b2.y, b2.z));
+    if (f2.abgeleitet) {
+      for (let k2 = 0; k2 < 14; k2++) geos.push(farbeRoh(new TubeGeometry(new LineCurve3(kurve.getPoint(k2 / 14), kurve.getPoint((k2 + 0.5) / 14)), 2, 0.03, 4, false).toNonIndexed(), [0.9, 0.9, 1]));
+      continue;
+    }
     zahl++;
-    const d2 = Math.hypot(a2.x - b2.x, a2.z - b2.z), m = new Vector3((a2.x + b2.x) / 2, Math.max(a2.y, b2.y) + 2 + d2 * 0.22, (a2.z + b2.z) / 2);
-    geos.push(farbeRoh(new TubeGeometry(new QuadraticBezierCurve3(new Vector3(a2.x, a2.y, a2.z), m, new Vector3(b2.x, b2.y, b2.z)), 28, 0.05, 5, false).toNonIndexed(), f2.von === n2 ? [2.6, 2, 1] : [1, 1.8, 2.6]));
+    geos.push(farbeRoh(new TubeGeometry(kurve, 28, 0.05, 5, false).toNonIndexed(), f2.von === n2 ? [2.6, 2, 1] : [1, 1.8, 2.6]));
   }
   if (geos.length) {
     faeden = new Mesh(mergeGeometries(geos), new MeshBasicMaterial({ vertexColors: true, fog: false }));
@@ -78257,11 +79800,10 @@ canvas.addEventListener("pointerup", (e2) => {
   if (beste) {
     const begehbar = ["dorf", "campus", "buero"].includes(weltKey) && beste.zahl && !beste.mat;
     if (begehbar && gemerkt === beste.n) {
-      gemerkt = null;
       hinein(beste.n);
       return;
     }
-    gemerkt = beste.n;
+    merkeWerk(beste.n);
     const fz = zeigeFaeden(beste.n);
     const tp = jetzt.gruppe.userData.tippe;
     if (tp) tp(beste);
@@ -78275,6 +79817,10 @@ addEventListener("resize", () => {
   renderer.setSize(innerWidth, innerHeight);
 });
 if (/werkstatt/.test(location.search)) window.__welten = { seite: (n2) => LG.seite[n2], zeigeFaeden, haus, hinein, hinaus, lies, tippeInnen, karte, E, LGR: LG.R, wege: LG.wege, renderer, camera, ctl, scene, geheZu, WELTEN };
+{
+  const n2 = NAMEN.indexOf(werkAus(location.hash));
+  if (n2 >= 0) merkeWerk(n2);
+}
 geheZu(new URLSearchParams(location.search).get("welt") || "dorf");
 var uhr = new Clock();
 renderer.setAnimationLoop(() => {
@@ -78282,7 +79828,7 @@ renderer.setAnimationLoop(() => {
   ctl.update();
   jetzt.gruppe.userData.tick && jetzt.gruppe.userData.tick(dt);
   pipe.render();
-  namen();
+  namen2();
 });
 /*! Bundled license information:
 
@@ -78294,6 +79840,13 @@ three/build/three.core.js:
    *)
 
 three/build/three.tsl.js:
+  (**
+   * @license
+   * Copyright 2010-2026 Three.js Authors
+   * SPDX-License-Identifier: MIT
+   *)
+
+three/build/three.webgpu.js:
   (**
    * @license
    * Copyright 2010-2026 Three.js Authors

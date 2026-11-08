@@ -20,6 +20,7 @@ import * as B from './bedienung.js';
 import * as schreib from './schreiben.js';
 import * as ankunft from './ankunft.js';
 import * as link from './link.js';
+import {werkAus} from './auswahl.js';
 import {baueAlsformen, fokusZiel} from './verschraenkung.js';
 import {mondBlickSatz, planetBlickSatz, ART} from './alsformen.js';
 import {bindeVaultquellen} from './vault-quellen.js';
@@ -726,7 +727,10 @@ function start(){
   const ziel = WERKSTATT ? {mond: null, von: null} : link.lies(location.hash);
   const seit = WERKSTATT ? null : ankunft.zuletzt(), neu = ankunft.neuSeit(W.B, seit);
   W.neuMonde = neu.zahl ? neu.monde : null; W.N.neu = W.neuMonde;   // im Netz leuchten nur echte Ankünfte
-  const ort = ziel.mond || ziel.von ? linkFahrt(ziel) : null;
+  // Ein gewähltes Werk in der Adresse (#werk=…): im Netz beginnen, das Werk gewählt; jede Welt bleibt daran
+  const werkI = !WERKSTATT && !ziel.mond && W.namen ? W.namen.indexOf(werkAus(location.hash)) : -1;
+  let ort = ziel.mond || ziel.von ? linkFahrt(ziel) : null;
+  if(!ort && werkI >= 0){ U.netK = 1; U.netT = 1; oeffneMond(werkI, {ohneAufzug: true}); zumNetz(); ort = 'netz'; }
   if(!ort){
     let id = null; try{ id = localStorage.getItem(MERK); }catch(e){}
     let i = neu.zahl && neu.juengster ? mondNachId(neu.juengster) : id ? mondNachId(id) : -1;

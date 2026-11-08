@@ -42,7 +42,7 @@ export function bauteile(W, zahl){ const lose = i => W.art[i] === 'frei' || W.ar
 /* Die Etagen eines Werks: unten das Älteste. Ihre Zahl ist die geleistete Arbeit; je Etage die Fassungen eines Zeitabschnitts */
 export function etagen(m, ar = 0.5, hoechstens = 16){
   const ord = m.samen.map((_, i) => i).sort((a, b) => (m.samen[a].zeit || 0) - (m.samen[b].zeit || 0)), n = ord.length; if(!n) return [];
-  const F = Math.min(n, hoechstens, Math.max(1, Math.round(1 + (hoechstens - 1) * ar * ar * 1.25))), tag = t => t ? new Date(t).toISOString().slice(0, 10) : 'ohne Datum', raus = [];
-  for(let k = 0; k < F; k++){ const li = ord.slice(Math.floor(k * n / F), Math.floor((k + 1) * n / F)); raus.push({von: tag(m.samen[li[0]].zeit), bis: tag(m.samen[li[li.length - 1]].zeit), fassungen: li}); }
+  const F = Math.min(n, hoechstens, Math.max(1, Math.round(1 + (hoechstens - 1) * ar * ar * 1.25))), tag = t => t ? new Date(t).toISOString().slice(0, 10) : 'ohne Datum', tagS = s => s.saum ? 'ohne Datum' : tag(s.zeit), raus = [];   // der Saum hat kein Datum
+  for(let k = 0; k < F; k++){ const li = ord.slice(Math.floor(k * n / F), Math.floor((k + 1) * n / F)); raus.push({von: tagS(m.samen[li[0]]), bis: tagS(m.samen[li[li.length - 1]]), fassungen: li}); }
   return raus;
 }

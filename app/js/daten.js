@@ -113,6 +113,15 @@ export function bestand(graph){
   const monde = [];
   for(const w of g.works){
     const p = proWerk.get(w.id), fs = p.fassungen.slice().sort((a,b) => ms(a.created_at) - ms(b.created_at));
+    /* Aus dem Fundus: die Lage bestimmt allein die belegte Zeit (technik.zeit.sortierung). Undatiertes liegt im Saum,
+       hinter allem Datierten, in der Reihenfolge des Hinzufügens; es bekommt kein Alter, nur eine Lage. */
+    const lage = new Map();
+    if(fs.some(v => v.fundus)){
+      const belegt = v => v.fundus && v.fundus.sortierung ? ms(v.fundus.sortierung) || null : null;
+      fs.sort((a, b) => { const x = belegt(a), y = belegt(b); return x != null && y != null ? x - y || ms(a.created_at) - ms(b.created_at) : x != null ? -1 : y != null ? 1 : 0; });
+      let letzte = 0, rang = 0;
+      for(const v of fs){ const t = belegt(v); if(t != null){ letzte = t; lage.set(v.id, {zeit: t, saum: false}); } else lage.set(v.id, {zeit: letzte + (++rang), saum: true}); }
+    }
     // Keim: das gemeinsame Rundenbriefing samt seiner Fassungen im selben Zweig; sonst die älteste Wurzel
     let keimIds = new Set(fs.filter(v => briefing.has(v.id)).map(v => v.id));
     if(keimIds.size){
@@ -125,7 +134,8 @@ export function bestand(graph){
     }
     const keim = fs.filter(v => keimIds.has(v.id));
     const samen = fs.filter(v => !keimIds.has(v.id)).map(v => { const form = formen.has(v.id); return {
-      id: v.id, fassung: v, stimme: stimmeVon(A.get(v.author_id)), zeit: ms(v.created_at),
+      id: v.id, fassung: v, stimme: stimmeVon(A.get(v.author_id)), zeit: lage.has(v.id) ? lage.get(v.id).zeit : ms(v.created_at), saum: lage.has(v.id) && lage.get(v.id).saum,
+      zeitSatz: v.fundus && v.fundus.zeit && v.fundus.zeit !== 'offen' ? menschlich(v.fundus.zeit) : null,   // die belegte Zeit als Satz, ohne erfundene Uhrzeit
       // ein Form-Korn: kein Status, der anderswo gesetzt wurde, und Licht nach dem sichtbaren Wortlaut, nicht nach den Bytes der Seite
       status: form ? 'entwurf' : v.status || 'entwurf', laenge: form ? sichtbarerText(v.content).length : (v.content || '').length,
       modus: (v.contribution || {}).mode || null, baum: v.worktree_id, label: v.label || 'Unbenannte Fassung',

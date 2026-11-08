@@ -139,7 +139,7 @@ export class Zelle {
     // Eine Marke steht an der ersten Ausprägung ihres Tages und trägt deren Datum; ein Tag ohne Einträge bekommt keine eigene.
     this.tage = [];
     if(n > 1 && t1 - t0 > 3600e3){
-      const marke = i => { if(i < 0 || (this.tage.length && this.tage[this.tage.length - 1].i >= i)) return; this.tage.push({y: this.seedY[i], t: sam[i].zeit, i}); };
+      const marke = i => { if(i < 0 || sam[i].saum || (this.tage.length && this.tage[this.tage.length - 1].i >= i)) return; this.tage.push({y: this.seedY[i], t: sam[i].zeit, i}); };
       marke(0);
       const d = new Date(t0); d.setHours(24, 0, 0, 0);
       for(; d.getTime() < t1 && this.tage.length < 12; d.setDate(d.getDate() + 1)){

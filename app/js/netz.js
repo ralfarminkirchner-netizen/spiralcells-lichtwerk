@@ -13,6 +13,7 @@ import {TAU, clamp, mix, sstep, eio, hash, mixc, P, CAM, toScreen, screenRing, W
 import {VOICES, fibSphere} from './zelle.js';
 import {MENSCH} from './daten.js';
 import {wuchs, rangRadien} from './wuchs.js';
+import {fundusBezuege} from './bezuege.js';
 import {ordne, lage} from './ordnung.js';
 import {alsformen} from './alsformen.js';
 import {gelaende, PFLANZE} from './gelaende.js';
@@ -109,11 +110,22 @@ export class Netz {
       const fliesst = e.edge_type === 'remixt-aus' || e.edge_type === 'erweitert';
       const von = fliesst ? b : a, nach = fliesst ? a : b, k = `${von}>${nach}:${e.edge_type}`;
       const f = buendel.get(k) || {von, nach, typ: e.edge_type, kanten: [], verwendung: 0}; f.kanten.push(e); if(e.usage) f.verwendung++; buendel.set(k, f); }
+    /* Aus dem Fundus: gespeicherte Bezüge zwischen ganzen Werken (Bausteine, Vorgänge, Bezüge an Zellen, „folgt auf“ und
+       „kannte“ über Werkgrenzen) kommen als eigene Fäden dazu. Berechnete Nähe ist ein Faden „nahe“: gestrichelt, nie
+       gebündelt, nur am gewählten Werk sichtbar. Zum Folgen trägt jede Kante je Seite eine Fassung ihres Werks. */
+    const vertreter = id => { const m = B.mondVon.get(id); return m ? ((m.samen[0] || m.keim[0] || {}).id || null) : null; };
+    for(const x of fundusBezuege(B.roh)){ const a = idx.get(x.von), b = idx.get(x.nach); if(a == null || b == null) continue;
+      const fliesst = x.typ === 'remixt-aus' || x.typ === 'erweitert', von = fliesst ? b : a, nach = fliesst ? a : b, k = `${von}>${nach}:${x.typ}`;
+      const e = {id: x.schluessel, schluessel: x.schluessel, fundus: true, abgeleitet: !x.gespeichert, edge_type: x.typ, art: x.art,
+        from_variant_id: B.fassungen.has(x.knotenVon) ? x.knotenVon : vertreter(x.von), to_variant_id: B.fassungen.has(x.knotenZu) ? x.knotenZu : vertreter(x.nach)};
+      const f = buendel.get(k) || {von, nach, typ: x.typ, kanten: [], verwendung: 0, abgeleitet: !x.gespeichert, gruende: new Set()};
+      f.kanten.push(e); if(!x.gespeichert) f.gruende.add(x.grund); buendel.set(k, f); }
     // Kanten mit beschriebener Verwendung zuerst: sie führen bis in die Passage
     this.faeden = [...buendel.values()]; for(const f of this.faeden) f.kanten.sort((p, q) => (q.usage ? 1 : 0) - (p.usage ? 1 : 0));
     // Bündel von Bezirk zu Bezirk für den Überblick; was in einem Bezirk bleibt, zeigt sich erst darin
     const bk = b => b === 'mitte' || b === 'ohne' ? b : 'd' + b, bm = new Map(); this.buendel = []; this.innen = new Map();
     this.faeden.forEach((f, fi) => { const a = this.bezirk(f.von), b = this.bezirk(f.nach); f.bzVon = a; f.bzNach = b;
+      if(f.abgeleitet) return;   // berechnete Nähe wird nie gebündelt und nie gezählt
       if(a === b){ this.innen.set(a, (this.innen.get(a) || 0) + f.kanten.length); return; }
       const k = bk(a) + '>' + bk(b); let x = bm.get(k);
       if(!x){ x = {von: a, nach: b, faeden: [], kanten: 0, verwendung: 0, typen: new Map()}; bm.set(k, x); this.buendel.push(x); }
@@ -243,6 +255,7 @@ export function baueNetz(N, U, wall, vis, aktiv, aktivDetail){
   const fz = Math.max(0.11, CAM.S * 0.004), wahl = selM >= 0;   // ist ein Werk gewählt, treten die übrigen Fäden zurück
   for(let fi = 0; fi < N.faeden.length; fi++){ const f = N.faeden[fi], A = N.ort[f.von], Bp = N.ort[f.nach];
     const anF = U.sel && U.sel.art === 'faden' && U.sel.i === fi, hovF = U.hover && U.hover.art === 'faden' && U.hover.i === fi;
+    if(f.abgeleitet && !(anF || hovF || selM === f.von || selM === f.nach)){ U.knoten[fi] = null; continue; }   // berechnete Nähe nur am gewählten Werk
     const eigeneWelt = le > 0.5 || ge > 0.5, beteiligt = (!eigeneWelt && (aktiv === f.von || aktiv === f.nach)) || selM === f.von || selM === f.nach;   // in den Welten zeigen sich Fäden erst, wenn man ein Werk wählt
     const zeig = anF || hovF || beteiligt || (imDach != null && (f.bzVon === imDach || f.bzNach === imDach));
     if(!zeig){ U.knoten[fi] = null;
@@ -318,12 +331,16 @@ function bogen(ca, Ra, cb, Rb){
 }
 
 /* Fadenstile: Material fließt (übernommen, erweitert), Verweis zeigt, Prüfen tickt, Widerspruch bricht, Zugehörigkeit steht */
-const STIL = {
+export const STIL = {
   'remixt-aus':   {c: mixc(WG, KEIMC, 0.6), a: 0.5, fluss: 'material'},   // warmes Weiß, nie Gold: Gold bleibt Ralfs Kristallisieren
   'erweitert':    {c: WG, a: 0.42, fluss: 'material'},
   'verweist-auf': {c: mixc(WG, SILVER, 0.5), a: 0.3, fluss: 'zeigt'},
-  'testet':       {c: mixc(SILVER, WG, 0.3), a: 0.34, fluss: 'zeigt', strich: true},
+  'testet':       {c: mixc(SILVER, WG, 0.3), a: 0.34, fluss: 'zeigt'},
   'widerspricht': {c: ASCHE, a: 0.4, luecke: true},
-  'gehört-zu':    {c: SILVER, a: 0.28, strich: true},
+  'gehört-zu':    {c: SILVER, a: 0.24},
+  // Gestrichelt ist allein, was berechnet und nie gespeichert ist (Grundgesetz 07.11.)
+  'nahe':         {c: mixc(SILVER, WG, 0.5), a: 0.26, strich: true},
 };
-export const FADEN_SATZ = {'remixt-aus': 'übernimmt Material aus', 'erweitert': 'erweitert', 'verweist-auf': 'verweist auf', 'testet': 'prüft', 'widerspricht': 'widerspricht', 'gehört-zu': 'gehört zu'};
+export const FADEN_SATZ = {'remixt-aus': 'übernimmt Material aus', 'erweitert': 'erweitert', 'verweist-auf': 'verweist auf', 'testet': 'prüft', 'widerspricht': 'widerspricht', 'gehört-zu': 'gehört zu',
+  'folgt-auf': 'folgt auf', 'kannte': 'kannte beim Entstehen', 'stammt-aus': 'stammt aus', 'baut-auf': 'baut auf', 'gemeinsamer-bestand': 'teilt Bestand mit', 'wirkt-mit-in': 'wirkt mit in',
+  'ist-baustein-von': 'ist Baustein von', 'bewertet': 'bewertet', 'alternative-zu': 'ist Alternative zu', 'vorgezogen-vor': 'ist vorgezogen vor', 'passt-zu': 'passt zu', 'nahe': 'liegt nahe bei'};
