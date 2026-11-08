@@ -165,3 +165,13 @@ Ralf: Das gleiche Prinzip soll 1:1 kohärent den Wechsel von Engine und Plattfor
 - Prüfung 18 von 18: zusätzlich kein Haus in einem anderen, jede Fassung ein Fenster, jede Ausgangsfrage eine Tür, und alle 541 Fenster, die das Handy wirklich gezeichnet hat, stehen auf 1 cm an ihrem Ort aus der Bauform.
 - Gemessen kopflos auf der Grafik des Macs, ganzes Dorf: 27 Bilder je Sekunde bei 1280 x 800, 36 bei 390 x 844 (dort ohne Baumschatten; nur Grafik). Weniger als vorher, weil jetzt alles steht. Kein echtes Handy.
 - Offen: Unreal liest die Bauform noch nicht. Häuser bleiben schlicht. Die 420 Bäume sind zu schwer fürs Handy und brauchen eine leichtere Stufe.
+
+## Schritt 24: Lebensspirale, die Auswahl hält (Ralf, 08.11.)
+Ralf: vom Gesamtnetz in eine Zelle, dann zwischen flacher Spirale, räumlicher Spirale und Galaxie wechseln und dabei am selben Werk bleiben. Kein Morph (01.11.): mitgenommen wird nur, welches Werk gewählt ist.
+- `app/js/auswahl.js`: welches Werk eine Auswahl meint, der Wechsel der Welt, die Adresse `#werk=<lesbarer Name>`. Aus der offenen Zelle führt jede Welttaste ins Netz und dann in die Welt, am selben Werk.
+- `app/js/bezuege.js`: liest `fundus.kanten` aus dem Fundus-Export. Gespeicherte Verbindungen zwischen zwei Werken sind durchgezogene Fäden, jede genau einmal. Berechnete Nähe ist gestrichelt, wird nicht gezählt und erscheint nur am gewählten Werk.
+- Zelle: Die Fassungen stehen nach belegter Zeit (`sortierung`). Was keine belegte Zeit hat, liegt im Saum dahinter und heißt „ohne Datum“, nie ein erfundenes Datum.
+- Textfassung: Sie klappt am gewählten Werk auf und zeigt die gespeicherten Beziehungen und die berechneten Nähen getrennt.
+- Seite Welten: liest dieselbe Adresse, zeigt Fäden und Spirale des Werks und verlinkt zurück („Zelle und Text“).
+- Prüfung `tests/lebensspirale.test.mjs` (7): Zeitordnung und Saum, jede gespeicherte Verbindung genau einmal, nur Berechnetes gestrichelt, Wechsel durch alle Welten in zufälliger Folge mit gleicher Auswahl und gleichen Kanten.
+- Offen: 523 Werke aus dem Fundus haben noch kein Dach. Das ist Ralfs Wahl.
