@@ -78811,7 +78811,7 @@ function baueGalaxie() {
   });
   const LK = new PointLight(16767136, 120, Rg, 1.4);
   S0.add(LK);
-  const liste = [...pl.keys()].filter((i) => !pl[i].material), lage2 = (i) => {
+  const liste = [...pl.keys()], lage2 = (i) => {
     const p2 = pl[i];
     return [p2.sx, p2.sz, Math.hypot(p2.rx, p2.rz)];
   }, bp = [], bc = [];
@@ -79486,7 +79486,8 @@ addEventListener("keydown", (e2) => {
   for (const [k2, W2] of Object.entries(WELTEN)) if (e2.key === W2.taste) geheZu(k2);
 });
 var zuSeite = document.createElement("a");
-zuSeite.textContent = "Zelle und Text";
+zuSeite.innerHTML = 'Zelle<span class="lang">&nbsp;und Text</span>';
+zuSeite.setAttribute("aria-label", "Zelle und Text");
 zuSeite.href = "index.html";
 zuSeite.className = "zuseite";
 leiste.append(zuSeite);
