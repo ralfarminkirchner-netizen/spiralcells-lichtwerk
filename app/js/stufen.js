@@ -35,8 +35,10 @@ const laenge = s => Math.max(0.34, Math.sqrt(s)) * 0.9;   // Anteil an der Menge
 
 /* Eine Gabel: die Geschwister teilen sich in zwei Äste von etwa gleicher Menge, die Reihenfolge bleibt.
    Der schwerere Ast geht gerader, der leichtere weicht weiter aus – wie bei einem gewachsenen Baum. */
-function gabel(reihe, P, a, L, eltern){
-  if(reihe.length === 1){ wachse(reihe, P, a, L, eltern); return; }
+function gabel(reihe, P, a, L, eltern, seite = 1){
+  if(reihe.length === 1){ wachse(reihe, P, a, L, eltern, seite); return; }
+  // an der Spitze rollt sich der Ast ein (Ralf: „Spitzen rollen sich ein“), die Fassungen eines Werks immer
+  if((reihe.length <= ROLLT && eltern.art !== 'wurzel') || reihe.every(k => k.art === 'fassung')){ rolle(reihe, P, a, L, seite || 1, eltern); return; }
   const ganz = gewicht(reihe); let i = 1, acc = gw(reihe[0]);
   while(i < reihe.length - 1 && Math.abs(acc + gw(reihe[i]) - ganz / 2) < Math.abs(acc - ganz / 2)) acc += gw(reihe[i++]);
   const sA = acc / ganz, sB = 1 - sA;
@@ -44,18 +46,30 @@ function gabel(reihe, P, a, L, eltern){
   wachse(reihe.slice(i), P, a + SPREIZ * sA, L * laenge(sB), eltern, 1);
 }
 
+/* Die Spitze: sie rollt sich zur Spirale ein, das größte Teil zweigt zuerst ab, der Rest rollt weiter */
+const ROLLT = 3;
+const anteil = s => 0.16 + 0.8 * Math.sqrt(s);
+function rolle(reihe, P, a, L, seite, eltern){
+  if(reihe.length === 1){ wachse(reihe, P, a, L, eltern, seite); return; }
+  const ganz = gewicht(reihe), s0 = gw(reihe[0]) / ganz, l0 = L * anteil(s0), lr = L * anteil(1 - s0);
+  const schritt = Math.max(L * 0.24, l0 * 0.8);
+  const [Q, a2] = bogen(P, a, schritt, seite * Math.min(0.8, 2 * schritt / L), L * W0 * 0.8, lr * W0 * 0.8, eltern);
+  wachse([reihe[0]], Q, a2 - seite * 0.8, l0, eltern, -seite);
+  rolle(reihe.slice(1), Q, a2 + seite * 0.12, lr, seite, eltern);
+}
+
 /* Ein Ast: er wächst ein Stück und gabelt sich, bis er ein einzelnes Ding trägt */
 function wachse(reihe, P, a, L, eltern, seite = 0){
   const ein = reihe.length === 1 ? reihe[0] : null;
   const [Q, a2] = bogen(P, a, L * (ein ? 0.55 : 1), seite * 0.12, L * W0, L * W0 * 0.82, ein || eltern);
-  if(!ein){ gabel(reihe, Q, a2, L, eltern); return; }
+  if(!ein){ gabel(reihe, Q, a2, L, eltern, seite); return; }
   const k = ein;
   Object.assign(k, {eltern, nr: alle.length, tiefe: eltern ? eltern.tiefe + 1 : 0}); alle.push(k);
   if(k.art === 'fassung'){ Object.assign(k, {x: Q[0] + Math.cos(a2) * L * 0.3, y: Q[1] + Math.sin(a2) * L * 0.3, r: L * 0.3, dir: a2}); return; }
   const r = L * 0.46;
   Object.assign(k, {x: Q[0] + Math.cos(a2) * r, y: Q[1] + Math.sin(a2) * r, r, dir: a2});
   // hinter dem Kreis trägt das Ding seine eigene Krone, nach demselben Gesetz
-  if(k.kinder && k.kinder.length) gabel(k.kinder, [Q[0] + Math.cos(a2) * 1.9 * r, Q[1] + Math.sin(a2) * 1.9 * r], a2, L * 0.95, k);
+  if(k.kinder && k.kinder.length) gabel(k.kinder, [Q[0] + Math.cos(a2) * 1.9 * r, Q[1] + Math.sin(a2) * 1.9 * r], a2, L * 0.95, k, seite);
 }
 
 /* Umriss jedes Teilbaums, für das Hineinfahren */
