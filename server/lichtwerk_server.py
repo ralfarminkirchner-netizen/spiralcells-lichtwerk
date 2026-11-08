@@ -33,6 +33,7 @@ import json
 import os
 import re
 import socket
+import subprocess
 import sys
 import threading
 import time
@@ -64,6 +65,11 @@ ENTSTEHUNG_FELDER = {"work_id", "title", "body", "kind", "author_id", "variant_i
 BELEG_UNKLAR = ("Ob der Beleg gespeichert wurde, ist gerade unklar. "
                 "Bitte lade den Bestand neu, bevor du erneut speicherst.")
 LESEN = {"/api/graph", "/api/health", "/api/agents"}
+# Spiralbaum: Bilder, die in Fassungen genannt sind (absolute Pfade auf dem Arbeitslaufwerk)
+BILD_IN_TEXT = re.compile(r'(/+Volumes/ThunderBolt4_2TB/[^"\s)\]<>]+?\.(?:png|jpe?g|webp))', re.I)
+_bilder = {"t": 0.0, "erlaubt": set()}
+BILDCHEN = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "protokolle", "bildchen")   # protokolle/ ist nicht in Git
+_bilder_lock = threading.Lock()
 UMGEBUNG = [  # nur Lebenszeichen; TiSCH (9030) wird nie angefragt, er kostet Geld
     {"name": "KiN OS", "satz": "KiN OS · die Zentrale", "port": 8894, "pfad": "/api/aios/runtime"},
     {"name": "KiNFORMER", "satz": "KiNFORMER · die Formwerkstatt", "port": 9062, "pfad": "/"},
@@ -590,6 +596,41 @@ class Lichtwerk(BaseHTTPRequestHandler):
     def do_HEAD(self):
         self.do_GET()
 
+    def _bild(self, pfad: str) -> None:
+        with _bilder_lock:
+            alt = time.time() - _bilder["t"] > 120
+        if alt:
+            status, roh = self._oben("GET", "/api/graph")
+            if status != 200:
+                raise Fehler(503, "SPiRALCELLS ruht gerade.")
+            erlaubt = set()
+            for m in BILD_IN_TEXT.finditer(roh.decode("utf-8", "replace")):
+                erlaubt.add(m.group(1).replace("\\/", "/").lstrip("/"))
+            with _bilder_lock:
+                _bilder.update(t=time.time(), erlaubt=erlaubt)
+        rein = pfad.lstrip("/")
+        with _bilder_lock:
+            bekannt = rein in _bilder["erlaubt"]
+        datei = "/" + rein
+        if not bekannt or not os.path.isfile(datei) or os.path.realpath(datei) != os.path.normpath(datei):
+            raise Fehler(404, "Dieses Bild gibt es im Fundus nicht.")
+        # ein kleines Vorschaubild (240 Pixel), einmal gemacht und im Zwischenlager behalten; geht das nicht, das Original
+        klein = os.path.join(BILDCHEN, hashlib.sha256(datei.encode("utf-8")).hexdigest()[:32] + ".jpg")
+        if not os.path.isfile(klein) or os.path.getmtime(klein) < os.path.getmtime(datei):
+            os.makedirs(BILDCHEN, exist_ok=True)
+            try:
+                subprocess.run(["/usr/bin/sips", "-s", "format", "jpeg", "-Z", "240", datei, "--out", klein],
+                               stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=20, check=True)
+            except (OSError, subprocess.SubprocessError):
+                klein = None
+        if klein and os.path.isfile(klein):
+            datei, typ = klein, "image/jpeg"
+        else:
+            typ = {".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".webp": "image/webp"}[os.path.splitext(datei)[1].lower()]
+        with open(datei, "rb") as f:
+            daten = f.read()
+        self._senden(200, daten, typ, extra={"Cache-Control": "private, max-age=3600"})
+
     def do_GET(self):
         try:
             self._schutz(False)
@@ -656,6 +697,8 @@ class Lichtwerk(BaseHTTPRequestHandler):
                     self._json(200, {"daecher": [], "bestaetigt": False})
             elif pfad == "/lichtwerk/neu":
                 self._neu(parse_qs(teile.query).get("seit", [""])[0])
+            elif pfad == "/lichtwerk/bild":   # Spiralbaum: nur Bilder, die eine Fassung im Fundus nennt, nur lesen
+                self._bild(parse_qs(teile.query).get("pfad", [""])[0])
             elif pfad in ("/", "/index.html"):
                 self._datei(os.path.join(APP, "index.html"))
             else:

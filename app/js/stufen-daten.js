@@ -24,6 +24,10 @@ function zaehle(k){
   for(const c of k.kinder){ zaehle(c); zeichen += c.zeichen; fassungen += c.fassungen; wert += c.wert; datiert += c.datiert;
     if(c.von < von) von = c.von; if(c.bis > bis) bis = c.bis; }
   Object.assign(k, {anzahl: k.anzahl ?? k.kinder.length, zeichen, fassungen, wert: Math.max(wert, MINDESTENS), von, bis, datiert});
+  // ein Bild für den Kreis: bei Fassungen das jüngste, sonst das des größten Teils, das eins hat
+  const mitBild = k.kinder.filter(c => c.bild);
+  k.bild = mitBild.length ? (k.kinder.every(c => c.art === 'fassung') ? mitBild.reduce((a, b) => (b.von !== Infinity && (a.von === Infinity || b.von >= a.von) ? b : a)).bild
+    : mitBild.reduce((a, b) => b.wert > a.wert ? b : a).bild) : null;
   // Fassungen bleiben in ihrer Zeitfolge (die Spirale beginnt mit der frühesten), alles andere nach Menge
   if(k.kinder.every(c => c.art === 'fassung'))
     k.kinder.sort((a, b) => (a.von === Infinity) - (b.von === Infinity) || a.von - b.von || a.name.localeCompare(b.name, 'de'));
@@ -44,6 +48,8 @@ function buendle(k, wort){
   return k;
 }
 
+// Bilder, die eine Fassung nennt (absolute Pfade auf dem Arbeitslaufwerk); ausgeliefert nur über /lichtwerk/bild
+const BILD = /(\/+Volumes\/ThunderBolt4_2TB\/[^"\s)\]<>]+?\.(?:png|jpe?g|webp))/i;
 const vorname = t => { const i = t.indexOf(' · '); return i > 0 ? t.slice(0, i).trim() : ''; };
 
 export function spiralbaum(g){
@@ -52,7 +58,8 @@ export function spiralbaum(g){
   const fassungenVon = new Map();
   for(const v of g.variants || []){ const w = zweig.get(v.worktree_id); if(!w) continue; if(!fassungenVon.has(w)) fassungenVon.set(w, []); fassungenVon.get(w).push(v); }
   const blatt = (v, werkName) => { const zeichen = (v.content || '').length, t = sortierDatum(v);
-    return {art: 'fassung', name: (v.label || '').trim() || werkName, werk: werkName, zeichen, fassungen: 1, wert: Math.max(MINDESTENS, zeichen),
+    const m = (v.content || '').match(BILD);
+    return {art: 'fassung', name: (v.label || '').trim() || werkName, werk: werkName, zeichen, fassungen: 1, wert: Math.max(MINDESTENS, zeichen), bild: m ? '/' + m[1].replace(/^\/+/, '') : null,
       von: t ?? Infinity, bis: t ?? -Infinity, datiert: t == null ? 0 : 1, schluessel: v.id}; };
   const blaetter = id => (fassungenVon.get(id) || []).map(v => blatt(v, G.name(id)))
     .sort((a, b) => (a.von === Infinity) - (b.von === Infinity) || a.von - b.von || a.name.localeCompare(b.name, 'de'));

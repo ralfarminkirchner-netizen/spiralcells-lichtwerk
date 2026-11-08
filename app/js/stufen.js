@@ -10,6 +10,7 @@ import {spiralbaum, zahlWort, zeichenWort, zeitWort} from './stufen-daten.js';
 
 const NS = 'http://www.w3.org/2000/svg';
 const $ = s => document.querySelector(s);
+const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs'); document.querySelector('#baum').prepend(defs);
 const namenEl = $('#namen'), svg = $('#baum'), welt = svg.querySelector('.welt'), aesteG = svg.querySelector('.aeste'), knotenG = svg.querySelector('.knoten');
 
 /* ---------- Wuchs ----------
@@ -20,7 +21,7 @@ const alle = [], aeste = [];          // aeste: [Polygonpunkte, Besitzer]
 const groesse = w => 0.9 * Math.pow(Math.max(w, 1), 0.35);   // Kreis eines Dings aus seiner Menge
 const BREIT = 0.26;                   // Astdicke je Kreisgröße der getragenen Menge
 const SPREIZ = 1.1;                   // Öffnung einer Gabel
-const ROLLT = 3;                      // so wenige Geschwister rollen sich an der Spitze ein
+const ROLLT = 5;                      // so wenige Geschwister rollen sich an der Spitze ein
 const OBEN = -Math.PI / 2;
 const DICK = 0.055;
 const KRONE = 3.4;                    // Kronenhalbmesser je Kreishalbmesser                   // Astdicke je Kronenhalbmesser
@@ -84,7 +85,7 @@ function krone(reihe, seite, eltern, meide){
   if(reihe.length === 1) return gabelung([{G: ding(reihe[0], seite), th: 0, m: reihe[0].wert, wem: reihe[0]}], meide, eltern);
   const rollt = reihe.every(k => k.art === 'fassung') || (reihe.length <= ROLLT && eltern.art !== 'wurzel');
   let A, B, thA, thB, sA, sB;
-  if(rollt){ A = reihe.slice(0, 1); B = reihe.slice(1); thA = -seite * 1.0; thB = seite * 0.38; sA = -seite; sB = seite; }
+  if(rollt){ A = reihe.slice(0, 1); B = reihe.slice(1); thA = -seite * 1.1; thB = seite * 0.62; sA = -seite; sB = seite; }
   else {
     const gw = k => Math.sqrt(k.wert), ganz = reihe.reduce((s, k) => s + gw(k), 0); let i = 1, acc = gw(reihe[0]);
     while(i < reihe.length - 1 && Math.abs(acc + gw(reihe[i]) - ganz / 2) < Math.abs(acc - ganz / 2)) acc += gw(reihe[i++]);
@@ -193,8 +194,13 @@ function zeichne(){
       zeilen(k.name, 14, 3).forEach((z, i, l) => el('tspan', {x: k.x, dy: i ? '1.15em' : `${-(l.length - 1) * 0.575}em`}, t).textContent = z);
       k.text = t; k.form = g; continue;
     }
-    const g = el('g', {class: `kn ${k.art}${k.auch && k.auch.length > 1 ? ' verschraenkt' : ''}`, 'data-nr': k.nr}, knotenG);
+    const g = el('g', {class: `kn ${k.art}${k.auch && k.auch.length > 1 ? ' verschraenkt' : ''}${k.bild ? ' mitbild' : ''}`, 'data-nr': k.nr}, knotenG);
     el('circle', {cx: k.x, cy: k.y, r: k.r, 'stroke-width': k.r * 0.06}, g);
+    if(k.bild){   // ein rundes Bild aus dem Fundus; geladen erst, wenn der Kreis groß genug zu sehen ist
+      const c = el('clipPath', {id: 'rund' + k.nr}, defs); el('circle', {cx: k.x, cy: k.y, r: k.r * 0.97}, c);
+      k.bildEl = el('image', {x: k.x - k.r, y: k.y - k.r, width: 2 * k.r, height: 2 * k.r, preserveAspectRatio: 'xMidYMid slice', 'clip-path': `url(#rund${k.nr})`, class: 'bild'}, g);
+      el('circle', {cx: k.x, cy: k.y, r: k.r * 0.97, class: 'schleier'}, g);   // ein leichter Schatten, damit der Name auf dem Bild lesbar bleibt
+    }
     const zl = zeilen(k.name, 11, 3), fs = Math.min(k.r * 0.27, k.r * 1.75 / (0.62 * Math.max(...zl.map(z => [...z].length)))); k.fs = fs / k.r;
     const t = el('text', {x: k.x, y: k.y - (zl.length - 1) * fs * 0.58 - fs * 0.35, 'font-size': fs, class: 'name'}, g);
     zl.forEach((z, i) => el('tspan', {x: k.x, dy: i ? '1.15em' : 0}, t).textContent = z);
@@ -230,6 +236,7 @@ function lesbar(){
     if(k.textAn !== an){ k.text.style.display = an ? '' : 'none'; if(k.menge) k.menge.style.display = an && px >= 14 ? '' : 'none'; k.textAn = an; }
     else if(an && k.menge) k.menge.style.display = px >= 14 ? '' : 'none';
     k.klein = da && !an && px < 10.5 && k.eltern === fokus && k.art !== 'fassung';
+    if(k.bildEl && !k.bildDa && da && k.r * s >= 9){ k.bildDa = true; k.bildEl.setAttribute('href', '/lichtwerk/bild?pfad=' + encodeURIComponent(k.bild)); }
   }
   // Was auf dieser Stufe steht, bleibt nie namenlos: ist sein Kreis noch zu klein, steht der Name daneben
   const html = [], belegt = [];
@@ -237,7 +244,7 @@ function lesbar(){
   for(const k of alle.filter(q => q.klein).sort((a, b) => b.r - a.r)){   // die Größten zuerst
     const sx = (k.x - blick.x) * s + blick.mx, sy = (k.y - blick.y) * s + blick.my, sr = k.r * s, knapp = SCHMAL(), bw = Math.min(knapp ? 150 : 180, 16 + Math.max([...k.name].length * 8.4, knapp ? 0 : zeichenWort(k.zeichen).length * 6.8)), bh = (knapp ? 6 : 20) + 17 * Math.ceil([...k.name].length * 8.4 / (bw - 16));
     const lagen = [];
-    for(const d of [2, 14, 30, 50]) lagen.push([sx - bw / 2, sy + sr + d], [sx - bw / 2, sy - sr - d - bh], [sx + sr + d, sy - bh / 2], [sx - sr - d - bw, sy - bh / 2],
+    for(const d of [2, 10, 22]) lagen.push([sx - bw / 2, sy + sr + d], [sx - bw / 2, sy - sr - d - bh], [sx + sr + d, sy - bh / 2], [sx - sr - d - bw, sy - bh / 2],
       [sx + sr * .7 + d, sy + sr * .7 + d], [sx - sr * .7 - d - bw, sy + sr * .7 + d], [sx + sr * .7 + d, sy - sr * .7 - d - bh], [sx - sr * .7 - d - bw, sy - sr * .7 - d - bh]);
     const imBild = ([x, y]) => x >= 6 && x + bw <= W - 6 && y >= oben() && y + bh <= H - unten() + 20;
     const frei = ([x, y]) => !belegt.some(q => x < q[2] && x + bw > q[0] && y < q[3] && y + bh > q[1]);
