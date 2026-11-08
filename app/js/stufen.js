@@ -199,7 +199,8 @@ function zeichne(){
     if(k.bild){   // ein rundes Bild aus dem Fundus; geladen erst, wenn der Kreis groß genug zu sehen ist
       const c = el('clipPath', {id: 'rund' + k.nr}, defs); el('circle', {cx: k.x, cy: k.y, r: k.r * 0.97}, c);
       k.bildEl = el('image', {x: k.x - k.r, y: k.y - k.r, width: 2 * k.r, height: 2 * k.r, preserveAspectRatio: 'xMidYMid slice', 'clip-path': `url(#rund${k.nr})`, class: 'bild'}, g);
-      el('circle', {cx: k.x, cy: k.y, r: k.r * 0.97, class: 'schleier'}, g);   // ein leichter Schatten, damit der Name auf dem Bild lesbar bleibt
+      const schleier = el('circle', {cx: k.x, cy: k.y, r: k.r * 0.97, class: 'schleier'}, g);   // ein leichter Schatten, damit der Name auf dem Bild lesbar bleibt
+      k.bildEl.addEventListener('error', () => { k.bildEl.remove(); schleier.remove(); g.classList.remove('mitbild'); });   // kein Bild da: der Kreis bleibt schlicht
     }
     const zl = zeilen(k.name, 11, 3), fs = Math.min(k.r * 0.27, k.r * 1.75 / (0.62 * Math.max(...zl.map(z => [...z].length)))); k.fs = fs / k.r;
     const t = el('text', {x: k.x, y: k.y - (zl.length - 1) * fs * 0.58 - fs * 0.35, 'font-size': fs, class: 'name'}, g);

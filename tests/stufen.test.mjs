@@ -34,3 +34,18 @@ test('auf keiner Stufe mehr als BIS Dinge und ein Bündel', () => {
   const b = spiralbaum(g), lauf = n => { if(n.kinder){ assert.ok(n.kinder.length <= BIS + 1, n.name); n.kinder.forEach(lauf); } };
   lauf(b);
 });
+
+test('der Baum folgt den Kanten beliebig tief: Bereich unter Ort, Ort unter Ort; ersetzte Kanten gelten nicht', () => {
+  const g = graph();
+  g.works.push(w('o3', 'EDUCATiON', 'Oberdach'), w('o4', 'Tragwerk System', 'Mitte'), w('o5', 'Tragwerk', 'Tragwerk'), w('f', 'FASKA', 'Bereich'), w('fa', 'FASKA FLOW'), w('fw', 'Lernweg', 'text'), w('sw', 'SOFTWERK'));
+  g.fundus.kanten.push(k('f', 'o3'), k('fa', 'f'), k('fw', 'fa'), k('o5', 'o4'), k('sw', 'o5'), {...k('fa', 'o3'), ersetzt_durch: 'x'});
+  for(const i of ['fw', 'sw']){ g.worktrees.push({id: 't' + i, work_id: i}); g.variants.push({id: 'f' + i, worktree_id: 't' + i, label: 'Fassung ' + i, content: 'x'.repeat(500)}); }
+  const b = spiralbaum(g), namen = b.kinder.map(o => o.name);
+  assert.ok(namen.includes('Tragwerk System') && !namen.includes('Tragwerk'));   // Tragwerk steht im Tragwerk System, nicht oben
+  const edu = b.kinder.find(o => o.name === 'EDUCATiON');
+  assert.deepEqual(edu.kinder.map(c => [c.art, c.name]), [['bereich', 'FASKA']]);   // die ersetzte direkte Kante gilt nicht
+  const flow = edu.kinder[0].kinder[0];
+  assert.equal(flow.art, 'app'); assert.equal(flow.kinder[0].name, 'Lernweg');
+  const tw = b.kinder.find(o => o.name === 'Tragwerk System').kinder[0];
+  assert.equal(tw.art, 'ort'); assert.equal(tw.kinder[0].name, 'SOFTWERK');
+});

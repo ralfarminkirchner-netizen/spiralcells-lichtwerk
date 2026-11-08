@@ -6,7 +6,7 @@
    gemeinsamem Vornamen („Invaria 2 · …“) liegen in diesem einen Werk. Auf keiner Stufe mehr als BIS Dinge;
    der Rest liegt gebündelt in „noch n kleinere“. Reine Funktionen, sie lesen nur. */
 
-import {ortsgraph} from './ortsgraph.js';
+import {ORTSARTEN, FOLGE} from './ortsgraph.js';
 
 export const BIS = 9;           // so viele Dinge stehen auf einer Stufe einzeln, dazu ein Bündel: das Bündel ist wieder dieselbe Spirale (fraktal)
 export const MINDESTENS = 400;  // so viel zählt eine Fassung ohne Text
@@ -40,10 +40,15 @@ function buendle(k, wort){
   if(k.art === 'fassung') return k;
   for(const c of k.kinder) buendle(c, wort);
   if(k.kinder.length > BIS + 1){
-    const rest = k.kinder.slice(BIS), w = wort[k.art] || 'kleinere';
-    const b = zaehle({art: k.kinder[BIS].art === 'fassung' ? 'buendel-fassung' : 'buendel', name: `noch ${rest.length} ${w}`, kinder: rest, schluessel: k.schluessel + '/rest'});
-    buendle(b, wort);
-    k.kinder = [...k.kinder.slice(0, BIS), b];
+    // Orte und Bereiche in einem Ort bleiben immer sichtbar; gebündelt wird nur, was darüber hinaus klein ist
+    const fest = k.kinder.filter(c => c.art === 'ort' || c.art === 'bereich'), lose = k.kinder.filter(c => !fest.includes(c));
+    const frei = Math.max(1, BIS - fest.length);
+    if(lose.length > frei + 1){
+      const rest = lose.slice(frei), w = wort[k.art] || 'kleinere';
+      const b = zaehle({art: rest[0].art === 'fassung' ? 'buendel-fassung' : 'buendel', name: `noch ${rest.length} ${w}`, kinder: rest, schluessel: k.schluessel + '/rest'});
+      buendle(b, wort);
+      k.kinder = [...k.kinder.filter(c => fest.includes(c) || lose.slice(0, frei).includes(c)), b];
+    }
   }
   return k;
 }
@@ -53,7 +58,14 @@ const BILD = /(\/+Volumes\/ThunderBolt4_2TB\/[^"\s)\]<>]+?\.(?:png|jpe?g|webp))/
 const vorname = t => { const i = t.indexOf(' · '); return i > 0 ? t.slice(0, i).trim() : ''; };
 
 export function spiralbaum(g){
-  const G = ortsgraph(g);
+  const W = new Map((g.works || []).map(w => [w.id, w])), name = id => ((W.get(id) || {}).title || '').trim();
+  // die Kanten „gehört zu“, ohne ersetzte (der Fundus überschreibt nicht, er ersetzt)
+  const hoch = new Map(), runter = new Map(), dazu = (m, k, v) => { if(!m.has(k)) m.set(k, []); if(!m.get(k).includes(v)) m.get(k).push(v); };
+  for(const k of (g.fundus && g.fundus.kanten) || []){
+    if(k.ersetzt_durch || k.art !== 'gehört zu' || k.form !== 'B' || !k.gespeichert || !W.has(k.von) || !W.has(k.zu) || k.von === k.zu) continue;
+    dazu(hoch, k.von, k.zu); dazu(runter, k.zu, k.von);
+  }
+  const istOrt = id => ORTSARTEN.has((W.get(id) || {}).work_type), istBereich = id => (W.get(id) || {}).work_type === 'Bereich';
   const zweig = new Map((g.worktrees || []).map(t => [t.id, t.work_id]));
   const fassungenVon = new Map();
   for(const v of g.variants || []){ const w = zweig.get(v.worktree_id); if(!w) continue; if(!fassungenVon.has(w)) fassungenVon.set(w, []); fassungenVon.get(w).push(v); }
@@ -61,43 +73,57 @@ export function spiralbaum(g){
     const m = (v.content || '').match(BILD);
     return {art: 'fassung', name: (v.label || '').trim() || werkName, werk: werkName, zeichen, fassungen: 1, wert: Math.max(MINDESTENS, zeichen), bild: m ? '/' + m[1].replace(/^\/+/, '') : null,
       von: t ?? Infinity, bis: t ?? -Infinity, datiert: t == null ? 0 : 1, schluessel: v.id}; };
-  const blaetter = id => (fassungenVon.get(id) || []).map(v => blatt(v, G.name(id)))
+  const blaetter = id => (fassungenVon.get(id) || []).map(v => blatt(v, name(id)))
     .sort((a, b) => (a.von === Infinity) - (b.von === Infinity) || a.von - b.von || a.name.localeCompare(b.name, 'de'));
-  const orteNamen = id => (G.orteVon.get(id) || []).map(o => G.name(o) === 'Mitte' ? 'Tragwerk System' : G.name(o));
+  // die Orte eines Werks: die nächsten Orte darüber, über Apps und Bereiche hinweg
+  const orteMemo = new Map();
+  const orteVon = (id, weg = new Set()) => {
+    if(orteMemo.has(id)) return orteMemo.get(id);
+    const r = new Set(); weg.add(id);
+    for(const z of hoch.get(id) || []){ if(weg.has(z)) continue; if(istOrt(z)) r.add(z); else for(const o of orteVon(z, weg)) r.add(o); }
+    weg.delete(id); orteMemo.set(id, r); return r;
+  };
+  const orteNamen = id => [...orteVon(id)].sort((a, b) => rang(name(a)) - rang(name(b))).map(name);
+  const rang = t => { const r = FOLGE.indexOf(t); return r < 0 ? FOLGE.length : r; };
 
-  const appKnoten = (a, ortName) => {
-    const name = G.name(a), eigen = blaetter(a), gruppen = new Map();
-    const werke = [...new Set(G.unter.get(a) || [])];
-    const zaehlVorname = new Map();
-    for(const w of werke){ const p = vorname(G.name(w)); if(p) zaehlVorname.set(p, (zaehlVorname.get(p) || 0) + 1); }
-    for(const w of werke){
-      const t = G.name(w).trim();
-      if(/^Stelle aus\b/.test(t)){ eigen.push(...blaetter(w).map(b => ({...b, name: t}))); continue; }
-      const p = vorname(t);
-      const key = p && p.toLowerCase() !== name.toLowerCase() && zaehlVorname.get(p) >= 2 ? p : t;
+  /* Ein Knoten und alles, was zu ihm gehört – so tief, wie die Kanten reichen */
+  function knoten(id, art, weg){
+    const nm = name(id), unten = (runter.get(id) || []).filter(c => !weg.has(c)), weiter = new Set(weg).add(id);
+    if(art === 'ort' || art === 'bereich'){
+      const kinder = unten.map(c => knoten(c, istOrt(c) ? 'ort' : istBereich(c) ? 'bereich' : 'app', weiter));
+      const eigen = blaetter(id);
+      if(eigen.length) kinder.push({art: 'werk', name: nm, eigen: true, teile: [], auch: [], kinder: eigen, schluessel: 'eigen:' + id, ids: [id]});
+      return art === 'ort' ? {art, name: nm, ortsart: W.get(id).work_type, kinder, schluessel: 'ort:' + id}
+        : {art, name: nm, auch: orteNamen(id), kinder, schluessel: 'bereich:' + id, ids: [id]};
+    }
+    // eine App: Stellen liegen im eigenen Material, Gleichnamiges und Zwischenstände mit gemeinsamem Vornamen sind je ein Werk
+    const eigen = blaetter(id), gruppen = new Map(), zaehlVorname = new Map();
+    for(const w of unten){ const p = vorname(name(w)); if(p) zaehlVorname.set(p, (zaehlVorname.get(p) || 0) + 1); }
+    for(const w of unten){
+      const t = name(w);
+      if(/^Stelle aus\b/.test(t) && !(runter.get(w) || []).length){ eigen.push(...blaetter(w).map(b => ({...b, name: t}))); continue; }
+      const p = vorname(t), key = p && p.toLowerCase() !== nm.toLowerCase() && zaehlVorname.get(p) >= 2 ? p : t;
       if(!gruppen.has(key)) gruppen.set(key, {ids: [], titel: []});
       const gr = gruppen.get(key); gr.ids.push(w); gr.titel.push(t);
     }
     const kinder = [...gruppen].map(([key, gr]) => {
-      const auch = [...new Set(gr.ids.flatMap(orteNamen))];
+      // ein einzelnes Werk, unter dem selbst noch etwas hängt, ist wieder eine App: derselbe Bau eine Stufe tiefer
+      if(gr.ids.length === 1 && (runter.get(gr.ids[0]) || []).some(c => !weiter.has(c))) return knoten(gr.ids[0], 'app', weiter);
       const teile = [...new Set(gr.titel)];
-      const blt = gr.ids.flatMap(id => blaetter(id).map(b => teile.length > 1 ? {...b, name: b.werk === b.name ? b.werk : `${b.werk} · ${b.name}`} : b));
-      return {art: 'werk', name: key, teile, auch, kinder: blt, schluessel: 'werk:' + [...gr.ids].sort().join('+'), ids: gr.ids};
+      const blt = gr.ids.flatMap(i => blaetter(i).map(b => teile.length > 1 ? {...b, name: b.werk === b.name ? b.werk : `${b.werk} · ${b.name}`} : b));
+      return {art: 'werk', name: key, teile, auch: [...new Set(gr.ids.flatMap(orteNamen))], kinder: blt, schluessel: 'werk:' + [...gr.ids].sort().join('+'), ids: gr.ids};
     });
-    if(eigen.length) kinder.push({art: 'werk', name: name, eigen: true, teile: [], auch: orteNamen(a), kinder: eigen, schluessel: 'eigen:' + a, ids: [a]});
-    return {art: 'app', name, auch: orteNamen(a), kinder, schluessel: 'app:' + a, ids: [a]};
-  };
+    if(eigen.length) kinder.push({art: 'werk', name: nm, eigen: true, teile: [], auch: orteNamen(id), kinder: eigen, schluessel: 'eigen:' + id, ids: [id]});
+    return {art: 'app', name: nm, auch: orteNamen(id), kinder, schluessel: 'app:' + id, ids: [id]};
+  }
 
-  // Ralf, 08.11.: „nenne das, was bisher Mitte heißt, Tragwerk System“ – im Fundus heißt der Ort noch „Mitte“
-  const anzeige = t => ({Mitte: 'Tragwerk System'})[t] || t;
-  const orte = G.orte.map(o => ({art: 'ort', name: anzeige(o.title), ortsart: o.work_type,
-    kinder: [...G.apps].filter(([, os]) => os.has(o.id)).map(([a]) => appKnoten(a, o.title)), schluessel: 'ort:' + o.id}));
-  const wurzel = {art: 'wurzel', name: 'Alle Orte', kinder: orte, schluessel: 'wurzel'};
-  // Orte bleiben in Ralfs fester Folge, darum erst zählen, dann die Folge zurücksetzen
-  zaehle(wurzel); wurzel.kinder = orte.slice().sort((a, b) => G.orte.findIndex(o => anzeige(o.title) === a.name) - G.orte.findIndex(o => anzeige(o.title) === b.name));
-  // leere Orte (etwa die alte „Mitte“, deren Kanten ersetzt sind) fallen vor dem Bündeln weg; die Orte selbst werden nie gebündelt
-  wurzel.kinder = wurzel.kinder.filter(o => o.kinder.length);
-  for(const o of wurzel.kinder) buendle(o, {ort: 'kleinere Apps', app: 'kleinere Werke', werk: 'weitere Fassungen', buendel: 'kleinere'});
+  // oben stehen die Orte, die zu keinem anderen Ort gehören, in Ralfs fester Folge
+  const oben = [...W.keys()].filter(id => istOrt(id) && !(hoch.get(id) || []).some(istOrt))
+    .sort((a, b) => rang(name(a)) - rang(name(b)) || name(a).localeCompare(name(b), 'de'));
+  const orte = oben.map(id => knoten(id, 'ort', new Set()));
+  const wurzel = {art: 'wurzel', name: 'Alle Orte', kinder: orte.slice(), schluessel: 'wurzel'};   // zaehle sortiert nach Menge, die Folge bleibt in orte
+  zaehle(wurzel); wurzel.kinder = orte.filter(o => o.kinder.length);   // Orte bleiben in der festen Folge; leere fallen weg
+  for(const o of wurzel.kinder) buendle(o, {ort: 'kleinere Apps', bereich: 'kleinere Apps', app: 'kleinere Werke', werk: 'weitere Fassungen', buendel: 'kleinere'});
   return wurzel;
 }
 
@@ -117,6 +143,7 @@ export function zahlWort(k){
   const n = (x, e, m) => `${x} ${x === 1 ? e : m}`;
   if(k.art === 'ort') return `${n(k.anzahl, 'App', 'Apps')} · ${n(k.fassungen, 'Fassung', 'Fassungen')}`;
   if(k.art === 'app') return `${n(k.anzahl, 'Werk', 'Werke')} · ${n(k.fassungen, 'Fassung', 'Fassungen')}`;
+  if(k.art === 'bereich') return `${n(k.anzahl, 'App', 'Apps')} · ${n(k.fassungen, 'Fassung', 'Fassungen')}`;
   if(k.art === 'fassung') return zeichenWort(k.zeichen);
   return n(k.fassungen, 'Fassung', 'Fassungen');
 }
