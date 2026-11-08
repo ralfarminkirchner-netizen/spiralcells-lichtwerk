@@ -128,6 +128,105 @@ def _masse(je: dict) -> None:
                 b["b"], b["h"] = m[1], m[2]
 
 
+# ------------------------------------------------------------------ Gespräche als Blätter
+# Ralf, 08.11.2026: „etliche grüne Blätter, die allesamt Chats, Beiträge zu den jeweiligen Themen sein können …
+# Alles soll angebunden an das eine sein.“ Gelesen wird nur, nie geschrieben. Sensible Gespräche (sensibel: true,
+# siehe MiNDSOURCE/PRIVAT-MODUS.md) bleiben draußen. Die Zuordnung zu Orten über Schlagworte ist ein Vorschlag.
+GESPRAECHE = "/Volumes/ThunderBolt4_2TB/MiNDLAXY/MiNDSOURCE/inbox"
+ORT_SCHLAGWORTE = {
+    "MiND-BODY-SOUL": ("heilung/", "text/spiritualitaet", "text/psychologie", "text/philosophie", "adhs-psyche/angst", "adhs-psyche/adhs", "adhs-psyche/diagnostik", "adhs-psyche/medikation", "ko/existenz"),
+    "MUSiC": ("medien/audio", "text/rap"),
+    "EDUCATiON": ("text/paedagogik", "faska"),
+    "WRiTING": ("text/prosa", "text/lyrik", "text/ibw"),
+    "ARTS": ("medien/bild", "medien/video", "medien/praesentation"),
+    "Tragwerk System": ("ki-coding/", "adhs-os/"),
+    "PERSONAL": ("adhs-psyche/familie", "adhs-psyche/identitaet"),
+}
+_gespraeche = {"t": 0.0, "schluessel": None, "liste": [], "pfade": []}
+_gespraeche_lock = threading.Lock()
+
+
+def _gespraeche_kopf(pfad: str):
+    try:
+        with open(pfad, encoding="utf-8", errors="replace") as f:
+            roh = f.read(400000)
+    except OSError:
+        return None
+    if not roh.startswith("---"):
+        return None
+    teile = roh.split("\n---", 1)
+    if len(teile) < 2:
+        return None
+    kopf, rumpf = teile[0], teile[1]
+    if not re.search(r"^type:\s*conversation\s*$", kopf, re.M) or re.search(r"^sensibel:\s*true\s*$", kopf, re.M):
+        return None
+    titel = (re.search(r"^title:\s*(.+)$", kopf, re.M) or [None, ""])[1].strip().strip('"')
+    datum = (re.search(r"^date:\s*(\S+)", kopf, re.M) or [None, ""])[1].strip().strip('"')
+    schlagworte = re.findall(r"^\s+-\s+(.+)$", kopf, re.M)
+    return {"titel": titel, "datum": datum[:10], "schlagworte": [w.strip().strip('"') for w in schlagworte], "rumpf": rumpf}
+
+
+def _gespraeche_lesen(graph: dict) -> list:
+    namen = sorted({(w.get("title") or "").strip() for w in graph.get("works", [])
+                    if w.get("work_type") in ("App", "app", "Bereich") and len((w.get("title") or "").strip()) >= 5})
+    try:
+        stand = max(os.path.getmtime(GESPRAECHE), *(os.path.getmtime(os.path.join(GESPRAECHE, n)) for n in os.listdir(GESPRAECHE)[:1]))
+    except (OSError, ValueError):
+        return []
+    schluessel = (stand, hashlib.sha256("\n".join(namen).encode("utf-8")).hexdigest())
+    with _gespraeche_lock:
+        if _gespraeche["schluessel"] == schluessel and time.time() - _gespraeche["t"] < 600:
+            return _gespraeche["liste"]
+    dateien = sorted(n for n in os.listdir(GESPRAECHE) if n.endswith(".md"))
+    roh = []
+    for n in dateien:
+        k = _gespraeche_kopf(os.path.join(GESPRAECHE, n))
+        if k and k["titel"]:
+            k["pfad"] = os.path.join(GESPRAECHE, n)
+            k["klein"] = (k["titel"] + "\n" + k["rumpf"][:30000]).lower()
+            roh.append(k)
+    # ein einziger Suchlauf je Gespräch über alle Namen; ein Name, der in sehr vielen Gesprächen steht, ist ein gewöhnliches Wort
+    gross = {nm.lower(): nm for nm in namen}
+    alle = re.compile(r"(?<![\w-])(" + "|".join(re.escape(n) for n in sorted(gross, key=len, reverse=True)) + r")(?![\w-])") if gross else None
+    for k in roh:
+        z = {}
+        for m in (alle.finditer(k["klein"]) if alle else ()):
+            z[m.group(1)] = z.get(m.group(1), 0) + 1
+        k["zaehlung"] = z
+        k["im_titel"] = {n for n in z if n in k["titel"].lower()}
+    haeufig = {}
+    for k in roh:
+        for n in k["zaehlung"]:
+            haeufig[n] = haeufig.get(n, 0) + 1
+    gewoehnlich = {n for n, c in haeufig.items() if c > max(12, len(roh) * 0.03)}
+    liste, pfade = [], []
+    for k in roh:
+        # ein klein geschriebenes Einzelwort (etwa „frontend“) zählt nur im Titel, alles andere im Titel oder zweimal im Text
+        zu = sorted({gross[n] for n, c in k["zaehlung"].items() if n not in gewoehnlich
+                     and (n in k["im_titel"] or (c >= 2 and not (gross[n].islower() and " " not in n)))})
+        orte = [o for o, praefixe in ORT_SCHLAGWORTE.items() if any(s.startswith(p) for s in k["schlagworte"] for p in praefixe)]
+        if not zu and not orte:
+            continue
+        liste.append({"n": len(pfade), "titel": k["titel"], "datum": k["datum"], "zu": zu, "orte": orte})
+        pfade.append(k["pfad"])
+    with _gespraeche_lock:
+        _gespraeche.update(t=time.time(), schluessel=schluessel, liste=liste, pfade=pfade)
+    return liste
+
+
+def _gespraech_text(n: int) -> dict:
+    with _gespraeche_lock:
+        pfade = list(_gespraeche["pfade"])
+    if not 0 <= n < len(pfade):
+        raise Fehler(404, "Dieses Gespräch gibt es nicht.")
+    k = _gespraeche_kopf(pfade[n])
+    if not k:
+        raise Fehler(404, "Dieses Gespräch gibt es nicht.")
+    # ohne Kennungen: die Kopfzeilen des Exports (Original-ID, Modell) bleiben weg
+    zeilen = [z for z in k["rumpf"].splitlines() if not re.match(r"^>\s*(Original-ID|Exportiert|Modell)", z)]
+    return {"titel": k["titel"], "datum": k["datum"], "text": "\n".join(zeilen).strip()[:300000]}
+
+
 class Fehler(Exception):
     def __init__(self, status: int, satz: str):
         super().__init__(satz)
@@ -774,6 +873,17 @@ class Lichtwerk(BaseHTTPRequestHandler):
                 self._bild(q.get("pfad", [""])[0], q.get("w", ["240"])[0])
             elif pfad == "/lichtwerk/bilder":
                 self._json(200, self._bilder_lesen())
+            elif pfad == "/lichtwerk/gespraeche":   # Spiralbaum: Gespräche aus der Vault als Blätter, nur lesen
+                status, roh = self._oben("GET", "/api/graph")
+                if status != 200:
+                    raise Fehler(503, "SPiRALCELLS ruht gerade.")
+                self._json(200, _gespraeche_lesen(json.loads(roh)))
+            elif pfad == "/lichtwerk/gespraech":
+                try:
+                    n = int((parse_qs(teile.query).get("n") or ["-1"])[0])
+                except ValueError:
+                    n = -1
+                self._json(200, _gespraech_text(n))
             elif pfad in ("/", "/index.html"):
                 self._datei(os.path.join(APP, "index.html"))
             else:

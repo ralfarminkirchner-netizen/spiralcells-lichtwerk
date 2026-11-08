@@ -6,7 +6,7 @@
    an den Spitzen die Fassungen als Blätter. Dieselbe Gabel auf jeder Stufe, nur kleiner: fraktal.
    Man zoomt stufenlos hinein; Namen stehen in den Kreisen und wachsen mit, sichtbar erst, wenn sie lesbar sind. */
 
-import {spiralbaum, zahlWort, zeichenWort, zeitWort} from './stufen-daten.js';
+import {spiralbaum, zahlWort, zeichenWort, zeitWort, blattArt} from './stufen-daten.js';
 
 const NS = 'http://www.w3.org/2000/svg';
 const $ = s => document.querySelector(s);
@@ -65,14 +65,14 @@ const kurve = (B, a0, a1, l) => [[0, 0], [Math.cos(a0) * l * 0.45, Math.sin(a0) 
 
 /* Ein Ding: Kreis (oder Blatt) mit dem Fuß im Ursprung; über dem Kreis seine eigene Krone */
 function ding(k, seite){
-  if(k.art === 'fassung'){ const r = groesse(k.wert) * (k.bild ? 1.5 : 0.8); return verbinde([], [{typ: 'blatt', k, x: 0, y: -r, r, dir: OBEN}]); }
+  if(blattArt(k)){ const r = blattR(k); return verbinde([], [{typ: 'blatt', k, x: 0, y: -r, r, dir: OBEN}]); }
   if(!(k.kinder && k.kinder.length)){ const r = groesse(k.wert) * (k.bild ? 1.7 : 1); return verbinde([], [{typ: 'kreis', k, x: 0, y: -r, r}]); }
   // der Kreis wächst mit seiner Krone, damit er sie tragen kann und sein Name hineinpasst
   // wie beim Vorbild: die Krone bekommt die Größe, die ihrer Menge zusteht, egal wie viele Teile sie hat;
   // so wird alles Tiefere von selbst immer kleiner
   // ein Ort ist nur die Gabel, an der seine Apps hängen: sein Kreis bleibt klein, die Krone bekommt den Platz
   // die Dinge mit Bild (Apps, Werke) tragen große Kreise, damit ihre Bilder schon von weitem zu sehen sind
-  const R = groesse(k.wert), r = R * (k.art === 'ort' || k.art === 'bereich' || k.art === 'varianten' ? 0.8 : k.bild ? 1.7 : 1), kreis = {typ: 'kreis', k, x: 0, y: -r, r};
+  const R = groesse(k.wert), r = R * (k.art === 'ort' || k.art === 'bereich' || k.art === 'varianten' ? 0.8 : k.art === 'gespraeche' || k.art === 'zeit' ? 0.5 : k.bild ? 1.7 : 1), kreis = {typ: 'kreis', k, x: 0, y: -r, r};
   const K = krone(k.kinder, seite, k, null);
   dreh(K, 0, 0, 0, KRONE * R / K.h.R);
   let hoch = 2 * r; const unten = {cx: 0, cy: -r, R: r};
@@ -86,14 +86,15 @@ const menge = l => l.reduce((s, k) => s + k.wert, 0);
 /* Eine Krone: Geschwister teilen sich an Gabeln, an der Spitze rollt sich der Ast ein */
 /* Ralf, 08.11.: was mehrere Fassungen hat, bekommt einen eigenen Ast, auf dem sie gezeigt werden. Die Fassungen eines
    Werks hängen nebeneinander an einem Zweig, abwechselnd links und rechts, die früheste unten, die jüngste an der Spitze. */
+const blattR = k => k.art === 'gespraech' ? groesse(k.wert) * 1.15 : groesse(k.wert) * (k.bild ? 1.5 : 0.8);
 function zweig(reihe, seite, eltern){
-  const blaetter = reihe.filter(k => k.art === 'fassung'), rest = reihe.filter(k => k.art !== 'fassung');
-  const rs = blaetter.map(k => groesse(k.wert) * (k.bild ? 1.5 : 0.8)), rmax = Math.max(...rs), schritt = rmax * 1.05;
+  const blaetter = reihe.filter(blattArt), rest = reihe.filter(k => !blattArt(k));
+  const rs = blaetter.map(blattR), rmax = Math.max(...rs), schritt = rmax * 1.05;
   const prims = [];
   let y = -rmax * 0.6;
   blaetter.forEach((k, i) => {
     const letzt = i === blaetter.length - 1 && !rest.length, s = (i % 2 ? 1 : -1) * seite;
-    const dir = letzt ? OBEN : OBEN + s * 0.95, r = rs[i];
+    const dir = letzt ? OBEN : OBEN + s * (k.art === 'gespraech' ? 0.55 : 0.95), r = rs[i];   // Gespräche stehen fast aufrecht: so liest man sie im Blatt
     prims.push({typ: 'blatt', k, x: Math.cos(dir) * r, y: y + Math.sin(dir) * r, r, dir});
     if(!letzt) y -= schritt;
   });
@@ -104,13 +105,13 @@ function zweig(reihe, seite, eltern){
 }
 
 function krone(reihe, seite, eltern, meide){
-  if(reihe.length > 1 && eltern.art !== 'buendel-fassung' && reihe.every(k => k.art === 'fassung' || k.art === 'buendel-fassung')) return zweig(reihe, seite, eltern);
+  if(reihe.length > 1 && eltern.art !== 'buendel-fassung' && reihe.every(k => blattArt(k) || k.art === 'buendel-fassung')) return zweig(reihe, seite, eltern);
   if(reihe.length === 1) return gabelung([{G: ding(reihe[0], seite), th: 0, m: reihe[0].wert, wem: reihe[0]}], meide, eltern);
   if(FAECHER && eltern.art === 'wurzel'){   // am Stamm die Orte, an einem Ort seine Apps: alle auf einmal aufgefächert, wie die Hauptäste einer breiten Krone
     const n = reihe.length, weit = Math.min(1.35, 0.32 * (n - 1));
     return gabelung(reihe.map((k, i) => ({G: ding(k, i < (n - 1) / 2 ? -1 : 1), th: n === 1 ? 0 : -weit + 2 * weit * i / (n - 1), m: k.wert, wem: k})), meide, eltern);
   }
-  const rollt = reihe.every(k => k.art === 'fassung') || (reihe.length <= ROLLT && eltern.art !== 'wurzel');
+  const rollt = reihe.every(blattArt) || (reihe.length <= ROLLT && eltern.art !== 'wurzel');
   let A, B, thA, thB, sA, sB;
   if(rollt){ A = reihe.slice(0, 1); B = reihe.slice(1); thA = -seite * 1.1; thB = seite * 0.62; sA = -seite; sB = seite; }
   else {
@@ -159,7 +160,7 @@ function band(f){
   for(let i = 0; i <= n; i++){
     const t = i / n, [x, y] = bezier(f.pts, t), [xa, ya] = bezier(f.pts, Math.max(0, t - 0.01)), [xb, yb] = bezier(f.pts, Math.min(1, t + 0.01));
     const d = Math.hypot(xb - xa, yb - ya) || 1, nx = -(yb - ya) / d, ny = (xb - xa) / d;
-    const b = (f.stamm ? f.w1 + (f.w0 - f.w1) * Math.pow(1 - t, 3) : f.w0 + (f.w1 - f.w0) * t) / 2;
+    const b = (f.stamm ? f.w1 + (f.w0 - f.w1) * Math.pow(1 - t, 2.2) : f.w0 + (f.w1 - f.w0) * t) / 2;
     L.push([x + nx * b, y + ny * b]); R.push([x - nx * b, y - ny * b]);
   }
   return L.concat(R.reverse());
@@ -174,44 +175,54 @@ const gleichsinnig = P => { let a = 0; for(let i = 0; i < P.length; i++){ const 
 let BOGEN = 1, wurzelTief = 0, wurzelBreit = 0;
 const wurzelFormen = [];
 const bodenY = x => BOGEN - Math.sqrt(Math.max(0, BOGEN * BOGEN - x * x));
-function wurzle(K, wg){
-  const R = K.h.R; BOGEN = R * 9;   // extrem flach, aber ein Bogen
-  let saat = 7; const zufall = () => (saat = (saat * 16807) % 2147483647) / 2147483647;
+function wurzle(R, fuss){
+  BOGEN = R * 9;   // extrem flach, aber ein Bogen
+  let saat = 20261108; const z = () => (saat = (saat * 16807) % 2147483647) / 2147483647, um = (a, b) => a + (b - a) * z();
   const unten = Math.PI / 2;
+  // jede Wurzel wächst für sich: eigene Länge, eigener Knick, mal zwei, mal drei Äste, mal einer, der allein weiterkriecht
   const wachse = (x, y, dir, len, w, stufe) => {
+    const knick = um(-0.45, 0.45);
     let ex = x + Math.cos(dir) * len, ey = y + Math.sin(dir) * len;
-    const min = bodenY(ex) + R * 0.012; if(ey < min) ey = min;   // eine Wurzel bleibt unter der Erde
-    const knick = (zufall() - 0.5) * 0.5, d2 = Math.atan2(ey - y, ex - x) + knick;
-    wurzelFormen.push({typ: 'ast', pts: [[x, y], [x + Math.cos(dir) * len * 0.4, y + Math.sin(dir) * len * 0.4], [ex - Math.cos(d2) * len * 0.35, ey - Math.sin(d2) * len * 0.35], [ex, ey]], w0: w, w1: w * 0.62});
-    wurzelTief = Math.max(wurzelTief, ey); wurzelBreit = Math.max(wurzelBreit, Math.abs(ex));
-    if(stufe <= 0) return;
-    const spr = 0.3 + zufall() * 0.25, zieh = (unten - d2) * 0.06;   // die Erde zieht die Wurzel leicht nach unten
-    wachse(ex, ey, d2 - spr + zieh, len * (0.62 + zufall() * 0.12), w * 0.6, stufe - 1);
-    wachse(ex, ey, d2 + spr + zieh, len * (0.62 + zufall() * 0.12), w * 0.6, stufe - 1);
+    const min = bodenY(ex) + R * 0.01; if(ey < min) ey = min;
+    const d2 = Math.atan2(ey - y, ex - x) + knick, b1 = um(0.25, 0.5), b2 = um(0.25, 0.45);
+    wurzelFormen.push({typ: 'ast', pts: [[x, y], [x + Math.cos(dir) * len * b1, y + Math.sin(dir) * len * b1],
+      [ex - Math.cos(d2) * len * b2 + um(-1, 1) * len * 0.08, ey - Math.sin(d2) * len * b2], [ex, ey]], w0: w, w1: w * um(0.55, 0.7)});
+    const w1 = wurzelFormen[wurzelFormen.length - 1].w1;   // die Äste setzen genau so breit an, wie die Wurzel dort ist: keine Stufen
+    if(stufe <= 0 || w < R * 0.0015) return;
+    const zahl = z() < 0.18 ? 1 : z() < 0.8 ? 2 : 3, zieh = (unten - d2) * um(0.02, 0.12);
+    for(let i = 0; i < zahl; i++){
+      const a = zahl === 1 ? d2 + um(-0.3, 0.3) : d2 + (i / (zahl - 1) - 0.5) * um(0.6, 1.2) + um(-0.15, 0.15);
+      wachse(ex, ey, a + zieh, len * um(0.5, 0.82), w1 * (zahl === 1 ? 1 : um(0.7, 0.88)), stufe - (zahl === 1 ? 0.5 : 1));
+    }
   };
-  // Hauptwurzeln: die äußeren fast waagrecht und lang, damit das Wurzelwerk so breit wird wie die Krone
-  for(const [a, l, w] of [[-1.47, 0.4, 0.95], [1.46, 0.42, 0.95], [-1.1, 0.24, 0.8], [1.12, 0.25, 0.8], [-0.55, 0.15, 0.7], [0.6, 0.15, 0.7], [0.05, 0.12, 0.65]])
-    wachse(a * wg * 0.5, wg * 0.15, unten + a, R * l, wg * w, 5);
-  // das Wurzelwerk geht mehr in die Breite als in die Tiefe: flach gedrückt, aber nie über die Erde
-  const FLACH = 0.55;
-  for(const f of wurzelFormen) f.pts = f.pts.map(([x, y]) => [x, Math.max(bodenY(x) + R * 0.008, y * FLACH)]);
+  // Hauptwurzeln: ungleich verteilt, die äußeren lang und fast waagrecht, damit das Wurzelwerk breit wird
+  const haupt = 9;
+  for(let i = 0; i < haupt; i++){
+    const t = i / (haupt - 1) - 0.5, a = t * 2.95 + um(-0.12, 0.12), aussen = Math.abs(t) * 2;
+    wachse(Math.sin(a) * fuss * 0.36, fuss * 0.16, unten + a, R * (0.1 + aussen * um(0.22, 0.34)), fuss * (0.34 - aussen * 0.12) * um(0.8, 1.1), 5 + Math.round(aussen));
+  }
+  // in die Breite statt in die Tiefe, und nie über der Erde
+  // jede Wurzel liegt mit ihrer ganzen Breite unter der Erde, auch die dicken am Stammfuß: keine Buckel, keine Kanten
+  for(const f of wurzelFormen) f.pts = f.pts.map(([x, y], i) => [x, Math.max(bodenY(x) + (f.w0 + (f.w1 - f.w0) * i / 3) * 0.55, y * 0.6)]);
   wurzelTief = Math.max(...wurzelFormen.flatMap(f => f.pts.map(p => p[1])));
+  wurzelBreit = Math.max(...wurzelFormen.flatMap(f => f.pts.map(p => Math.abs(p[0]))));
 }
 
 function pflanze(baum){
-  const K = krone(baum.kinder, 1, baum, null), wg = DICK * K.h.R;
-  // der Stamm ist kurz (Ralf: „der Baumstamm ist zu lang“), aber lang genug, dass keine Krone in den Boden hängt
-  let tief = 0; for(const f of K.formen) tief = Math.max(tief, f.typ === 'ast' ? Math.max(...f.pts.map(p => p[1])) + f.w0 : f.y + f.r);
-  const T = Math.max(K.h.R * 0.07, tief + K.h.R * 0.03);
+  const K = krone(baum.kinder, 1, baum, null);
+  // der Stamm ist so breit wie die Äste, die er trägt, zusammen – und unten noch breiter (Ralf: „der Stamm muss viel breiter werden“)
+  const erste = K.formen.filter(f => f.typ === 'ast' && Math.hypot(f.pts[0][0], f.pts[0][1]) < 1e-6);
+  const oben0 = erste.reduce((s, f) => s + f.w0, 0) * 0.9, gabelW = Math.max(...erste.map(f => f.w0));
+  let tief = 0; for(const f of K.formen) tief = Math.max(tief, f.typ === 'ast' ? Math.max(...f.pts.map(p => p[1])) + f.w0 : f.y + (f.r || 0));
+  const T = Math.max(K.h.R * 0.09, tief + K.h.R * 0.03, oben0 * 1.6), fuss = oben0 * 2.4;
   dreh(K, 0, 0, -T);
-  const formen = [...K.formen,
-    {typ: 'ast', stamm: true, pts: [[0, 0], [-wg * 0.25, -T * 0.35], [wg * 0.2, -T * 0.7], [0, -T]], w0: wg * 2.6, w1: wg * 1.05, wem: baum},
-    {typ: 'knoten', x: 0, y: -T, r: wg * 0.53, wem: baum}];
-  wurzle(K, wg);
+  // ein Stamm aus einem Guss: oben so breit wie seine Äste, nach unten weich ausgestellt, bis unter die Erde, wo die Wurzeln ansetzen
+  const formen = [...K.formen, {typ: 'ast', stamm: true, pts: [[0, fuss * 0.12], [0, -T * 0.35], [0, -T * 0.75], [0, -T - gabelW * 0.15]], w0: fuss, w1: gabelW * 1.12, wem: baum}];   // oben genau so breit wie der stärkste Ast: keine Schulter
+  wurzle(K.h.R, fuss);
   Object.assign(baum, {x: 0, y: 0, r: 0});
   for(const f of formen){
     if(f.typ === 'ast') aeste.push([gleichsinnig(band(f)), f.wem, f.zu]);
-    else if(f.typ === 'knoten') aeste.push([gleichsinnig(rund(f.x, f.y, f.r)), f.wem]);
+    else if(f.typ === 'knoten') {}   // Gelenke werden nicht gezeichnet (Ralf: „diese komischen Knubbel“)
     else Object.assign(f.k, {x: f.x, y: f.y, r: f.r, dir: f.dir});
   }
   const ordne = (k, eltern) => { Object.assign(k, {eltern, nr: alle.length, tiefe: eltern ? eltern.tiefe + 1 : 0}); alle.push(k); for(const c of k.kinder || []) ordne(c, k); };
@@ -243,7 +254,14 @@ function zeilen(name, proZeile, hoechstens){
   if(z.length > hoechstens){ z.length = hoechstens; z[hoechstens - 1] = z[hoechstens - 1].replace(/.?$/, '…'); }
   return z;
 }
+let zeitSpanne = [0, 1];
+const gruen = k => { if(!k.datiert) return '#7f9c68';
+  const t = Math.max(0, Math.min(1, (k.von - zeitSpanne[0]) / (zeitSpanne[1] - zeitSpanne[0] || 1)));
+  return `hsl(${92 + t * 8} ${34 + t * 22}% ${30 + t * 26}%)`; };
+const unterzeile = k => ['gespraeche', 'zeit', 'gespraech'].includes(k.art) || k.zeichen === 0 ? zahlWort(k) : zeichenWort(k.zeichen);
 function zeichne(){
+  const tage = alle.filter(k => k.art === 'gespraech' && k.datiert).map(k => k.von);
+  if(tage.length) zeitSpanne = [Math.min(...tage), Math.max(...tage)];
   // Je Ding ein Pfad für seine Äste, damit Fremdes beim Hineinzoomen zurücktreten kann
   const je = new Map(); for(const [p, wem] of aeste){ if(!je.has(wem)) je.set(wem, []); je.get(wem).push('M' + p.map(q => q[0].toFixed(3) + ' ' + q[1].toFixed(3)).join('L') + 'Z'); }
   el('circle', {class: 'boden', cx: 0, cy: BOGEN, r: BOGEN}, aesteG);   // der Boden: ein ganz flacher Bogen, auf dem der Baum steht
@@ -251,9 +269,11 @@ function zeichne(){
   for(const [wem, d] of je) wem.ast = el('path', {class: 'ast', d: d.join('')}, aesteG);
   for(const k of alle){
     if(k.art === 'wurzel') continue;
-    if(k.art === 'fassung'){
-      const g = el('g', {class: 'blatt ' + (k.datiert ? 'belegt' : 'offen'), 'data-nr': k.nr}, knotenG);
-      el('path', {d: blattPfad(k), 'stroke-width': k.r * 0.06}, g);
+    if(blattArt(k)){
+      const gs = k.art === 'gespraech';
+      const g = el('g', {class: 'blatt ' + (gs ? 'gespraech' : k.datiert ? 'belegt' : 'offen'), 'data-nr': k.nr}, knotenG);
+      const pf = el('path', {d: blattPfad(k), 'stroke-width': k.r * 0.06}, g);
+      if(gs) pf.style.fill = gruen(k);   // jung hell, alt dunkel: die Zeit sieht man am Grün
       if(k.bild){   // die Fassung zeigt ihr eigenes Bild in der Blattform
         const c = el('clipPath', {id: 'rund' + k.nr}, defs); el('path', {d: blattPfad(k)}, c);
         const mx = k.x + Math.cos(k.dir) * k.r * 0.25, my = k.y + Math.sin(k.dir) * k.r * 0.25, h = k.r * 1.3;
@@ -262,8 +282,9 @@ function zeichne(){
         k.bildEl.addEventListener('error', () => { k.bildEl.remove(); sch.remove(); k.bildEl = null; });
         g.classList.add('mitbild');
       }
-      const t = el('text', {x: k.x, y: k.y, 'font-size': k.r * 0.22, class: 'name'}, g);
-      zeilen(k.name, 14, 3).forEach((z, i, l) => el('tspan', {x: k.x, dy: i ? '1.15em' : `${-(l.length - 1) * 0.575}em`}, t).textContent = z);
+      const t = el('text', {x: k.x + Math.cos(k.dir) * k.r * 0.25, y: k.y + Math.sin(k.dir) * k.r * 0.25, 'font-size': k.r * 0.22, class: 'name'}, g);
+      if(gs) k.datumEl = el('tspan', {x: t.getAttribute('x'), dy: '-1.6em', class: 'datum'}, t), k.datumEl.textContent = zahlWort(k);
+      zeilen(k.name, 14, 3).forEach((z, i, l) => el('tspan', {x: t.getAttribute('x'), dy: i || gs ? '1.15em' : `${-(l.length - 1) * 0.575}em`}, t).textContent = z);
       k.text = t; k.form = g; continue;
     }
     const g = el('g', {class: `kn ${k.art}${k.auch && k.auch.length > 1 ? ' verschraenkt' : ''}${k.bild ? ' mitbild' : ''}`, 'data-nr': k.nr}, knotenG);
@@ -279,7 +300,7 @@ function zeichne(){
     zl.forEach((z, i) => el('tspan', {x: k.x, dy: i ? '1.15em' : 0}, t).textContent = z);
     const m = el('text', {x: k.x, y: k.y + (zl.length) * fs * 0.58 + fs * 0.25, 'font-size': fs * 0.52, class: 'menge'}, g);
     el('tspan', {x: k.x, dy: 0}, m).textContent = zahlWort(k);
-    el('tspan', {x: k.x, dy: '1.2em'}, m).textContent = zeichenWort(k.zeichen);
+    el('tspan', {x: k.x, dy: '1.2em'}, m).textContent = ['gespraeche', 'zeit'].includes(k.art) ? '' : zeichenWort(k.zeichen);
     k.text = t; k.menge = m; k.form = g;
   }
 }
@@ -301,9 +322,10 @@ function vollbild(){
   grenze = {s, x0: Math.min(x0 - 8 / s, cx - W / 2 / s), x1: Math.max(x1 + 8 / s, cx + W / 2 / s), y0: -bodenY / s, y1: (H - bodenY) / s};
   return {x: cx, y: 0, s, mx: W / 2, my: bodenY};
 }
+let kleinstesBlatt = Infinity;
 function halte(b){
   if(!grenze) return b;
-  const s = Math.max(b.s, grenze.s), x = Math.min(Math.max(b.x, grenze.x0 + b.mx / s), grenze.x1 - (W - b.mx) / s);
+  const s = Math.min(Math.max(b.s, grenze.s), Math.min(W, H) * 1.1 / (kleinstesBlatt * 1.2)), x = Math.min(Math.max(b.x, grenze.x0 + b.mx / s), grenze.x1 - (W - b.mx) / s);
   const y = Math.min(Math.max(b.y, grenze.y0 + b.my / s), grenze.y1 - (H - b.my) / s);
   return {...b, s, x, y};
 }
@@ -328,12 +350,12 @@ function lesbar(){
   for(const k of alle){
     if(!k.text) continue;
     const da = k.x + k.r > x0 && k.x - k.r < x1 && k.y + k.r > y0 && k.y - k.r < y1;
-    const px = k.r * s * (k.art === 'fassung' ? 0.22 : k.fs);
-    const gabel = k.art === 'ort' || k.art === 'bereich' || k.art === 'varianten', an = da && px >= (gabel ? 8.5 : 10.5) && px <= (gabel ? 160 : 48);   // Orte und Bereiche tragen ihren Namen auch groß
+    const px = k.r * s * (blattArt(k) ? 0.22 : k.fs);
+    const gabel = ['ort', 'bereich', 'varianten', 'gespraeche', 'zeit'].includes(k.art), an = da && px >= (gabel ? 8.5 : 10.5) && px <= (gabel ? 160 : 48);   // Orte und Bereiche tragen ihren Namen auch groß
     if(k.textAn !== an){ k.text.style.display = an ? '' : 'none'; if(k.menge) k.menge.style.display = an && px >= 14 ? '' : 'none'; k.textAn = an; }
     else if(an && k.menge) k.menge.style.display = px >= 14 ? '' : 'none';
     // ohne Schild bleibt das eigene Material, das den Namen seiner App trägt: der steht schon darüber
-    k.klein = da && !an && px < 10.5 && k.art !== 'fassung' && !(k.eigen && k.eltern && k.eltern.name === k.name) && (k.eltern === fokus || (k.eltern && k.eltern.eltern === fokus && k.r * s >= 7)) ? (k.eltern === fokus ? 2 : 1) : 0;
+    k.klein = da && !an && px < 10.5 && !blattArt(k) && !(k.eigen && k.eltern && k.eltern.name === k.name) && (k.eltern === fokus || (k.eltern && k.eltern.eltern === fokus && k.r * s >= 7)) ? (k.eltern === fokus ? 2 : 1) : 0;
     // Schärfe nach Nähe (LOD): aus der Ferne ein kleines Bild, ab etwa 120 Bildpunkten Kreis ein scharfes
     if(k.bildEl && da && k.r * s >= 4){ const w = k.r * s * 2 * (devicePixelRatio || 1) > 260 ? 960 : 240;
       if(k.bildW < w || !k.bildW){ k.bildW = w; const url = `/lichtwerk/bild?w=${w}&pfad=${encodeURIComponent(k.bild)}`;
@@ -342,10 +364,10 @@ function lesbar(){
   }
   // Was auf dieser Stufe steht, bleibt nie namenlos: ist sein Kreis noch zu klein, steht der Name daneben
   const html = [], belegt = [], hart = [];   // hart: Kreise, in denen ein Name steht – darüber liegt nie ein Schild
-  for(const k of alle) if(k.r * s > 3 && k.art !== 'fassung' && k.art !== 'wurzel' && k.form && !k.form.classList.contains('fern')){ const sx = (k.x - blick.x) * s + blick.mx, sy = (k.y - blick.y) * s + blick.my, sr = k.r * s; belegt.push([sx - sr, sy - sr, sx + sr, sy + sr]); if(k.textAn) hart.push([sx - sr, sy - sr, sx + sr, sy + sr]); }
+  for(const k of alle) if(k.r * s > 3 && !blattArt(k) && k.art !== 'wurzel' && k.form && !k.form.classList.contains('fern')){ const sx = (k.x - blick.x) * s + blick.mx, sy = (k.y - blick.y) * s + blick.my, sr = k.r * s; belegt.push([sx - sr, sy - sr, sx + sr, sy + sr]); if(k.textAn) hart.push([sx - sr, sy - sr, sx + sr, sy + sr]); }
   const kreise = belegt.length;
   for(const k of alle.filter(q => q.klein).sort((a, b) => b.klein - a.klein || b.r - a.r)){   // erst die Stufe selbst, dann die nächste; die Größten zuerst
-    const sx = (k.x - blick.x) * s + blick.mx, sy = (k.y - blick.y) * s + blick.my, sr = k.r * s, knapp = SCHMAL(), bw = Math.min(knapp ? 150 : 180, 16 + Math.max([...k.name].length * 8.4, knapp ? 0 : zeichenWort(k.zeichen).length * 6.8)), bh = (knapp ? 6 : 20) + 17 * Math.ceil([...k.name].length * 8.4 / (bw - 16));
+    const sx = (k.x - blick.x) * s + blick.mx, sy = (k.y - blick.y) * s + blick.my, sr = k.r * s, knapp = SCHMAL(), bw = Math.min(knapp ? 150 : 180, 16 + Math.max([...k.name].length * 8.4, knapp ? 0 : unterzeile(k).length * 6.8)), bh = (knapp ? 6 : 20) + 17 * Math.ceil([...k.name].length * 8.4 / (bw - 16));
     const lagen = [];
     for(const d of k.klein === 2 ? [2, 10, 22, 36] : [2, 7]) lagen.push(   // Schilder der Stufe darunter bleiben dicht an ihrem Kreis, sonst gehören sie scheinbar zu einem anderen[sx - bw / 2, sy + sr + d], [sx - bw / 2, sy - sr - d - bh], [sx + sr + d, sy - bh / 2], [sx - sr - d - bw, sy - bh / 2],
       [sx + sr * .7 + d, sy + sr * .7 + d], [sx - sr * .7 - d - bw, sy + sr * .7 + d], [sx + sr * .7 + d, sy - sr * .7 - d - bh], [sx - sr * .7 - d - bw, sy - sr * .7 - d - bh]);
@@ -356,10 +378,49 @@ function lesbar(){
     const schildFrei = ([x, y]) => ![...belegt.slice(kreise), ...hart].some(q => x < q[2] && x + bw > q[0] && y < q[3] && y + bh > q[1]);
     const l = lagen.find(p => imBild(p) && frei(p)) || (k.klein === 2 ? lagen.find(p => imBild(p) && schildFrei(p)) : null); if(!l) continue;
     belegt.push([l[0], l[1], l[0] + bw, l[1] + bh]);
-    html.push(`<div class="nm" data-nr="${k.nr}" style="left:${l[0]}px;top:${l[1]}px;width:${bw}px"><b>${esc(k.name)}</b>${knapp ? '' : `<span>${esc(zeichenWort(k.zeichen))}</span>`}</div>`);
+    html.push(`<div class="nm" data-nr="${k.nr}" style="left:${l[0]}px;top:${l[1]}px;width:${bw}px"><b>${esc(k.name)}</b>${knapp ? '' : `<span>${esc(unterzeile(k))}</span>`}</div>`);
   }
   namenEl.innerHTML = html.join('');
+  lies(s, x0, y0, x1, y1);
 }
+/* Lesen im Blatt (Ralf, 08.11.: „nie mehr in Textfenster wechseln … so weit hineinzoomen, bis es sich zum Vollbild macht
+   … und per Mausrad oder Wischgeste einfach wieder rauswischen bis zum ganzen Baum“). Wird ein Gespräch groß genug,
+   steht sein Text in ihm, fest mit dem Blatt verbunden; er wandert und wächst mit dem Blick. */
+const lesenEl = document.createElement('div'); lesenEl.id = 'lesen'; document.querySelector('.flaeche').appendChild(lesenEl);
+const texte = new Map(), offen = new Map();
+function lies(s, x0, y0, x1, y1){
+  const jetzt = new Set(); let bestes = null, wert = -Infinity;
+  for(const k of alle){
+    if(k.art !== 'gespraech') continue;
+    const cx = k.x + Math.cos(k.dir) * k.r * 0.25, cy = k.y + Math.sin(k.dir) * k.r * 0.25, b = k.r * 1.2 * s, h = k.r * 1.5 * s;
+    if(b < 230 || cx + k.r < x0 || cx - k.r > x1 || cy + k.r < y0 || cy - k.r > y1) continue;
+    const sx0 = (cx - blick.x) * s + blick.mx, sy0 = (cy - blick.y) * s + blick.my, w = b - Math.hypot(sx0 - W / 2, sy0 - H / 2);
+    if(w > wert){ wert = w; bestes = k; }
+  }
+  for(const k of bestes ? [bestes] : []){   // nur ein Blatt zeigt seinen Text: das größte nahe der Mitte
+    const cx = k.x + Math.cos(k.dir) * k.r * 0.25, cy = k.y + Math.sin(k.dir) * k.r * 0.25, b = k.r * 1.2 * s, h = k.r * 1.5 * s;
+    jetzt.add(k);
+    let d = offen.get(k);
+    if(!d){
+      d = document.createElement('article'); d.className = 'blatttext'; d.dataset.nr = k.nr;
+      d.innerHTML = `<h2>${esc(k.name)}</h2><p class="wann">${esc(zahlWort(k))}</p><div class="gesagt">…</div>`;
+      lesenEl.appendChild(d); offen.set(k, d);
+      const fuell = t => { d.querySelector('.gesagt').innerHTML = gesagt(t); };
+      if(texte.has(k.nr)) fuell(texte.get(k.nr));
+      else fetch('/lichtwerk/gespraech?n=' + k.nr).then(r => r.ok ? r.json() : null).then(j => { const t = j ? j.text : 'Dieses Gespräch ist gerade nicht lesbar.'; texte.set(k.nr, t); fuell(t); }).catch(() => fuell('Dieses Gespräch ist gerade nicht lesbar.'));
+    }
+    const sx = (cx - blick.x) * s + blick.mx, sy = (cy - blick.y) * s + blick.my;
+    Object.assign(d.style, {left: `${sx - b / 2}px`, top: `${sy - h / 2}px`, width: `${b}px`, height: `${h}px`, fontSize: `${Math.max(13, Math.min(17, b / 40))}px`});
+  }
+  for(const [k, d] of offen) if(!jetzt.has(k)){ d.remove(); offen.delete(k); }
+}
+function gesagt(t){
+  return esc(t.replace(/^#\s.*$/m, '').replace(/^---\s*$/gm, '')).split(/\n{2,}/).map(p => p.trim()).filter(Boolean).map(p => {
+    p = p.replace(/\*\*(Du|ChatGPT|Claude|Assistant|User):\*\*/, (m, w) => `<b class="${w === 'Du' || w === 'User' ? 'du' : 'ki'}">${w === 'User' ? 'Du' : w}</b> `)
+      .replace(/\*\*(.+?)\*\*/g, '<b>$1</b>').replace(/\n/g, '<br>');
+    return `<p>${p}</p>`; }).join('');
+}
+
 function fahre(nach, dauer = 800){
   const von = {...blick}, t0 = performance.now(), ls0 = Math.log(von.s), ls1 = Math.log(nach.s);
   ziel = nach;
@@ -373,7 +434,7 @@ function fahre(nach, dauer = 800){
 /* ---------- Stufen ---------- */
 const unterhalb = (k, f) => { for(let q = k; q; q = q.eltern) if(q === f) return true; return false; };
 function geh(k, sanft = true){
-  if(k.art === 'fassung'){ waehle(k); return; }
+  if(blattArt(k)){ waehle(k); return; }
   fokus = k; gewaehlt && gewaehlt.form.classList.remove('gewaehlt'); gewaehlt = null;
   for(const q of alle){ const fern = !unterhalb(q, k) && !unterhalb(k, q); q.form && q.form.classList.toggle('fern', fern); q.ast && q.ast.classList.toggle('fern', fern && q !== k.eltern); }
   const p = passend(k); sanft ? fahre(p) : (blick = p, setze());
@@ -381,10 +442,24 @@ function geh(k, sanft = true){
   const teile = []; for(let q = k; q; q = q.eltern) teile.unshift(q.name);
   history.replaceState(null, '', '#' + teile.slice(1).map(encodeURIComponent).join('/'));
 }
+function blattBlick(f){   // ein Blatt so nah, dass es den Schirm füllt und man darin lesen kann
+  const cx = f.x + Math.cos(f.dir) * f.r * 0.25, cy = f.y + Math.sin(f.dir) * f.r * 0.25, bh = H - oben() - 12, bw = W - 16;
+  const s = Math.min(bw / (f.r * 1.25), bh / (f.r * 1.55));
+  return halte({x: cx, y: cy, s, mx: W / 2, my: oben() + bh / 2});
+}
 function waehle(f){
   gewaehlt && gewaehlt.form.classList.remove('gewaehlt');
   gewaehlt = f; f.form.classList.add('gewaehlt');
   if(fokus !== f.eltern){ fokus = f.eltern; pfad(f.eltern); }
+  if(f.art === 'gespraech'){
+    fahre(blattBlick(f), 1000);
+    $('.karte-name').textContent = f.name;
+    const an = []; for(let q = f.eltern; q; q = q.eltern) if(q.art === 'app' || q.art === 'ort' || q.art === 'bereich'){ an.push(q.name); break; }
+    $('.karte-menge').textContent = `Gespräch · ${zahlWort(f)}${an.length ? ' · an ' + an[0] : ''}`;
+    $('.karte-auch').textContent = '';
+    hoch(f.eltern, 'hinaus');
+    return;
+  }
   fahre(passend(f.eltern));
   $('.karte-name').textContent = f.name;
   $('.karte-menge').textContent = `Fassung in „${f.werk}“ · ${zeichenWort(f.zeichen)} · ${f.datiert ? zeitWort(f) : 'Zeit nicht belegt'}`;
@@ -393,7 +468,7 @@ function waehle(f){
 }
 function karte(k){
   $('.karte-name').textContent = k.art === 'wurzel' ? 'Ralfs Werke' : k.name;
-  const teile = k.art === 'wurzel' ? [`${k.kinder.length} Orte`, `${k.fassungen} Fassungen`, zeichenWort(k.zeichen)] : [zahlWort(k), zeichenWort(k.zeichen), zeitWort(k)];
+  const teile = k.art === 'wurzel' ? [`${k.kinder.length} Orte`, `${k.fassungen} Fassungen`, zeichenWort(k.zeichen)] : [zahlWort(k), k.zeichen ? zeichenWort(k.zeichen) : '', zeitWort(k)].filter(Boolean);
   if(k.art === 'werk' && k.eigen) teile.unshift('eigenes Material der App');
   $('.karte-menge').textContent = teile.join(' · ');
   const ort = (() => { for(let q = k; q; q = q.eltern) if(q.art === 'ort') return q.name; })();
@@ -415,7 +490,7 @@ function pfad(k){
 const zeiger = new Map(); let zug = null, bewegt = false, getippt = null;
 svg.addEventListener('pointerdown', e => { getippt = e.target.closest('[data-nr]'); svg.setPointerCapture(e.pointerId); zeiger.set(e.pointerId, [e.clientX, e.clientY]); bewegt = false; ziel = null;
   zug = {blick: {...blick}, punkte: new Map(zeiger)}; });
-svg.addEventListener('pointermove', e => { if(!zeiger.has(e.pointerId)) return; zeiger.set(e.pointerId, [e.clientX, e.clientY]);
+const bewege = e => { if(!zeiger.has(e.pointerId)) return; zeiger.set(e.pointerId, [e.clientX, e.clientY]);
   const a = [...zug.punkte.values()], b = [...zeiger.values()]; if(a.length !== b.length){ zug = {blick: {...blick}, punkte: new Map(zeiger)}; return; }
   const mitte = l => [l.reduce((s, p) => s + p[0], 0) / l.length, l.reduce((s, p) => s + p[1], 0) / l.length];
   const abst = l => l.length > 1 ? Math.hypot(l[0][0] - l[1][0], l[0][1] - l[1][1]) : 1;
@@ -423,13 +498,25 @@ svg.addEventListener('pointermove', e => { if(!zeiger.has(e.pointerId)) return; 
   if(Math.hypot(bx - ax, by - ay) > 6 || Math.abs(f - 1) > .03) bewegt = true;
   if(!bewegt) return; svg.classList.add('zieht');
   const z = zug.blick, s = z.s * f, wx = z.x + (ax - z.mx) / z.s, wy = z.y + (ay - z.my) / z.s;
-  blick = {s, mx: z.mx, my: z.my, x: wx - (bx - z.mx) / s, y: wy - (by - z.my) / s}; setze(); });
+  blick = {s, mx: z.mx, my: z.my, x: wx - (bx - z.mx) / s, y: wy - (by - z.my) / s}; setze(); };
+svg.addEventListener('pointermove', bewege);
+lesenEl.addEventListener('pointerdown', e => { if(e.pointerType !== 'touch') return; zeiger.set(e.pointerId, [e.clientX, e.clientY]); getippt = null; bewegt = false; zug = {blick: {...blick}, punkte: new Map(zeiger)}; });
+lesenEl.addEventListener('pointermove', e => { if(zeiger.size >= 2 && zeiger.has(e.pointerId)){ e.preventDefault(); bewege(e); } else if(zeiger.has(e.pointerId)) zeiger.set(e.pointerId, [e.clientX, e.clientY]); });
+for(const n of ['pointerup', 'pointercancel']) lesenEl.addEventListener(n, e => { zeiger.delete(e.pointerId); if(zeiger.size) zug = {blick: {...blick}, punkte: new Map(zeiger)}; });
 const los = e => { zeiger.delete(e.pointerId); svg.classList.remove('zieht'); if(zeiger.size) zug = {blick: {...blick}, punkte: new Map(zeiger)};
   else if(!bewegt && getippt) geh(alle[+getippt.dataset.nr]); };
 svg.addEventListener('pointerup', los); svg.addEventListener('pointercancel', e => { zeiger.delete(e.pointerId); });
-svg.addEventListener('wheel', e => { e.preventDefault(); ziel = null; const f = Math.exp(-e.deltaY * 0.002);
+const radeln = e => { e.preventDefault(); ziel = null; const f = Math.exp(-e.deltaY * 0.002);
   const wx = blick.x + (e.clientX - blick.mx) / blick.s, wy = blick.y + (e.clientY - blick.my) / blick.s, s = blick.s * f;
-  blick = {...blick, s, x: wx - (e.clientX - blick.mx) / s, y: wy - (e.clientY - blick.my) / s}; setze(); }, {passive: false});
+  blick = {...blick, s, x: wx - (e.clientX - blick.mx) / s, y: wy - (e.clientY - blick.my) / s}; setze(); };
+svg.addEventListener('wheel', radeln, {passive: false});
+// über dem Text im Blatt: blättern liest weiter; ist man oben angekommen (oder zieht mit zwei Fingern zusammen), geht es hinaus
+// wie überall im Baum führt das Rad nach unten hinaus: im Blatt erst durch das ganze Gespräch, an seinem Ende weiter hinaus
+lesenEl.addEventListener('wheel', e => { const t = e.target.closest('.blatttext');
+  const ende = t && t.scrollTop + t.clientHeight >= t.scrollHeight - 2, anfang = t && t.scrollTop <= 0;
+  if(!t || e.ctrlKey || (e.deltaY > 0 && ende)) radeln(e);
+  else if(e.deltaY < 0 && anfang) e.preventDefault();   // am Anfang des Gesprächs geht es nicht noch tiefer hinein
+  else e.stopPropagation(); }, {passive: false});
 namenEl.addEventListener('click', e => { const t = e.target.closest('[data-nr]'); if(t) geh(alle[+t.dataset.nr]); });
 addEventListener('keydown', e => { if(e.key === 'Escape' && fokus && fokus.eltern) geh(fokus.eltern); });
 addEventListener('resize', () => { W = innerWidth; H = innerHeight; if(wurzelKnoten){ vollbild(); } if(fokus){ blick = passend(fokus); setze(); } });
@@ -437,10 +524,11 @@ addEventListener('resize', () => { W = innerWidth; H = innerHeight; if(wurzelKno
 /* ---------- Laden ---------- */
 (async () => {
   try {
-    const [graph, bilder] = await Promise.all([fetch('/api/graph').then(r => r.json()), fetch('/lichtwerk/bilder').then(r => r.ok ? r.json() : {}).catch(() => ({}))]);
-    const baum = spiralbaum(graph, bilder);
+    const [graph, bilder, gespraeche] = await Promise.all([fetch('/api/graph').then(r => r.json()), fetch('/lichtwerk/bilder').then(r => r.ok ? r.json() : {}).catch(() => ({})),
+      fetch('/lichtwerk/gespraeche').then(r => r.ok ? r.json() : []).catch(() => [])]);
+    const baum = spiralbaum(graph, bilder, gespraeche);
     pflanze(baum);
-    umrisse(); zeichne(); wurzelKnoten = baum; vollbild();
+    umrisse(); zeichne(); wurzelKnoten = baum; for(const k of alle) if(k.r && (k.art === 'fassung' || k.art === 'gespraech')) kleinstesBlatt = Math.min(kleinstesBlatt, k.r); vollbild();
     $('#lade').hidden = true;
     const finde = () => { let k = baum; for(const t of location.hash.slice(1).split('/').filter(Boolean).map(decodeURIComponent)){ const n = (k.kinder || []).find(c => c.name === t); if(!n) break; k = n; } return k; };
     geh(finde(), false);
