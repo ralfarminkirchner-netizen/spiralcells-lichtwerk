@@ -253,10 +253,11 @@ function stammKrone(orte, baum){
   const seite = orte.map((_, i) => i === n - 1 ? 0 : (i % 2 ? 1 : -1));
   // Lage auf der Kuppel: unten am Stamm heißt außen in der Krone; die Sektoren teilen die Spanne nach Menge
   const reihe = orte.map((_, i) => i).sort((a, b) => seite[a] * (1 - a / Math.max(1, n - 1)) - seite[b] * (1 - b / Math.max(1, n - 1)));
-  const sek = reihe.map(i => Math.sqrt(ziel[i])), sg = sek.reduce((s, v) => s + v, 0), phi = [];
+  const sek = reihe.map(i => ziel[i])   // der Sektor so breit wie die Krone, die er trägt
+  , sg = sek.reduce((s, v) => s + v, 0), phi = [];
   let acc = 0; reihe.forEach((i, q) => { phi[i] = -SPANNE + 2 * SPANNE * (acc + sek[q] / 2) / sg; acc += sek[q]; });
   const hoehe = orte.map((_, i) => HD * (0.3 + 0.7 * Math.pow(i / Math.max(1, n - 1), 0.85)));
-  const winkel = phi.slice(), KURZ = 0.16;   // der Arm zielt mitten in seinen Sektor
+  const winkel = phi, KURZ = 0.16;   // der Arm zielt mitten in seinen Sektor
   const H = HD, mitte = h => Math.sin(h / H * Math.PI * 1.15) * H * 0.03;
   const arm = i => kreisVon(G[i], orte[i]) * 1.05;
   const breiteBei = h => Math.sqrt(orte.reduce((s, _, j) => s + (hoehe[j] >= h - 1e-9 ? arm(j) ** 2 : 0), 0));
@@ -275,21 +276,23 @@ function stammKrone(orte, baum){
   };
   const stammKreise = () => umkreis(Array.from({length: 24}, (_, q) => { const h = H * 0.92 * q / 23; return {cx: mitte(h), cy: -h, R: breiteBei(h) * 0.6 + 1e-6}; }));
   // eine Krone darf hinter fremden Armen liegen wie im echten Laubdach; anstoßen kann sie nur an Kronen und am Stamm
-  const stoesst = (i, L) => {
-    const luft = RD * 0.004, me = L[i];
-    if(stossen(stammKreise(), ID, G[i].h, me.T, luft)) return true;
-    for(let j = 0; j < n; j++) if(j !== i && stossen(G[i].h, me.T, G[j].h, L[j].T, luft)) return true;
-    return false;
-  };
-  // wachsen, bis alles anstößt: erst in großen, dann in kleinen Schritten
-  for(const f of [1.08, 1.02]){
-    const fest = orte.map(() => false);
-    for(let it = 0; it < 200 && fest.some(v => !v); it++){
-      for(let i = 0; i < n; i++){ if(fest[i]) continue;
-        dreh(G[i], 0, 0, 0, f);
-        const L = orte.map((_, j) => lage(j));
-        if(stoesst(i, L)){ dreh(G[i], 0, 0, 0, 1 / f); fest[i] = true; }
-      }
+  // wachsen alle zugleich mit einem Faktor (Ralf, 09.11.: die Größe gehört an die Menge, nicht an den freien Platz):
+  // wer mehr trägt, ist immer größer. Stoßen zwei Kronen an, rücken sie und alles hinter ihnen zur Seite, solange die
+  // Kuppel reicht; erst wenn nichts mehr ausweichen kann, hören alle zugleich auf.
+  const WEIT = 1.66;
+  const anstoss = L => { const luft = RD * 0.004;
+    for(let i = 0; i < n; i++){ if(stossen(stammKreise(), ID, G[i].h, L[i].T, luft)) return [i, -1];
+      for(let j = i + 1; j < n; j++) if(stossen(G[i].h, L[i].T, G[j].h, L[j].T, luft)) return [i, j]; }
+    return null; };
+  const spreize = (i, j) => { const lo = phi[i] <= phi[j] ? i : j, hi = lo === i ? j : i, pl = phi[lo], ph = phi[hi], d = 0.008;
+    for(let k = 0; k < n; k++){ if(phi[k] <= pl) phi[k] -= d; else if(phi[k] >= ph) phi[k] += d; }
+    return Math.max(...phi.map(Math.abs)) <= WEIT; };
+  for(const f of [1.08, 1.02, 1.005]){
+    for(let it = 0; it < 300; it++){
+      const vor = phi.slice(); G.forEach(g => dreh(g, 0, 0, 0, f));
+      let frei = false;
+      for(let v = 0; v < 120; v++){ const a = anstoss(orte.map((_, j) => lage(j))); if(!a){ frei = true; break; } if(a[1] < 0 || !spreize(a[0], a[1])) break; }
+      if(!frei){ G.forEach(g => dreh(g, 0, 0, 0, 1 / f)); vor.forEach((p, k) => phi[k] = p); break; }
     }
   }
   const L = orte.map((_, i) => lage(i));
