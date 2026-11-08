@@ -73,7 +73,7 @@ function ding(k, seite){
   // so wird alles Tiefere von selbst immer kleiner
   // ein Ort ist nur die Gabel, an der seine Apps hängen: sein Kreis bleibt klein, die Krone bekommt den Platz
   // die Dinge mit Bild (Apps, Werke) tragen große Kreise, damit ihre Bilder schon von weitem zu sehen sind
-  const R = groesse(k.wert), r = R * (k.art === 'ort' ? 1.25 : k.art === 'bereich' || k.art === 'varianten' ? 0.8 : k.art === 'gespraeche' || k.art === 'zeit' ? 0.5 : k.bild ? 1.7 : 1), kreis = {typ: 'kreis', k, x: 0, y: -r, r};
+  const R = groesse(k.wert), r = R * (k.art === 'ort' ? 0.75 : k.art === 'bereich' || k.art === 'varianten' ? 0.8 : k.art === 'gespraeche' || k.art === 'zeit' ? 0.5 : k.bild ? 1.7 : 1), kreis = {typ: 'kreis', k, x: 0, y: -r, r};
   const K = krone(k.kinder, seite, k, null), Kr = K.h.R;
   dreh(K, 0, 0, 0, KRONE * R * (k.art === 'gespraeche' ? 1 : k.art === 'ort' ? 1.8 : 1) / K.h.R);   // ein Ort trägt eine große Krone   // das Laub der Gespräche steht groß und dicht
   let hoch = 2 * r; const unten = {cx: 0, cy: -r, R: r};
@@ -236,47 +236,69 @@ function wurzle(R, fuss){
   wurzelBreit = Math.max(...wurzelFormen.flatMap(f => f.pts.map(p => Math.abs(p[0]))));
 }
 
-/* Der Stamm (Ralf, 08.11.: „all die Grunddinge brauchen einen eigenen Arm, der vom Stamm kommt, bevor er sich verzweigt“).
-   Jeder Ort wächst an seinem eigenen Arm aus dem Stamm, die Arme setzen spiralig nacheinander an: abwechselnd links und
-   rechts, unten weit ausladend, nach oben immer steiler; der oberste setzt den Stamm fort. Der Stamm ist an jeder Stelle so
-   stark wie alle Arme über ihr zusammen (Querschnitt bleibt erhalten, wie bei echten Bäumen) und wird nach unten breit. */
+/* Der Stamm und die Gesamtkrone (Ralf, 08.11.: „all die Grunddinge brauchen einen eigenen Arm“; 09.11.: die Krone dicht
+   und fraktal, „eine Mischung aus beidem“). Über dem Stamm wölbt sich eine Kuppel wie das Laubdach eines echten Baums.
+   Jeder Ort bekommt darin einen Sektor, so breit wie seine Menge, in der Zeitfolge von links nach rechts. Seine Krone
+   steht nach außen gedreht, ihr Rand an der Kuppelhaut, und wächst, bis sie an Nachbarn, Arme oder Stamm stößt: so
+   füllen die Kronen den Raum. Innen bleibt jede Krone selbstähnlich, Gabel auf Gabel, an den Spitzen eingerollt.
+   Jeder Ort hängt an seinem eigenen Arm; die Arme setzen spiralig an, abwechselnd links und rechts, unten weit, oben
+   steil, der oberste setzt den Stamm fort. Der Stamm ist so stark wie alle Arme über ihm zusammen. */
 function stammKrone(orte, baum){
   const n = orte.length, G = orte.map(k => ding(k, 1));
   const kreisVon = (g, k) => (g.formen.find(f => f.typ === 'kreis' && f.k === k) || {r: g.h.R * 0.2}).r;
-  const arm = G.map((g, i) => kreisVon(g, orte[i]) * 1.05);
-  const maxR = Math.max(...G.map(g => g.h.R)), H = G.reduce((s, g) => s + g.h.R, 0) * 0.7;   // so hoch, dass die Kronen jeder Seite übereinander Platz haben
-  const hoehe = orte.map((_, i) => n === 1 ? H : H * (0.16 + 0.84 * Math.pow(i / (n - 1), 0.9)));
+  const RD = 100, HD = RD * 1.02, D = [0, -HD], SPANNE = 1.42;
+  // Startgröße nach Menge, flach gestaucht; dann wachsen alle gemeinsam, bis sie anstoßen
+  const ziel = orte.map(k => Math.pow(Math.max(k.wert, 1), 0.3)), zm = Math.max(...ziel);
+  G.forEach((g, i) => dreh(g, 0, 0, 0, RD * 0.07 * ziel[i] / zm / g.h.R));
   const seite = orte.map((_, i) => i === n - 1 ? 0 : (i % 2 ? 1 : -1));
-  const winkel = orte.map((_, i) => seite[i] * (0.62 + 0.72 * Math.pow(1 - i / Math.max(1, n - 1), 0.8)));
-  const breiteBei = h => Math.sqrt(arm.reduce((s, w, j) => s + (hoehe[j] >= h - 1e-9 ? w * w : 0), 0));
-  const mitte = h => Math.sin(h / H * Math.PI * 1.15) * H * 0.035;   // der Stamm schwingt leicht
-  const lage = (i, lam) => {
-    const h = hoehe[i], x0 = mitte(h), th = winkel[i], L = Math.max(lam * G[i].h.R, arm[i] * 3);
-    const end = th * 0.35, mittel = th * 0.8;   // der Arm geht weit hinaus und biegt sich zum Licht hinauf
-    const ex = x0 + Math.sin(mittel) * L, ey = -h - Math.cos(mittel) * L;
-    const pts = [[x0, -h + arm[i] * 0.6], [x0 + Math.sin(th) * L * 0.45, -h - Math.cos(th) * L * 0.45], [ex - Math.sin(end) * L * 0.35, ey + Math.cos(end) * L * 0.35], [ex, ey]];
-    const ast = {typ: 'ast', pts, w0: Math.max(arm[i] * 1.25, i === n - 1 ? breiteBei(h) : 0), w1: arm[i] * 0.95, wem: orte[i], zu: true};
-    return {T: {c: Math.cos(end), s: Math.sin(end), tx: ex, ty: ey}, ast, end};
+  // Lage auf der Kuppel: unten am Stamm heißt außen in der Krone; die Sektoren teilen die Spanne nach Menge
+  const reihe = orte.map((_, i) => i).sort((a, b) => seite[a] * (1 - a / Math.max(1, n - 1)) - seite[b] * (1 - b / Math.max(1, n - 1)));
+  const sek = reihe.map(i => Math.sqrt(ziel[i])), sg = sek.reduce((s, v) => s + v, 0), phi = [];
+  let acc = 0; reihe.forEach((i, q) => { phi[i] = -SPANNE + 2 * SPANNE * (acc + sek[q] / 2) / sg; acc += sek[q]; });
+  const hoehe = orte.map((_, i) => HD * (0.3 + 0.7 * Math.pow(i / Math.max(1, n - 1), 0.85)));
+  const winkel = phi.slice(), KURZ = 0.16;   // der Arm zielt mitten in seinen Sektor
+  const H = HD, mitte = h => Math.sin(h / H * Math.PI * 1.15) * H * 0.03;
+  const arm = i => kreisVon(G[i], orte[i]) * 1.05;
+  const breiteBei = h => Math.sqrt(orte.reduce((s, _, j) => s + (hoehe[j] >= h - 1e-9 ? arm(j) ** 2 : 0), 0));
+  const reich = g => -g.h.cy + g.h.R;   // wie weit die Krone vom Fuß nach außen reicht
+  // jeder Arm ist ein Strahl aus seinem Ansatz am Stamm; tiefer ansetzende Strahlen gehen weiter hinaus, so kreuzt sich nichts.
+  // Am Ende des Strahls sitzt die Krone, ihr äußerer Rand an der Kuppelhaut; reicht der Strahl nicht hin, steht sie dicht am Stamm.
+  const lage = i => {
+    const h = hoehe[i], A = [mitte(h), -h], th = winkel[i], ende = th * 0.82, u = [Math.sin(th), -Math.cos(th)];
+    const rho = RD - reich(G[i]), dx = A[0] - D[0], dy = A[1] - D[1];
+    const bq = dx * u[0] + dy * u[1], cq = dx * dx + dy * dy - rho * rho, disk = bq * bq - cq;
+    const d = Math.max(disk > 0 ? -bq + Math.sqrt(disk) : 0, KURZ * RD);
+    const fx = A[0] + u[0] * d, fy = A[1] + u[1] * d;
+    const pts = [[A[0], A[1] + arm(i) * 0.6], [A[0] + Math.sin(th * 1.12) * d * 0.4, A[1] - Math.cos(th * 1.12) * d * 0.4], [fx - Math.sin(ende) * d * 0.3, fy + Math.cos(ende) * d * 0.3], [fx, fy]];
+    const ast = {typ: 'ast', pts, w0: Math.max(arm(i) * 1.25, i === n - 1 ? breiteBei(h) : 0), w1: arm(i) * 0.95, wem: orte[i], zu: true};
+    return {T: {c: Math.cos(ende), s: Math.sin(ende), tx: fx, ty: fy}, ast, end: ende};
   };
-  // der Stamm als Kreise für die Platzprüfung
-  const stammKreise = umkreis(Array.from({length: 24}, (_, q) => { const h = H * q / 23; return {cx: mitte(h), cy: -h, R: breiteBei(h) * 0.6 + 1e-6}; }));
-  const lam = orte.map((_, i) => 0.7 + 0.5 * (1 - i / Math.max(1, n - 1))); let L;   // unten lange, weit ausgreifende Arme, oben kürzere
-  for(let it = 0; it < 160; it++){
-    L = orte.map((_, i) => lage(i, lam[i])); const luft = 0.05 * maxR, weiter = orte.map(() => false);
-    for(let a = 0; a < n; a++){
-      if(stossen(stammKreise, ID, G[a].h, L[a].T, luft)) weiter[a] = true;
-      for(let b = a + 1; b < n; b++) if(stossen(G[a].h, L[a].T, G[b].h, L[b].T, luft)) { weiter[a] = weiter[b] = true; }
-      for(let b = 0; b < n; b++){ if(b === a) continue; const st = formKreise(L[b].ast).slice(2); if(st.length && stossen(umkreis(st), ID, G[a].h, L[a].T, luft)) weiter[a] = true; }
+  const stammKreise = () => umkreis(Array.from({length: 24}, (_, q) => { const h = H * 0.92 * q / 23; return {cx: mitte(h), cy: -h, R: breiteBei(h) * 0.6 + 1e-6}; }));
+  // eine Krone darf hinter fremden Armen liegen wie im echten Laubdach; anstoßen kann sie nur an Kronen und am Stamm
+  const stoesst = (i, L) => {
+    const luft = RD * 0.004, me = L[i];
+    if(stossen(stammKreise(), ID, G[i].h, me.T, luft)) return true;
+    for(let j = 0; j < n; j++) if(j !== i && stossen(G[i].h, me.T, G[j].h, L[j].T, luft)) return true;
+    return false;
+  };
+  // wachsen, bis alles anstößt: erst in großen, dann in kleinen Schritten
+  for(const f of [1.08, 1.02]){
+    const fest = orte.map(() => false);
+    for(let it = 0; it < 200 && fest.some(v => !v); it++){
+      for(let i = 0; i < n; i++){ if(fest[i]) continue;
+        dreh(G[i], 0, 0, 0, f);
+        const L = orte.map((_, j) => lage(j));
+        if(stoesst(i, L)){ dreh(G[i], 0, 0, 0, 1 / f); fest[i] = true; }
+      }
     }
-    if(!weiter.some(Boolean)) break;
-    weiter.forEach((w, j) => { if(w) lam[j] *= 1.06; });
   }
+  const L = orte.map((_, i) => lage(i));
   orte.forEach((_, i) => dreh(G[i], L[i].end, L[i].T.tx, L[i].T.ty));
   // der Stamm: eine Fläche aus einem Guss, seine Breite folgt weich den abgehenden Armen
   const links = [], rechts = [], N = 140, fussB = breiteBei(0) * 1.7;
   for(let q = 0; q <= N; q++){
     const h = -breiteBei(0) * 0.25 + (H + breiteBei(0) * 0.25) * q / N, t = Math.max(0, h) / H;
-    let w = 0, gew = 0;   // weich gemittelte Breite statt Stufen
+    let w = 0, gew = 0;
     for(let d = 0; d <= 14; d++){ const hh = h - d * H * 0.012, g = 15 - d; w += breiteBei(Math.max(0, Math.min(h, hh))) * g; gew += g; }   // nur nach unten gemittelt: oben läuft der Stamm genau in den letzten Arm aus
     w = w / gew * (1 + 0.08 * (1 - t)) + (fussB - breiteBei(0)) * Math.pow(Math.max(0, 1 - t * 3.2), 2.2);
     links.push([mitte(Math.max(0, h)) - w / 2, -h]); rechts.push([mitte(Math.max(0, h)) + w / 2, -h]);
