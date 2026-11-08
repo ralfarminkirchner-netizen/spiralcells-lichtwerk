@@ -114,3 +114,24 @@ test('Adresse: das Werk steht unter seinem lesbaren Namen und bleibt neben ander
   assert.equal(werkAus('#werk=../boese'), null, 'nur lesbare Namen');
   assert.equal(werkAus('#werk=a&werk=b'), null);
 });
+
+test('Spirale im Netz: Länge ist die Menge, der Saum liegt hinten, Dauer nur wenn belegt', {skip: ohne}, async () => {
+  const {menge, strecke, fassungBei, windungen} = await import('../app/js/menge.js');
+  assert.equal(windungen(1000), 1); assert.equal(windungen(10000), 2); assert.equal(windungen(100000), 3);
+  assert.ok(windungen(10) >= 0.3 && windungen(1e9) <= 5);
+  for(const m of B.monde){
+    const st = strecke(m.samen), x = menge(m);
+    if(!m.samen.length){ assert.equal(x.windungen, 0); continue; }
+    // mehr Material, nie kürzere Spirale
+    assert.ok(x.windungen > 0);
+    // der Saum beginnt erst, wo das Datierte endet
+    for(let i = 0; i < m.samen.length; i++){ if(m.samen[i].saum) assert.ok(st.von[i] >= st.saumAb - 1e-12); else assert.ok(st.bis[i] <= st.saumAb + 1e-12); }
+    for(let i = 0; i < m.samen.length; i++) assert.equal(fassungBei(st, (st.von[i] + st.bis[i]) / 2), i);
+    // nie eine Dauer ohne zwei datierte Fassungen, nie ein Datum ohne datierte
+    if(x.datiert === 0) assert.doesNotMatch(x.satz, /belegt am|über \d/);
+    if(x.datiert < 2) assert.doesNotMatch(x.satz, /über \d/);
+    assert.doesNotMatch(x.satz, /[0-9a-f]{8}-[0-9a-f]{4}/, 'keine Kennung');
+  }
+  const gross = [...B.monde].sort((a, b) => menge(b).zeichen - menge(a).zeichen);
+  assert.ok(menge(gross[0]).windungen > menge(gross[gross.length - 100]).windungen, 'viel Material, lange Spirale');
+});

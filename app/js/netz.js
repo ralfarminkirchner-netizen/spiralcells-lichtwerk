@@ -14,6 +14,7 @@ import {VOICES, fibSphere} from './zelle.js';
 import {MENSCH} from './daten.js';
 import {wuchs, rangRadien} from './wuchs.js';
 import {fundusBezuege} from './bezuege.js';
+import {strecke, fassungBei, windungen} from './menge.js';
 import {ordne, lage} from './ordnung.js';
 import {alsformen} from './alsformen.js';
 import {gelaende, PFLANZE} from './gelaende.js';
@@ -47,27 +48,29 @@ function pflanze(m, W, rM, H){
 export function arbeit(m){ const zeichen = m.samen.reduce((a, s) => a + Math.max(0, s.laenge || 0), 0);
   return clamp(Math.log2(1 + m.samen.length + zeichen / 2000) / Math.log2(201), 0, 1); }
 /* Ein Werk im Kleinen: eine Zelle mit eigener Haut. Die Haut ist je Werk anders und stabil; darin liegen seine Fassungen
-   als Spirale, die Stimme als Farbe, Gabeln etwas neben der Bahn. Die Länge der Spirale zeigt, wie viel schon entstanden ist.
+   als Spirale, die Stimme als Farbe, Gabeln etwas neben der Bahn. Die Länge der Spirale ist die Menge: eine Windung je
+   Verzehnfachung des Materials (menge.js). Vorn die datierten Fassungen, durchgezogen; dahinter der Saum ohne Datum, gepunktet.
    Die Spirale ist Anordnung, kein Beleg für Abstammung. Im Garten steigt dieselbe Spirale als Pflanze auf: jedes Korn hat seine Höhe. */
 function miniWuchs(m, rM, seed){
-  const n = m.samen.length, W = n ? wuchs(m) : null, w = arbeit(m), turns = 0.45 + 2.6 * w, weite = 0.3 + 0.5 * w, H = rM * (2.2 + 6.5 * w);
+  const n = m.samen.length, W = n ? wuchs(m) : null, w = arbeit(m), ST = strecke(m.samen), turns = windungen(ST.gesamt), weite = 0.3 + 0.5 * w, H = rM * (2.2 + 6.5 * w);
   const bahn = t => { const a = -Math.PI * 0.73 + t * TAU * turns, r = rM * (0.07 + weite * Math.pow(t, 0.8)); return [r * Math.cos(a), r * Math.sin(a), a]; };
   const schritt = Math.max(1, Math.ceil(n / 160)), pts = [], stiel = [];
   const G = n ? pflanze(m, W, rM, H) : {lage: new Float32Array(0), stengel: new Float32Array(0)}, ptsG = [], korn = new Float32Array(n * 2);
   for(let i = 0; i < n; i++){
-    const s = m.samen[i], t = n === 1 ? 1 : i / (n - 1); let [x, z, a] = bahn(t);
+    const s = m.samen[i], t = n === 1 ? 1 : (ST.von[i] + ST.bis[i]) / 2; let [x, z, a] = bahn(t);   // jedes Korn mitten auf seinem Stück der Spirale
     const sw = W.eltern[i] >= 0 ? W.kinder[W.eltern[i]] : null;
     if(sw && sw.length > 1){ const v = (sw.indexOf(i) - (sw.length - 1) / 2) / Math.max(1, (sw.length - 1) / 2) * rM * 0.1; x += Math.cos(a + Math.PI / 2) * v; z += Math.sin(a + Math.PI / 2) * v; }
     korn[i * 2] = x; korn[i * 2 + 1] = z;
     const c = s.form ? SILVER : typeof s.stimme === 'number' ? SEEDC[s.stimme] : s.stimme === MENSCH ? SILVER : DUSTC, g = s.status === 'grundformation' ? 0.5 : 0;
     if(i % schritt === 0 || W.kinder[i].length > 1 || W.art[i] === 'gabel'){ pts.push(x, (i / n) * rM * 0.1, z, mix(c[0], GOLDC[0], g), mix(c[1], GOLDC[1], g), mix(c[2], GOLDC[2], g)); ptsG.push(G.lage[i * 3], G.lage[i * 3 + 1], G.lage[i * 3 + 2]); }
   }
-  if(n){ const q = Math.round(clamp(rM * 12 * turns, 10, 110)); for(let j = 0; j <= q; j++){ const [x, z] = bahn(j / q), c = m.samen[Math.round(j / q * (n - 1))], f = typeof c.stimme === 'number' ? SEEDC[c.stimme] : DUSTC; stiel.push(x, 0, z, f[0], f[1], f[2]); } }
+  const saum = [];
+  if(n){ const q = Math.round(clamp(rM * 30 * turns, 16, 240)); for(let j = 0; j <= q; j++){ const t = j / q, [x, z] = bahn(t), c = m.samen[fassungBei(ST, t)], f = typeof c.stimme === 'number' ? SEEDC[c.stimme] : c.form || c.stimme === MENSCH ? SILVER : DUSTC; stiel.push(x, 0, z, f[0], f[1], f[2]); saum.push(t > ST.saumAb ? 1 : 0); } }
   // Die Haut: leicht unregelmäßig; oben links liegt ein heller Rand, der ihr Tiefe gibt, ohne etwas zu behaupten
   const hn = Math.round(clamp(rM * 26, 40, 96)), p3 = hash(seed * 1.3) * TAU, p5 = hash(seed * 2.1) * TAU, haut = [];
   for(let j = 0; j < hn; j++){ const a = j / hn * TAU, r = rM * (1 + Math.sin(a * 3 + p3) * 0.036 + Math.cos(a * 5 + p5) * 0.016);
     let u = (a / Math.PI - 1.01) / 0.7, hell = u >= 0 && u <= 1 ? Math.sin(Math.PI * u) : 0; haut.push(r * Math.cos(a), r * Math.sin(a) * 0.94, hell); }
-  return {ar: w, korn, pts: new Float32Array(pts), ptsG: new Float32Array(ptsG), stiel: new Float32Array(stiel), stengel: G.stengel, haut: new Float32Array(haut), H, plan: n ? {lage: G.lage, W, lose: Array.from({length: n}, (_, i) => W.art[i] === 'frei' || W.art[i] === 'reihe'), tiefste: Math.max(...W.tiefe)} : null};
+  return {ar: w, korn, pts: new Float32Array(pts), ptsG: new Float32Array(ptsG), stiel: new Float32Array(stiel), stielSaum: Uint8Array.from(saum), stengel: G.stengel, haut: new Float32Array(haut), H, plan: n ? {lage: G.lage, W, lose: Array.from({length: n}, (_, i) => W.art[i] === 'frei' || W.art[i] === 'reihe'), tiefste: Math.max(...W.tiefe)} : null};
 }
 /* Die Mischfarbe einer Reihe von Werken: so leuchtet ein Dach, wenn es leuchtet */
 function mischFarbe(mini, werke){ let r = 0, g = 0, b = 0, n = 0;
@@ -235,7 +238,8 @@ export function baueNetz(N, U, wall, vis, aktiv, aktivDetail){
     for(let p = 0; p < haut.length / 3; p++){ const h = haut[p * 3 + 2]; P(o[0] + haut[p * 3], o[1], o[2] + haut[p * 3 + 1], hz * (1 + 0.5 * h), mix(cr, WG[0], 0.45 + 0.5 * h), mix(cg, WG[1], 0.45 + 0.5 * h), mix(cb, WG[2], 0.45 + 0.5 * h), hf * (0.5 + 0.9 * h)); }
     const sz = Math.max(0.17 * Math.max(0.7, N.rM[n]), CAM.S * 0.0042);   // auch im Überblick bleibt die Gestalt eines Werks zu sehen, nicht nur sein Schein
     const pG = N.mini[n].ptsG; if(korn * (1 - ge) > 0.002) for(let p = 0; p < k; p++) P(o[0] + mix(pts[p * 6], pG[p * 3], gk) * gross, o[1] + mix(pts[p * 6 + 1], pG[p * 3 + 1], gk) * gross, o[2] + mix(pts[p * 6 + 2], pG[p * 3 + 2], gk) * gross, sz, pts[p * 6 + 3], pts[p * 6 + 4], pts[p * 6 + 5], a * lit * 0.9 * korn * (1 - ge));   // jedes Korn bleibt, wo sein Blatt entsteht
-    const st = N.mini[n].stiel; for(let p = 0; p < st.length / 6; p++) P(o[0] + st[p * 6], o[1], o[2] + st[p * 6 + 2], sz * 0.45, st[p * 6 + 3], st[p * 6 + 4], st[p * 6 + 5], a * 0.3 * (1 - gk));
+    const st = N.mini[n].stiel, ss = N.mini[n].stielSaum; for(let p = 0; p < st.length / 6; p++){ const sa = ss && ss[p]; if(sa && p % 3) continue;   // Saum ohne Datum: gepunktet
+      P(o[0] + st[p * 6], o[1], o[2] + st[p * 6 + 2], sz * (sa ? 0.5 : 0.55), st[p * 6 + 3], st[p * 6 + 4], st[p * 6 + 5], a * (sa ? 0.45 : 0.6) * (1 - gk)); }
     if(gk > 0.01){ const sg = N.mini[n].stengel; for(let p = 0; p < sg.length / 6; p++) P(o[0] + sg[p * 6], o[1] + sg[p * 6 + 1], o[2] + sg[p * 6 + 2], sz * 0.5, sg[p * 6 + 3], sg[p * 6 + 4], sg[p * 6 + 5], a * 0.55 * gk * raum); }
     P(o[0], o[1], o[2], k ? 0.2 : 0.26, KEIMC[0], KEIMC[1], KEIMC[2], a * (m.keimKristall ? 1.5 : k ? 0.8 : 1.1) * raum);
     // Ringe (Phase, zuletzt bewegt): im Überblick nur am jüngsten Werk je Bezirk, im Bezirk an allen seinen Werken

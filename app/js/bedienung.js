@@ -18,6 +18,7 @@ import {quellAdresse, quellFassung, quellName} from './quelle.js';
 import {werkFarbe} from './verschraenkung.js';
 import {appSource} from './materialraum.js';
 import {wechsle, werkDerAuswahl, mitWerk, werkAus} from './auswahl.js';
+import {menge} from './menge.js';
 
 const $ = s => document.querySelector(s);
 const canvas = $('#gl'), lineEl = $('#line'), markeEl = $('#marke'), leseEl = $('#lese'), siegelEl = $('#siegel'), hintEl = $('#hint'), ortEl = $('#zurueck');
@@ -56,10 +57,12 @@ function mondSatzGrund(m){
   return 'Die Stimmen lesen einander. Kristallisiert hat Ralf noch nichts.';
 }
 export function stummeStimmen(m){ if(!m || m.stimmen.length < 2 || m.kopplung === 0) return null; const lesen = new Set(m.paare.map(p => p[0])); const s = m.stimmen.filter(i => !lesen.has(i)); return s.length ? s : null; }
+/* Wie man die Spirale eines Werks liest, ohne es zu öffnen (Ralf, 08.11.2026) */
+export const SPIRAL_SATZ = 'Jede Spirale ist so lang wie ihr Material, eine Windung je zehnmal mehr; durchgezogen mit belegter Zeit, gepunktet ohne.';
 export function netzSatz(B){
   const N = W.N, d = N && N.baum ? N.baum.daecher.length : 0;
   if(d){ const ohne = N.baum.ohne.length;
-    return `Die Zentrale in der Mitte, ${zahlwort(d)} ${d === 1 ? 'Dach' : 'Dächer'} darum` + (ohne ? `, ${zahlwort(ohne)} Werke noch ohne Dach.` : '.') + (N.baum.bestaetigt ? '' : ' Diese Ordnung ist ein Vorschlag, noch nicht von dir bestätigt.'); }
+    return `Die Zentrale in der Mitte, ${zahlwort(d)} ${d === 1 ? 'Dach' : 'Dächer'} darum` + (ohne ? `, ${zahlwort(ohne)} Werke noch ohne Dach.` : '.') + (N.baum.bestaetigt ? '' : ' Diese Ordnung ist ein Vorschlag, noch nicht von dir bestätigt.') + ' ' + SPIRAL_SATZ; }
   const mit = B.monde.filter(m => m.stimmen.length).length;
   return `${B.monde.length} Werke, noch ohne Ordnung. In ${zahlwort(mit)} sprechen die Stimmen.`;
 }
@@ -101,7 +104,7 @@ export function markeFuer(sel){
   if(sel.art === 'keim') return [m.keimSatz, 'Ausgangsfrage' + (m.keimKristall ? ' · Grundformation' : '') + (m.keim.length > 1 ? ` · ${m.keim.length} Fassungen` : '') + (gleich(U.sel, sel) ? ' · tippen liest' : '')];
   if(sel.art === 'kopf'){ const v = STIMMEN[sel.i]; return [v.name, `${v.rolle} · ${v.schrift} · tippen zeigt ihre Spur allein`]; }
   if(sel.art === 'mond'){ const nv = m.stimmen.length;
-    const teile = [nv ? `${Zahlwort(nv)} ${nv === 1 ? 'Stimme' : 'Stimmen'}` : 'ohne Stimmen', `${m.samen.length + m.keim.length} ${m.samen.length + m.keim.length === 1 ? 'Ausprägung' : 'Ausprägungen'}`, m.reife];
+    const teile = [nv ? `${Zahlwort(nv)} ${nv === 1 ? 'Stimme' : 'Stimmen'}` : 'ohne Stimmen', `${m.samen.length + m.keim.length} ${m.samen.length + m.keim.length === 1 ? 'Ausprägung' : 'Ausprägungen'}`, menge(m).satz, m.reife];
     const A = W.N && W.N.als; if(A && A.hat(sel.i)) teile.push(alsSatz(A, sel.i));
     if(gleich(U.sel, sel)) teile.push('tippen öffnet');
     return [m.titel, teile.join(' · ')]; }
