@@ -23,6 +23,7 @@ const BREIT = 0.26;                   // Astdicke je Kreisgröße der getragenen
 const SPREIZ = 1.1;                   // Öffnung einer Gabel
 const ROLLT = 5;                      // so wenige Geschwister rollen sich an der Spitze ein
 const OBEN = -Math.PI / 2;
+const DREH = 0.17;                   // Spiraldrehung je Gabel (Ralf: „mehr diese Spiraldrehung“)
 const FAECHER = false;               // Orte als Fächer am Stamm (verworfen: ein Besen, kein Baum)
 const DICK = 0.055;
 const KRONE = 2.0;                    // Kronenhalbmesser je Kreishalbmesser                   // Astdicke je Kronenhalbmesser
@@ -72,13 +73,16 @@ function ding(k, seite){
   // so wird alles Tiefere von selbst immer kleiner
   // ein Ort ist nur die Gabel, an der seine Apps hängen: sein Kreis bleibt klein, die Krone bekommt den Platz
   // die Dinge mit Bild (Apps, Werke) tragen große Kreise, damit ihre Bilder schon von weitem zu sehen sind
-  const R = groesse(k.wert), r = R * (k.art === 'ort' || k.art === 'bereich' || k.art === 'varianten' ? 0.8 : k.art === 'gespraeche' || k.art === 'zeit' ? 0.5 : k.bild ? 1.7 : 1), kreis = {typ: 'kreis', k, x: 0, y: -r, r};
-  const K = krone(k.kinder, seite, k, null);
-  dreh(K, 0, 0, 0, KRONE * R * (k.art === 'gespraeche' ? 2.6 : 1) / K.h.R);   // das Laub der Gespräche steht groß und dicht
+  const R = groesse(k.wert), r = R * (k.art === 'ort' ? 1.25 : k.art === 'bereich' || k.art === 'varianten' ? 0.8 : k.art === 'gespraeche' || k.art === 'zeit' ? 0.5 : k.bild ? 1.7 : 1), kreis = {typ: 'kreis', k, x: 0, y: -r, r};
+  const K = krone(k.kinder, seite, k, null), Kr = K.h.R;
+  dreh(K, 0, 0, 0, KRONE * R * (k.art === 'gespraeche' ? 1 : k.art === 'ort' ? 1.8 : 1) / K.h.R);   // ein Ort trägt eine große Krone   // das Laub der Gespräche steht groß und dicht
   let hoch = 2 * r; const unten = {cx: 0, cy: -r, R: r};
   for(let i = 0; i < 60 && stossen(unten, ID, K.h, {c: 1, s: 0, tx: 0, ty: -hoch}, 0); i++) hoch += r * 0.12;
+  const fuss = K.fuss ? K.fuss * (KRONE * R * (k.art === 'ort' ? 1.8 : 1) / Kr) : r * 0.3;
   dreh(K, 0, 0, -hoch);
-  return verbinde([K], [kreis]);
+  // die Krone wächst aus einem Stiel, der mitten im Kreis ansetzt: der Kreis verdeckt den Übergang
+  const stiel = {typ: 'ast', pts: [[0, -r], [0, -r - (hoch - r) * 0.35], [0, -hoch + (hoch - r) * 0.3], [0, -hoch - fuss * 0.2]], w0: fuss * 1.08, w1: fuss, wem: k};
+  return verbinde([K], [stiel, kreis]);
 }
 const teil = (l, seite, eltern) => l.length === 1 ? ding(l[0], seite) : krone(l, seite, eltern, null);
 const menge = l => l.reduce((s, k) => s + k.wert, 0);
@@ -119,7 +123,7 @@ function rosette(reihe, eltern){
 }
 
 function krone(reihe, seite, eltern, meide){
-  if(eltern.art === 'gespraeche' && reihe.every(blattArt)) return rosette(reihe, eltern);
+  if(eltern.art === 'gespraeche' && reihe.length > 40 && reihe.every(blattArt)) return rosette(reihe, eltern);   // wenige Gespräche hängen am Zweig
   if(reihe.length > 1 && eltern.art !== 'buendel-fassung' && reihe.every(k => blattArt(k) || k.art === 'buendel-fassung')) return zweig(reihe, seite, eltern);
   if(reihe.length === 1) return gabelung([{G: ding(reihe[0], seite), th: 0, m: reihe[0].wert, wem: reihe[0]}], meide, eltern);
   if(FAECHER && eltern.art === 'wurzel'){   // am Stamm die Orte, an einem Ort seine Apps: alle auf einmal aufgefächert, wie die Hauptäste einer breiten Krone
@@ -134,7 +138,7 @@ function krone(reihe, seite, eltern, meide){
     while(i < reihe.length - 1 && Math.abs(acc + gw(reihe[i]) - ganz / 2) < Math.abs(acc - ganz / 2)) acc += gw(reihe[i++]);
     const a = acc / ganz; A = reihe.slice(0, i); B = reihe.slice(i);
     const sp = eltern.art === 'wurzel' ? 1.45 : SPREIZ;   // am Stamm öffnen sich die Gabeln weit: so steht die Krone breit und der Stamm bleibt kurz
-    thA = -sp * (0.25 + 0.75 * (1 - a)); thB = sp * (0.25 + 0.75 * a); sA = -1; sB = 1;
+    thA = -sp * (0.25 + 0.75 * (1 - a)) + DREH * seite; thB = sp * (0.25 + 0.75 * a) + DREH * seite; sA = -1; sB = 1;   // jede Gabel dreht sich ein wenig mit ihrer Seite: die Krone windet sich spiralig
   }
   return gabelung([{G: teil(A, sA, eltern), th: thA, m: menge(A), wem: A.length === 1 ? A[0] : eltern},
                    {G: teil(B, sB, eltern), th: thB, m: menge(B), wem: B.length === 1 ? B[0] : eltern}], meide, eltern);
@@ -145,7 +149,9 @@ function gabelung(teile, meide, wem){
   const breite = t => Math.max(BREIT * groesse(t.m), DICK * t.G.h.R);   // ein Ast ist so dick, wie seine Krone groß ist
   const lage = (t, lam) => { const l = Math.max(lam * t.G.h.R, breite(t) * 2), a = t.th * 0.6, bx = Math.sin(a) * l, by = -Math.cos(a) * l;
     const T = {c: Math.cos(t.th), s: Math.sin(t.th), tx: bx, ty: by};
-    const ast = {typ: 'ast', pts: kurve([bx, by], OBEN, OBEN + t.th, l), w0: breite(t) * 1.12, w1: breite(t) * 0.92, wem: t.wem, zu: t.wem !== wem};   // zu: der Ast, der zu einem Ding hinführt
+    // der Ast endet so breit, wie die Gabel darüber beginnt (G.fuss): so wächst das Obere aus ihm heraus, ohne Absatz
+    const w1 = t.G.fuss ? t.G.fuss : breite(t) * 0.92, w0 = Math.max(breite(t) * 1.12, w1 * 1.06);
+    const ast = {typ: 'ast', pts: kurve([bx, by], OBEN, OBEN + t.th, l), w0, w1, wem: t.wem, zu: t.wem !== wem};   // zu: der Ast, der zu einem Ding hinführt
     const stiel = formKreise(ast).slice(1);
     return {l, bx, by, T, ast, stiel: stiel.length ? umkreis(stiel) : null};
   };
@@ -165,7 +171,14 @@ function gabelung(teile, meide, wem){
     weiter.forEach((w, j) => { if(w) lam[j] *= 1.08; });
   }
   teile.forEach((t, j) => dreh(t.G, t.th, L[j].bx, L[j].by));
-  return verbinde(teile.map(t => t.G), [...L.map(l => l.ast), {typ: 'knoten', x: 0, y: 0, r: Math.max(...L.map(l => l.ast.w0)) * 0.56, wem}]);
+  // zwei Äste wachsen nebeneinander aus dem einen heraus: jeder beginnt an seiner Seite, ihre Außenkanten setzen die des Mutterasts fort
+  if(L.length === 2){
+    const [a, b] = teile[0].th <= teile[1].th ? [L[0], L[1]] : [L[1], L[0]], wa = a.ast.w0, wb = b.ast.w0;
+    for(const [l, sx] of [[a, -wb * 0.42], [b, wa * 0.42]]) { l.ast.pts[0] = [l.ast.pts[0][0] + sx, l.ast.pts[0][1]]; l.ast.pts[1] = [l.ast.pts[1][0] + sx * 0.6, l.ast.pts[1][1]]; }
+  }
+  const G = verbinde(teile.map(t => t.G), [...L.map(l => l.ast), {typ: 'knoten', x: 0, y: 0, r: Math.max(...L.map(l => l.ast.w0)) * 0.56, wem}]);
+  G.fuss = L.length === 2 ? (L[0].ast.w0 + L[1].ast.w0) * 0.86 : L[0].ast.w0;
+  return G;
 }
 
 /* Formen in Zeichenflächen: Äste als sich verjüngende Bänder, Knoten als runde Gelenke */
@@ -223,16 +236,61 @@ function wurzle(R, fuss){
   wurzelBreit = Math.max(...wurzelFormen.flatMap(f => f.pts.map(p => Math.abs(p[0]))));
 }
 
+/* Der Stamm (Ralf, 08.11.: „all die Grunddinge brauchen einen eigenen Arm, der vom Stamm kommt, bevor er sich verzweigt“).
+   Jeder Ort wächst an seinem eigenen Arm aus dem Stamm, die Arme setzen spiralig nacheinander an: abwechselnd links und
+   rechts, unten weit ausladend, nach oben immer steiler; der oberste setzt den Stamm fort. Der Stamm ist an jeder Stelle so
+   stark wie alle Arme über ihr zusammen (Querschnitt bleibt erhalten, wie bei echten Bäumen) und wird nach unten breit. */
+function stammKrone(orte, baum){
+  const n = orte.length, G = orte.map(k => ding(k, 1));
+  const kreisVon = (g, k) => (g.formen.find(f => f.typ === 'kreis' && f.k === k) || {r: g.h.R * 0.2}).r;
+  const arm = G.map((g, i) => kreisVon(g, orte[i]) * 1.05);
+  const maxR = Math.max(...G.map(g => g.h.R)), H = G.reduce((s, g) => s + g.h.R, 0) * 0.7;   // so hoch, dass die Kronen jeder Seite übereinander Platz haben
+  const hoehe = orte.map((_, i) => n === 1 ? H : H * (0.16 + 0.84 * Math.pow(i / (n - 1), 0.9)));
+  const seite = orte.map((_, i) => i === n - 1 ? 0 : (i % 2 ? 1 : -1));
+  const winkel = orte.map((_, i) => seite[i] * (0.62 + 0.72 * Math.pow(1 - i / Math.max(1, n - 1), 0.8)));
+  const breiteBei = h => Math.sqrt(arm.reduce((s, w, j) => s + (hoehe[j] >= h - 1e-9 ? w * w : 0), 0));
+  const mitte = h => Math.sin(h / H * Math.PI * 1.15) * H * 0.035;   // der Stamm schwingt leicht
+  const lage = (i, lam) => {
+    const h = hoehe[i], x0 = mitte(h), th = winkel[i], L = Math.max(lam * G[i].h.R, arm[i] * 3);
+    const end = th * 0.35, mittel = th * 0.8;   // der Arm geht weit hinaus und biegt sich zum Licht hinauf
+    const ex = x0 + Math.sin(mittel) * L, ey = -h - Math.cos(mittel) * L;
+    const pts = [[x0, -h + arm[i] * 0.6], [x0 + Math.sin(th) * L * 0.45, -h - Math.cos(th) * L * 0.45], [ex - Math.sin(end) * L * 0.35, ey + Math.cos(end) * L * 0.35], [ex, ey]];
+    const ast = {typ: 'ast', pts, w0: Math.max(arm[i] * 1.25, i === n - 1 ? breiteBei(h) : 0), w1: arm[i] * 0.95, wem: orte[i], zu: true};
+    return {T: {c: Math.cos(end), s: Math.sin(end), tx: ex, ty: ey}, ast, end};
+  };
+  // der Stamm als Kreise für die Platzprüfung
+  const stammKreise = umkreis(Array.from({length: 24}, (_, q) => { const h = H * q / 23; return {cx: mitte(h), cy: -h, R: breiteBei(h) * 0.6 + 1e-6}; }));
+  const lam = orte.map((_, i) => 0.7 + 0.5 * (1 - i / Math.max(1, n - 1))); let L;   // unten lange, weit ausgreifende Arme, oben kürzere
+  for(let it = 0; it < 160; it++){
+    L = orte.map((_, i) => lage(i, lam[i])); const luft = 0.05 * maxR, weiter = orte.map(() => false);
+    for(let a = 0; a < n; a++){
+      if(stossen(stammKreise, ID, G[a].h, L[a].T, luft)) weiter[a] = true;
+      for(let b = a + 1; b < n; b++) if(stossen(G[a].h, L[a].T, G[b].h, L[b].T, luft)) { weiter[a] = weiter[b] = true; }
+      for(let b = 0; b < n; b++){ if(b === a) continue; const st = formKreise(L[b].ast).slice(2); if(st.length && stossen(umkreis(st), ID, G[a].h, L[a].T, luft)) weiter[a] = true; }
+    }
+    if(!weiter.some(Boolean)) break;
+    weiter.forEach((w, j) => { if(w) lam[j] *= 1.06; });
+  }
+  orte.forEach((_, i) => dreh(G[i], L[i].end, L[i].T.tx, L[i].T.ty));
+  // der Stamm: eine Fläche aus einem Guss, seine Breite folgt weich den abgehenden Armen
+  const links = [], rechts = [], N = 60, fussB = breiteBei(0) * 1.7;
+  for(let q = 0; q <= N; q++){
+    const h = -breiteBei(0) * 0.25 + (H + breiteBei(0) * 0.25) * q / N, t = Math.max(0, h) / H;
+    let w = 0, gew = 0;   // weich gemittelte Breite statt Stufen
+    for(let d = 0; d <= 6; d++){ const hh = h - d * H * 0.02, g = 7 - d; w += breiteBei(Math.max(0, Math.min(h, hh))) * g; gew += g; }   // nur nach unten gemittelt: oben läuft der Stamm genau in den letzten Arm aus
+    w = w / gew * (1 + 0.08 * (1 - t)) + (fussB - breiteBei(0)) * Math.pow(Math.max(0, 1 - t * 3.2), 2.2);
+    links.push([mitte(Math.max(0, h)) - w / 2, -h]); rechts.push([mitte(Math.max(0, h)) + w / 2, -h]);
+  }
+  const stamm = links.concat(rechts.reverse());
+  const K = verbinde(G, L.map(l => l.ast));
+  K.stamm = stamm; K.fuss = fussB; K.hoch = H;
+  return K;
+}
+
 function pflanze(baum){
-  const K = krone(baum.kinder, 1, baum, null);
-  // der Stamm ist so breit wie die Äste, die er trägt, zusammen – und unten noch breiter (Ralf: „der Stamm muss viel breiter werden“)
-  const erste = K.formen.filter(f => f.typ === 'ast' && Math.hypot(f.pts[0][0], f.pts[0][1]) < 1e-6);
-  const oben0 = erste.reduce((s, f) => s + f.w0, 0) * 0.9, gabelW = Math.max(...erste.map(f => f.w0));
-  let tief = 0; for(const f of K.formen) tief = Math.max(tief, f.typ === 'ast' ? Math.max(...f.pts.map(p => p[1])) + f.w0 : f.y + (f.r || 0));
-  const T = Math.max(K.h.R * 0.09, tief + K.h.R * 0.03, oben0 * 1.6), fuss = oben0 * 2.4;
-  dreh(K, 0, 0, -T);
-  // ein Stamm aus einem Guss: oben so breit wie seine Äste, nach unten weich ausgestellt, bis unter die Erde, wo die Wurzeln ansetzen
-  const formen = [...K.formen, {typ: 'ast', stamm: true, pts: [[0, fuss * 0.12], [0, -T * 0.35], [0, -T * 0.75], [0, -T - gabelW * 0.15]], w0: fuss, w1: gabelW * 1.12, wem: baum}];   // oben genau so breit wie der stärkste Ast: keine Schulter
+  const K = stammKrone(baum.kinder, baum), fuss = K.fuss;
+  const formen = [...K.formen];
+  aeste.push([gleichsinnig(K.stamm.slice()), baum]);
   wurzle(K.h.R, fuss);
   Object.assign(baum, {x: 0, y: 0, r: 0});
   for(const f of formen){
@@ -366,11 +424,11 @@ function lesbar(){
     if(!k.text) continue;
     const da = k.x + k.r > x0 && k.x - k.r < x1 && k.y + k.r > y0 && k.y - k.r < y1;
     const px = k.r * s * (blattArt(k) ? 0.22 : k.fs);
-    const gabel = ['ort', 'bereich', 'varianten', 'gespraeche', 'zeit'].includes(k.art), an = da && px >= (gabel ? 8.5 : 10.5) && px <= (gabel ? 160 : 48);   // Orte und Bereiche tragen ihren Namen auch groß
+    const gabel = ['ort', 'bereich', 'varianten', 'gespraeche', 'zeit'].includes(k.art), an = da && px >= (k.art === 'ort' ? 16 : gabel ? 8.5 : 10.5) && px <= (gabel ? 160 : 48);   // Orte und Bereiche tragen ihren Namen auch groß
     if(k.textAn !== an){ k.text.style.display = an ? '' : 'none'; if(k.menge) k.menge.style.display = an && px >= 14 ? '' : 'none'; k.textAn = an; }
     else if(an && k.menge) k.menge.style.display = px >= 14 ? '' : 'none';
     // ohne Schild bleibt das eigene Material, das den Namen seiner App trägt: der steht schon darüber
-    k.klein = da && !an && px < 10.5 && !blattArt(k) && !(k.eigen && k.eltern && k.eltern.name === k.name) && (k.eltern === fokus || (k.eltern && k.eltern.eltern === fokus && k.r * s >= 7)) ? (k.eltern === fokus ? 2 : 1) : 0;
+    k.klein = da && !an && (px < 10.5 || k.art === 'ort') && !blattArt(k) && !(k.eigen && k.eltern && k.eltern.name === k.name) && (k.eltern === fokus || (k.eltern && k.eltern.eltern === fokus && k.r * s >= 7)) ? (k.eltern === fokus ? 2 : 1) : 0;
     // Schärfe nach Nähe (LOD): aus der Ferne ein kleines Bild, ab etwa 120 Bildpunkten Kreis ein scharfes
     if(k.bildEl && da && k.r * s >= 4){ const w = k.r * s * 2 * (devicePixelRatio || 1) > 260 ? 960 : 240;
       if(k.bildW < w || !k.bildW){ k.bildW = w; const url = `/lichtwerk/bild?w=${w}&pfad=${encodeURIComponent(k.bild)}`;
@@ -391,9 +449,10 @@ function lesbar(){
     // findet ein Schild keinen freien Platz, bleibt es weg, statt ein anderes zu verdecken; beim Hineinzoomen erscheint es
     // was auf dieser Stufe steht, bekommt immer seinen Namen: findet sich kein ganz freier Platz, darf das Schild über Ästen und kleinen Kreisen liegen, nie über einem anderen Schild
     const schildFrei = ([x, y]) => ![...belegt.slice(kreise), ...hart].some(q => x < q[2] && x + bw > q[0] && y < q[3] && y + bh > q[1]);
-    const l = lagen.find(p => imBild(p) && frei(p)) || (k.klein === 2 ? lagen.find(p => imBild(p) && schildFrei(p)) : null); if(!l) continue;
+    // ein Ort trägt seinen Namen immer mitten im eigenen Kreis, nie daneben
+    const l = k.art === 'ort' ? [[sx - bw / 2, sy - bh / 2], [sx - bw / 2, sy + sr + 2], [sx - bw / 2, sy - sr - bh - 2]].find(schildFrei) || [sx - bw / 2, sy - bh / 2] : lagen.find(p => imBild(p) && frei(p)) || (k.klein === 2 ? lagen.find(p => imBild(p) && schildFrei(p)) : null); if(!l) continue;
     belegt.push([l[0], l[1], l[0] + bw, l[1] + bh]);
-    html.push(`<div class="nm" data-nr="${k.nr}" style="left:${l[0]}px;top:${l[1]}px;width:${bw}px"><b>${esc(k.name)}</b>${knapp ? '' : `<span>${esc(unterzeile(k))}</span>`}</div>`);
+    html.push(`<div class="nm${k.art === 'ort' ? ' ortname' : ''}" data-nr="${k.nr}" style="left:${l[0]}px;top:${l[1]}px;width:${bw}px"><b>${esc(k.name)}</b>${knapp ? '' : `<span>${esc(unterzeile(k))}</span>`}</div>`);
   }
   namenEl.innerHTML = html.join('');
   lies(s, x0, y0, x1, y1);

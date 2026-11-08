@@ -202,10 +202,11 @@ def _gespraeche_lesen(graph: dict) -> list:
     liste, pfade = [], []
     for k in roh:
         # ein klein geschriebenes Einzelwort (etwa „frontend“) zählt nur im Titel, alles andere im Titel oder zweimal im Text
-        zu = sorted({gross[n] for n, c in k["zaehlung"].items() if n not in gewoehnlich
-                     and (n in k["im_titel"] or (c >= 2 and not (gross[n].islower() and " " not in n)))})
-        orte = [o for o, praefixe in ORT_SCHLAGWORTE.items() if any(s.startswith(p) for s in k["schlagworte"] for p in praefixe)]
-        if not zu and not orte:
+        # Ralf, 08.11.: nur Gespräche, die spezifisch zu einer App gehören – ihr Name steht im Titel des Gesprächs.
+        # Keine Themen-Gespräche über Schlagworte an Orten, keine bloßen Erwähnungen im Text.
+        zu = sorted({gross[n] for n in k["im_titel"] if n not in gewoehnlich and not (gross[n].islower() and " " not in n)})
+        orte = []
+        if not zu:
             continue
         liste.append({"n": len(pfade), "titel": k["titel"], "datum": k["datum"], "zu": zu, "orte": orte})
         pfade.append(k["pfad"])
