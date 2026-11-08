@@ -8,7 +8,7 @@
 
 import {ortsgraph} from './ortsgraph.js';
 
-export const BIS = 16;          // so viele Dinge stehen auf einer Stufe einzeln, dazu höchstens ein Bündel
+export const BIS = 9;           // so viele Dinge stehen auf einer Stufe einzeln, dazu ein Bündel: das Bündel ist wieder dieselbe Spirale (fraktal)
 export const MINDESTENS = 400;  // so viel zählt eine Fassung ohne Text
 
 const sortierDatum = v => {
