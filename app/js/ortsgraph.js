@@ -12,7 +12,7 @@
 
 export const ORTSARTEN = new Set(['Oberdach', 'Mitte', 'Tragwerk', 'Sammlung']);
 // Die feste Folge der Orte: die Mitte trägt, dann die Oberdächer wie Ralf sie genannt hat, Tragwerk, zuletzt was noch geprüft wird
-export const FOLGE = ['Mitte', 'MiND-BODY-SOUL', 'GAMES', 'MUSiC', 'EDUCATiON', 'WRiTING', 'ARTS', 'PERSONAL', 'Tragwerk', 'Zur Prüfung'];
+export const FOLGE = ['Tragwerk System', 'Mitte', 'MiND-BODY-SOUL', 'GAMES', 'MUSiC', 'EDUCATiON', 'WRiTING', 'ARTS', 'PERSONAL', 'Tragwerk', 'Zur Prüfung'];
 const SATZ = {
   'Mitte': 'die Zentrale und ihre Werkzeuge', 'Tragwerk': 'die Werke, die in vielen Apps mitwirken', 'Zur Prüfung': 'noch nicht sicher eingeordnet',
 };
@@ -28,7 +28,8 @@ export function hatOrtsgraph(g){
 export function ortsgraph(g){
   const W = new Map((g.works || []).map(w => [w.id, w])), hoch = new Map();
   for(const k of (g.fundus && g.fundus.kanten) || []){
-    if(k.art !== 'gehört zu' || k.form !== 'B' || !k.gespeichert || !W.has(k.von) || !W.has(k.zu) || k.von === k.zu) continue;
+    // eine ersetzte Kante gilt nicht mehr (der Fundus überschreibt nichts, er ersetzt: „Mitte“ → „Tragwerk System“, 08.11.)
+    if(k.ersetzt_durch || k.art !== 'gehört zu' || k.form !== 'B' || !k.gespeichert || !W.has(k.von) || !W.has(k.zu) || k.von === k.zu) continue;
     if(!hoch.has(k.von)) hoch.set(k.von, new Set()); hoch.get(k.von).add(k.zu);
   }
   const rang = w => { const r = FOLGE.indexOf(w.title); return r < 0 ? FOLGE.length : r; };

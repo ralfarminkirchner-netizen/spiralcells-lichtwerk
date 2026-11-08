@@ -95,8 +95,9 @@ export function spiralbaum(g){
   const wurzel = {art: 'wurzel', name: 'Alle Orte', kinder: orte, schluessel: 'wurzel'};
   // Orte bleiben in Ralfs fester Folge, darum erst zählen, dann die Folge zurücksetzen
   zaehle(wurzel); wurzel.kinder = orte.slice().sort((a, b) => G.orte.findIndex(o => anzeige(o.title) === a.name) - G.orte.findIndex(o => anzeige(o.title) === b.name));
-  buendle(wurzel, {ort: 'kleinere Apps', app: 'kleinere Werke', werk: 'weitere Fassungen', buendel: 'kleinere'});
+  // leere Orte (etwa die alte „Mitte“, deren Kanten ersetzt sind) fallen vor dem Bündeln weg; die Orte selbst werden nie gebündelt
   wurzel.kinder = wurzel.kinder.filter(o => o.kinder.length);
+  for(const o of wurzel.kinder) buendle(o, {ort: 'kleinere Apps', app: 'kleinere Werke', werk: 'weitere Fassungen', buendel: 'kleinere'});
   return wurzel;
 }
 
