@@ -168,6 +168,36 @@ const rund = (x, y, r) => Array.from({length: 16}, (_, i) => [x + Math.cos(i * M
 
 // alle Flächen im selben Drehsinn, sonst stanzen sich überlappende Äste gegenseitig Löcher
 const gleichsinnig = P => { let a = 0; for(let i = 0; i < P.length; i++){ const [x0, y0] = P[i], [x1, y1] = P[(i + 1) % P.length]; a += x0 * y1 - x1 * y0; } return a < 0 ? P.reverse() : P; };
+/* Boden und Wurzeln (Ralf, 08.11.: „eine tiefe Verästelung bis in den Boden … wirklich in die Breite … nicht auf einem
+   geraden Boden, sondern auf einem gewölbten … ein ganz flacher Bogen, auf dem der Baum steht“). Der Boden ist ein Kreis,
+   dessen Scheitel am Fuß des Stamms liegt; die Wurzeln gabeln sich wie die Krone, nur nach unten und weit zur Seite. */
+let BOGEN = 1, wurzelTief = 0, wurzelBreit = 0;
+const wurzelFormen = [];
+const bodenY = x => BOGEN - Math.sqrt(Math.max(0, BOGEN * BOGEN - x * x));
+function wurzle(K, wg){
+  const R = K.h.R; BOGEN = R * 9;   // extrem flach, aber ein Bogen
+  let saat = 7; const zufall = () => (saat = (saat * 16807) % 2147483647) / 2147483647;
+  const unten = Math.PI / 2;
+  const wachse = (x, y, dir, len, w, stufe) => {
+    let ex = x + Math.cos(dir) * len, ey = y + Math.sin(dir) * len;
+    const min = bodenY(ex) + R * 0.012; if(ey < min) ey = min;   // eine Wurzel bleibt unter der Erde
+    const knick = (zufall() - 0.5) * 0.5, d2 = Math.atan2(ey - y, ex - x) + knick;
+    wurzelFormen.push({typ: 'ast', pts: [[x, y], [x + Math.cos(dir) * len * 0.4, y + Math.sin(dir) * len * 0.4], [ex - Math.cos(d2) * len * 0.35, ey - Math.sin(d2) * len * 0.35], [ex, ey]], w0: w, w1: w * 0.62});
+    wurzelTief = Math.max(wurzelTief, ey); wurzelBreit = Math.max(wurzelBreit, Math.abs(ex));
+    if(stufe <= 0) return;
+    const spr = 0.3 + zufall() * 0.25, zieh = (unten - d2) * 0.06;   // die Erde zieht die Wurzel leicht nach unten
+    wachse(ex, ey, d2 - spr + zieh, len * (0.62 + zufall() * 0.12), w * 0.6, stufe - 1);
+    wachse(ex, ey, d2 + spr + zieh, len * (0.62 + zufall() * 0.12), w * 0.6, stufe - 1);
+  };
+  // Hauptwurzeln: die äußeren fast waagrecht und lang, damit das Wurzelwerk so breit wird wie die Krone
+  for(const [a, l, w] of [[-1.47, 0.4, 0.95], [1.46, 0.42, 0.95], [-1.1, 0.24, 0.8], [1.12, 0.25, 0.8], [-0.55, 0.15, 0.7], [0.6, 0.15, 0.7], [0.05, 0.12, 0.65]])
+    wachse(a * wg * 0.5, wg * 0.15, unten + a, R * l, wg * w, 5);
+  // das Wurzelwerk geht mehr in die Breite als in die Tiefe: flach gedrückt, aber nie über die Erde
+  const FLACH = 0.55;
+  for(const f of wurzelFormen) f.pts = f.pts.map(([x, y]) => [x, Math.max(bodenY(x) + R * 0.008, y * FLACH)]);
+  wurzelTief = Math.max(...wurzelFormen.flatMap(f => f.pts.map(p => p[1])));
+}
+
 function pflanze(baum){
   const K = krone(baum.kinder, 1, baum, null), wg = DICK * K.h.R;
   // der Stamm ist kurz (Ralf: „der Baumstamm ist zu lang“), aber lang genug, dass keine Krone in den Boden hängt
@@ -177,9 +207,7 @@ function pflanze(baum){
   const formen = [...K.formen,
     {typ: 'ast', stamm: true, pts: [[0, 0], [-wg * 0.25, -T * 0.35], [wg * 0.2, -T * 0.7], [0, -T]], w0: wg * 2.6, w1: wg * 1.05, wem: baum},
     {typ: 'knoten', x: 0, y: -T, r: wg * 0.53, wem: baum}];
-  // Wurzeln: der Stamm steht im Boden und greift in ihn hinein
-  for(const [sx, weit, tief, dick] of [[-1, 2.6, 0.5, 0.6], [1, 2.4, 0.45, 0.6], [-1, 1.2, 1.0, 0.45], [1, 1.4, 0.9, 0.45], [-1, 0.3, 1.3, 0.35], [1, 3.4, 0.25, 0.3]])
-    formen.push({typ: 'ast', pts: [[sx * wg * 0.3, -wg * 0.2], [sx * wg * weit * 0.35, wg * tief * 0.1], [sx * wg * weit * 0.7, wg * tief * 0.55], [sx * wg * weit, wg * tief]], w0: wg * dick, w1: wg * 0.05, wem: baum});
+  wurzle(K, wg);
   Object.assign(baum, {x: 0, y: 0, r: 0});
   for(const f of formen){
     if(f.typ === 'ast') aeste.push([gleichsinnig(band(f)), f.wem, f.zu]);
@@ -218,7 +246,8 @@ function zeilen(name, proZeile, hoechstens){
 function zeichne(){
   // Je Ding ein Pfad für seine Äste, damit Fremdes beim Hineinzoomen zurücktreten kann
   const je = new Map(); for(const [p, wem] of aeste){ if(!je.has(wem)) je.set(wem, []); je.get(wem).push('M' + p.map(q => q[0].toFixed(3) + ' ' + q[1].toFixed(3)).join('L') + 'Z'); }
-  el('rect', {class: 'boden', x: -1e7, y: 0, width: 2e7, height: 1e7}, aesteG);   // der Boden, auf dem der Baum steht
+  el('circle', {class: 'boden', cx: 0, cy: BOGEN, r: BOGEN}, aesteG);   // der Boden: ein ganz flacher Bogen, auf dem der Baum steht
+  el('path', {class: 'wurzelwerk', d: wurzelFormen.map(f => 'M' + gleichsinnig(band(f)).map(q => q[0].toFixed(3) + ' ' + q[1].toFixed(3)).join('L') + 'Z').join('')}, aesteG);
   for(const [wem, d] of je) wem.ast = el('path', {class: 'ast', d: d.join('')}, aesteG);
   for(const k of alle){
     if(k.art === 'wurzel') continue;
@@ -264,10 +293,11 @@ const oben = () => 56, unten = () => (SCHMAL() ? 130 : 110);
    lässt sich der Blick nur so weit, dass nie leerer Himmel neben einem kleinen Baum steht. */
 let grenze = null;
 function vollbild(){
-  const [x0, y0, x1] = wurzelKnoten.box, boden = SCHMAL() ? 96 : 70;
+  // der ganze Baum mit seinen Wurzeln; der Boden wölbt sich darunter
+  const bx = wurzelKnoten.box, x0 = Math.min(bx[0], -wurzelBreit), x1 = Math.max(bx[2], wurzelBreit), y0 = bx[1], rand = SCHMAL() ? 112 : 10;   // am Handy enden die Wurzeln über der Karte
   // auf dem schmalen Handy füllt der Baum die Höhe (seitlich schiebbar), statt klein unter leerem Himmel zu stehen
-  const sb = (W - 16) / (x1 - x0), sh = (H - oben() - boden) / (0 - y0), s = Math.min(sh, sb * (SCHMAL() ? 1.9 : 1));
-  const cx = (x0 + x1) / 2, bodenY = H - boden;
+  const sb = (W - 16) / (x1 - x0), sk = (W - 16) / (bx[2] - bx[0]), sh = (H - oben() - rand) / (wurzelTief - y0), s = Math.min(sh, SCHMAL() ? sk * 1.9 : sb);
+  const cx = (x0 + x1) / 2, bodenY = H - rand - wurzelTief * s;
   grenze = {s, x0: Math.min(x0 - 8 / s, cx - W / 2 / s), x1: Math.max(x1 + 8 / s, cx + W / 2 / s), y0: -bodenY / s, y1: (H - bodenY) / s};
   return {x: cx, y: 0, s, mx: W / 2, my: bodenY};
 }

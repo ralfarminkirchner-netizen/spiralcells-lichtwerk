@@ -58,7 +58,7 @@ svg text{text-anchor:middle;pointer-events:none;font-family:"Avenir Next","Helve
 
 .fern{opacity:.3;transition:opacity .5s}
 .ast,.kn,.blatt{transition:opacity .5s}
-.boden{fill:#d8ccb4}
+.boden{fill:#d9cbb2}
 .kn .name,.blatt.mitbild .name{paint-order:stroke;stroke:rgba(25,20,15,.55);stroke-width:.14em;stroke-linejoin:round}
 .blatt.mitbild .name{fill:#fff}
 .blatt path.schleier{fill:rgba(32,28,24,.16);stroke:none;pointer-events:none}
@@ -69,3 +69,4 @@ svg text{text-anchor:middle;pointer-events:none;font-family:"Avenir Next","Helve
 .kn.bereich .name{fill:#2f5532}
 .kn.varianten circle{fill:#f4efe2;stroke:#9a7b4f}
 .kn.varianten .name,.kn.varianten .menge{fill:#5d4526;stroke:none}
+.wurzelwerk{fill:#6f6457;stroke:none}
