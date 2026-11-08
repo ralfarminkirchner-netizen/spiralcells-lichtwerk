@@ -81,7 +81,7 @@ function ding(k, seite){
   const fuss = K.fuss ? K.fuss * (KRONE * R * (k.art === 'ort' ? 1.8 : 1) / Kr) : r * 0.3;
   dreh(K, 0, 0, -hoch);
   // die Krone wächst aus einem Stiel, der mitten im Kreis ansetzt: der Kreis verdeckt den Übergang
-  const stiel = {typ: 'ast', pts: [[0, -r], [0, -r - (hoch - r) * 0.35], [0, -hoch + (hoch - r) * 0.3], [0, -hoch - fuss * 0.2]], w0: fuss * 1.08, w1: fuss, wem: k};
+  const stiel = {typ: 'ast', pts: [[0, -r], [0, -r - (hoch - r) * 0.35], [0, -hoch + (hoch - r) * 0.3], [0, -hoch]], w0: Math.min(fuss * 1.3, r * 0.9), w1: Math.min(fuss, r * 0.7), wem: k};
   return verbinde([K], [stiel, kreis]);
 }
 const teil = (l, seite, eltern) => l.length === 1 ? ding(l[0], seite) : krone(l, seite, eltern, null);
@@ -193,7 +193,7 @@ function band(f){
   }
   return L.concat(R.reverse());
 }
-const rund = (x, y, r) => Array.from({length: 16}, (_, i) => [x + Math.cos(i * Math.PI / 8) * r, y + Math.sin(i * Math.PI / 8) * r]);
+const rund = (x, y, r) => Array.from({length: 28}, (_, i) => [x + Math.cos(i * Math.PI / 14) * r, y + Math.sin(i * Math.PI / 14) * r]);
 
 // alle Flächen im selben Drehsinn, sonst stanzen sich überlappende Äste gegenseitig Löcher
 const gleichsinnig = P => { let a = 0; for(let i = 0; i < P.length; i++){ const [x0, y0] = P[i], [x1, y1] = P[(i + 1) % P.length]; a += x0 * y1 - x1 * y0; } return a < 0 ? P.reverse() : P; };
@@ -273,11 +273,11 @@ function stammKrone(orte, baum){
   }
   orte.forEach((_, i) => dreh(G[i], L[i].end, L[i].T.tx, L[i].T.ty));
   // der Stamm: eine Fläche aus einem Guss, seine Breite folgt weich den abgehenden Armen
-  const links = [], rechts = [], N = 60, fussB = breiteBei(0) * 1.7;
+  const links = [], rechts = [], N = 140, fussB = breiteBei(0) * 1.7;
   for(let q = 0; q <= N; q++){
     const h = -breiteBei(0) * 0.25 + (H + breiteBei(0) * 0.25) * q / N, t = Math.max(0, h) / H;
     let w = 0, gew = 0;   // weich gemittelte Breite statt Stufen
-    for(let d = 0; d <= 6; d++){ const hh = h - d * H * 0.02, g = 7 - d; w += breiteBei(Math.max(0, Math.min(h, hh))) * g; gew += g; }   // nur nach unten gemittelt: oben läuft der Stamm genau in den letzten Arm aus
+    for(let d = 0; d <= 14; d++){ const hh = h - d * H * 0.012, g = 15 - d; w += breiteBei(Math.max(0, Math.min(h, hh))) * g; gew += g; }   // nur nach unten gemittelt: oben läuft der Stamm genau in den letzten Arm aus
     w = w / gew * (1 + 0.08 * (1 - t)) + (fussB - breiteBei(0)) * Math.pow(Math.max(0, 1 - t * 3.2), 2.2);
     links.push([mitte(Math.max(0, h)) - w / 2, -h]); rechts.push([mitte(Math.max(0, h)) + w / 2, -h]);
   }
@@ -294,7 +294,10 @@ function pflanze(baum){
   wurzle(K.h.R, fuss);
   Object.assign(baum, {x: 0, y: 0, r: 0});
   for(const f of formen){
-    if(f.typ === 'ast') aeste.push([gleichsinnig(band(f)), f.wem, f.zu]);
+    if(f.typ === 'ast'){ aeste.push([gleichsinnig(band(f)), f.wem, f.zu]);
+      // runde Enden genau in der Breite des Asts: Gelenke verschmelzen, ohne Kante und ohne Knubbel
+      const [a, b] = [f.pts[0], f.pts[3]];
+      aeste.push([gleichsinnig(rund(a[0], a[1], f.w0 / 2)), f.wem, f.zu], [gleichsinnig(rund(b[0], b[1], f.w1 / 2)), f.wem, f.zu]); }
     else if(f.typ === 'knoten') {}   // Gelenke werden nicht gezeichnet (Ralf: „diese komischen Knubbel“)
     else Object.assign(f.k, {x: f.x, y: f.y, r: f.r, dir: f.dir});
   }
@@ -313,7 +316,11 @@ function umrisse(){
 
 /* ---------- Zeichnen ---------- */
 const el = (n, a, p) => { const e = document.createElementNS(NS, n); for(const k in a) e.setAttribute(k, a[k]); if(p) p.appendChild(e); return e; };
-function blattPfad(c){
+function blattPfad(c){   // Fassungen und Gespräche sind kleine runde Zellen (Ralf, 09.11.: „diese paar Blätter sehen albern aus“)
+  const r = c.r * 0.82, x = c.x + Math.cos(c.dir) * c.r * 0.25, y = c.y + Math.sin(c.dir) * c.r * 0.25;
+  return `M${(x - r).toFixed(3)} ${y.toFixed(3)}a${r.toFixed(3)} ${r.toFixed(3)} 0 1 0 ${(2 * r).toFixed(3)} 0a${r.toFixed(3)} ${r.toFixed(3)} 0 1 0 ${(-2 * r).toFixed(3)} 0Z`;
+}
+function blattPfadAlt(c){
   const r = c.r, a = c.dir, ux = Math.cos(a), uy = Math.sin(a), vx = -uy, vy = ux;
   const P = (s, t) => `${(c.x + ux * s * r + vx * t * r).toFixed(3)} ${(c.y + uy * s * r + vy * t * r).toFixed(3)}`;
   return `M${P(-1, 0)} C${P(-1, 0.95)} ${P(0.8, 1)} ${P(1.5, 0)} C${P(0.8, -1)} ${P(-1, -0.95)} ${P(-1, 0)}Z`;
@@ -442,7 +449,7 @@ function lesbar(){
   for(const k of alle.filter(q => q.klein).sort((a, b) => b.klein - a.klein || b.r - a.r)){   // erst die Stufe selbst, dann die nächste; die Größten zuerst
     const sx = (k.x - blick.x) * s + blick.mx, sy = (k.y - blick.y) * s + blick.my, sr = k.r * s, knapp = SCHMAL(), bw = Math.min(knapp ? 150 : 180, 16 + Math.max([...k.name].length * 8.4, knapp ? 0 : unterzeile(k).length * 6.8)), bh = (knapp ? 6 : 20) + 17 * Math.ceil([...k.name].length * 8.4 / (bw - 16));
     const lagen = [];
-    for(const d of k.klein === 2 ? [2, 10, 22, 36] : [2, 7]) lagen.push(   // Schilder der Stufe darunter bleiben dicht an ihrem Kreis, sonst gehören sie scheinbar zu einem anderen[sx - bw / 2, sy + sr + d], [sx - bw / 2, sy - sr - d - bh], [sx + sr + d, sy - bh / 2], [sx - sr - d - bw, sy - bh / 2],
+    for(const d of k.klein === 2 ? [2, 8] : [2, 6]) lagen.push(   // Schilder der Stufe darunter bleiben dicht an ihrem Kreis, sonst gehören sie scheinbar zu einem anderen[sx - bw / 2, sy + sr + d], [sx - bw / 2, sy - sr - d - bh], [sx + sr + d, sy - bh / 2], [sx - sr - d - bw, sy - bh / 2],
       [sx + sr * .7 + d, sy + sr * .7 + d], [sx - sr * .7 - d - bw, sy + sr * .7 + d], [sx + sr * .7 + d, sy - sr * .7 - d - bh], [sx - sr * .7 - d - bw, sy - sr * .7 - d - bh]);
     const imBild = ([x, y]) => x >= 6 && x + bw <= W - 6 && y >= oben() && y + bh <= H - unten() + 20;
     const frei = ([x, y]) => !belegt.some(q => x < q[2] && x + bw > q[0] && y < q[3] && y + bh > q[1]);
@@ -510,7 +517,7 @@ const unterhalb = (k, f) => { for(let q = k; q; q = q.eltern) if(q === f) return
 function geh(k, sanft = true){
   if(blattArt(k)){ waehle(k); return; }
   fokus = k; gewaehlt && gewaehlt.form.classList.remove('gewaehlt'); gewaehlt = null;
-  for(const q of alle){ const fern = !unterhalb(q, k) && !unterhalb(k, q); q.form && q.form.classList.toggle('fern', fern); q.ast && q.ast.classList.toggle('fern', fern && q !== k.eltern); }
+  // nichts wird ausgeblendet (Ralf, 09.11.: „dieses Ausblenden bestimmter Äste macht es noch lächerlicher“)
   const p = passend(k); sanft ? fahre(p) : (blick = p, setze());
   karte(k); pfad(k); lesbar();
   const teile = []; for(let q = k; q; q = q.eltern) teile.unshift(q.name);

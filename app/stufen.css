@@ -92,3 +92,9 @@ svg text{text-anchor:middle;pointer-events:none;font-family:"Avenir Next","Helve
 .kn.app:not(.mitbild) .name,.kn.app:not(.mitbild) .menge,.kn.werk:not(.mitbild) .name,.kn.werk:not(.mitbild) .menge{fill:var(--tinte);stroke:none}
 .blatttext b.zwischen{display:block;margin-top:.4em}
 .nm.ortname b{font-size:15px;font-weight:700;letter-spacing:.02em}
+/* Zellen statt Blätter: ruhig, wie die Kreise darüber */
+.blatt.belegt path,.blatt.offen path{fill:#e9e1d1}
+.blatt path{stroke:var(--ast-hell);stroke-opacity:1}
+.blatt .name{fill:var(--tinte)}
+.blatt.mitbild .name{fill:#fff}
+.fern{opacity:1}
