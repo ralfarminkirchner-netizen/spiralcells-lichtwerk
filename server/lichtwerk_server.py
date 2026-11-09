@@ -82,6 +82,28 @@ CSP = ("default-src 'self'; img-src 'self' data: blob:; connect-src 'self' blob:
        "script-src 'self'; font-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'")
 
 
+def _app_herkuenfte() -> str:
+    """Spiralbaum (Ralf, 09.11.2026: „zu keinen Apps, die sich öffnen lassen“): Eingebettet werden dürfen genau die
+    Herkünfte der belegten App-Adressen, deren Prüfung Einbetten erlaubt hat. Sonst bleibt default-src 'self'."""
+    import json
+    from urllib.parse import urlsplit
+    try:
+        with open(os.path.join(APP, "stufen-apps.json"), encoding="utf-8") as f:
+            apps = json.load(f).get("apps", [])
+    except (OSError, ValueError):
+        return ""
+    herk = set()
+    for a in apps:
+        t = urlsplit(str(a.get("url", "")))
+        if a.get("einbetten") and t.scheme == "https" and t.netloc and all(c not in t.netloc for c in " ;'\""):
+            herk.add(f"https://{t.netloc}")
+    return " ".join(sorted(herk))
+
+
+if _app_herkuenfte():
+    CSP += "; frame-src " + _app_herkuenfte()
+
+
 def _masse(je: dict) -> None:
     """Breite und Höhe jedes Bilds (für Schärfe und Ausschnitt), einmal mit sips gemessen und im Zwischenlager behalten."""
     lager = os.path.join(BILDCHEN, "masse.json")

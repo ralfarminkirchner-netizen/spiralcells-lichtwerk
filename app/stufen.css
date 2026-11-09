@@ -98,3 +98,68 @@ svg text{text-anchor:middle;pointer-events:none;font-family:"Avenir Next","Helve
 .blatt .name{fill:var(--tinte)}
 .blatt.mitbild .name{fill:#fff}
 .fern{opacity:1}
+
+/* ---------- 09.11.: Himmel und Erde (Ralf: „zumindest im Ansatz eine Himmelblaufärbung“, anderer Boden) ---------- */
+:root{--grund:#e4eef4;--ast:#6e6152;--ast-hell:#a39582}
+html,body{background:linear-gradient(180deg,#a9cfe9 0%,#c8e0ef 38%,#e3eef3 72%,#eef0e8 100%) fixed}
+.kopf{background:linear-gradient(rgba(169,207,233,.92) 55%,transparent)}
+.boden{fill:#8a6e4f}
+.wurzelwerk{fill:#5b4a39}
+#baum,#namen{user-select:none;-webkit-user-select:none}
+.nm{text-shadow:0 0 3px #e9f2f6,0 0 3px #e9f2f6,0 0 6px #e9f2f6,0 0 10px #e9f2f6}
+/* Collage und Muster in den großen Kreisen */
+.kn.collage .name,.kn.collage .menge{fill:#fff;paint-order:stroke;stroke:rgba(25,20,15,.6);stroke-width:.16em;stroke-linejoin:round}
+.kn circle.collage-schleier{fill:rgba(28,24,20,.32);stroke:none;pointer-events:none}
+.kn .muster{pointer-events:none}
+.kn.collage>circle:first-child{stroke:#fffaf0}
+
+/* Karte: was man tun kann */
+.tu{margin-top:10px;font:inherit;font-size:16px;font-weight:600;border:0;border-radius:999px;background:#2f4f6a;color:#fff;padding:9px 18px;cursor:pointer;min-height:40px}
+.tu[hidden]{display:none}
+
+/* ---------- Der Kreis wird Inhalt ---------- */
+#inhalt{position:fixed;inset:0;z-index:10;background:#fbf9f4;display:flex;flex-direction:column;clip-path:circle(0 at 50% 50%);transition:clip-path .5s cubic-bezier(.6,0,.25,1)}
+#inhalt[hidden]{display:none}
+#inhalt .leiste{display:flex;align-items:center;gap:8px 14px;flex-wrap:wrap;padding:max(10px,env(safe-area-inset-top)) 16px 10px;background:#eef4f8;border-bottom:1px solid #d6e2ea}
+#inhalt .leiste button,#inhalt .leiste a{font:inherit;font-size:15px;border:0;background:none;color:#2f4f6a;padding:6px 4px;cursor:pointer;min-height:36px;text-decoration:none}
+#inhalt .leiste .zurueck{font-weight:600}
+#inhalt .leiste .wo{color:var(--leise);font-size:14px;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#inhalt .leiste .titel{flex:1;min-width:0;font-size:16px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#inhalt .blaettern{display:flex;align-items:center;gap:6px}
+#inhalt .blaettern i{font-style:normal;color:var(--leise);font-size:14px}
+#inhalt .innen{background:#dfeaf1 !important;border-radius:999px;padding:6px 14px !important}
+#inhalt iframe{flex:1;width:100%;border:0;background:#fff}
+#inhalt .seite{flex:1;overflow-y:auto;overscroll-behavior:contain;padding:28px 20px 60px}
+#inhalt .seite>*{max-width:44rem;margin-left:auto;margin-right:auto}
+#inhalt .seite .art{color:var(--leise);font-size:15px;margin-bottom:6px}
+#inhalt .seite h1{font-size:clamp(24px,4vw,34px);line-height:1.2;margin-top:0;margin-bottom:18px}
+#inhalt .seite .text{font-size:18px;line-height:1.6;overflow-wrap:anywhere}
+#inhalt .seite .text p{margin:0 0 1em}
+#inhalt .seite .text b.du{color:#8a5a1c}
+#inhalt .seite .text b.ki{color:#2f4f6a}
+#inhalt .seite .text b.zwischen{display:block;margin-top:.6em;font-size:1.05em}
+#inhalt .bilder{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px;margin-bottom:22px}
+#inhalt .bilder img{width:100%;border-radius:10px;display:block;background:#eee}
+#inhalt .ende{display:flex;flex-wrap:wrap;gap:12px;margin-top:36px;padding-top:18px;border-top:1px solid #e3ddd2}
+#inhalt .ende button{font:inherit;font-size:16px;border:0;border-radius:999px;background:#e6eef3;color:#2f4f6a;padding:10px 18px;cursor:pointer}
+#inhalt .nichtein{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;padding:24px;text-align:center;font-size:18px}
+#inhalt .nichtein a{background:#2f4f6a;color:#fff;border-radius:999px;padding:12px 22px;text-decoration:none;font-weight:600}
+body.inhalt-offen #minikarte{display:none}
+
+/* ---------- Minikarte ---------- */
+#minikarte{position:fixed;right:16px;bottom:max(16px,env(safe-area-inset-bottom));width:200px;height:150px;z-index:4;background:rgba(240,246,250,.9);border-radius:12px;box-shadow:0 4px 16px rgba(40,60,80,.18);cursor:pointer}
+#minikarte.ganz{display:none}
+#minikarte .mast{fill:#8a7a66}
+#minikarte .mort{fill:#f7f1e6;stroke:#6e6152;stroke-width:.4%}
+#minikarte .mort.hier{fill:#c8873a}
+#minikarte .mrahmen{fill:rgba(47,79,106,.12);stroke:#2f4f6a;stroke-width:1.5px;vector-effect:non-scaling-stroke}
+@media (max-width:600px){
+  #minikarte{top:calc(max(12px,env(safe-area-inset-top)) + 44px);bottom:auto;right:10px;width:96px;height:76px}
+  #inhalt .seite .text{font-size:17px}
+  #inhalt .leiste .wo{display:none}
+}
+#inhalt .seite .umfang{font-size:15px;color:var(--leise);margin:1.4em 0}
+#inhalt .seite details{margin:0 0 12px;border:1px solid #e3ddd2;border-radius:10px;background:#fff}
+#inhalt .seite summary{cursor:pointer;padding:10px 14px;font-weight:600;font-size:16px}
+#inhalt .seite summary i{font-weight:400;color:var(--leise);font-style:normal}
+#inhalt .seite pre{margin:0;padding:12px 14px;border-top:1px solid #eee7dc;overflow-x:auto;font:13px/1.5 ui-monospace,Menlo,monospace;white-space:pre}

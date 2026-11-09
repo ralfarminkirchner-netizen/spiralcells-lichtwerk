@@ -370,7 +370,7 @@ function zeichne(){
   const tage = alle.filter(k => k.art === 'gespraech' && k.datiert).map(k => k.von);
   if(tage.length) zeitSpanne = [Math.min(...tage), Math.max(...tage)];
   // Je Ding ein Pfad für seine Äste, damit Fremdes beim Hineinzoomen zurücktreten kann
-  const je = new Map(); for(const [p, wem] of aeste){ if(!je.has(wem)) je.set(wem, []); je.get(wem).push('M' + p.map(q => q[0].toFixed(3) + ' ' + q[1].toFixed(3)).join('L') + 'Z'); }
+  const je = new Map(); for(const [p, wem] of aeste){ if(!je.has(wem)) je.set(wem, []); je.get(wem).push('M' + p.map(q => q[0].toFixed(5) + ' ' + q[1].toFixed(5)).join('L') + 'Z'); }
   el('circle', {class: 'boden', cx: 0, cy: BOGEN, r: BOGEN}, aesteG);   // der Boden: ein ganz flacher Bogen, auf dem der Baum steht
   el('path', {class: 'wurzelwerk', d: wurzelFormen.map(f => 'M' + gleichsinnig(band(f)).map(q => q[0].toFixed(3) + ' ' + q[1].toFixed(3)).join('L') + 'Z').join('')}, aesteG);
   for(const [wem, d] of je) wem.ast = el('path', {class: 'ast', d: d.join('')}, aesteG);
@@ -401,7 +401,7 @@ function zeichne(){
       k.bildEl = el('image', {x: k.x - k.r, y: k.y - k.r, width: 2 * k.r, height: 2 * k.r, preserveAspectRatio: k.bildHoch > 1.25 ? 'xMidYMin slice' : 'xMidYMid slice', 'clip-path': `url(#rund${k.nr})`, class: 'bild'}, g);
       const schleier = el('circle', {cx: k.x, cy: k.y, r: k.r * 0.97, class: 'schleier'}, g);   // ein leichter Schatten, damit der Name auf dem Bild lesbar bleibt
       k.bildEl.addEventListener('error', () => { k.bildEl.remove(); schleier.remove(); k.bildEl = null; g.classList.remove('mitbild'); });   // kein Bild da: der Kreis bleibt schlicht
-    }
+    } else if(!['wurzel', 'buendel', 'buendel-fassung'].includes(k.art)) bebildere(k, g);
     const zl = zeilen(k.name, 11, 3), fs = Math.min(k.r * (k.art === 'ort' || k.art === 'bereich' ? 0.36 : 0.27), k.r * 1.75 / (0.62 * Math.max(...zl.map(z => [...z].length)))); k.fs = fs / k.r;
     const t = el('text', {x: k.x, y: k.y - (zl.length - 1) * fs * 0.58 - fs * 0.35, 'font-size': fs, class: 'name'}, g);
     zl.forEach((z, i) => el('tspan', {x: k.x, dy: i ? '1.15em' : 0}, t).textContent = z);
@@ -409,6 +409,44 @@ function zeichne(){
     el('tspan', {x: k.x, dy: 0}, m).textContent = zahlWort(k);
     el('tspan', {x: k.x, dy: '1.2em'}, m).textContent = ['gespraeche', 'zeit'].includes(k.art) ? '' : zeichenWort(k.zeichen);
     k.text = t; k.menge = m; k.form = g;
+  }
+}
+
+/* Große Kreise ohne eigenes Bild (Ralf, 09.11.: „warum sind ausgerechnet die großen Kreise ohne jegliche Bilder“):
+   sie zeigen eine Collage aus den echten Bildern, die unter ihnen wachsen, je Ast eines. Wächst darunter kein Bild,
+   bekommt der Kreis ein ruhiges Sonnenblumenmuster in einer Farbe aus seinem Namen – erfunden ist dabei kein Inhalt. */
+function bilderUnter(k, n){
+  const l = [], lauf = q => { if(l.length >= n) return; if(q.bild && q !== k) l.push(q.bild);
+    else for(const b of q.bilder || []){ if(l.length >= n) break; l.push(b.pfad); }
+    for(const c of q.kinder || []) lauf(c); };
+  lauf(k); return l;
+}
+function sammleBilder(k, n){
+  const je = (k.kinder || []).map(c => bilderUnter(c, n)).filter(l => l.length), aus = [], da = new Set();
+  for(let i = 0; aus.length < n && je.some(l => l.length > i); i++) for(const l of je){ const p = l[i]; if(p && !da.has(p) && aus.length < n){ da.add(p); aus.push(p); } }
+  return aus;
+}
+const farbe = t => { let h = 0; for(const c of String(t)) h = (h * 31 + c.codePointAt(0)) >>> 0; return h % 360; };
+function bebildere(k, g){
+  const bs = sammleBilder(k, 4), r = k.r * 0.97;
+  if(bs.length){
+    const c = el('clipPath', {id: 'rund' + k.nr}, defs); el('circle', {cx: k.x, cy: k.y, r}, c);
+    const x0 = k.x - r, y0 = k.y - r, d = 2 * r, h = d / 2;
+    const kacheln = bs.length === 1 ? [[x0, y0, d, d]] : bs.length === 2 ? [[x0, y0, h, d], [k.x, y0, h, d]]
+      : bs.length === 3 ? [[x0, y0, h, d], [k.x, y0, h, h], [k.x, k.y, h, h]] : [[x0, y0, h, h], [k.x, y0, h, h], [x0, k.y, h, h], [k.x, k.y, h, h]];
+    const vor = g.querySelector('circle');
+    k.kacheln = kacheln.map(([x, y, w, hh], i) => { const e = el('image', {x, y, width: w, height: hh, preserveAspectRatio: 'xMidYMid slice', 'clip-path': `url(#rund${k.nr})`, class: 'bild'}, g);
+      e.addEventListener('error', () => e.remove()); return {el: e, pfad: bs[i], w: 0}; });
+    el('circle', {cx: k.x, cy: k.y, r, class: 'schleier collage-schleier'}, g);
+    g.classList.add('mitbild', 'collage');
+  } else {
+    const hu = farbe(k.name), m = el('g', {class: 'muster'}, g);
+    el('circle', {cx: k.x, cy: k.y, r, style: `fill:hsl(${hu} 38% 88%);stroke:none`}, m);
+    const GW = Math.PI * (3 - Math.sqrt(5)), n = 34, pk = [];
+    for(let i = 1; i <= n; i++){ const a = i * GW, rr = r * 0.9 * Math.sqrt(i / n), pr = r * (0.035 + 0.05 * i / n);
+      pk.push(`M${(k.x + Math.cos(a) * rr - pr).toFixed(4)} ${(k.y + Math.sin(a) * rr).toFixed(4)}a${pr.toFixed(4)} ${pr.toFixed(4)} 0 1 0 ${(2 * pr).toFixed(4)} 0a${pr.toFixed(4)} ${pr.toFixed(4)} 0 1 0 ${(-2 * pr).toFixed(4)} 0Z`); }
+    el('path', {d: pk.join(''), style: `fill:hsl(${hu} 34% 66%);fill-opacity:.5`}, m);
+    g.classList.add('gemustert');
   }
 }
 
@@ -449,7 +487,7 @@ let geplant = false;
 function setze(){
   blick = halte(blick);
   welt.setAttribute('transform', `translate(${blick.mx - blick.x * blick.s} ${blick.my - blick.y * blick.s}) scale(${blick.s})`);
-  if(!geplant){ geplant = true; requestAnimationFrame(() => { geplant = false; lesbar(); }); }
+  if(!geplant){ geplant = true; requestAnimationFrame(() => { geplant = false; lesbar(); zeigeMinikarte(); }); }
 }
 /* Schrift nur, wo sie lesbar ist: nicht kleiner als 11 Pixel, nicht größer als 44 */
 function lesbar(){
@@ -468,6 +506,8 @@ function lesbar(){
       if(k.bildW < w || !k.bildW){ k.bildW = w; const url = `/lichtwerk/bild?w=${w}&pfad=${encodeURIComponent(k.bild)}`;
         if(!k.bildEl.getAttribute('href')) k.bildEl.setAttribute('href', url);
         else { const vor = new Image(); vor.onload = () => k.bildEl.setAttribute('href', url); vor.src = url; } } }   // das scharfe erst zeigen, wenn es da ist
+    if(k.kacheln && da && k.r * s >= 4){ const w = k.r * s * (devicePixelRatio || 1) > 200 ? 960 : 240;
+      for(const t of k.kacheln) if(t.w < w){ t.w = w; t.el.setAttribute('href', `/lichtwerk/bild?w=${w}&pfad=${encodeURIComponent(t.pfad)}`); } }
   }
   // Was auf dieser Stufe steht, bleibt nie namenlos: ist sein Kreis noch zu klein, steht der Name daneben
   const html = [], belegt = [], hart = [];   // hart: Kreise, in denen ein Name steht – darüber liegt nie ein Schild
@@ -492,38 +532,6 @@ function lesbar(){
     html.push(`<div class="nm${k.art === 'ort' ? ' ortname' : ''}" data-nr="${k.nr}" style="left:${l[0]}px;top:${l[1]}px;width:${bw}px"><b>${esc(k.name)}</b>${knapp ? '' : `<span>${esc(unterzeile(k))}</span>`}</div>`);
   }
   namenEl.innerHTML = html.join('');
-  lies(s, x0, y0, x1, y1);
-}
-/* Lesen im Blatt (Ralf, 08.11.: „nie mehr in Textfenster wechseln … so weit hineinzoomen, bis es sich zum Vollbild macht
-   … und per Mausrad oder Wischgeste einfach wieder rauswischen bis zum ganzen Baum“). Wird ein Gespräch groß genug,
-   steht sein Text in ihm, fest mit dem Blatt verbunden; er wandert und wächst mit dem Blick. */
-const lesenEl = document.createElement('div'); lesenEl.id = 'lesen'; document.querySelector('.flaeche').appendChild(lesenEl);
-const texte = new Map(), offen = new Map();
-function lies(s, x0, y0, x1, y1){
-  const jetzt = new Set(); let bestes = null, wert = -Infinity;
-  for(const k of alle){
-    if(k.art !== 'gespraech') continue;
-    const cx = k.x + Math.cos(k.dir) * k.r * 0.25, cy = k.y + Math.sin(k.dir) * k.r * 0.25, b = k.r * 1.2 * s, h = k.r * 1.5 * s;
-    if(b < 230 || cx + k.r < x0 || cx - k.r > x1 || cy + k.r < y0 || cy - k.r > y1) continue;
-    const sx0 = (cx - blick.x) * s + blick.mx, sy0 = (cy - blick.y) * s + blick.my, w = b - Math.hypot(sx0 - W / 2, sy0 - H / 2);
-    if(w > wert){ wert = w; bestes = k; }
-  }
-  for(const k of bestes ? [bestes] : []){   // nur ein Blatt zeigt seinen Text: das größte nahe der Mitte
-    const cx = k.x + Math.cos(k.dir) * k.r * 0.25, cy = k.y + Math.sin(k.dir) * k.r * 0.25, b = k.r * 1.2 * s, h = k.r * 1.5 * s;
-    jetzt.add(k);
-    let d = offen.get(k);
-    if(!d){
-      d = document.createElement('article'); d.className = 'blatttext'; d.dataset.nr = k.nr;
-      d.innerHTML = `<h2>${esc(k.name)}</h2><p class="wann">${esc(zahlWort(k))}</p><div class="gesagt">…</div>`;
-      lesenEl.appendChild(d); offen.set(k, d);
-      const fuell = t => { d.querySelector('.gesagt').innerHTML = gesagt(t); };
-      if(texte.has(k.nr)) fuell(texte.get(k.nr));
-      else fetch('/lichtwerk/gespraech?n=' + k.nr).then(r => r.ok ? r.json() : null).then(j => { const t = j ? j.text : 'Dieses Gespräch ist gerade nicht lesbar.'; texte.set(k.nr, t); fuell(t); }).catch(() => fuell('Dieses Gespräch ist gerade nicht lesbar.'));
-    }
-    const sx = (cx - blick.x) * s + blick.mx, sy = (cy - blick.y) * s + blick.my;
-    Object.assign(d.style, {left: `${sx - b / 2}px`, top: `${sy - h / 2}px`, width: `${b}px`, height: `${h}px`, fontSize: `${Math.max(13, Math.min(17, b / 40))}px`});
-  }
-  for(const [k, d] of offen) if(!jetzt.has(k)){ d.remove(); offen.delete(k); }
 }
 function gesagt(t){
   return esc(t.replace(/^#\s.*$/m, '').replace(/^---\s*$/gm, '').replace(/^```.*$/gm, '')).split(/\n{2,}/).map(p => p.trim()).filter(Boolean).map(p => {
@@ -532,20 +540,24 @@ function gesagt(t){
     return `<p>${p}</p>`; }).join('');
 }
 
-function fahre(nach, dauer = 800){
+function fahre(nach, dauer = 800, fertig = null){
   const von = {...blick}, t0 = performance.now(), ls0 = Math.log(von.s), ls1 = Math.log(nach.s);
   ziel = nach;
   const schritt = now => { if(ziel !== nach) return;
     const t = Math.min(1, (now - t0) / dauer), e = t < .5 ? 4 * t * t * t : 1 - (-2 * t + 2) ** 3 / 2;
     blick = {x: von.x + (nach.x - von.x) * e, y: von.y + (nach.y - von.y) * e, s: Math.exp(ls0 + (ls1 - ls0) * e), mx: von.mx + (nach.mx - von.mx) * e, my: von.my + (nach.my - von.my) * e};
-    setze(); if(t < 1) requestAnimationFrame(schritt); else ziel = null; };
+    setze(); if(t < 1) requestAnimationFrame(schritt); else { ziel = null; if(fertig) fertig(); } };
   requestAnimationFrame(schritt);
 }
 
 /* ---------- Stufen ---------- */
 const unterhalb = (k, f) => { for(let q = k; q; q = q.eltern) if(q === f) return true; return false; };
-function geh(k, sanft = true){
-  if(blattArt(k)){ waehle(k); return; }
+function geh(k, sanft = true, {baum = false} = {}){
+  if(!k) return;
+  if(blattArt(k)){ waehle(k); oeffne(k); return; }
+  // ein Tipp öffnet: eine App mit belegter Adresse läuft, ein Werk mit nur einer Fassung zeigt gleich ihren Text
+  if(!baum && k.adresse){ fokus = k; karte(k); pfad(k); oeffne(k); return; }
+  if(!baum && k.art === 'werk' && k.kinder && k.kinder.length === 1 && blattArt(k.kinder[0])){ geh(k.kinder[0]); return; }
   fokus = k; gewaehlt && gewaehlt.form.classList.remove('gewaehlt'); gewaehlt = null;
   // nichts wird ausgeblendet (Ralf, 09.11.: „dieses Ausblenden bestimmter Äste macht es noch lächerlicher“)
   const p = passend(k); sanft ? fahre(p) : (blick = p, setze());
@@ -558,12 +570,12 @@ function blattBlick(f){   // ein Blatt so nah, dass es den Schirm füllt und man
   const s = Math.min(bw / (f.r * 1.25), bh / (f.r * 1.55));
   return halte({x: cx, y: cy, s, mx: W / 2, my: oben() + bh / 2});
 }
-function waehle(f){
+function waehle(f, fahren = true){
   gewaehlt && gewaehlt.form.classList.remove('gewaehlt');
   gewaehlt = f; f.form.classList.add('gewaehlt');
   if(fokus !== f.eltern){ fokus = f.eltern; pfad(f.eltern); }
+  tu(f);
   if(f.art === 'gespraech'){
-    fahre(blattBlick(f), 1000);
     $('.karte-name').textContent = f.name;
     const an = []; for(let q = f.eltern; q; q = q.eltern) if(q.art === 'app' || q.art === 'ort' || q.art === 'bereich'){ an.push(q.name); break; }
     $('.karte-menge').textContent = `Gespräch · ${zahlWort(f)}${an.length ? ' · an ' + an[0] : ''}`;
@@ -571,7 +583,6 @@ function waehle(f){
     hoch(f.eltern, 'hinaus');
     return;
   }
-  fahre(passend(f.eltern));
   $('.karte-name').textContent = f.name;
   $('.karte-menge').textContent = `Fassung in „${f.werk}“ · ${zeichenWort(f.zeichen)} · ${f.datiert ? zeitWort(f) : 'Zeit nicht belegt'}`;
   $('.karte-auch').textContent = '';
@@ -586,15 +597,144 @@ function karte(k){
   const auch = (k.auch || []).filter(o => o !== ort);
   $('.karte-auch').textContent = auch.length ? 'dasselbe Werk auch in ' + auch.join(' · ') : '';
   hoch(k.eltern, 'eine Stufe hinaus');
+  tu(k);
 }
-function hoch(k, satz){ const b = $('.hoch'); b.hidden = !k; b.onclick = () => k && geh(k); b.querySelector('.hoch-satz').textContent = satz; }
+/* Was man mit dem Gewählten tun kann, steht als Knopf auf der Karte */
+function tu(k){ const b = $('.tu'); b.hidden = !kannAuf(k);
+  b.textContent = blattArt(k) ? (k.art === 'gespraech' ? 'Gespräch lesen' : 'Text lesen') : 'App öffnen';
+  b.onclick = () => oeffne(k); }
+function hoch(k, satz){ const b = $('.hoch'); b.hidden = !k; b.onclick = () => { if(offenK) schliesse(); k && geh(k, true, {baum: true}); }; b.querySelector('.hoch-satz').textContent = satz; }
 const esc = s => String(s).replace(/[&<>"]/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'}[c]));
 const kuerze = (s, n) => [...s].length > n ? [...s].slice(0, n - 1).join('').trimEnd() + '…' : s;
 function pfad(k){
   const nav = $('.pfad'); nav.textContent = '';
   const kette = []; for(let q = k; q; q = q.eltern) kette.unshift(q);
   kette.forEach((q, i) => { if(i){ const t = document.createElement('i'); t.textContent = '›'; nav.appendChild(t); }
-    const b = document.createElement('button'); b.type = 'button'; b.textContent = kuerze(q.name, 24); b.onclick = () => geh(q); nav.appendChild(b); });
+    const b = document.createElement('button'); b.type = 'button'; b.textContent = kuerze(q.name, 24); b.onclick = () => { if(offenK) schliesse(); geh(q, true, {baum: true}); }; nav.appendChild(b); });
+}
+
+/* ---------- Der Kreis wird Inhalt (Ralf, 09.11.: „man kann nichts anklicken, es öffnet sich nichts … zu keinen Apps,
+   nicht zu Texten“). Ein Tipp fährt in den Kreis, und der Kreis wächst über den ganzen Schirm: eine Fassung oder ein
+   Gespräch wird die Leseseite, eine App mit belegter Adresse wird die laufende App. „Zurück in den Baum“, Esc oder
+   über das Ende hinaus weiterblättern lässt den Inhalt wieder in seinen Kreis schrumpfen, an derselben Stelle. */
+const inhaltEl = document.createElement('section'); inhaltEl.id = 'inhalt'; inhaltEl.hidden = true; document.body.appendChild(inhaltEl);
+let offenK = null, fassungen = new Map(), adressen = [];
+const nennbar = t => String(t || '').toLowerCase().replace(/[^a-z0-9äöüß]/g, '');
+function adresseVon(k){
+  const n = nennbar(k.name); if(!n) return null;
+  return adressen.find(a => nennbar(a.name) === n || (a.auch || []).some(x => nennbar(x) === n)) || null;
+}
+const lesbarArt = k => blattArt(k);
+const kannAuf = k => lesbarArt(k) || !!k.adresse;
+function kreisAmSchirm(k){
+  const blatt = blattArt(k), cx = blatt ? k.x + Math.cos(k.dir) * k.r * 0.25 : k.x, cy = blatt ? k.y + Math.sin(k.dir) * k.r * 0.25 : k.y;
+  return {x: (cx - blick.x) * blick.s + blick.mx, y: (cy - blick.y) * blick.s + blick.my, r: k.r * (blatt ? 0.82 : 1) * blick.s};
+}
+function nahBlick(k){
+  const blatt = blattArt(k), cx = blatt ? k.x + Math.cos(k.dir) * k.r * 0.25 : k.x, cy = blatt ? k.y + Math.sin(k.dir) * k.r * 0.25 : k.y;
+  return halte({x: cx, y: cy, s: Math.min(W, H) * 0.36 / k.r, mx: W / 2, my: H / 2});
+}
+const geschwister = k => { let w = k.eltern; while(w && !['werk', 'gespraeche', 'app', 'varianten'].includes(w.art)) w = w.eltern;
+  const l = []; const lauf = q => blattArt(q) ? l.push(q) : (q.kinder || []).forEach(lauf); lauf(w || k.eltern || k); return l; };
+function oeffne(k){
+  if(!kannAuf(k)) return;
+  if(offenK){ fuelle(k); return; }
+  fahre(nahBlick(k), 600, () => wachse(k));
+}
+function wachse(k){
+  fuelle(k);
+  const c = kreisAmSchirm(k), weit = Math.hypot(Math.max(c.x, W - c.x), Math.max(c.y, H - c.y)) + 20;
+  inhaltEl.hidden = false; inhaltEl.style.transition = 'none'; inhaltEl.style.clipPath = `circle(${Math.max(8, c.r)}px at ${c.x}px ${c.y}px)`;
+  inhaltEl.getBoundingClientRect();
+  inhaltEl.style.transition = ''; inhaltEl.style.clipPath = `circle(${weit}px at ${c.x}px ${c.y}px)`;
+  document.body.classList.add('inhalt-offen');
+}
+function schliesse(){
+  if(!offenK) return;
+  const k = offenK; offenK = null;
+  blick = nahBlick(k); setze();
+  const c = kreisAmSchirm(k);
+  inhaltEl.style.clipPath = `circle(${Math.max(8, c.r)}px at ${c.x}px ${c.y}px)`;
+  document.body.classList.remove('inhalt-offen');
+  setTimeout(() => { if(!offenK){ inhaltEl.hidden = true; inhaltEl.innerHTML = ''; } }, 520);
+  if(blattArt(k)) waehle(k, false); else geh(k, true, {baum: true});
+}
+const woSatz = k => { const l = []; for(let q = k.eltern; q && q.art !== 'wurzel'; q = q.eltern) if(!['zeit', 'buendel', 'buendel-fassung', 'gespraeche'].includes(q.art) && q.name !== l[0]) l.unshift(q.name); return l.slice(-3).join(' › '); };
+function fuelle(k){
+  offenK = k; inhaltEl.dataset.art = blattArt(k) ? 'lesen' : 'app';
+  if(blattArt(k)){
+    const reihe = geschwister(k), i = reihe.indexOf(k), vor = reihe[i - 1], nach = reihe[i + 1];
+    const art = k.art === 'gespraech' ? 'Gespräch' : 'Fassung', wann = k.art === 'gespraech' ? zahlWort(k) : (k.datiert ? zeitWort(k) : 'Zeit nicht belegt');
+    const bilder = (k.bilder || []).slice(0, 4).map(b => `<img src="/lichtwerk/bild?w=960&pfad=${encodeURIComponent(b.pfad)}" alt="${esc(b.text || k.name)}" loading="lazy">`).join('');
+    inhaltEl.innerHTML = `<div class="leiste"><button type="button" class="zurueck">← zurück in den Baum</button><span class="wo">${esc(woSatz(k))}</span>
+      <span class="blaettern">${vor ? `<button type="button" class="vor" title="${esc(vor.name)}">‹ früher</button>` : ''}${reihe.length > 1 ? `<i>${i + 1} von ${reihe.length}</i>` : ''}${nach ? `<button type="button" class="nach" title="${esc(nach.name)}">später ›</button>` : ''}</span></div>
+      <article class="seite"><p class="art">${art}${k.werk ? ' in „' + esc(k.werk) + '“' : ''} · ${esc(wann)}${k.zeichen ? ' · ' + esc(zeichenWort(k.zeichen)) : ''}</p>
+      <h1>${esc(k.name)}</h1>${bilder ? `<div class="bilder">${bilder}</div>` : ''}<div class="text">…</div>
+      <p class="ende">${nach ? `<button type="button" class="nach">Weiter: ${esc(kuerze(nach.name, 40))} ›</button>` : ''}<button type="button" class="zurueck">← zurück in den Baum</button></p></article>`;
+    const fuell = t => { const d = inhaltEl.querySelector('.text'); if(d && offenK === k) d.innerHTML = gesagt(t); };
+    if(k.art === 'gespraech'){
+      fetch('/lichtwerk/gespraech?n=' + k.nr).then(r => r.ok ? r.json() : null).then(j => fuell(j ? j.text : 'Dieses Gespräch ist gerade nicht lesbar.')).catch(() => fuell('Dieses Gespräch ist gerade nicht lesbar.'));
+    } else { const v = fassungen.get(k.schluessel) || {}, d = inhaltEl.querySelector('.text'), t = (v.content || '').trim();
+      const quelle = t.startsWith('{') ? (() => { try { const j = JSON.parse(t); return j && j.format === 'moonfingers.app-source.v1' ? j : null; } catch { return null; } })() : null;
+      if(quelle) d.innerHTML = quellText(quelle);
+      else fuell(t || (v.notes || '').trim() || 'Diese Fassung hat keinen Text, nur ihre Angaben.'); }
+    inhaltEl.querySelectorAll('.vor').forEach(b => b.onclick = () => blaettere(vor));
+    inhaltEl.querySelectorAll('.nach').forEach(b => b.onclick = () => blaettere(nach));
+    waehle(k, false);
+  } else {
+    const a = k.adresse;
+    inhaltEl.innerHTML = `<div class="leiste"><button type="button" class="zurueck">← zurück in den Baum</button><b class="titel">${esc(k.name)}</b>
+      ${k.kinder && k.kinder.length ? `<button type="button" class="innen">Werke und Fassungen</button>` : ''}<a class="draussen" href="${esc(a.url)}" target="_blank" rel="noopener noreferrer">in eigenem Fenster ↗</a></div>
+      ${a.einbetten ? `<iframe src="${esc(a.url)}" title="${esc(k.name)}" referrerpolicy="no-referrer" allow="fullscreen; autoplay; clipboard-write"></iframe>`
+        : `<div class="nichtein"><p>${esc(k.name)} lässt sich nicht hier im Baum zeigen, die Seite erlaubt kein Einbetten.</p><a href="${esc(a.url)}" target="_blank" rel="noopener noreferrer">${esc(k.name)} in eigenem Fenster öffnen ↗</a></div>`}`;
+    const innen = inhaltEl.querySelector('.innen'); if(innen) innen.onclick = () => { const q = k; schliesse(); setTimeout(() => geh(q, true, {baum: true}), 0); };
+    fokus = k; pfad(k); karte(k);
+  }
+  inhaltEl.querySelectorAll('.zurueck').forEach(b => b.onclick = schliesse);
+  const seite = inhaltEl.querySelector('.seite'); if(seite) seite.scrollTop = 0;
+}
+/* Eine App-Fassung aus dem Code (moonfingers.app-source.v1): erst die Zusammenfassung als Text, dann jede gelesene
+   Datei als aufklappbarer Abschnitt mit ihrem Code. Der Speicherort bleibt in den Daten, sichtbar ist nur der Dateiname. */
+function quellText(j){
+  const teile = (j.sections || []).map((t, i) => `<details${i ? '' : ' open'}><summary>${esc(t.title || 'Abschnitt')}${t.truncated ? ' <i>(gekürzt)</i>' : ''}</summary><pre><code>${esc(t.content || '')}</code></pre></details>`).join('');
+  return `${gesagt(j.summary || '')}${j.scope ? `<p class="umfang">${esc(j.scope)}</p>` : ''}${teile}`;
+}
+function blaettere(k){ if(!k) return; blick = nahBlick(k); setze(); fuelle(k); }
+// wie überall im Baum führt das Rad nach unten hinaus: erst durch den ganzen Text, an seinem Ende zurück in den Baum
+let ueberEnde = 0;
+inhaltEl.addEventListener('wheel', e => { const t = e.target.closest('.seite'); if(!t) return;
+  if(e.ctrlKey && e.deltaY > 0){ e.preventDefault(); schliesse(); return; }
+  const ende = t.scrollTop + t.clientHeight >= t.scrollHeight - 2;
+  if(ende && e.deltaY > 0){ ueberEnde += e.deltaY; if(ueberEnde > 600){ ueberEnde = 0; schliesse(); } } else ueberEnde = 0; }, {passive: false});
+
+/* ---------- Minikarte: der ganze Baum klein, darin der Ausschnitt, den man gerade sieht ---------- */
+const mini = document.createElementNS(NS, 'svg'); mini.id = 'minikarte'; mini.setAttribute('role', 'navigation'); mini.setAttribute('aria-label', 'Übersicht: der ganze Baum');
+let miniRahmen = null, miniOrte = [];
+function baueMinikarte(){
+  const bx = wurzelKnoten.box, x0 = Math.min(bx[0], -wurzelBreit), x1 = Math.max(bx[2], wurzelBreit), y0 = bx[1], y1 = wurzelTief, rand = (x1 - x0) * 0.03;
+  mini.setAttribute('viewBox', `${x0 - rand} ${y0 - rand} ${x1 - x0 + 2 * rand} ${y1 - y0 + 2 * rand}`);
+  mini.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+  const g = el('g', {}, mini);
+  for(const k of alle) if(k.ast && ['wurzel', 'ort', 'bereich'].includes(k.art)) el('path', {d: k.ast.getAttribute('d'), class: 'mast'}, g);
+  for(const k of alle) if(k.art === 'ort' || k.art === 'bereich'){ const c = el('circle', {cx: k.x, cy: k.y, r: Math.max(k.r, (x1 - x0) * 0.012), class: 'mort'}, g); miniOrte.push([k, c]); }
+  miniRahmen = el('rect', {class: 'mrahmen'}, mini);
+  document.body.appendChild(mini);
+  mini.addEventListener('click', e => {
+    const p = mini.createSVGPoint(); p.x = e.clientX; p.y = e.clientY; const w = p.matrixTransform(mini.getScreenCTM().inverse());
+    let best = null, d = Infinity;
+    for(const [k] of miniOrte){ const b = k.box, drin = w.x >= b[0] && w.x <= b[2] && w.y >= b[1] && w.y <= b[3] + k.r * 3, a = Math.hypot(w.x - k.x, w.y - k.y);
+      if(drin && a < d){ d = a; best = k; } }
+    if(offenK) schliesse();
+    geh(best || wurzelKnoten, true, {baum: true});
+  });
+}
+function zeigeMinikarte(){
+  if(!miniRahmen) return;
+  const s = blick.s, x0 = blick.x - blick.mx / s, y0 = blick.y - blick.my / s;
+  Object.entries({x: x0, y: y0, width: W / s, height: H / s}).forEach(([a, v]) => miniRahmen.setAttribute(a, v));
+  const ort = (() => { for(let q = fokus; q; q = q.eltern) if(q.art === 'ort' || q.art === 'bereich') return q; })();
+  for(const [k, c] of miniOrte) c.classList.toggle('hier', k === ort);
+  mini.classList.toggle('ganz', !fokus || fokus.art === 'wurzel');
 }
 
 /* ---------- Bedienung: tippen, ziehen, Rad, zwei Finger ---------- */
@@ -611,9 +751,6 @@ const bewege = e => { if(!zeiger.has(e.pointerId)) return; zeiger.set(e.pointerI
   const z = zug.blick, s = z.s * f, wx = z.x + (ax - z.mx) / z.s, wy = z.y + (ay - z.my) / z.s;
   blick = {s, mx: z.mx, my: z.my, x: wx - (bx - z.mx) / s, y: wy - (by - z.my) / s}; setze(); };
 svg.addEventListener('pointermove', bewege);
-lesenEl.addEventListener('pointerdown', e => { if(e.pointerType !== 'touch') return; zeiger.set(e.pointerId, [e.clientX, e.clientY]); getippt = null; bewegt = false; zug = {blick: {...blick}, punkte: new Map(zeiger)}; });
-lesenEl.addEventListener('pointermove', e => { if(zeiger.size >= 2 && zeiger.has(e.pointerId)){ e.preventDefault(); bewege(e); } else if(zeiger.has(e.pointerId)) zeiger.set(e.pointerId, [e.clientX, e.clientY]); });
-for(const n of ['pointerup', 'pointercancel']) lesenEl.addEventListener(n, e => { zeiger.delete(e.pointerId); if(zeiger.size) zug = {blick: {...blick}, punkte: new Map(zeiger)}; });
 const los = e => { zeiger.delete(e.pointerId); svg.classList.remove('zieht'); if(zeiger.size) zug = {blick: {...blick}, punkte: new Map(zeiger)};
   else if(!bewegt && getippt) geh(alle[+getippt.dataset.nr]); };
 svg.addEventListener('pointerup', los); svg.addEventListener('pointercancel', e => { zeiger.delete(e.pointerId); });
@@ -621,28 +758,23 @@ const radeln = e => { e.preventDefault(); ziel = null; const f = Math.exp(-e.del
   const wx = blick.x + (e.clientX - blick.mx) / blick.s, wy = blick.y + (e.clientY - blick.my) / blick.s, s = blick.s * f;
   blick = {...blick, s, x: wx - (e.clientX - blick.mx) / s, y: wy - (e.clientY - blick.my) / s}; setze(); };
 svg.addEventListener('wheel', radeln, {passive: false});
-// über dem Text im Blatt: blättern liest weiter; ist man oben angekommen (oder zieht mit zwei Fingern zusammen), geht es hinaus
-// wie überall im Baum führt das Rad nach unten hinaus: im Blatt erst durch das ganze Gespräch, an seinem Ende weiter hinaus
-lesenEl.addEventListener('wheel', e => { const t = e.target.closest('.blatttext');
-  const ende = t && t.scrollTop + t.clientHeight >= t.scrollHeight - 2, anfang = t && t.scrollTop <= 0;
-  if(!t || e.ctrlKey || (e.deltaY > 0 && ende)) radeln(e);
-  else if(e.deltaY < 0 && anfang) e.preventDefault();   // am Anfang des Gesprächs geht es nicht noch tiefer hinein
-  else e.stopPropagation(); }, {passive: false});
 namenEl.addEventListener('click', e => { const t = e.target.closest('[data-nr]'); if(t) geh(alle[+t.dataset.nr]); });
-addEventListener('keydown', e => { if(e.key === 'Escape' && fokus && fokus.eltern) geh(fokus.eltern); });
+addEventListener('keydown', e => { if(e.key !== 'Escape') return; if(offenK) schliesse(); else if(fokus && fokus.eltern) geh(fokus.eltern, true, {baum: true}); });
 addEventListener('resize', () => { W = innerWidth; H = innerHeight; if(wurzelKnoten){ vollbild(); } if(fokus){ blick = passend(fokus); setze(); } });
 
 /* ---------- Laden ---------- */
 (async () => {
   try {
-    const [graph, bilder, gespraeche] = await Promise.all([fetch('/api/graph').then(r => r.json()), fetch('/lichtwerk/bilder').then(r => r.ok ? r.json() : {}).catch(() => ({})),
-      fetch('/lichtwerk/gespraeche').then(r => r.ok ? r.json() : []).catch(() => [])]);
+    const [graph, bilder, gespraeche, apps] = await Promise.all([fetch('/api/graph').then(r => r.json()), fetch('/lichtwerk/bilder').then(r => r.ok ? r.json() : {}).catch(() => ({})),
+      fetch('/lichtwerk/gespraeche').then(r => r.ok ? r.json() : []).catch(() => []), fetch('/stufen-apps.json').then(r => r.ok ? r.json() : {apps: []}).catch(() => ({apps: []}))]);
+    fassungen = new Map((graph.variants || []).map(v => [v.id, v])); adressen = apps.apps || [];
     const baum = spiralbaum(graph, bilder, gespraeche);
     pflanze(baum);
+    for(const k of alle) if(!blattArt(k) && ['app', 'werk', 'ort', 'bereich'].includes(k.art)){ const a = adresseVon(k); if(a) k.adresse = a; }
     umrisse(); zeichne(); wurzelKnoten = baum; for(const k of alle) if(k.r && (k.art === 'fassung' || k.art === 'gespraech')) kleinstesBlatt = Math.min(kleinstesBlatt, k.r); vollbild();
-    $('#lade').hidden = true;
+    $('#lade').hidden = true; baueMinikarte();
     const finde = () => { let k = baum; for(const t of location.hash.slice(1).split('/').filter(Boolean).map(decodeURIComponent)){ const n = (k.kinder || []).find(c => c.name === t); if(!n) break; k = n; } return k; };
-    geh(finde(), false);
-    addEventListener('hashchange', () => geh(finde()));
+    geh(finde(), false, {baum: true});
+    addEventListener('hashchange', () => { if(!offenK) geh(finde(), true, {baum: true}); });
   } catch(err){ $('#lade').textContent = 'Der Fundus ist gerade nicht erreichbar.'; console.error(err); }
 })();

@@ -1,0 +1,448 @@
+{
+ "stand": "2026-11-09T00:40:13+0100",
+ "satz": "Belegte Adressen von Ralfs Apps, je mit Quelle; geprüft heißt: einmal angefragt, zu der Zeit, die dabeisteht. Momentaufnahme für den Spiralbaum, gelesen aus app/app-adressen.json der Lichtgrund-Arbeitskopie.",
+ "apps": [
+  {
+   "name": "Aithentik-Alpha-Loop",
+   "auch": [
+    "Aithentik™ ALPHA-LOOP"
+   ],
+   "url": "https://ralfarminkirchner-netizen.github.io/Aithentik-Alpha-Loop/",
+   "quelle": "GitHub Pages · ralfarminkirchner-netizen/Aithentik-Alpha-Loop",
+   "einbetten": true,
+   "status": 200
+  },
+  {
+   "name": "AiTHENTiSCGH",
+   "auch": [
+    "MiNDCEL ANTiGRAViTY"
+   ],
+   "url": "https://ralfarminkirchner-netizen.github.io/AiTHENTiSCGH/",
+   "quelle": "GitHub Pages · ralfarminkirchner-netizen/AiTHENTiSCGH",
+   "einbetten": true,
+   "status": 200
+  },
+  {
+   "name": "aithentisch-tisch",
+   "auch": [
+    "AiTHENTiSCH-Tisch"
+   ],
+   "url": "https://ralfarminkirchner-netizen.github.io/aithentisch-tisch/",
+   "quelle": "GitHub Pages · ralfarminkirchner-netizen/aithentisch-tisch",
+   "einbetten": true,
+   "status": 200
+  },
+  {
+   "name": "ANWESENHEiT",
+   "auch": [
+    "Anwesenheitswerkstatt — MiNDCEL"
+   ],
+   "url": "https://anwesenheit-werkstatt.x99t4dyxr9.chatgpt.site",
+   "quelle": "ChatGPT Sites · ChatGPT Sites, list_sites, verified 2026-10-12",
+   "einbetten": true,
+   "status": 200
+  },
+  {
+   "name": "FASKA",
+   "auch": [
+    "FASKA Lernlandschaft · Öffentliche Demo"
+   ],
+   "url": "https://faska-lernlandschaft-production.up.railway.app/",
+   "quelle": "Railway · geführt in der Steuerzentrale SPiRALMiNDS",
+   "einbetten": true,
+   "status": 200
+  },
+  {
+   "name": "FASKA Eigenraum",
+   "auch": [],
+   "url": "https://faska-eigenraum.x99t4dyxr9.chatgpt.site",
+   "quelle": "ChatGPT Sites · ChatGPT Sites, list_sites, verified 2026-10-12",
+   "einbetten": true,
+   "status": 401
+  },
+  {
+   "name": "FASKA Eigenraum",
+   "auch": [
+    "FASKA — Lernbücher"
+   ],
+   "url": "https://faska-eigenraum-production.up.railway.app/",
+   "quelle": "Railway · geführt in der Steuerzentrale SPiRALMiNDS",
+   "einbetten": false,
+   "status": 200
+  },
+  {
+   "name": "FASKA GOLD · Am Werk",
+   "auch": [],
+   "url": "https://faska-gold-werk-20261010.x99t4dyxr9.chatgpt.site",
+   "quelle": "ChatGPT Sites · ChatGPT Sites, list_sites, verified 2026-10-12",
+   "einbetten": true,
+   "status": 401
+  },
+  {
+   "name": "FASKA Lernlandschaft",
+   "auch": [],
+   "url": "https://faska-lernlandschaft.x99t4dyxr9.chatgpt.site",
+   "quelle": "ChatGPT Sites · ChatGPT Sites, list_sites, verified 2026-10-12",
+   "einbetten": true,
+   "status": 401
+  },
+  {
+   "name": "FASKA Lernwege",
+   "auch": [],
+   "url": "https://mindlaxy-golden-path.x99t4dyxr9.chatgpt.site",
+   "quelle": "ChatGPT Sites · ChatGPT Sites, list_sites, verified 2026-10-12",
+   "einbetten": true,
+   "status": 401
+  },
+  {
+   "name": "FASKA MUSiC",
+   "auch": [],
+   "url": "https://faska-klangwelten-production.up.railway.app",
+   "quelle": "Fundus · wörtlich in einer Fassung",
+   "einbetten": true,
+   "status": 200
+  },
+  {
+   "name": "faska-eigenraum-pages",
+   "auch": [
+    "FASKA Eigenraum — Lernspuren im wirklichen Geschehen"
+   ],
+   "url": "https://ralfarminkirchner-netizen.github.io/faska-eigenraum-pages/",
+   "quelle": "GitHub Pages · ralfarminkirchner-netizen/faska-eigenraum-pages",
+   "einbetten": true,
+   "status": 200
+  },
+  {
+   "name": "faska-flow-2-wortarten-ninja",
+   "auch": [
+    "Wortarten-Ninja"
+   ],
+   "url": "https://ralfarminkirchner-netizen.github.io/faska-flow-2-wortarten-ninja/",
+   "quelle": "GitHub Pages · ralfarminkirchner-netizen/faska-flow-2-wortarten-ninja",
+   "einbetten": true,
+   "status": 200
+  },
+  {
+   "name": "faska-flow-pro",
+   "auch": [
+    "FASKA flow!"
+   ],
+   "url": "https://ralfarminkirchner-netizen.github.io/faska-flow-pro/",
+   "quelle": "GitHub Pages · ralfarminkirchner-netizen/faska-flow-pro",
+   "einbetten": true,
+   "status": 200
+  },
+  {
+   "name": "faska-invaria-2",
+   "auch": [
+    "FASKA Invaria 2 · Lernlandschaft — Der Lena-Fall"
+   ],
+   "url": "https://ralfarminkirchner-netizen.github.io/faska-invaria-2/",
+   "quelle": "GitHub Pages · ralfarminkirchner-netizen/faska-invaria-2",
+   "einbetten": true,
+   "status": 200
+  },
+  {
+   "name": "faska-lernlandschaft",
+   "auch": [
+    "FASKA Lernlandschaft · Öffentliche Demo"
+   ],
+   "url": "https://ralfarminkirchner-netizen.github.io/faska-lernlandschaft/",
+   "quelle": "GitHub Pages · ralfarminkirchner-netizen/faska-lernlandschaft",
+   "einbetten": true,
+   "status": 200
+  },
+  {
+   "name": "Genealogical Spiral",
+   "auch": [],
+   "url": "https://genealogical-spiral.x99t4dyxr9.chatgpt.site",
+   "quelle": "ChatGPT Sites · ChatGPT Sites, list_sites, verified 2026-10-12",
+   "einbetten": true,
+   "status": 401
+  },
+  {
+   "name": "growing-ninja-2",
+   "auch": [
+    "Growing Ninja – First Steps"
+   ],
+   "url": "https://ralfarminkirchner-netizen.github.io/growing-ninja-2/",
+   "quelle": "GitHub Pages · ralfarminkirchner-netizen/growing-ninja-2",
+   "einbetten": true,
+   "status": 200
+  },
+  {
+   "name": "hexagon-al-spiel",
+   "auch": [
+    "HEXAGON-AL"
+   ],
+   "url": "https://ralfarminkirchner-netizen.github.io/hexagon-al-spiel/",
+   "quelle": "GitHub Pages · ralfarminkirchner-netizen/hexagon-al-spiel",
+   "einbetten": true,
+   "status": 200
+  },
+  {
+   "name": "IBF",
+   "auch": [
+    "iNTEGRATIVE BEWUSSTSEiNSFOKUSSiERUNG"
+   ],
+   "url": "https://ibf-web-production.up.railway.app/",
+   "quelle": "Railway · geführt in der Steuerzentrale SPiRALMiNDS",
+   "einbetten": false,
+   "status": 200
+  },
+  {
+   "name": "inkarnat",
+   "auch": [
+    "INKARNAT — Serious Autonomy Architecture"
+   ],
+   "url": "https://ralfarminkirchner-netizen.github.io/inkarnat/",
+   "quelle": "GitHub Pages · ralfarminkirchner-netizen/inkarnat",
+   "einbetten": true,
+   "status": 200
+  },
+  {
+   "name": "iNTEGRATIVE BEWUSSTSEiNSFOKUSSiERUNG",
+   "auch": [],
+   "url": "https://integrative-bewusstseinsfokussierung.x99t4dyxr9.chatgpt.site",
+   "quelle": "ChatGPT Sites · ChatGPT Sites, list_sites, verified 2026-10-12",
+   "einbetten": true,
+   "status": 200
+  },
+  {
+   "name": "juggling-down-babylon",
+   "auch": [
+    "Juggling down Babylon"
+   ],
+   "url": "https://ralfarminkirchner-netizen.github.io/juggling-down-babylon/",
+   "quelle": "GitHub Pages · ralfarminkirchner-netizen/juggling-down-babylon",
+   "einbetten": true,
+   "status": 200
+  },
+  {
+   "name": "KiNTEGRiTY",
+   "auch": [
+    "KiNTEGRiTY · Übergang"
+   ],
+   "url": "https://kintegrity-production.up.railway.app/",
+   "quelle": "Railway · geführt in der Steuerzentrale SPiRALMiNDS",
+   "einbetten": true,
+   "status": 200
+  },
+  {
+   "name": "KUGELMATRIX",
+   "auch": [
+    "KUGELMATRIX · MOONFiNGERS"
+   ],
+   "url": "https://kugelmatrix-production.up.railway.app/",
+   "quelle": "Railway · geführt in der Steuerzentrale SPiRALMiNDS",
+   "einbetten": true,
+   "status": 200
+  },
+  {
+   "name": "Let the Music Play",
+   "auch": [],
+   "url": "https://let-the-music-play-production.up.railway.app/",
+   "quelle": "Fundus · wörtlich in einer Fassung",
+   "einbetten": true,
+   "status": 200
+  },
+  {
+   "name": "Let the Music Play · Jugend",
+   "auch": [
+    "Let the Music Play"
+   ],
+   "url": "https://let-the-music-play-production-7d0e.up.railway.app/",
+   "quelle": "Fundus · wörtlich in einer Fassung",
+   "einbetten": true,
+   "status": 200
+  },
+  {
+   "name": "looptisch",
+   "auch": [
+    "LOOPTiSCH"
+   ],
+   "url": "https://ralfarminkirchner-netizen.github.io/looptisch/",
+   "quelle": "GitHub Pages · ralfarminkirchner-netizen/looptisch",
+   "einbetten": true,
+   "status": 200
+  },
+  {
+   "name": "MiNDLAXY — Atlas der Gegenwart",
+   "auch": [
+    "MiNDLAXY · Garten und Denkbewegungsatlas"
+   ],
+   "url": "https://mindlaxy-gegenwartsgarten.x99t4dyxr9.chatgpt.site",
+   "quelle": "ChatGPT Sites · ChatGPT Sites, list_sites, verified 2026-10-12",
+   "einbetten": true,
+   "status": 200
+  },
+  {
+   "name": "mindlaxy2-vault",
+   "auch": [
+    "BRaiNSTORM SPiRAL — MiNDLAXY"
+   ],
+   "url": "https://ralfarminkirchner-netizen.github.io/mindlaxy2-vault/",
+   "quelle": "GitHub Pages · ralfarminkirchner-netizen/mindlaxy2-vault",
+   "einbetten": true,
+   "status": 200
+  },
+  {
+   "name": "Mooncells",
+   "auch": [],
+   "url": "https://mooncells-production.up.railway.app",
+   "quelle": "Fundus · wörtlich in einer Fassung",
+   "einbetten": true,
+   "status": 200
+  },
+  {
+   "name": "MOONFiNGERS-2",
+   "auch": [
+    "MOONFiNGERS 2"
+   ],
+   "url": "https://ralfarminkirchner-netizen.github.io/MOONFiNGERS-2/",
+   "quelle": "GitHub Pages · ralfarminkirchner-netizen/MOONFiNGERS-2",
+   "einbetten": true,
+   "status": 200
+  },
+  {
+   "name": "my app",
+   "auch": [
+    "Phänomenautik 3"
+   ],
+   "url": "https://phaenomenautik-3-production.up.railway.app",
+   "quelle": "Fundus · wörtlich in einer Fassung",
+   "einbetten": true,
+   "status": 200
+  },
+  {
+   "name": "neuro-psych-map",
+   "auch": [
+    "Neuro-Psych Map"
+   ],
+   "url": "https://ralfarminkirchner-netizen.github.io/neuro-psych-map/",
+   "quelle": "GitHub Pages · ralfarminkirchner-netizen/neuro-psych-map",
+   "einbetten": true,
+   "status": 200
+  },
+  {
+   "name": "PARALLAX — ADHS Phänomenatlas",
+   "auch": [],
+   "url": "https://parallax-adhs-phaenomenatlas.x99t4dyxr9.chatgpt.site",
+   "quelle": "ChatGPT Sites · ChatGPT Sites, list_sites, verified 2026-10-12",
+   "einbetten": true,
+   "status": 200
+  },
+  {
+   "name": "PHÄNOMENATLAS · Das Originalnetz formen",
+   "auch": [
+    "PHÄNOMENATLAS · Zeit, Handlung und Zusammenhänge"
+   ],
+   "url": "https://phaenomenautik-koharenz.x99t4dyxr9.chatgpt.site",
+   "quelle": "ChatGPT Sites · ChatGPT Sites, list_sites, verified 2026-10-12",
+   "einbetten": true,
+   "status": 200
+  },
+  {
+   "name": "RAiNBOW LiGHT 3D",
+   "auch": [],
+   "url": "https://ralfarminkirchner-netizen.github.io/rainbow-light-3d/",
+   "quelle": "Fundus · wörtlich in einer Fassung",
+   "einbetten": true,
+   "status": 200
+  },
+  {
+   "name": "RAKi · Textatlas",
+   "auch": [],
+   "url": "https://raki-textatlas.x99t4dyxr9.chatgpt.site",
+   "quelle": "ChatGPT Sites · ChatGPT Sites, list_sites, verified 2026-10-12",
+   "einbetten": true,
+   "status": 401
+  },
+  {
+   "name": "ridge-racer-clone",
+   "auch": [],
+   "url": "https://ralfarminkirchner-netizen.github.io/ridge-racer-clone/",
+   "quelle": "GitHub Pages · ralfarminkirchner-netizen/ridge-racer-clone",
+   "einbetten": true,
+   "status": 200
+  },
+  {
+   "name": "spiral-wiki-app",
+   "auch": [
+    "SPiRAL MiND WiKi"
+   ],
+   "url": "https://ralfarminkirchner-netizen.github.io/spiral-wiki-app/",
+   "quelle": "GitHub Pages · ralfarminkirchner-netizen/spiral-wiki-app",
+   "einbetten": true,
+   "status": 200
+  },
+  {
+   "name": "SPiRALMiNDS",
+   "auch": [
+    "SPiRALMiNDS · Modulare Steuerzentrale"
+   ],
+   "url": "https://spiralminds-control-center.x99t4dyxr9.chatgpt.site",
+   "quelle": "ChatGPT Sites · ChatGPT Sites, list_sites, verified 2026-10-12",
+   "einbetten": true,
+   "status": 200
+  },
+  {
+   "name": "stephs-kreativwelt",
+   "auch": [
+    "Stephs Kreativwelt"
+   ],
+   "url": "https://ralfarminkirchner-netizen.github.io/stephs-kreativwelt/",
+   "quelle": "GitHub Pages · ralfarminkirchner-netizen/stephs-kreativwelt",
+   "einbetten": true,
+   "status": 200
+  },
+  {
+   "name": "TAXiTAXi / PSYCHODRiVER Godot Fork",
+   "auch": [
+    "Little Car Borrow"
+   ],
+   "url": "https://cristim.github.io/little-car-borrow/",
+   "quelle": "Fundus · wörtlich in einer Fassung",
+   "einbetten": true,
+   "status": 200
+  },
+  {
+   "name": "traumaatlas",
+   "auch": [
+    "TRAUMAATLAS"
+   ],
+   "url": "https://ralfarminkirchner-netizen.github.io/traumaatlas/",
+   "quelle": "GitHub Pages · ralfarminkirchner-netizen/traumaatlas",
+   "einbetten": true,
+   "status": 200
+  },
+  {
+   "name": "weltretten-in-klein",
+   "auch": [
+    "Weltretten in klein"
+   ],
+   "url": "https://ralfarminkirchner-netizen.github.io/weltretten-in-klein/",
+   "quelle": "GitHub Pages · ralfarminkirchner-netizen/weltretten-in-klein",
+   "einbetten": true,
+   "status": 200
+  },
+  {
+   "name": "Wildwerkstatt 2026",
+   "auch": [],
+   "url": "https://wildwerkstatt-2026.x99t4dyxr9.chatgpt.site",
+   "quelle": "ChatGPT Sites · ChatGPT Sites, list_sites, verified 2026-10-12",
+   "einbetten": true,
+   "status": 401
+  },
+  {
+   "name": "ZEiTBLiND",
+   "auch": [
+    "ZEiTBLiND — Zeit als Forschungsraum"
+   ],
+   "url": "https://zeitblind.x99t4dyxr9.chatgpt.site",
+   "quelle": "ChatGPT Sites · ChatGPT Sites, list_sites, verified 2026-10-12",
+   "einbetten": true,
+   "status": 200
+  }
+ ]
+}
