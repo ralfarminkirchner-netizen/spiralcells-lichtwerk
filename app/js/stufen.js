@@ -248,7 +248,8 @@ function stammKrone(orte, baum){
   const kreisVon = (g, k) => (g.formen.find(f => f.typ === 'kreis' && f.k === k) || {r: g.h.R * 0.2}).r;
   const RD = 100, HD = RD * 1.02, D = [0, -HD], SPANNE = 1.42;
   // Startgröße nach Menge, flach gestaucht; dann wachsen alle gemeinsam, bis sie anstoßen
-  const ziel = orte.map(k => Math.pow(Math.max(k.wert, 1), 0.3)), zm = Math.max(...ziel);
+  const ziel = orte.map(k => Math.pow(Math.max(k.wert, 1), 0.5))   // Fläche der Krone wie ihre Menge (Ralf, 09.11.: „stärker“)
+  , zm = Math.max(...ziel);
   G.forEach((g, i) => dreh(g, 0, 0, 0, RD * 0.07 * ziel[i] / zm / g.h.R));
   const seite = orte.map((_, i) => i === n - 1 ? 0 : (i % 2 ? 1 : -1));
   // Lage auf der Kuppel: unten am Stamm heißt außen in der Krone; die Sektoren teilen die Spanne nach Menge
@@ -266,7 +267,7 @@ function stammKrone(orte, baum){
   // Am Ende des Strahls sitzt die Krone, ihr äußerer Rand an der Kuppelhaut; reicht der Strahl nicht hin, steht sie dicht am Stamm.
   const lage = i => {
     const h = hoehe[i], A = [mitte(h), -h], th = winkel[i], ende = th * 0.82, u = [Math.sin(th), -Math.cos(th)];
-    const rho = RD - reich(G[i]), dx = A[0] - D[0], dy = A[1] - D[1];
+    const rho = RD * (0.26 + 0.74 * ziel[i] / zm) - reich(G[i]), dx = A[0] - D[0], dy = A[1] - D[1];   // kleine Kronen bleiben näher am Stamm, statt an langen Stielen hinauszuragen
     const bq = dx * u[0] + dy * u[1], cq = dx * dx + dy * dy - rho * rho, disk = bq * bq - cq;
     const d = Math.max(disk > 0 ? -bq + Math.sqrt(disk) : 0, KURZ * RD);
     const fx = A[0] + u[0] * d, fy = A[1] + u[1] * d;
@@ -275,14 +276,15 @@ function stammKrone(orte, baum){
     return {T: {c: Math.cos(ende), s: Math.sin(ende), tx: fx, ty: fy}, ast, end: ende};
   };
   const stammKreise = () => umkreis(Array.from({length: 24}, (_, q) => { const h = H * 0.92 * q / 23; return {cx: mitte(h), cy: -h, R: breiteBei(h) * 0.6 + 1e-6}; }));
-  // eine Krone darf hinter fremden Armen liegen wie im echten Laubdach; anstoßen kann sie nur an Kronen und am Stamm
   // wachsen alle zugleich mit einem Faktor (Ralf, 09.11.: die Größe gehört an die Menge, nicht an den freien Platz):
   // wer mehr trägt, ist immer größer. Stoßen zwei Kronen an, rücken sie und alles hinter ihnen zur Seite, solange die
   // Kuppel reicht; erst wenn nichts mehr ausweichen kann, hören alle zugleich auf.
   const WEIT = 1.66;
   const anstoss = L => { const luft = RD * 0.004;
     for(let i = 0; i < n; i++){ if(stossen(stammKreise(), ID, G[i].h, L[i].T, luft)) return [i, -1];
-      for(let j = i + 1; j < n; j++) if(stossen(G[i].h, L[i].T, G[j].h, L[j].T, luft)) return [i, j]; }
+      for(let j = i + 1; j < n; j++) if(stossen(G[i].h, L[i].T, G[j].h, L[j].T, luft)) return [i, j];
+      for(let j = 0; j < n; j++){ if(j === i) continue; const st = formKreise(L[j].ast).slice(2);   // kein fremder Arm quer über eine Krone
+        if(st.length && stossen(umkreis(st), ID, G[i].h, L[i].T, luft)) return [i, j]; } }
     return null; };
   const spreize = (i, j) => { const lo = phi[i] <= phi[j] ? i : j, hi = lo === i ? j : i, pl = phi[lo], ph = phi[hi], d = 0.008;
     for(let k = 0; k < n; k++){ if(phi[k] <= pl) phi[k] -= d; else if(phi[k] >= ph) phi[k] += d; }
@@ -481,8 +483,11 @@ function lesbar(){
     // findet ein Schild keinen freien Platz, bleibt es weg, statt ein anderes zu verdecken; beim Hineinzoomen erscheint es
     // was auf dieser Stufe steht, bekommt immer seinen Namen: findet sich kein ganz freier Platz, darf das Schild über Ästen und kleinen Kreisen liegen, nie über einem anderen Schild
     const schildFrei = ([x, y]) => ![...belegt.slice(kreise), ...hart].some(q => x < q[2] && x + bw > q[0] && y < q[3] && y + bh > q[1]);
+    // ein Ortsname steht immer da: ist keine Lage ganz frei, nimmt er die, die andere Schilder am wenigsten überdeckt
+    const deckt = ([x, y]) => [...belegt.slice(kreise), ...hart].reduce((a, q) => a + Math.max(0, Math.min(x + bw, q[2]) - Math.max(x, q[0])) * Math.max(0, Math.min(y + bh, q[3]) - Math.max(y, q[1])), 0);
+    const ortLage = ls => ls.find(schildFrei) || ls.reduce((b, p) => deckt(p) < deckt(b) ? p : b);
     // ein Ort trägt seinen Namen immer mitten im eigenen Kreis, nie daneben
-    const l = k.art === 'ort' ? [[sx - bw / 2, sy - bh / 2], [sx - bw / 2, sy + sr + 2], [sx - bw / 2, sy - sr - bh - 2]].find(schildFrei) || [sx - bw / 2, sy - bh / 2] : lagen.find(p => imBild(p) && frei(p)) || (k.klein === 2 ? lagen.slice(0, 8).find(p => imBild(p) && schildFrei(p)) : null); if(!l) continue;   // Ersatzplatz nur direkt am eigenen Kreis
+    const l = k.art === 'ort' ? ortLage([[sx - bw / 2, sy - bh / 2], [sx - bw / 2, sy + sr + 2], [sx - bw / 2, sy - sr - bh - 2], [sx + sr + 4, sy - bh / 2], [sx - sr - 4 - bw, sy - bh / 2], [sx + sr * .7 + 4, sy - sr * .7 - bh - 2], [sx - sr * .7 - 4 - bw, sy - sr * .7 - bh - 2], [sx + sr * .7 + 4, sy + sr * .7 + 2], [sx - sr * .7 - 4 - bw, sy + sr * .7 + 2]]) : lagen.find(p => imBild(p) && frei(p)) || (k.klein === 2 ? lagen.slice(0, 8).find(p => imBild(p) && schildFrei(p)) : null); if(!l) continue;   // Ersatzplatz nur direkt am eigenen Kreis
     belegt.push([l[0], l[1], l[0] + bw, l[1] + bh]);
     html.push(`<div class="nm${k.art === 'ort' ? ' ortname' : ''}" data-nr="${k.nr}" style="left:${l[0]}px;top:${l[1]}px;width:${bw}px"><b>${esc(k.name)}</b>${knapp ? '' : `<span>${esc(unterzeile(k))}</span>`}</div>`);
   }
