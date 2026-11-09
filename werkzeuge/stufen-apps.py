@@ -47,7 +47,7 @@ def railway():
     aus = []
     for ws in gq("query { me { workspaces { id } } }")["data"]["me"]["workspaces"]:
         d = gq("""query($w:String){ projects(first:100, workspaceId:$w) { edges { node { name services { edges { node { name serviceInstances { edges { node {
-              source { repo } domains { serviceDomains { domain } customDomains { domain } } latestDeployment { status } } } } } } } } } } }""", {"w": ws["id"]})
+              rootDirectory source { repo } domains { serviceDomains { domain } customDomains { domain } } latestDeployment { status } } } } } } } } } } }""", {"w": ws["id"]})
         for p in (d.get("data") or {}).get("projects", {}).get("edges", []):
             p = p["node"]
             for s in p["services"]["edges"]:
@@ -56,7 +56,7 @@ def railway():
                     i = i["node"]
                     doms = [x["domain"] for x in i["domains"]["customDomains"]] + [x["domain"] for x in i["domains"]["serviceDomains"]]
                     for dm in doms:
-                        aus.append({"projekt": p["name"], "dienst": s["name"], "repo": ((i.get("source") or {}).get("repo") or "").lower(),
+                        aus.append({"projekt": p["name"], "dienst": s["name"], "repo": ((i.get("source") or {}).get("repo") or "").lower(), "wurzel": (i.get("rootDirectory") or "").strip("/"),
                                     "url": f"https://{dm}/", "erfolg": (i.get("latestDeployment") or {}).get("status") == "SUCCESS"})
     return aus
 
@@ -69,7 +69,7 @@ def pages():
 
 def repos_der_werke(g):
     zweig = {t["id"]: t["work_id"] for t in g.get("worktrees", [])}
-    je, remote = {}, {}
+    je, remote, ordner = {}, {}, {}
     for v in g.get("variants", []):
         t = (v.get("content") or "").strip()
         if not t.startswith("{"):
@@ -89,8 +89,11 @@ def repos_der_werke(g):
                 m = re.search(r"github\.com[/:]([^/]+)/([^/]+?)(?:\.git)?$", u)
                 remote[d] = f"{m.group(1)}/{m.group(2)}".lower() if m else None
             if remote[d]:
-                je.setdefault(zweig.get(v.get("worktree_id")), set()).add(remote[d])
-    return je
+                w = zweig.get(v.get("worktree_id"))
+                je.setdefault(w, set()).add(remote[d])
+                rel = os.path.relpath(os.path.dirname(str(s.get("locator"))), d)
+                ordner.setdefault((w, remote[d]), set()).add("" if rel == "." else rel)
+    return je, ordner
 
 
 def pruefe(url):
@@ -114,9 +117,9 @@ def main():
     g = lade_graph(sys.argv[1])
     alt = json.load(open(ZIEL, encoding="utf-8")) if ZIEL.exists() else {"apps": []}
     bekannt = [a for a in alt.get("apps", []) if a.get("quelle", "").split(" · ")[0] != "Railway-Konto"] if "werke" not in alt else alt.get("bekannt", [])
-    rw, pg, rep = railway(), pages(), repos_der_werke(g)
+    rw, pg, (rep, ordner) = railway(), pages(), repos_der_werke(g)
     # Kandidaten: (url, quelle, namen, repo)
-    kand = [{"url": r["url"], "quelle": f"Railway-Konto · {r['projekt']} · {r['dienst']}", "namen": {norm(r["dienst"]), norm(r["projekt"])}, "repo": r["repo"], "gut": r["erfolg"]} for r in rw]
+    kand = [{"url": r["url"], "quelle": f"Railway-Konto · {r['projekt']} · {r['dienst']}", "namen": {norm(r["dienst"]), norm(r["projekt"])}, "repo": r["repo"], "wurzel": r["wurzel"], "gut": r["erfolg"]} for r in rw]
     kand += [{"url": u, "quelle": f"GitHub Pages · {rp}", "namen": {norm(rp.split('/')[1])}, "repo": rp, "gut": True} for rp, u in pg.items()]
     kand += [{"url": a["url"], "quelle": a.get("quelle", ""), "namen": {norm(a["name"]), *map(norm, a.get("auch", []))}, "repo": "", "gut": True} for a in bekannt]
     # ein Repo, hinter dem Apps verschiedenen Namens stehen (ein Sammelrepo), belegt keine bestimmte App
@@ -126,14 +129,17 @@ def main():
     for wid, rs in rep.items():
         for r in rs:
             je_repo.setdefault(r, set()).add(stamm(wid))
-    rep = {wid: {r for r in rs if len(je_repo[r]) == 1} for wid, rs in rep.items()}
+    # … außer der Dienst baut aus einem Unterordner, und die Fassungen der App lesen genau dort (Railway „rootDirectory“)
+    im_ordner = lambda wid, k: bool(k.get("wurzel")) and any(o == k["wurzel"] or o.startswith(k["wurzel"] + "/") for o in ordner.get((wid, k["repo"]), ()))
+    eindeutig = {wid: {r for r in rs if len(je_repo[r]) == 1} for wid, rs in rep.items()}
     werke = []
     for w in g.get("works", []):
         # nur Apps und ihre Dächer; ein Text über eine App ist nicht die App
         if str(w.get("work_type") or "").lower() not in ("app", "app-variante", "app-development", "oberdach", "bereich", "tragwerk", "sammlung"):
             continue
         n, wr = norm(w.get("title")), rep.get(w["id"], set())
-        treffer = [(k, "Code") for k in kand if k["repo"] and k["repo"] in wr] + [(k, "Name") for k in kand if n and n in k["namen"]]
+        treffer = [(k, "Code") for k in kand if k["repo"] and k["repo"] in wr and (im_ordner(w["id"], k) or (not k.get("wurzel") and k["repo"] in eindeutig.get(w["id"], set())))]
+        treffer += [(k, "Name") for k in kand if n and n in k["namen"]]
         if not treffer:
             continue
         # vorne: Beleg über den Code, dann ein erfolgreicher Stand, dann der Dienst, der wie sein Projekt heißt, dann die kürzeste Adresse

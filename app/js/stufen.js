@@ -453,7 +453,7 @@ function bebildere(k, g){
 /* ---------- Blick ---------- */
 let wurzelKnoten = null, W = innerWidth, H = innerHeight, blick = {x: 0, y: 0, s: 1, mx: W / 2, my: H / 2}, ziel = null, fokus = null, gewaehlt = null;
 const SCHMAL = () => W < 600;
-const oben = () => 56, unten = () => (SCHMAL() ? 130 : 110);
+const oben = () => 56, unten = () => (SCHMAL() ? 160 : 110);
 /* Der ganze Baum füllt den Schirm und steht unten auf dem Boden (Ralf: „verwurzelt auf dem Boden … nicht in der Luft
    schweben, er braucht ja nicht kleiner sein als die Vollbildansicht“). Weiter hinaus geht es nicht, und schieben
    lässt sich der Blick nur so weit, dass nie leerer Himmel neben einem kleinen Baum steht. */
@@ -480,7 +480,7 @@ function passend(k){
   const kids = (k.kinder || []).filter(c => c.box && isFinite(c.box[0]));
   const [x0, y0, x1, y1] = kids.length ? kids.reduce((b, c) => [Math.min(b[0], c.box[0]), Math.min(b[1], c.box[1]), Math.max(b[2], c.box[2]), Math.max(b[3], c.box[3])],
     [k.x - k.r * 0.6, k.y - k.r * 0.4, k.x + k.r * 0.6, k.y - k.r * 0.4]) : k.box, bw = W - 24, bh = H - oben() - unten();
-  const s = Math.min(bw / (x1 - x0), bh / (y1 - y0)) * 0.96;
+  const s = Math.min(bw / (x1 - x0) * (SCHMAL() ? 1.4 : 1), bh / (y1 - y0)) * 0.96;
   return halte({x: (x0 + x1) / 2, y: (y0 + y1) / 2, s, mx: W / 2, my: oben() + bh / 2});
 }
 let geplant = false;
@@ -736,6 +736,7 @@ function zeigeMinikarte(){
   const ort = (() => { for(let q = fokus; q; q = q.eltern) if(q.art === 'ort' || q.art === 'bereich') return q; })();
   for(const [k, c] of miniOrte) c.classList.toggle('hier', k === ort);
   mini.classList.toggle('ganz', !fokus || fokus.art === 'wurzel');
+  document.body.classList.toggle('mit-mini', !!fokus && fokus.art !== 'wurzel');
 }
 
 /* ---------- Bedienung: tippen, ziehen, Rad, zwei Finger ---------- */
