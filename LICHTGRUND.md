@@ -175,3 +175,12 @@ Ralf: vom Gesamtnetz in eine Zelle, dann zwischen flacher Spirale, räumlicher S
 - Seite Welten: liest dieselbe Adresse, zeigt Fäden und Spirale des Werks und verlinkt zurück („Zelle und Text“).
 - Prüfung `tests/lebensspirale.test.mjs` (7): Zeitordnung und Saum, jede gespeicherte Verbindung genau einmal, nur Berechnetes gestrichelt, Wechsel durch alle Welten in zufälliger Folge mit gleicher Auswahl und gleichen Kanten.
 - Offen: 523 Werke aus dem Fundus haben noch kein Dach. Das ist Ralfs Wahl.
+
+## Schritt 25: Der Baum ist eine Ansicht unter mehreren (Ralf, 09.11.)
+Ralf: „Der Baum sollte nur eine Ansicht sein. Die anderen soll es nach wie vor geben … Umschaltbar ohne etwas zu verändern am Inhalt. Nur die Darstellung.“
+- `app/js/ansichten.js`: eine Leiste für alle Seiten – Baum, Kosmos, Garten, Galaxie, Dorf, Campus, Büro, Zelle und Text. Mitgenommen wird nur das gewählte Werk (`#werk=<lesbarer Name>`, wie Schritt 24). Seiten, die nicht ausgeliefert werden, bleiben weg.
+- Baum (`stufen.html`): Leiste oben rechts, am Handy oben über dem Pfad. `stufen.html#werk=…` öffnet den Baum an diesem Werk. Die Namen entstehen wie überall mit `link.namen` aus demselben Bestand.
+- Welten: „Baum“ steht vorn in der Weltenleiste (`app/js/welten-baum.js`, ohne das Bündel neu zu bauen). Zelle und Text: „Baum“ im Ansichten-Wähler.
+- Baum: grüner Boden, Wurzeln dunkelgrün. Was kein eigenes Bild hat, bekommt einen Umschlag: Farbverlauf aus dem Namen, Spirale, bei Kreisen ein Zellkranz. Gestaltet, nicht fotografiert; kein erfundener Inhalt. Namen bleiben im Blatt.
+- Geprüft bei 1440 und 390 in kopflosem Chrome: Baum am Werk → Galaxie mit demselben Werk → Baum zurück am selben Werk.
+- Offen: Im Netz (Railway) liegt nur der Baum; dort zeigt die Leiste deshalb nur ihn.

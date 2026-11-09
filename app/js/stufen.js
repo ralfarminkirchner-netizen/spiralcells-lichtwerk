@@ -7,6 +7,10 @@
    Man zoomt stufenlos hinein; Namen stehen in den Kreisen und wachsen mit, sichtbar erst, wenn sie lesbar sind. */
 
 import {spiralbaum, zahlWort, zeichenWort, zeitWort, blattArt} from './stufen-daten.js';
+import {bestand} from './daten.js';
+import {namen as lesbareNamen} from './link.js';
+import {werkAus} from './auswahl.js';
+import {leiste} from './ansichten.js';
 
 const NS = 'http://www.w3.org/2000/svg';
 const $ = s => document.querySelector(s);
@@ -381,6 +385,7 @@ function zeichne(){
       const g = el('g', {class: 'blatt ' + (gs ? 'gespraech' : k.datiert ? 'belegt' : 'offen'), 'data-nr': k.nr}, knotenG);
       const pf = el('path', {d: blattPfad(k), 'stroke-width': k.r * 0.06}, g);
       if(gs) pf.style.fill = gruen(k);   // jung hell, alt dunkel: die Zeit sieht man am Grün
+      if(!k.bild && !gs) umschlag(k, g, pf, k.x + Math.cos(k.dir) * k.r * 0.25, k.y + Math.sin(k.dir) * k.r * 0.25, k.r * 0.55, false);
       if(k.bild){   // die Fassung zeigt ihr eigenes Bild in der Blattform
         const c = el('clipPath', {id: 'rund' + k.nr}, defs); el('path', {d: blattPfad(k)}, c);
         const mx = k.x + Math.cos(k.dir) * k.r * 0.25, my = k.y + Math.sin(k.dir) * k.r * 0.25, h = k.r * 1.3;
@@ -389,9 +394,11 @@ function zeichne(){
         k.bildEl.addEventListener('error', () => { k.bildEl.remove(); sch.remove(); k.bildEl = null; });
         g.classList.add('mitbild');
       }
-      const t = el('text', {x: k.x + Math.cos(k.dir) * k.r * 0.25, y: k.y + Math.sin(k.dir) * k.r * 0.25, 'font-size': k.r * 0.22, class: 'name'}, g);
+      const zb = zeilen(k.name, 14, 3), lang = Math.max(...zb.map(z => [...z].length), 1);   // der Name bleibt im Blatt
+      const t = el('text', {x: k.x + Math.cos(k.dir) * k.r * 0.25, y: k.y + Math.sin(k.dir) * k.r * 0.25, 'font-size': Math.min(k.r * 0.22, k.r * 1.45 / (0.6 * lang)), class: 'name'}, g);
+      k.fs = Math.min(0.22, 1.45 / (0.6 * lang));
       if(gs) k.datumEl = el('tspan', {x: t.getAttribute('x'), dy: '-1.6em', class: 'datum'}, t), k.datumEl.textContent = zahlWort(k);
-      zeilen(k.name, 14, 3).forEach((z, i, l) => el('tspan', {x: t.getAttribute('x'), dy: i || gs ? '1.15em' : `${-(l.length - 1) * 0.575}em`}, t).textContent = z);
+      zb.forEach((z, i, l) => el('tspan', {x: t.getAttribute('x'), dy: i || gs ? '1.15em' : `${-(l.length - 1) * 0.575}em`}, t).textContent = z);
       k.text = t; k.form = g; continue;
     }
     const g = el('g', {class: `kn ${k.art}${k.auch && k.auch.length > 1 ? ' verschraenkt' : ''}${k.bild ? ' mitbild' : ''}`, 'data-nr': k.nr}, knotenG);
@@ -414,7 +421,7 @@ function zeichne(){
 
 /* Große Kreise ohne eigenes Bild (Ralf, 09.11.: „warum sind ausgerechnet die großen Kreise ohne jegliche Bilder“):
    sie zeigen eine Collage aus den echten Bildern, die unter ihnen wachsen, je Ast eines. Wächst darunter kein Bild,
-   bekommt der Kreis ein ruhiges Sonnenblumenmuster in einer Farbe aus seinem Namen – erfunden ist dabei kein Inhalt. */
+   bekommt der Kreis einen Umschlag (unten) – erfunden ist dabei kein Inhalt. */
 function bilderUnter(k, n){
   const l = [], lauf = q => { if(l.length >= n) return; if(q.bild && q !== k) l.push(q.bild);
     else for(const b of q.bilder || []){ if(l.length >= n) break; l.push(b.pfad); }
@@ -439,21 +446,36 @@ function bebildere(k, g){
       e.addEventListener('error', () => e.remove()); return {el: e, pfad: bs[i], w: 0}; });
     el('circle', {cx: k.x, cy: k.y, r, class: 'schleier collage-schleier'}, g);
     g.classList.add('mitbild', 'collage');
-  } else {
-    const hu = farbe(k.name), m = el('g', {class: 'muster'}, g);
-    el('circle', {cx: k.x, cy: k.y, r, style: `fill:hsl(${hu} 38% 88%);stroke:none`}, m);
-    const GW = Math.PI * (3 - Math.sqrt(5)), n = 34, pk = [];
-    for(let i = 1; i <= n; i++){ const a = i * GW, rr = r * 0.9 * Math.sqrt(i / n), pr = r * (0.035 + 0.05 * i / n);
-      pk.push(`M${(k.x + Math.cos(a) * rr - pr).toFixed(4)} ${(k.y + Math.sin(a) * rr).toFixed(4)}a${pr.toFixed(4)} ${pr.toFixed(4)} 0 1 0 ${(2 * pr).toFixed(4)} 0a${pr.toFixed(4)} ${pr.toFixed(4)} 0 1 0 ${(-2 * pr).toFixed(4)} 0Z`); }
-    el('path', {d: pk.join(''), style: `fill:hsl(${hu} 34% 66%);fill-opacity:.5`}, m);
-    g.classList.add('gemustert');
-  }
+  } else umschlag(k, g, g.querySelector('circle'), k.x, k.y, r, true);
+}
+/* Ein Umschlag für alles ohne eigenes Bild (Ralf, 09.11.: „warum bekommen so viele Dinge überhaupt kein Cover? Es sieht
+   alles so halbfertig aus“): ein Farbverlauf aus dem Namen, darin die Spirale und ein Kranz aus Zellen. Er ist erkennbar
+   gestaltet, nicht fotografiert, und behauptet keinen Inhalt. Verläufe teilen sich je Farbton, damit es leicht bleibt. */
+const verlaeufe = new Set();
+function verlauf(hu){
+  const id = 'umschlag' + hu; if(verlaeufe.has(id)) return id; verlaeufe.add(id);
+  const v = el('linearGradient', {id, x1: 0, y1: 0, x2: 1, y2: 1}, defs);
+  el('stop', {offset: 0, 'stop-color': `hsl(${hu} 70% 80%)`}, v); el('stop', {offset: 0.55, 'stop-color': `hsl(${(hu + 25) % 360} 58% 62%)`}, v); el('stop', {offset: 1, 'stop-color': `hsl(${(hu + 50) % 360} 52% 42%)`}, v);
+  return id;
+}
+function umschlag(k, g, form, cx, cy, r, kranz){
+  const hu = Math.round(farbe(k.name) / 12) * 12 % 360;
+  form.style.fill = `url(#${verlauf(hu)})`; form.style.stroke = '#fffaf0';
+  const m = el('g', {class: 'muster'}, g), dreh = (farbe(k.name + '·') % 360) * Math.PI / 180, pk = [];
+  // logarithmische Spirale vom Kern nach außen
+  for(let i = 0; i <= 90; i++){ const t = i / 90, a = dreh + t * Math.PI * 5, rr = r * 0.86 * Math.pow(t, 1.6); pk.push(`${i ? 'L' : 'M'}${(cx + Math.cos(a) * rr).toFixed(4)} ${(cy + Math.sin(a) * rr).toFixed(4)}`); }
+  el('path', {d: pk.join(''), style: `fill:none;stroke:#fff;stroke-opacity:.55;stroke-width:${(r * 0.045).toFixed(4)};stroke-linecap:round`}, m);
+  if(kranz){ const GW = Math.PI * (3 - Math.sqrt(5)), n = 26, z = [];
+    for(let i = 4; i <= n; i++){ const a = dreh + i * GW, rr = r * 0.9 * Math.sqrt(i / n), pr = r * (0.02 + 0.045 * i / n);
+      z.push(`M${(cx + Math.cos(a) * rr - pr).toFixed(4)} ${(cy + Math.sin(a) * rr).toFixed(4)}a${pr.toFixed(4)} ${pr.toFixed(4)} 0 1 0 ${(2 * pr).toFixed(4)} 0a${pr.toFixed(4)} ${pr.toFixed(4)} 0 1 0 ${(-2 * pr).toFixed(4)} 0Z`); }
+    el('path', {d: z.join(''), style: 'fill:#fff;fill-opacity:.32'}, m); }
+  g.classList.add('umschlag');
 }
 
 /* ---------- Blick ---------- */
 let wurzelKnoten = null, W = innerWidth, H = innerHeight, blick = {x: 0, y: 0, s: 1, mx: W / 2, my: H / 2}, ziel = null, fokus = null, gewaehlt = null;
 const SCHMAL = () => W < 600;
-const oben = () => 56, unten = () => (SCHMAL() ? 160 : 110);
+const oben = () => (SCHMAL() ? 104 : 56), unten = () => (SCHMAL() ? 160 : 110);
 /* Der ganze Baum füllt den Schirm und steht unten auf dem Boden (Ralf: „verwurzelt auf dem Boden … nicht in der Luft
    schweben, er braucht ja nicht kleiner sein als die Vollbildansicht“). Weiter hinaus geht es nicht, und schieben
    lässt sich der Blick nur so weit, dass nie leerer Himmel neben einem kleinen Baum steht. */
@@ -495,8 +517,8 @@ function lesbar(){
   for(const k of alle){
     if(!k.text) continue;
     const da = k.x + k.r > x0 && k.x - k.r < x1 && k.y + k.r > y0 && k.y - k.r < y1;
-    const px = k.r * s * (blattArt(k) ? 0.22 : k.fs);
-    const gabel = ['ort', 'bereich', 'varianten', 'gespraeche', 'zeit'].includes(k.art), an = da && px >= (k.art === 'ort' ? 16 : gabel ? 8.5 : k.bild ? 9 : 10.5) && px <= (gabel ? 160 : 48);   // Orte und Bereiche tragen ihren Namen auch groß
+    const px = k.r * s * (blattArt(k) ? (k.fs || 0.22) : k.fs);
+    const gabel = ['ort', 'bereich', 'varianten', 'gespraeche', 'zeit'].includes(k.art), an = da && px >= (k.art === 'ort' ? 16 : gabel ? 8.5 : blattArt(k) ? 8 : k.bild ? 9 : 10.5) && px <= (gabel ? 160 : 48);   // Orte und Bereiche tragen ihren Namen auch groß
     if(k.textAn !== an){ k.text.style.display = an ? '' : 'none'; if(k.menge) k.menge.style.display = an && px >= 14 ? '' : 'none'; k.textAn = an; }
     else if(an && k.menge) k.menge.style.display = px >= 14 ? '' : 'none';
     // ohne Schild bleibt das eigene Material, das den Namen seiner App trägt: der steht schon darüber
@@ -764,6 +786,13 @@ namenEl.addEventListener('click', e => { const t = e.target.closest('[data-nr]')
 addEventListener('keydown', e => { if(e.key !== 'Escape') return; if(offenK) schliesse(); else if(fokus && fokus.eltern) geh(fokus.eltern, true, {baum: true}); });
 addEventListener('resize', () => { W = innerWidth; H = innerHeight; if(wurzelKnoten){ vollbild(); } if(fokus){ blick = passend(fokus); setze(); } });
 
+/* ---------- Dasselbe Werk in jeder Ansicht ---------- */
+let werkNamen = new Map();
+function werkName(k){ for(let q = k; q; q = q.eltern) if(q.ids && q.ids.length === 1 && werkNamen.has(q.ids[0])) return werkNamen.get(q.ids[0]); return null; }
+function werkKnoten(name){ const id = [...werkNamen].find(([, n]) => n === name)?.[0]; if(!id) return null;
+  const da = alle.filter(k => !blattArt(k) && k.ids && k.ids.includes(id));
+  return da.find(k => k.ids.length === 1 && k.art === 'werk') || da.find(k => k.ids.length === 1) || da[0] || null; }
+
 /* ---------- Laden ---------- */
 (async () => {
   try {
@@ -771,12 +800,14 @@ addEventListener('resize', () => { W = innerWidth; H = innerHeight; if(wurzelKno
       fetch('/lichtwerk/gespraeche').then(r => r.ok ? r.json() : []).catch(() => []), fetch('/stufen-apps.json').then(r => r.ok ? r.json() : {apps: []}).catch(() => ({apps: []}))]);
     fassungen = new Map((graph.variants || []).map(v => [v.id, v])); adressen = apps.bekannt || apps.apps || [];
     adresseJeWerk = new Map((apps.werke || []).map(w => [w.werk, w]));
+    { const B = bestand(graph), nm = lesbareNamen(B.monde); werkNamen = new Map(B.monde.map((m, i) => [m.id, nm[i]])); }
     const baum = spiralbaum(graph, bilder, gespraeche);
     pflanze(baum);
     for(const k of alle) if(!blattArt(k) && ['app', 'werk', 'ort', 'bereich'].includes(k.art)){ const a = adresseVon(k); if(a) k.adresse = a; }
     umrisse(); zeichne(); wurzelKnoten = baum; for(const k of alle) if(k.r && (k.art === 'fassung' || k.art === 'gespraech')) kleinstesBlatt = Math.min(kleinstesBlatt, k.r); vollbild();
     $('#lade').hidden = true; baueMinikarte();
-    const finde = () => { let k = baum; for(const t of location.hash.slice(1).split('/').filter(Boolean).map(decodeURIComponent)){ const n = (k.kinder || []).find(c => c.name === t); if(!n) break; k = n; } return k; };
+    leiste(document.querySelector('.ansichten'), 'baum', () => werkName(offenK || gewaehlt || fokus));
+    const finde = () => { const w = werkAus(location.hash); if(w) return werkKnoten(w) || baum; let k = baum; for(const t of location.hash.slice(1).split('/').filter(Boolean).map(decodeURIComponent)){ const n = (k.kinder || []).find(c => c.name === t); if(!n) break; k = n; } return k; };
     geh(finde(), false, {baum: true});
     addEventListener('hashchange', () => { if(!offenK) geh(finde(), true, {baum: true}); });
   } catch(err){ $('#lade').textContent = 'Der Fundus ist gerade nicht erreichbar.'; console.error(err); }

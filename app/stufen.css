@@ -170,3 +170,16 @@ html,body,.flaeche,#namen{overflow:hidden;max-width:100vw}
   #minikarte{top:auto;bottom:calc(max(16px,env(safe-area-inset-bottom)) + 10px);right:26px;width:84px;height:66px;box-shadow:none;background:rgba(232,240,245,.95)}
   body.mit-mini .karte{padding-right:110px}
 }
+
+/* ---------- 09.11. nachmittags: grüner Boden, Umschläge, Ansichten (Ralf) ---------- */
+.boden{fill:#6f9e4c}
+.wurzelwerk{fill:#3f6230;fill-opacity:.85}
+.kn.umschlag .name,.kn.umschlag .menge,.blatt.umschlag .name{fill:#fff;paint-order:stroke;stroke:rgba(25,30,20,.55);stroke-width:.16em;stroke-linejoin:round}
+.kn.umschlag>circle:first-child{stroke:#fffaf0}
+.kopf{display:flex;align-items:flex-start;justify-content:space-between;gap:8px 16px;flex-wrap:wrap}
+.ansichten{pointer-events:auto;display:flex;gap:2px;padding:4px;border-radius:12px;background:rgba(255,253,248,.82);box-shadow:0 2px 10px rgba(40,60,80,.12);max-width:100%;overflow-x:auto;scrollbar-width:none}
+.ansichten::-webkit-scrollbar{display:none}
+.ansichten a{flex-shrink:0;min-height:36px;display:flex;align-items:center;padding:0 11px;border-radius:8px;color:#2f4f6a;text-decoration:none;font-size:14px;white-space:nowrap}
+.ansichten a:hover,.ansichten a:focus-visible{background:rgba(47,79,106,.1)}
+.ansichten a[aria-current=page]{background:#2f4f6a;color:#fff}
+@media (max-width:600px){.kopf{flex-direction:column;flex-wrap:nowrap}.ansichten{order:-1;width:100%}.ansichten a{padding:0 9px;font-size:13px}}

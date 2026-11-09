@@ -651,6 +651,7 @@ export function installiere(a){
   $('#snd').addEventListener('click', () => { const on = klangToggle(); const b = $('#snd'); b.setAttribute('aria-pressed', on ? 'true' : 'false'); b.setAttribute('aria-label', on ? 'Klang ausschalten' : 'Klang einschalten'); activity(); });
   $('#seite').addEventListener('click', () => { seite(); activity(); });
   $('#spiralknopf').addEventListener('click', () => { spirale(); activity(); });
+  { const zb = $('#zubaum'); if(zb) zb.addEventListener('click', () => { zb.href = 'stufen.html' + mitWerk('', werkAus(location.hash)); }); }   // dasselbe Werk im Baum
   { const zw = $('#zuwelten'); if(zw) zw.addEventListener('click', () => { zw.href = 'welten.html' + mitWerk('', werkAus(location.hash)); }); }   // dasselbe Werk auf der Seite mit der neuen Grafik
   $('#ansichtknopf').addEventListener('click', () => { const w = $('#ansichten'); w.hidden = !w.hidden; $('#ansichtknopf').setAttribute('aria-expanded', w.hidden ? 'false' : 'true'); activity(); });
   document.querySelectorAll('#ansichten button').forEach(b => b.addEventListener('click', () => { const a = b.dataset.a; if(a === 'kosmos'){ if(U.imText) textfassung(false); if(U.ansicht !== 'kosmos') ansicht(U.ansicht); } else if(a === U.ansicht && !U.imText){ /* bleibt */ } else ansicht(a); $('#ansichten').hidden = true; activity(); }));
