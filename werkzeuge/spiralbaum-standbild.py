@@ -57,11 +57,12 @@ def main():
             fehlt.append(pfad)
     with ThreadPoolExecutor(6) as ex:
         list(ex.map(eins, [(p, w) for p in pfade for w in (240, 960)]))
-    # Railway nimmt höchstens etwa 250 MB auf einmal: die scharfen Bilder (960 Pixel) bleiben so groß, nur stärker gepresst
+    # Railway nimmt höchstens etwa 250 MB auf einmal, und bei 193 MB brach das Hochladen nach Zeit ab (Ralf, 09.11.):
+    # die scharfen Bilder werden auf 640 Pixel verkleinert und stärker gepresst, zusammen etwa 100 MB
     import subprocess
     scharf = [os.path.join(ZIEL, "daten", "bilder", f) for f in os.listdir(os.path.join(ZIEL, "daten", "bilder")) if f.endswith("-960.jpg")]
     with ThreadPoolExecutor(8) as ex:
-        list(ex.map(lambda f: subprocess.run(["/usr/bin/sips", "-s", "formatOptions", "58", f, "--out", f], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL), scharf))
+        list(ex.map(lambda f: subprocess.run(["/usr/bin/sips", "-Z", "640", "-s", "formatOptions", "45", f, "--out", f], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL), scharf))
     groesse = sum(os.path.getsize(os.path.join(r, f)) for r, _, fs in os.walk(ZIEL) for f in fs)
     print(f"{len(pfade)} Bilder, {len(gespraeche)} Gespräche, {len(set(fehlt))} Bilder fehlen, zusammen {groesse / 1e6:.0f} MB in {ZIEL}")
 
