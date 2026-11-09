@@ -89,8 +89,9 @@ def _app_herkuenfte() -> str:
     from urllib.parse import urlsplit
     try:
         with open(os.path.join(APP, "stufen-apps.json"), encoding="utf-8") as f:
-            apps = json.load(f).get("apps", [])
-    except (OSError, ValueError):
+            daten = json.load(f)
+        apps = daten.get("werke", []) + daten.get("bekannt", []) + daten.get("apps", [])
+    except (OSError, ValueError, AttributeError):
         return ""
     herk = set()
     for a in apps:

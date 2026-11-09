@@ -1,7 +1,831 @@
 {
- "stand": "2026-11-09T00:40:13+0100",
- "satz": "Belegte Adressen von Ralfs Apps, je mit Quelle; geprüft heißt: einmal angefragt, zu der Zeit, die dabeisteht. Momentaufnahme für den Spiralbaum, gelesen aus app/app-adressen.json der Lichtgrund-Arbeitskopie.",
- "apps": [
+ "stand": "2026-11-09T07:35:45+0100",
+ "satz": "Adressen der Apps im Spiralbaum, je mit Beleg (Code oder gleicher Name) und Quelle; einmal angefragt zur angegebenen Zeit.",
+ "werke": [
+  {
+   "werk": "01d39c03-56d7-43b5-b6ae-28990fb818bd",
+   "name": "MOONFiNGERS",
+   "url": "https://moonfingers-production.up.railway.app/",
+   "quelle": "Railway-Konto · spiralminds-private-modules · moonfingers",
+   "beleg": "Name",
+   "weitere": [
+    "https://moonfingers-production-9fcd.up.railway.app/"
+   ],
+   "status": 200,
+   "einbetten": true,
+   "ms": 384,
+   "am": "2026-11-09T07:35:43+0100"
+  },
+  {
+   "werk": "0651e6ad-f6a8-46c0-80ce-90d1dba55e00",
+   "name": "KLANGFELD",
+   "url": "https://klangfeld-production.up.railway.app/",
+   "quelle": "Railway-Konto · klangfeld · klangfeld",
+   "beleg": "Name",
+   "weitere": [],
+   "status": 200,
+   "einbetten": true,
+   "ms": 144,
+   "am": "2026-11-09T07:35:43+0100"
+  },
+  {
+   "werk": "0c8bef1c-d3fb-4424-b667-218677c47df0",
+   "name": "TAXiTAXi 3D",
+   "url": "https://taxitaxi-production.up.railway.app/",
+   "quelle": "Railway-Konto · spiralminds-private-modules · taxitaxi",
+   "beleg": "Code",
+   "weitere": [],
+   "status": 200,
+   "einbetten": true,
+   "ms": 193,
+   "am": "2026-11-09T07:35:43+0100"
+  },
+  {
+   "werk": "10f25733-ac02-4953-a1ef-e1fdf3813933",
+   "name": "Let the Music Play · Jugend",
+   "url": "https://let-the-music-play-production-7d0e.up.railway.app/",
+   "quelle": "Fundus · wörtlich in einer Fassung",
+   "beleg": "Name",
+   "weitere": [],
+   "status": 200,
+   "einbetten": true,
+   "ms": 127,
+   "am": "2026-11-09T07:35:43+0100"
+  },
+  {
+   "werk": "14e8b7eb-6c10-4302-aaf3-a9a20d94f77c",
+   "name": "PHÄNOMENATLAS · Das Originalnetz formen",
+   "url": "https://phaenomenautik-koharenz.x99t4dyxr9.chatgpt.site",
+   "quelle": "ChatGPT Sites · ChatGPT Sites, list_sites, verified 2026-10-12",
+   "beleg": "Name",
+   "weitere": [],
+   "status": 200,
+   "einbetten": true,
+   "ms": 116,
+   "am": "2026-11-09T07:35:43+0100"
+  },
+  {
+   "werk": "153a2097-3305-402c-98b0-28235b011092",
+   "name": "SPiRALMiNDS",
+   "url": "https://spiralminds-control-center.x99t4dyxr9.chatgpt.site",
+   "quelle": "ChatGPT Sites · ChatGPT Sites, list_sites, verified 2026-10-12",
+   "beleg": "Name",
+   "weitere": [],
+   "status": 200,
+   "einbetten": true,
+   "ms": 123,
+   "am": "2026-11-09T07:35:43+0100"
+  },
+  {
+   "werk": "18aa9b17-6826-4f76-b89e-a568d7347992",
+   "name": "KUGELTiSCH",
+   "url": "https://kugeltisch-production.up.railway.app/",
+   "quelle": "Railway-Konto · KUGELTiSCH · KUGELTiSCH",
+   "beleg": "Name",
+   "weitere": [],
+   "status": 401,
+   "einbetten": false,
+   "am": "2026-11-09T07:35:43+0100"
+  },
+  {
+   "werk": "1c932e97-7518-4927-b4bc-a37fbca68783",
+   "name": "Weltretten in klein",
+   "url": "https://ralfarminkirchner-netizen.github.io/weltretten-in-klein/",
+   "quelle": "GitHub Pages · ralfarminkirchner-netizen/weltretten-in-klein",
+   "beleg": "Name",
+   "weitere": [],
+   "status": 200,
+   "einbetten": true,
+   "ms": 90,
+   "am": "2026-11-09T07:35:43+0100"
+  },
+  {
+   "werk": "1fed04d3-e12a-4eb8-96cd-2c6167d1206d",
+   "name": "KlebensFroh Bastelwelt",
+   "url": "https://klebensfroh-bastelwelt-production.up.railway.app/",
+   "quelle": "Railway-Konto · KLEBENSFROH-BASTELWELT · KLEBENSFROH-BASTELWELT",
+   "beleg": "Name",
+   "weitere": [],
+   "status": 200,
+   "einbetten": true,
+   "ms": 137,
+   "am": "2026-11-09T07:35:43+0100"
+  },
+  {
+   "werk": "20a11d1f-9d1f-4278-80b2-3d5f8b24f8a8",
+   "name": "FASKA Eine App",
+   "url": "https://faska-eine-app-production.up.railway.app/",
+   "quelle": "Railway-Konto · faska-eine-app · faska-eine-app",
+   "beleg": "Name",
+   "weitere": [
+    "https://faska-begleitraum-production.up.railway.app/"
+   ],
+   "status": 200,
+   "einbetten": true,
+   "ms": 213,
+   "am": "2026-11-09T07:35:43+0100"
+  },
+  {
+   "werk": "23729723-6279-4fdb-a38a-89563dcb57bd",
+   "name": "RAKi · Textatlas",
+   "url": "https://raki-textatlas.x99t4dyxr9.chatgpt.site",
+   "quelle": "ChatGPT Sites · ChatGPT Sites, list_sites, verified 2026-10-12",
+   "beleg": "Name",
+   "weitere": [],
+   "status": 401,
+   "einbetten": false,
+   "am": "2026-11-09T07:35:43+0100"
+  },
+  {
+   "werk": "26992897-22ec-45e4-9166-dc3976eb85bc",
+   "name": "spiel maerchendorf",
+   "url": "https://spiel-maerchendorf-production.up.railway.app/",
+   "quelle": "Railway-Konto · spiralminds-private-modules · spiel-maerchendorf",
+   "beleg": "Code",
+   "weitere": [],
+   "status": 200,
+   "einbetten": true,
+   "ms": 202,
+   "am": "2026-11-09T07:35:43+0100"
+  },
+  {
+   "werk": "2a406e7a-b914-4975-bf91-89b0eded87d2",
+   "name": "KlebensFroh",
+   "url": "https://klebensfroh-production.up.railway.app/",
+   "quelle": "Railway-Konto · klebensfroh · klebensfroh",
+   "beleg": "Name",
+   "weitere": [],
+   "status": 200,
+   "einbetten": true,
+   "ms": 282,
+   "am": "2026-11-09T07:35:43+0100"
+  },
+  {
+   "werk": "2baafe17-1096-49ea-994b-9a76b62bce3c",
+   "name": "Taxi Rush Pro",
+   "url": "https://top-down-taxi-rush-production.up.railway.app/",
+   "quelle": "Railway-Konto · spiralminds-private-modules · top-down-taxi-rush",
+   "beleg": "Code",
+   "weitere": [],
+   "status": 200,
+   "einbetten": true,
+   "ms": 268,
+   "am": "2026-11-09T07:35:43+0100"
+  },
+  {
+   "werk": "2c04a249-bc5e-49f7-ade5-31617ae5df4a",
+   "name": "Variantenfeld",
+   "url": "https://variantenfeld-production.up.railway.app/",
+   "quelle": "Railway-Konto · faska-varianten · variantenfeld",
+   "beleg": "Name",
+   "weitere": [],
+   "status": 200,
+   "einbetten": false,
+   "ms": 133,
+   "am": "2026-11-09T07:35:43+0100"
+  },
+  {
+   "werk": "2e5261f7-0331-416f-8bcb-5f666e6bb204",
+   "name": "TAXiTAXi / PSYCHODRiVER Godot Fork",
+   "url": "https://cristim.github.io/little-car-borrow/",
+   "quelle": "Fundus · wörtlich in einer Fassung",
+   "beleg": "Name",
+   "weitere": [],
+   "status": 200,
+   "einbetten": true,
+   "ms": 87,
+   "am": "2026-11-09T07:35:43+0100"
+  },
+  {
+   "werk": "2fbbc19d-dd88-4773-87ce-32e90ae80d0e",
+   "name": "PARALLAX — ADHS Phänomenatlas",
+   "url": "https://parallax-adhs-phaenomenatlas.x99t4dyxr9.chatgpt.site",
+   "quelle": "ChatGPT Sites · ChatGPT Sites, list_sites, verified 2026-10-12",
+   "beleg": "Name",
+   "weitere": [],
+   "status": 200,
+   "einbetten": true,
+   "ms": 235,
+   "am": "2026-11-09T07:35:43+0100"
+  },
+  {
+   "werk": "3119bade-00fd-43fd-bcfe-b24eeeb59988",
+   "name": "MiNDLAXY",
+   "url": "https://mindlaxy-production.up.railway.app/",
+   "quelle": "Railway-Konto · mindlaxy · mindlaxy",
+   "beleg": "Name",
+   "weitere": [
+    "https://kosmos-production-0d6f.up.railway.app/",
+    "https://txtlaxy-production.up.railway.app/"
+   ],
+   "status": 200,
+   "einbetten": false,
+   "ms": 233,
+   "am": "2026-11-09T07:35:43+0100"
+  },
+  {
+   "werk": "33f3d248-b3c9-40aa-8d60-fc012481696e",
+   "name": "gedankenspirale",
+   "url": "https://gedankenspirale-production.up.railway.app/",
+   "quelle": "Railway-Konto · spiralminds-private-modules · gedankenspirale",
+   "beleg": "Name",
+   "weitere": [],
+   "status": 200,
+   "einbetten": true,
+   "ms": 226,
+   "am": "2026-11-09T07:35:43+0100"
+  },
+  {
+   "werk": "352e3920-b155-4990-8a15-00b8601792dc",
+   "name": "FASKA Varianten",
+   "url": "https://faska-varianten-production.up.railway.app/",
+   "quelle": "Railway-Konto · faska-varianten · faska-varianten",
+   "beleg": "Name",
+   "weitere": [
+    "https://variantenfeld-production.up.railway.app/",
+    "https://verbindungslandschaft-planb-production.up.railway.app/"
+   ],
+   "status": 200,
+   "einbetten": false,
+   "ms": 190,
+   "am": "2026-11-09T07:35:43+0100"
+  },
+  {
+   "werk": "403c8a39-650e-4812-9825-d243397db034",
+   "name": "faska flow",
+   "url": "https://ralfarminkirchner-netizen.github.io/faska-flow-pro/",
+   "quelle": "GitHub Pages · ralfarminkirchner-netizen/faska-flow-pro",
+   "beleg": "Code",
+   "weitere": [
+    "https://faska-flow-pro-production-1026.up.railway.app/"
+   ],
+   "status": 200,
+   "einbetten": true,
+   "ms": 189,
+   "am": "2026-11-09T07:35:43+0100"
+  },
+  {
+   "werk": "4128857d-772f-4f8d-8f7a-f72dba924719",
+   "name": "FASKA FLOW",
+   "url": "https://ralfarminkirchner-netizen.github.io/faska-flow-pro/",
+   "quelle": "GitHub Pages · ralfarminkirchner-netizen/faska-flow-pro",
+   "beleg": "Name",
+   "weitere": [],
+   "status": 200,
+   "einbetten": true,
+   "ms": 184,
+   "am": "2026-11-09T07:35:43+0100"
+  },
+  {
+   "werk": "43e051fb-d33c-4742-b231-7370a17b98f2",
+   "name": "KiNTEGRiTY",
+   "url": "https://kintegrity-production.up.railway.app/",
+   "quelle": "Railway-Konto · kintegrity-passage · kintegrity",
+   "beleg": "Name",
+   "weitere": [
+    "https://kintegrity-production-4bea.up.railway.app/"
+   ],
+   "status": 200,
+   "einbetten": true,
+   "ms": 302,
+   "am": "2026-11-09T07:35:43+0100"
+  },
+  {
+   "werk": "4933b079-1396-4f42-9b4f-19976b8ec35d",
+   "name": "FASKA",
+   "url": "https://faska-lernlandschaft-production.up.railway.app/",
+   "quelle": "Railway · geführt in der Steuerzentrale SPiRALMiNDS",
+   "beleg": "Name",
+   "weitere": [],
+   "status": 200,
+   "einbetten": true,
+   "ms": 303,
+   "am": "2026-11-09T07:35:43+0100"
+  },
+  {
+   "werk": "4a6a3cd0-87b4-4697-abf5-de1ee3e6c135",
+   "name": "ZEiTBLiND",
+   "url": "https://zeitblind.x99t4dyxr9.chatgpt.site",
+   "quelle": "ChatGPT Sites · ChatGPT Sites, list_sites, verified 2026-10-12",
+   "beleg": "Name",
+   "weitere": [],
+   "status": 200,
+   "einbetten": true,
+   "ms": 401,
+   "am": "2026-11-09T07:35:43+0100"
+  },
+  {
+   "werk": "52c98e5e-1239-4a60-bb5d-51a033814e70",
+   "name": "Mooncells",
+   "url": "https://mooncells-production.up.railway.app",
+   "quelle": "Fundus · wörtlich in einer Fassung",
+   "beleg": "Name",
+   "weitere": [
+    "https://mooncells-production.up.railway.app/",
+    "https://moonfingers-kintegrity-production.up.railway.app/"
+   ],
+   "status": 200,
+   "einbetten": true,
+   "ms": 171,
+   "am": "2026-11-09T07:35:43+0100"
+  },
+  {
+   "werk": "541e9e70-e137-4540-9b8d-c94c5b0168aa",
+   "name": "Briefgarten · Kunstwelten",
+   "url": "https://briefgarten-kunstwelten-production.up.railway.app/",
+   "quelle": "Railway-Konto · briefgarten-kunstwelten · briefgarten-kunstwelten",
+   "beleg": "Name",
+   "weitere": [
+    "https://kiri-and-stups-production.up.railway.app/"
+   ],
+   "status": 200,
+   "einbetten": true,
+   "ms": 288,
+   "am": "2026-11-09T07:35:43+0100"
+  },
+  {
+   "werk": "555877cd-80ba-4a8e-8c4c-1218296e1a06",
+   "name": "deutsch party brett",
+   "url": "https://deutsch-party-brett-production-c977.up.railway.app/",
+   "quelle": "Railway-Konto · deutsch-party-brett · deutsch-party-brett",
+   "beleg": "Name",
+   "weitere": [],
+   "status": 200,
+   "einbetten": true,
+   "ms": 211,
+   "am": "2026-11-09T07:35:43+0100"
+  },
+  {
+   "werk": "590e4ae2-ca4c-4a05-ab9a-c1d781178cf0",
+   "name": "MiNDLAXY — Atlas der Gegenwart",
+   "url": "https://mindlaxy-gegenwartsgarten.x99t4dyxr9.chatgpt.site",
+   "quelle": "ChatGPT Sites · ChatGPT Sites, list_sites, verified 2026-10-12",
+   "beleg": "Name",
+   "weitere": [],
+   "status": 200,
+   "einbetten": true,
+   "ms": 178,
+   "am": "2026-11-09T07:35:43+0100"
+  },
+  {
+   "werk": "623d4a33-130b-4425-bb28-0273c4506aa7",
+   "name": "Let the Music Play",
+   "url": "https://let-the-music-play-production.up.railway.app/",
+   "quelle": "Railway-Konto · let-the-music-play · let-the-music-play",
+   "beleg": "Name",
+   "weitere": [
+    "https://let-the-music-play-production-7d0e.up.railway.app/"
+   ],
+   "status": 200,
+   "einbetten": true,
+   "ms": 144,
+   "am": "2026-11-09T07:35:43+0100"
+  },
+  {
+   "werk": "804e82b4-687e-49e6-939f-9305adba731c",
+   "name": "montessori flow",
+   "url": "https://montessori-flow-2-production.up.railway.app/",
+   "quelle": "Railway-Konto · spiralminds-private-modules · montessori-flow-2",
+   "beleg": "Code",
+   "weitere": [],
+   "status": 200,
+   "einbetten": true,
+   "ms": 212,
+   "am": "2026-11-09T07:35:43+0100"
+  },
+  {
+   "werk": "837c5502-207d-42e3-871f-8b88909b1ecd",
+   "name": "Genealogical Spiral",
+   "url": "https://genealogical-spiral.x99t4dyxr9.chatgpt.site",
+   "quelle": "ChatGPT Sites · ChatGPT Sites, list_sites, verified 2026-10-12",
+   "beleg": "Name",
+   "weitere": [],
+   "status": 401,
+   "einbetten": false,
+   "am": "2026-11-09T07:35:43+0100"
+  },
+  {
+   "werk": "846e5728-a2e0-4cd7-8dc2-80866d7333d4",
+   "name": "RAiNBOW LiGHT 3D",
+   "url": "https://rainbow-light-3d-production.up.railway.app/",
+   "quelle": "Railway-Konto · spiralminds-private-modules · rainbow-light-3d",
+   "beleg": "Code",
+   "weitere": [
+    "https://ralfarminkirchner-netizen.github.io/rainbow-light-3d/"
+   ],
+   "status": 200,
+   "einbetten": true,
+   "ms": 231,
+   "am": "2026-11-09T07:35:43+0100"
+  },
+  {
+   "werk": "87ce6aa1-c44a-4364-a92f-ecc1f7fd97e3",
+   "name": "Stephs Kreativwelt",
+   "url": "https://ralfarminkirchner-netizen.github.io/stephs-kreativwelt/",
+   "quelle": "GitHub Pages · ralfarminkirchner-netizen/stephs-kreativwelt",
+   "beleg": "Name",
+   "weitere": [],
+   "status": 200,
+   "einbetten": true,
+   "ms": 97,
+   "am": "2026-11-09T07:35:43+0100"
+  },
+  {
+   "werk": "88448bc8-fc3f-4d15-bfc6-3cc07450869b",
+   "name": "faska invaria 2",
+   "url": "https://ralfarminkirchner-netizen.github.io/faska-invaria-2/",
+   "quelle": "GitHub Pages · ralfarminkirchner-netizen/faska-invaria-2",
+   "beleg": "Code",
+   "weitere": [
+    "https://faska-invaria-2-production.up.railway.app/"
+   ],
+   "status": 200,
+   "einbetten": true,
+   "ms": 89,
+   "am": "2026-11-09T07:35:43+0100"
+  },
+  {
+   "werk": "894ebba0-9b3c-42a0-a974-940a6aa522ae",
+   "name": "iNTEGRATIVE BEWUSSTSEiNSFOKUSSiERUNG",
+   "url": "https://integrative-bewusstseinsfokussierung.x99t4dyxr9.chatgpt.site",
+   "quelle": "ChatGPT Sites · ChatGPT Sites, list_sites, verified 2026-10-12",
+   "beleg": "Name",
+   "weitere": [
+    "https://ibf-web-production.up.railway.app/"
+   ],
+   "status": 200,
+   "einbetten": true,
+   "ms": 274,
+   "am": "2026-11-09T07:35:43+0100"
+  },
+  {
+   "werk": "89e4415b-5b54-4ae0-a5f8-52000dbd584b",
+   "name": "INKARNAT",
+   "url": "https://ralfarminkirchner-netizen.github.io/inkarnat/",
+   "quelle": "GitHub Pages · ralfarminkirchner-netizen/inkarnat",
+   "beleg": "Name",
+   "weitere": [],
+   "status": 200,
+   "einbetten": true,
+   "ms": 100,
+   "am": "2026-11-09T07:35:43+0100"
+  },
+  {
+   "werk": "8b736463-f238-4cff-b61f-77605c9df437",
+   "name": "FASKA MUSiC",
+   "url": "https://faska-klangwelten-production.up.railway.app",
+   "quelle": "Fundus · wörtlich in einer Fassung",
+   "beleg": "Name",
+   "weitere": [
+    "https://faska-music-klangpfad-production.up.railway.app/"
+   ],
+   "status": 200,
+   "einbetten": true,
+   "ms": 124,
+   "am": "2026-11-09T07:35:43+0100"
+  },
+  {
+   "werk": "8bbf5083-01aa-4fed-b769-87369955ec56",
+   "name": "Fugenland",
+   "url": "https://fugenland-production.up.railway.app/",
+   "quelle": "Railway-Konto · neurodivergenz-gesamtapp-chatgpt · fugenland",
+   "beleg": "Name",
+   "weitere": [],
+   "status": 200,
+   "einbetten": true,
+   "ms": 128,
+   "am": "2026-11-09T07:35:43+0100"
+  },
+  {
+   "werk": "94acdcff-73ca-4aa5-9b5c-1338b131848d",
+   "name": "WESENSTiSCH",
+   "url": "https://wesenstisch-production.up.railway.app/",
+   "quelle": "Railway-Konto · WESENSTiSCH · wesenstisch",
+   "beleg": "Name",
+   "weitere": [
+    "https://kintegrity-production-4bea.up.railway.app/"
+   ],
+   "status": 200,
+   "einbetten": true,
+   "ms": 1626,
+   "am": "2026-11-09T07:35:45+0100"
+  },
+  {
+   "werk": "98c1a9b0-80e5-4e9b-b439-bd398b6fc4ea",
+   "name": "Begegnungsstrom",
+   "url": "https://begegnungsstrom-production.up.railway.app/",
+   "quelle": "Railway-Konto · begegnungsstrom · begegnungsstrom",
+   "beleg": "Name",
+   "weitere": [],
+   "status": 200,
+   "einbetten": true,
+   "ms": 123,
+   "am": "2026-11-09T07:35:45+0100"
+  },
+  {
+   "werk": "9a3effe6-fd21-4a9d-8999-8fcb48328c2c",
+   "name": "Juggling down Babylon",
+   "url": "https://ralfarminkirchner-netizen.github.io/juggling-down-babylon/",
+   "quelle": "GitHub Pages · ralfarminkirchner-netizen/juggling-down-babylon",
+   "beleg": "Name",
+   "weitere": [],
+   "status": 200,
+   "einbetten": true,
+   "ms": 90,
+   "am": "2026-11-09T07:35:45+0100"
+  },
+  {
+   "werk": "9c84e854-0e21-411f-90ed-8d1ef48a009c",
+   "name": "TAXiTAXi",
+   "url": "https://taxitaxi-production.up.railway.app/",
+   "quelle": "Railway-Konto · spiralminds-private-modules · taxitaxi",
+   "beleg": "Name",
+   "weitere": [],
+   "status": 200,
+   "einbetten": true,
+   "ms": 194,
+   "am": "2026-11-09T07:35:45+0100"
+  },
+  {
+   "werk": "a6812711-1780-452b-bb31-a5cc6a0cda40",
+   "name": "Wildwerkstatt 2026",
+   "url": "https://wildwerkstatt-2026.x99t4dyxr9.chatgpt.site",
+   "quelle": "ChatGPT Sites · ChatGPT Sites, list_sites, verified 2026-10-12",
+   "beleg": "Name",
+   "weitere": [],
+   "status": 401,
+   "einbetten": false,
+   "am": "2026-11-09T07:35:45+0100"
+  },
+  {
+   "werk": "a7788ccb-9ddc-4689-88b9-1a5cb2e19b00",
+   "name": "TXTLAXY",
+   "url": "https://txtlaxy-production.up.railway.app/",
+   "quelle": "Railway-Konto · mindlaxy · txtlaxy",
+   "beleg": "Name",
+   "weitere": [],
+   "status": 200,
+   "einbetten": true,
+   "ms": 132,
+   "am": "2026-11-09T07:35:45+0100"
+  },
+  {
+   "werk": "a8610de2-3fba-4590-a761-b496feac274c",
+   "name": "KiNTEGRiTY Passage",
+   "url": "https://kintegrity-production.up.railway.app/",
+   "quelle": "Railway-Konto · kintegrity-passage · kintegrity",
+   "beleg": "Name",
+   "weitere": [],
+   "status": 200,
+   "einbetten": true,
+   "ms": 263,
+   "am": "2026-11-09T07:35:45+0100"
+  },
+  {
+   "werk": "af5c773a-505b-4115-86d0-0478e59dd8fb",
+   "name": "QuerLeser",
+   "url": "https://querleser-production.up.railway.app/",
+   "quelle": "Railway-Konto · querleser · querleser",
+   "beleg": "Name",
+   "weitere": [],
+   "status": 200,
+   "einbetten": false,
+   "ms": 132,
+   "am": "2026-11-09T07:35:45+0100"
+  },
+  {
+   "werk": "b41ef78d-03ac-4298-b3eb-eef2113e9e1b",
+   "name": "XPERTENTiSCH",
+   "url": "https://xpertentisch-production.up.railway.app/",
+   "quelle": "Railway-Konto · xpertentisch · xpertentisch",
+   "beleg": "Name",
+   "weitere": [],
+   "status": 200,
+   "einbetten": true,
+   "ms": 229,
+   "am": "2026-11-09T07:35:45+0100"
+  },
+  {
+   "werk": "b60ce6b8-5bb8-43fc-9fa2-ebb53828a187",
+   "name": "Einhorn 64",
+   "url": "https://einhorn-64-production.up.railway.app/",
+   "quelle": "Railway-Konto · spiralminds-private-modules · einhorn-64",
+   "beleg": "Code",
+   "weitere": [],
+   "status": 200,
+   "einbetten": true,
+   "ms": 232,
+   "am": "2026-11-09T07:35:45+0100"
+  },
+  {
+   "werk": "b9b55c99-ee21-4f0a-aa6a-37ceee792949",
+   "name": "Traumaatlas",
+   "url": "https://ralfarminkirchner-netizen.github.io/traumaatlas/",
+   "quelle": "GitHub Pages · ralfarminkirchner-netizen/traumaatlas",
+   "beleg": "Name",
+   "weitere": [],
+   "status": 200,
+   "einbetten": true,
+   "ms": 86,
+   "am": "2026-11-09T07:35:45+0100"
+  },
+  {
+   "werk": "bb33eebe-7008-4882-9bd9-63552d733a8b",
+   "name": "FASKA Varianten · Jahreskreise (Netz) · Vergleich",
+   "url": "https://faska-varianten-production.up.railway.app/",
+   "quelle": "Railway-Konto · faska-varianten · faska-varianten",
+   "beleg": "Code",
+   "weitere": [],
+   "status": 200,
+   "einbetten": false,
+   "ms": 206,
+   "am": "2026-11-09T07:35:45+0100"
+  },
+  {
+   "werk": "bd31a53c-4276-4861-b4ba-d0751a7a3b84",
+   "name": "FASKA Eigenraum",
+   "url": "https://faska-eigenraum.x99t4dyxr9.chatgpt.site",
+   "quelle": "ChatGPT Sites · ChatGPT Sites, list_sites, verified 2026-10-12",
+   "beleg": "Name",
+   "weitere": [
+    "https://faska-eigenraum-production.up.railway.app/"
+   ],
+   "status": 401,
+   "einbetten": false,
+   "am": "2026-11-09T07:35:45+0100"
+  },
+  {
+   "werk": "c1ed0101-b815-4a2f-8002-be0cddbde368",
+   "name": "Neuroatlas",
+   "url": "https://neuroatlas-production.up.railway.app/",
+   "quelle": "Railway-Konto · neuroatlas · neuroatlas",
+   "beleg": "Name",
+   "weitere": [
+    "https://schloss-schluessel-probe-production.up.railway.app/"
+   ],
+   "status": 200,
+   "einbetten": false,
+   "ms": 338,
+   "am": "2026-11-09T07:35:45+0100"
+  },
+  {
+   "werk": "c220d993-381c-452f-bb8a-0a35bf42b7fc",
+   "name": "my app",
+   "url": "https://phaenomenautik-3-production.up.railway.app/",
+   "quelle": "Railway-Konto · phaenomenautik-3 · phaenomenautik-3",
+   "beleg": "Code",
+   "weitere": [
+    "https://phaenomenautik-3-production.up.railway.app"
+   ],
+   "status": 200,
+   "einbetten": true,
+   "ms": 217,
+   "am": "2026-11-09T07:35:45+0100"
+  },
+  {
+   "werk": "c85dab0a-c7e8-4a2d-b312-235c8df94bcc",
+   "name": "ANWESENHEiT",
+   "url": "https://anwesenheit-werkstatt.x99t4dyxr9.chatgpt.site",
+   "quelle": "ChatGPT Sites · ChatGPT Sites, list_sites, verified 2026-10-12",
+   "beleg": "Name",
+   "weitere": [],
+   "status": 200,
+   "einbetten": true,
+   "ms": 348,
+   "am": "2026-11-09T07:35:45+0100"
+  },
+  {
+   "werk": "d94e9bfe-9428-4668-96fc-a880bd5b4394",
+   "name": "FASKA Lernwege",
+   "url": "https://mindlaxy-golden-path.x99t4dyxr9.chatgpt.site",
+   "quelle": "ChatGPT Sites · ChatGPT Sites, list_sites, verified 2026-10-12",
+   "beleg": "Name",
+   "weitere": [],
+   "status": 401,
+   "einbetten": false,
+   "am": "2026-11-09T07:35:45+0100"
+  },
+  {
+   "werk": "db1ac8f0-d234-453d-b8f8-2350456257f5",
+   "name": "Neuro Atlas",
+   "url": "https://neuroatlas-production.up.railway.app/",
+   "quelle": "Railway-Konto · neuroatlas · neuroatlas",
+   "beleg": "Name",
+   "weitere": [
+    "https://schloss-schluessel-probe-production.up.railway.app/"
+   ],
+   "status": 200,
+   "einbetten": false,
+   "ms": 366,
+   "am": "2026-11-09T07:35:45+0100"
+  },
+  {
+   "werk": "ddd7a221-3c76-4486-a49d-ef5d428e9e13",
+   "name": "FASKA Varianten · Vergleich",
+   "url": "https://faska-varianten-production.up.railway.app/",
+   "quelle": "Railway-Konto · faska-varianten · faska-varianten",
+   "beleg": "Code",
+   "weitere": [],
+   "status": 200,
+   "einbetten": false,
+   "ms": 217,
+   "am": "2026-11-09T07:35:45+0100"
+  },
+  {
+   "werk": "e23ddb57-e2ab-4aa2-bb44-80d790012dc9",
+   "name": "Klangspiele",
+   "url": "https://klangspiele-production.up.railway.app/",
+   "quelle": "Railway-Konto · Klangspiele · Klangspiele",
+   "beleg": "Name",
+   "weitere": [],
+   "status": 200,
+   "einbetten": true,
+   "ms": 147,
+   "am": "2026-11-09T07:35:45+0100"
+  },
+  {
+   "werk": "ec4bf570-9c37-4d1c-82b7-3ef5afb431d3",
+   "name": "Klebensfroh",
+   "url": "https://klebensfroh-production.up.railway.app/",
+   "quelle": "Railway-Konto · klebensfroh · klebensfroh",
+   "beleg": "Name",
+   "weitere": [],
+   "status": 200,
+   "einbetten": true,
+   "ms": 214,
+   "am": "2026-11-09T07:35:45+0100"
+  },
+  {
+   "werk": "f2baa4a9-0c46-41ce-affa-e4eb99ff9b95",
+   "name": "RAiNBOW LiGHT 3D",
+   "url": "https://ralfarminkirchner-netizen.github.io/rainbow-light-3d/",
+   "quelle": "Fundus · wörtlich in einer Fassung",
+   "beleg": "Name",
+   "weitere": [
+    "https://rainbow-light-3d-production.up.railway.app/"
+   ],
+   "status": 200,
+   "einbetten": true,
+   "ms": 94,
+   "am": "2026-11-09T07:35:45+0100"
+  },
+  {
+   "werk": "f719d193-d200-4e0f-9932-b2ddc0c3f124",
+   "name": "FASKA Lernlandschaft",
+   "url": "https://faska-lernlandschaft-production.up.railway.app/",
+   "quelle": "Railway-Konto · faska-lernlandschaft · faska-lernlandschaft",
+   "beleg": "Code",
+   "weitere": [
+    "https://faska-lernlandschaft.x99t4dyxr9.chatgpt.site",
+    "https://ralfarminkirchner-netizen.github.io/faska-lernlandschaft/"
+   ],
+   "status": 200,
+   "einbetten": true,
+   "ms": 232,
+   "am": "2026-11-09T07:35:45+0100"
+  },
+  {
+   "werk": "fac52d62-95af-42d1-b4e1-2d3a0894db51",
+   "name": "TiSCH-EiNGANG",
+   "url": "https://tisch-eingang-production.up.railway.app/",
+   "quelle": "Railway-Konto · tisch-eingang · tisch-eingang",
+   "beleg": "Name",
+   "weitere": [],
+   "status": 200,
+   "einbetten": true,
+   "ms": 134,
+   "am": "2026-11-09T07:35:45+0100"
+  },
+  {
+   "werk": "fc58c933-1af7-4a08-8374-ffe9f5dd238a",
+   "name": "Neuro-Psych Map",
+   "url": "https://ralfarminkirchner-netizen.github.io/neuro-psych-map/",
+   "quelle": "GitHub Pages · ralfarminkirchner-netizen/neuro-psych-map",
+   "beleg": "Name",
+   "weitere": [
+    "https://neuro-psych-map-production.up.railway.app/"
+   ],
+   "status": 200,
+   "einbetten": true,
+   "ms": 98,
+   "am": "2026-11-09T07:35:45+0100"
+  },
+  {
+   "werk": "fe312358-70cd-418b-ac47-581dc53bc756",
+   "name": "RAiNBOW LiGHT",
+   "url": "https://rainbow-light-production.up.railway.app/",
+   "quelle": "Railway-Konto · spiralminds-private-modules · rainbow-light",
+   "beleg": "Name",
+   "weitere": [
+    "https://rainbow-light-production-a792.up.railway.app/"
+   ],
+   "status": 200,
+   "einbetten": true,
+   "ms": 215,
+   "am": "2026-11-09T07:35:45+0100"
+  }
+ ],
+ "bekannt": [
   {
    "name": "Aithentik-Alpha-Loop",
    "auch": [

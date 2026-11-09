@@ -618,9 +618,10 @@ function pfad(k){
    Gespräch wird die Leseseite, eine App mit belegter Adresse wird die laufende App. „Zurück in den Baum“, Esc oder
    über das Ende hinaus weiterblättern lässt den Inhalt wieder in seinen Kreis schrumpfen, an derselben Stelle. */
 const inhaltEl = document.createElement('section'); inhaltEl.id = 'inhalt'; inhaltEl.hidden = true; document.body.appendChild(inhaltEl);
-let offenK = null, fassungen = new Map(), adressen = [];
+let offenK = null, fassungen = new Map(), adressen = [], adresseJeWerk = new Map();
 const nennbar = t => String(t || '').toLowerCase().replace(/[^a-z0-9äöüß]/g, '');
 function adresseVon(k){
+  for(const id of k.ids || []) if(adresseJeWerk.has(id)) return adresseJeWerk.get(id);   // belegt über das Werk selbst
   const n = nennbar(k.name); if(!n) return null;
   return adressen.find(a => nennbar(a.name) === n || (a.auch || []).some(x => nennbar(x) === n)) || null;
 }
@@ -767,7 +768,8 @@ addEventListener('resize', () => { W = innerWidth; H = innerHeight; if(wurzelKno
   try {
     const [graph, bilder, gespraeche, apps] = await Promise.all([fetch('/api/graph').then(r => r.json()), fetch('/lichtwerk/bilder').then(r => r.ok ? r.json() : {}).catch(() => ({})),
       fetch('/lichtwerk/gespraeche').then(r => r.ok ? r.json() : []).catch(() => []), fetch('/stufen-apps.json').then(r => r.ok ? r.json() : {apps: []}).catch(() => ({apps: []}))]);
-    fassungen = new Map((graph.variants || []).map(v => [v.id, v])); adressen = apps.apps || [];
+    fassungen = new Map((graph.variants || []).map(v => [v.id, v])); adressen = apps.bekannt || apps.apps || [];
+    adresseJeWerk = new Map((apps.werke || []).map(w => [w.werk, w]));
     const baum = spiralbaum(graph, bilder, gespraeche);
     pflanze(baum);
     for(const k of alle) if(!blattArt(k) && ['app', 'werk', 'ort', 'bereich'].includes(k.art)){ const a = adresseVon(k); if(a) k.adresse = a; }
