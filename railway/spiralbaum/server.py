@@ -103,6 +103,8 @@ class Spiralbaum(BaseHTTPRequestHandler):
     def do_GET(self):
         t = urlsplit(self.path)
         p, q = t.path, parse_qs(t.query)
+        if p == "/" and os.environ.get("LICHTGRUND_VARIANTE") == "codex":
+            return self._datei(os.path.join(APP, "ansichten.html"), "no-cache")
         if p in ("/", "/stufen.html"):
             return self._datei(os.path.join(APP, "stufen.html"), "no-cache")
         if p in ("/api/graph", "/lichtwerk/graph"):
