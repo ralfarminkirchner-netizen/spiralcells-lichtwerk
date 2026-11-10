@@ -13,13 +13,13 @@ import {TRAGEND, OFFEN, mengenWort} from './inhalt.js';
 
 const TINTE = '#2b241c', SERIF = 'ui-serif, "New York", "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif', SANS = 'ui-sans-serif, system-ui, -apple-system, "Helvetica Neue", sans-serif';
 const klemme = (v, a = 0, b = 1) => v < a ? a : v > b ? b : v;
-const HOCH = 5, GURT = 1.5, LUECKE_APP = 0.9, LUECKE_WERK = 0.28, RAND = 1.6;   // Felder je Geschoss, Höhe des Trägers, Pfosten, Fuge, Außenstütze
+const KLEIN = 0.5, HOCH = 5, GURT = 1.5, LUECKE_APP = 0.9, LUECKE_WERK = 0.28, RAND = 1.6;   // Felder je Geschoss, Höhe des Trägers, Pfosten, Fuge, Außenstütze
 
 export const legende = `
   <p><b>Das Tragwerk</b> zeigt, was worauf ruht. Unten das Fundament: das Tragwerk System. Darauf die Orte als Geschosse, das schwerste zuunterst.</p>
   <ul class="zeichen">
     <li><i class="z fenster"></i>Bild: das echte Bild dieser Fassung</li>
-    <li><i class="z papier"></i>Blatt Papier: Fassung ohne Bild, mit ihrem Namen</li>
+    <li><i class="z papier"></i>kleines Blatt Papier: Fassung ohne Bild; ihr Name steht darauf, sobald man nah ist oder darüberfährt</li>
     <li><i class="z knolle"></i>im Fundament: was trägt</li>
     <li><i class="z geruest"></i>im Gerüst: noch zur Prüfung</li>
   </ul>
@@ -40,13 +40,18 @@ function baue(I, breit){
     const eigene = []; let x = 0, zeile = null, ersteApp = true;
     const neueZeile = () => { zeile = {ort, x0, weit, pfosten: [], fugen: [], teil, ende: 0, hoch: 2, nr: eigene.length}; eigene.push(zeile); zeilen.push(zeile); x = 0; };
     neueZeile();
+    /* Ein Stapel: zuerst die Fassungen mit Bild, groß; dahinter die ohne Bild als kleine Blätter (Ralf, 10.11.: „Klein, Bilder groß“) */
     const stapel = (werk, blaetter) => {
-      const spalten = Math.ceil(blaetter.length / HOCH);
-      if(spalten <= weit && x + spalten > weit) neueZeile();
-      for(let i = 0; i < blaetter.length; i++){ const sp = Math.floor(i / HOCH), r = i % HOCH;
-        if(r === 0 && i > 0){ x += 1; if(x + 1 > weit + 1e-6) neueZeile(); }
-        const f = {q: blaetter[i], z: zeile, sx: x, r}; felder.push(f); merke(blaetter[i], zeile, x, x + 1); zeile.ende = Math.max(zeile.ende, x + 1); zeile.hoch = Math.max(zeile.hoch, r + 1); }
-      x += 1;
+      const mit = blaetter.filter(q => q.bild), ohne = blaetter.filter(q => !q.bild);
+      const ganz = Math.ceil(mit.length / HOCH) + Math.ceil(ohne.length / (HOCH * 2)) * KLEIN;
+      if(ganz <= weit && x + ganz > weit) neueZeile();
+      const reihe = (liste, g, jeSpalte) => {
+        for(let i = 0; i < liste.length; i++){ const r = i % jeSpalte;
+          if(r === 0){ if(i > 0) x += g; if(x + g > weit + 1e-6) neueZeile(); }
+          felder.push({q: liste[i], z: zeile, sx: x, ry: r * g, g}); merke(liste[i], zeile, x, x + g);
+          zeile.ende = Math.max(zeile.ende, x + g); zeile.hoch = Math.max(zeile.hoch, (r + 1) * g); }
+        if(liste.length) x += g; };
+      reihe(mit, 1, HOCH); reihe(ohne, KLEIN, HOCH * 2);
     };
     const app = (k, tief) => {
       if(x > 0){ if(x + LUECKE_APP + 1 > weit) neueZeile(); else { if(!tief) zeile.pfosten.push(x + LUECKE_APP / 2); x += tief ? LUECKE_WERK * 2 : LUECKE_APP; } }
@@ -75,7 +80,7 @@ function baue(I, breit){
   const geruest = []; let gy = -0.6; const gb = Math.max(4, Math.min(9, Math.round(breit * 0.22))), gx = breit + RAND + 3.5;
   for(const o of offen){ const b = {o, z: fliesse(o, gb, gx, 'geruest'), y1: gy}; for(const z of b.z){ z.yb = gy - 0.5; z.yt = z.yb - z.hoch; gy = z.yt; } b.y0 = gy; geruest.push(b); }
 
-  for(const f of felder){ f.x = f.z.x0 + f.sx; f.y = f.z.yb - 1 - f.r; }
+  for(const f of felder){ f.x = f.z.x0 + f.sx; f.y = f.z.yb - f.g - f.ry; }
   const rechtecke = new Map();
   for(const [k, l] of segmente) rechtecke.set(k, l.map(s => ({x0: s.z.x0 + s.x0, x1: s.z.x0 + s.x1, y0: s.z.yt, y1: s.z.yb, z: s.z})));
   for(const b of [...bloecke, ...fund, ...geruest]) if(!b.o.pseudo) rechtecke.set(b.o, b.z.map(z => ({x0: z.x0, x1: z.x0 + z.weit, y0: z.yt, y1: z.yb, z})));
@@ -101,7 +106,7 @@ export function starte(el, K){
     for(const b of W.geruest) for(const z of b.z) z.zeit = i++ / n;
     B.sMin = B.blickAuf(W.rahmen).s * 0.6;
   }
-  const rechteVon = k => W.rechtecke.get(k) || (feldVon.has(k) ? [{x0: feldVon.get(k).x, x1: feldVon.get(k).x + 1, y0: feldVon.get(k).y, y1: feldVon.get(k).y + 1, z: feldVon.get(k).z}] : null);
+  const rechteVon = k => W.rechtecke.get(k) || (feldVon.has(k) ? [{x0: feldVon.get(k).x, x1: feldVon.get(k).x + feldVon.get(k).g, y0: feldVon.get(k).y, y1: feldVon.get(k).y + feldVon.get(k).g, z: feldVon.get(k).z}] : null);
   function rahmenVon(k){
     const l = k && k.art !== 'wurzel' ? rechteVon(k) : null; if(!l) return W.rahmen;
     const r = {x0: Math.min(...l.map(a => a.x0)), x1: Math.max(...l.map(a => a.x1)), y0: Math.min(...l.map(a => a.y0)), y1: Math.max(...l.map(a => a.y1))};
@@ -109,12 +114,12 @@ export function starte(el, K){
   }
   function zeige(k, sofort){ B.rand = K.rand();
     const f = feldVon.get(k);   // ein Bild, das man schon sieht, bleibt, wo es ist: es wird nur groß
-    if(f && !sofort && B.s >= 11){ const px = B.zuX(f.x + 0.5), py = B.zuY(f.y + 0.5); if(px > 0 && px < B.w && py > B.rand.oben && py < B.h - B.rand.unten) return B.neu(); } const z = B.blickAuf(rahmenVon(k), 1.06); sofort ? B.setze(z) : B.fliege(z); }
+    if(f && !sofort && B.s >= 11){ const px = B.zuX(f.x + f.g / 2), py = B.zuY(f.y + f.g / 2); if(px > 0 && px < B.w && py > B.rand.oben && py < B.h - B.rand.unten) return B.neu(); } const z = B.blickAuf(rahmenVon(k), 1.06); sofort ? B.setze(z) : B.fliege(z); }
 
   function treffer(px, py){
     const wx = B.vonX(px), wy = B.vonY(py); let kette = null;
-    const f = W.felder.find(f => wx >= f.x && wx < f.x + 1 && wy >= f.y && wy < f.y + 1);
-    if(f && B.s >= 11) return f.q;   // ein Bild, das man sieht, wählt man direkt
+    const f = W.felder.find(f => wx >= f.x && wx < f.x + f.g && wy >= f.y && wy < f.y + f.g);
+    if(f && B.s * f.g >= 9) return f.q;   // ein Bild, das man sieht, wählt man direkt
     if(f){ kette = []; for(let q = f.q; q && q.art !== 'wurzel'; q = q.eltern) kette.unshift(q); }
     else {   // die Luft über einem Stapel gehört zu seinem Werk und seiner App
       let tief = null; for(const [k, l] of W.rechtecke) if((!tief || k.tiefe > tief.tiefe) && l.some(r => wx >= r.x0 && wx <= r.x1 && wy >= r.y0 && wy <= r.y1)) tief = k;
@@ -130,7 +135,7 @@ export function starte(el, K){
   function tipp(px, py){ const fg = feldVon.get(K.gewaehlt()); if(fg && fg.gross && px >= fg.gross[0] && px <= fg.gross[0] + fg.gross[2] && py >= fg.gross[1] && py <= fg.gross[1] + fg.gross[3]) return K.oeffne(fg.q);
     const k = treffer(px, py); if(!k) return; if(k === K.gewaehlt()){ if(!k.kinder) K.oeffne(k); else zeige(k); } else K.waehle(k); }
   function schwebe(px, py){ let k = px < 0 ? null : treffer(px, py);
-    if(px >= 0 && B.s >= 4){ const wx = B.vonX(px), wy = B.vonY(py), f = W.felder.find(f => wx >= f.x && wx < f.x + 1 && wy >= f.y && wy < f.y + 1); if(f) k = f.q; } if(k !== schweb){ schweb = k; B.c.style.cursor = k ? 'pointer' : ''; B.neu(); } }
+    if(px >= 0 && B.s >= 4){ const wx = B.vonX(px), wy = B.vonY(py), f = W.felder.find(f => wx >= f.x && wx < f.x + f.g && wy >= f.y && wy < f.y + f.g); if(f) k = f.q; } if(k !== schweb){ schweb = k; B.c.style.cursor = k ? 'pointer' : ''; B.neu(); } }
 
   /* ---------- Zeichnen ---------- */
   const zufall = (a, b) => { const s = Math.sin(a * 127.1 + b * 311.7) * 43758.5453; return s - Math.floor(s); };
@@ -191,8 +196,8 @@ export function starte(el, K){
     // die Felder: Fassungen. Mit Bild das Bild selbst, in jeder Entfernung. Ohne Bild ein Blatt Papier mit dem Namen: nichts wird vorgetäuscht.
     const fuge = s < 5 ? 0.4 : Math.min(0.07 * s, 3), ecke = Math.min(0.1 * s, 5);
     for(const f of W.felder){ const px = X(f.x), py = Y(f.y); if(px > w || px + s < 0 || py > h || py + s < 0) continue; const d = da(f.z); if(d <= 0) continue;
-      const a = fertig ? 1 : klemme(d * 2 - (f.r / HOCH)); if(a <= 0) continue; x.globalAlpha = a;
-      feld(x, f, px + fuge, py + fuge, s - fuge * 2, ecke, t, a);
+      const a = fertig ? 1 : klemme(d * 2 - (f.ry / HOCH)); if(a <= 0) continue; x.globalAlpha = a;
+      { const fg2 = f.g < 1 ? fuge * 0.6 : fuge; feld(x, f, px + fg2, py + fg2, s * f.g - fg2 * 2, f.g < 1 ? ecke * 0.5 : ecke, t, a); }
     }
     x.globalAlpha = 1;
 
@@ -240,8 +245,8 @@ export function starte(el, K){
   }
   /* Ein Feld groß zeigen, über allem, ganz im Bild; mit seinem Namen darunter */
   function gross(x, f, t, gewaehlt){
-    const {w, h, s} = B, G = klemme(Math.min(w, h) * 0.34, 150, 340); if(s >= G * 0.8){ f.gross = null; return; }
-    const mx = B.zuX(f.x + 0.5), my = B.zuY(f.y + 0.5), fuss = 46, r = B.rand;
+    const {w, h} = B, s = B.s * f.g, G = f.q.bild ? klemme(Math.min(w, h) * 0.34, 150, 340) : 170; if(s >= G * 0.8){ f.gross = null; return; }
+    const mx = B.zuX(f.x + f.g / 2), my = B.zuY(f.y + f.g / 2), fuss = 46, r = B.rand;
     const px = klemme(mx - G / 2, 8, w - G - 8), py = klemme(my - G / 2, r.oben, Math.max(r.oben, h - r.unten - G - fuss));
     x.save(); x.shadowColor = 'rgba(20,14,8,.45)'; x.shadowBlur = 28; x.shadowOffsetY = 8 * B.dpr; x.fillStyle = '#fdf9ef'; x.beginPath(); x.roundRect(px - 6, py - 6, G + 12, G + fuss + 8, 12); x.fill(); x.restore();
     feld(x, f, px, py, G, 7, t, 1, true);
