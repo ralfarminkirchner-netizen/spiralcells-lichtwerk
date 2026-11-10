@@ -143,7 +143,7 @@ export function starte(el, K){
   const STILE = {
     holz: {himmel: ['#cfe0e6', '#e9ecdf', '#f9ebcf'], sonne: ['rgba(255,246,214,.9)', 'rgba(255,240,200,.55)', 'rgba(255,240,200,0)'], huegel: ['#cddccb', '#b9d0a4'], erde: ['#4a3324', '#3a281d', '#1d1410'], gras: ['#6f9a48', '#8fb85c'],
       holz: '#3d2a1f', holz2: '#6a4c35', stein: '#57463a', stein2: '#6b584a', kammer: '#241812', leer: 'rgba(61,42,31,.3)', raum: ['rgba(120,88,58,.30)', 'rgba(120,88,58,.10)'], geruest: '#8a6a48',
-      papier: '#fdf9ef', papierUnten: '#cbbd9f', hinterBild: '#e6dcc6', rahmen: '#2b241c', schatten: true},
+      papier: '#fdf9ef', papierUnten: '#cbbd9f', hinterBild: '#e6dcc6', rahmen: '#2b241c', schatten: true, reich: true},
     nacht: {himmel: ['#070b14', '#101a2c', '#2a2f45'], sonne: ['rgba(225,232,255,.95)', 'rgba(170,190,255,.22)', 'rgba(150,170,255,0)'], huegel: ['#161d2c', '#0f1520'], erde: ['#0e0c0b', '#0a0908', '#050505'], gras: ['#141c18', '#1f2a22'],
       holz: '#05070b', holz2: '#232b3a', stein: '#15161a', stein2: '#22242b', kammer: '#0a0907', leer: 'rgba(150,170,210,.16)', raum: ['rgba(255,186,96,.30)', 'rgba(255,170,80,.08)'], geruest: '#4a5568',
       papier: '#f1e6cc', papierUnten: '#d9c9a4', hinterBild: '#20242c', rahmen: '#ffffff', dunkel: true, sterne: true, glut: true},
@@ -170,12 +170,24 @@ export function starte(el, K){
         x.strokeStyle = 'rgba(31,35,40,.16)'; x.lineWidth = 1; x.beginPath(); const ab = Math.max(7, 1.1 * s); for(let px = -h; px < w; px += ab){ x.moveTo(px, y0); x.lineTo(px + (h - y0), h); } x.stroke();
         x.fillStyle = T.holz; x.fillRect(0, y0 - 1, w, 2); } }
     const R = (a, b, c, d) => x.fillRect(X(a), Y(b), (c - a) * s, (d - b) * s);
+    if(T.reich){
+      // Wolken: weit hinten, sie stehen in der Welt und nicht am Schirm
+      x.fillStyle = 'rgba(255,253,246,.55)'; for(let i = 0; i < 7; i++){ const cx = X((zufall(i, 5) - 0.5) * br * 9 + br / 2), cy = Y(W.dach * (0.35 + zufall(i, 6) * 0.95)), g = (5 + zufall(i, 7) * 7) * s;
+        if(cx + g * 3 < 0 || cx - g * 3 > w) continue; x.beginPath(); for(let j = 0; j < 5; j++){ const ex = cx + (j - 2) * g * 0.62, erx = g * (0.55 + zufall(i, j) * 0.4); x.moveTo(ex + erx, cy + Math.sin(j * 2.1 + i) * g * 0.12); x.ellipse(ex, cy + Math.sin(j * 2.1 + i) * g * 0.12, erx, g * (0.2 + zufall(j, i) * 0.14), 0, 0, 6.2832); } x.fill(); }
+      // Schatten des Baus und Gras davor
+      if(y0 > -20 && y0 < h + 20){ const sg = x.createRadialGradient(X(br / 2 + 4), y0, 0, X(br / 2 + 4), y0, (br * 0.95) * s); sg.addColorStop(0, 'rgba(40,50,20,.34)'); sg.addColorStop(1, 'rgba(40,50,20,0)');
+        x.save(); x.translate(0, y0); x.scale(1, 0.05); x.translate(0, -y0); x.fillStyle = sg; x.fillRect(X(-br), y0 - br * s, br * 3 * s, br * 2 * s); x.restore();
+        if(s > 3.2){ const ab = 0.4; x.strokeStyle = '#5f8f3f'; x.lineWidth = Math.max(1, 0.07 * s); x.lineCap = 'round'; x.beginPath();
+          for(let i = Math.floor(B.vonX(0) / ab); i <= B.vonX(w) / ab; i++){ const r = zufall(i, 3), wx = (i + r) * ab; if(wx > -RAND - 3 && wx < br + RAND + 3) continue; const px = X(wx), hh = (0.45 + r) * s, n = (zufall(i, 8) - 0.5) * 0.6 * s; x.moveTo(px, y0 + 0.1 * s); x.quadraticCurveTo(px, y0 - hh * 0.6, px + n, y0 - hh); } x.stroke(); } }
+    }
 
     // das Fundament: ein Block aus Stein, darin gewölbte Kammern
     if(W.fund.length){ const f0 = -3 - RAND, f1 = -3 + W.fb + RAND, ft = 0.5, fu = W.tief + 0.8, a = fertig ? 1 : klemme(P * 1.1 / 0.12);
       x.globalAlpha = a; x.fillStyle = STEIN; x.beginPath(); x.moveTo(X(f0), Y(ft)); x.lineTo(X(f1), Y(ft)); x.lineTo(X(f1 + 2.2), Y(fu)); x.lineTo(X(f0 - 2.2), Y(fu)); x.closePath(); x.fill();
       x.fillStyle = STEIN2; R(f0, ft, f1, ft + 0.5);
-      if(s > 4){ x.strokeStyle = 'rgba(30,20,14,.28)'; x.lineWidth = 1; x.beginPath(); for(let yy = ft + 1.4; yy < fu; yy += 1.4){ x.moveTo(X(f0 - 2.2 * (yy - ft) / (fu - ft)), Y(yy)); x.lineTo(X(f1 + 2.2 * (yy - ft) / (fu - ft)), Y(yy)); } x.stroke(); }
+      if(s > 4){ x.strokeStyle = 'rgba(30,20,14,.28)'; x.lineWidth = 1; x.beginPath(); for(let yy = ft + 1.4; yy < fu; yy += 1.4){ x.moveTo(X(f0 - 2.2 * (yy - ft) / (fu - ft)), Y(yy)); x.lineTo(X(f1 + 2.2 * (yy - ft) / (fu - ft)), Y(yy)); }
+        if(T.reich && s > 6){ let reihe = 0; for(let yy = ft; yy < fu; yy += 1.4, reihe++){ const e = 2.2 * (yy - ft) / (fu - ft); for(let xx = f0 - e + (reihe % 2 ? 1.6 : 0.2) + zufall(reihe, 1) * 0.6; xx < f1 + e; xx += 2.6 + zufall(reihe, xx | 0) * 1.2){ x.moveTo(X(xx), Y(yy)); x.lineTo(X(xx), Y(Math.min(fu, yy + 1.4))); } } }
+        x.stroke(); }
       x.globalAlpha = 1;
       for(const z of W.zeilen){ if(z.teil !== 'fund') continue; const d = da(z); if(d <= 0) continue; x.globalAlpha = d; x.fillStyle = T.kammer; x.beginPath(); x.roundRect(X(z.x0 - 0.35), Y(z.yt - 0.35), (z.weit + 0.7) * s, (z.hoch + 0.7) * s, 0.5 * s); x.fill();
         x.fillStyle = STEIN2; for(const p of z.pfosten) R(z.x0 + p - 0.22, z.yt - 0.35, z.x0 + p + 0.22, z.yb + 0.35); } x.globalAlpha = 1; }
@@ -194,7 +206,15 @@ export function starte(el, K){
         x.strokeStyle = HOLZ; x.lineWidth = Math.max(1, (erste ? 0.2 : 0.13) * s); x.lineJoin = 'round'; x.beginPath(); const schritt = GURT * 0.9; let auf = false; x.moveTo(X(-RAND), Y(g1 - dick));
         for(let xx = -RAND; xx < br + RAND; xx += schritt){ x.lineTo(X(Math.min(br + RAND, xx + schritt)), Y(auf ? g1 - dick : g0 + dick)); auf = !auf; } x.stroke();
         if(erste){ x.globalAlpha = d * 0.16; x.fillStyle = HOLZ; R(-RAND, g0, br + RAND, g1); x.globalAlpha = d; } }
+      if(T.reich){
+        const dg = x.createLinearGradient(0, Y(z.yt), 0, Y(z.yt + Math.min(1.1, z.hoch * 0.45))); dg.addColorStop(0, 'rgba(50,30,16,.34)'); dg.addColorStop(1, 'rgba(50,30,16,0)'); x.fillStyle = dg; R(-RAND + 0.5, z.yt, br + RAND - 0.5, z.yt + Math.min(1.1, z.hoch * 0.45));
+        x.fillStyle = '#8a6846'; R(-RAND + 0.5, z.yb - 0.07, br + RAND - 0.5, z.yb + 0.05);   // Dielen
+        if(fein){ x.fillStyle = 'rgba(255,225,180,.28)'; R(-RAND, g0, br + RAND, g0 + 0.06); R(-RAND, g1 - dick, br + RAND, g1 - dick + 0.05);
+          if(s > 9){ x.fillStyle = '#a98562'; const schritt = GURT * 0.9; let auf = true; x.beginPath(); for(let xx = -RAND; xx <= br + RAND + 0.01; xx += schritt){ const px = X(Math.min(br + RAND, xx)), py = Y(auf ? g1 - dick : g0 + dick); x.moveTo(px + 0.09 * s, py); x.arc(px, py, 0.09 * s, 0, 6.2832); auf = !auf; } x.fill(); } }
+        if(st * s > 7){ x.fillStyle = 'rgba(255,220,170,.10)'; for(let i = 0; i < 4; i++){ const u = zufall(z.nr * 7 + i, 4); R(-RAND - st + 0.55 + st * u, z.yt, -RAND - st + 0.55 + st * u + 0.05, z.yb + GURT); R(br + RAND - 0.55 + st * u, z.yt, br + RAND - 0.55 + st * u + 0.05, z.yb + GURT); } }
+      }
       x.fillStyle = HOLZ; for(const p of z.pfosten) R(p - 0.2, z.yt, p + 0.2, z.yb);
+      if(T.reich && s > 6){ x.fillStyle = HOLZ2; for(const p of z.pfosten) R(p - 0.2, z.yt, p - 0.09, z.yb); }
       if(s > 9){ x.fillStyle = T.leer; for(const p of z.fugen) R(p - 0.05, z.yt + 0.6, p + 0.05, z.yb); }
       // freie Felder am Ende der Zeile: offenes Fachwerk, Platz zum Wachsen
       if(z.ende < br - 1.5 && s > 2.5){ x.strokeStyle = T.leer; x.lineWidth = Math.max(1, 0.08 * s); x.beginPath(); const a0 = z.ende + 0.6; x.moveTo(X(a0), Y(z.yt)); x.lineTo(X(a0), Y(z.yb));
@@ -204,7 +224,11 @@ export function starte(el, K){
     // Sockel und Dachstuhl
     { const a = fertig ? 1 : klemme((P * 1.1 - 0.25) / 0.1); x.globalAlpha = a; x.fillStyle = STEIN2; R(-RAND - 2.6, -1.2, br + RAND + 2.6, 0.5); x.fillStyle = STEIN; R(-RAND - 2.6, -0.2, br + RAND + 2.6, 0.5);
       const d = fertig ? 1 : klemme((P * 1.1 - 1) / 0.08); x.globalAlpha = d; const yd = W.dach, first = yd - br * 0.16, l = -RAND - 1.6, r = br + RAND + 1.6, m = br / 2;
+      if(T.reich){ x.fillStyle = 'rgba(120,88,58,.22)'; x.beginPath(); x.moveTo(X(l), Y(yd)); x.lineTo(X(m), Y(first)); x.lineTo(X(r), Y(yd)); x.closePath(); x.fill(); }
       x.strokeStyle = HOLZ; x.lineWidth = Math.max(1.5, 0.42 * s); x.lineJoin = 'round'; x.lineCap = 'round'; x.beginPath(); x.moveTo(X(l), Y(yd)); x.lineTo(X(m), Y(first)); x.lineTo(X(r), Y(yd)); x.closePath(); x.stroke();
+      if(T.reich){ const ob = 0.75, k = (yd - first) / (m - l), ux = 1.4;   // die Deckung liegt außen auf den Sparren, mit Überstand
+        x.strokeStyle = '#a4583a'; x.lineWidth = Math.max(2, 0.62 * s); x.lineCap = 'butt'; x.beginPath(); x.moveTo(X(l - ux), Y(yd + ux * k - ob)); x.lineTo(X(m), Y(first - ob)); x.lineTo(X(r + ux), Y(yd + ux * k - ob)); x.stroke();
+        x.strokeStyle = 'rgba(255,214,170,.35)'; x.lineWidth = Math.max(1, 0.1 * s); x.beginPath(); x.moveTo(X(l - ux), Y(yd + ux * k - ob - 0.25)); x.lineTo(X(m), Y(first - ob - 0.25)); x.lineTo(X(r + ux), Y(yd + ux * k - ob - 0.25)); x.stroke(); x.strokeStyle = HOLZ; x.lineCap = 'round'; }
       x.lineWidth = Math.max(1, 0.18 * s); x.beginPath(); const n = 8; for(let i = 1; i < n; i++){ const u = i / n, xx = l + (r - l) * u, yy = yd + (first - yd) * (1 - Math.abs(u - 0.5) * 2); x.moveTo(X(xx), Y(yd)); x.lineTo(X(xx), Y(yy)); const v = (i + (u < 0.5 ? 1 : -1)) / n, x2 = l + (r - l) * v, y2 = yd + (first - yd) * (1 - Math.abs(v - 0.5) * 2); if(i !== n / 2){ x.moveTo(X(xx), Y(yd)); x.lineTo(X(x2), Y(y2)); } } x.stroke(); x.globalAlpha = 1; }
     // das Gerüst
     for(const z of W.zeilen){ if(z.teil !== 'geruest') continue; const d = da(z); if(d <= 0) continue; x.globalAlpha = d * 0.9; x.strokeStyle = T.geruest; x.lineWidth = Math.max(1, 0.12 * s); x.beginPath();
@@ -292,6 +316,12 @@ export function starte(el, K){
     // Orte: groß über ihrem Block, solange er klein ist; sonst auf ihrem untersten Träger
     for(const b of [...W.bloecke, ...W.fund, ...W.geruest]){ const z0 = b.z[0], unten = z0.teil === 'fund', ger = z0.teil === 'geruest', hoch = Math.abs(b.y1 - b.y0) * s, mx = X(z0.x0 + z0.weit / 2), name = ger ? 'Zur Prüfung' : b.o.name;
       if(ger){ setze(name, mx, Y(b.y0 - 2), klemme(s * 1.6, 11, 17), {kursiv: true}); continue; }
+      if(!unten && T.reich){ const gr = klemme(hoch * 0.2, 12.5, 24), font = `650 ${gr.toFixed(1)}px ${SERIF}`; x.font = font; const tb = x.measureText(name).width, xr = X(-RAND - 3.4), my = klemme(Y((b.y0 + b.y1) / 2), B.rand.oben + gr, h - B.rand.unten - gr);
+        if(hoch > 14 && xr - tb - 14 > B.rand.links && Y(b.y1) > B.rand.oben && Y(b.y0) < h - B.rand.unten){   // Name links neben seinem Block, mit einer Klammer über dessen Höhe
+          x.globalAlpha = ein; x.strokeStyle = 'rgba(43,36,28,.55)'; x.lineWidth = 1.2; x.beginPath(); const kx = X(-RAND - 2.4), a0 = Y(b.y0) + 3, a1 = Y(b.y1) - 3; x.moveTo(kx + 5, a0); x.lineTo(kx, a0); x.lineTo(kx, a1); x.lineTo(kx + 5, a1); x.moveTo(kx, my); x.lineTo(kx - 6, my); x.stroke();
+          x.textAlign = 'right'; x.textBaseline = 'middle'; x.fillStyle = TINTE; x.fillText(name, xr - 4, my); belegt.push([xr - tb - 8, my - gr * 0.7, xr, my + gr * 0.7]);
+          if(hoch > 60){ x.font = `11.5px ${SANS}`; x.fillStyle = 'rgba(43,36,28,.6)'; x.fillText(mengenWort(b.o).split(' · ').slice(0, 2).join(' · '), xr - 4, my + gr * 0.95); }
+          x.globalAlpha = 1; continue; } }
       if(GURT * s < 15 || unten){ const my = unten ? Y(b.y0 + 0.2) - 2 : Y((b.y0 + b.y1) / 2); if(hoch > 16 || unten) setze(name, mx, unten ? Y(1.35) : my, Math.min(klemme(unten ? s * 2 : hoch * 0.3, 12.5, 26), z0.weit * s / (name.length * 0.66)), {gewicht: 650, dunkel: unten}); }
       else setze(name, X(-RAND + 0.6), Y(z0.yb + GURT / 2), klemme(GURT * s * 0.52, 12, 30), {gewicht: 650, links: true, hell: true, ohneHof: true}) && s > 22 && setze(mengenWort(b.o), X(z0.x0 + z0.weit + RAND - 0.6) - 150, Y(z0.yb + GURT / 2), 11.5, {sans: true, hell: true, ohneHof: true, alpha: 0.8}); }
     // Apps: über ihrem Abschnitt; Werke: unter ihrem Stapel, auf dem Träger
