@@ -1,0 +1,152 @@
+.landschaft{position:absolute;inset:0;color:#26382d;background:#f3f1e6;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;touch-action:pan-y}
+.landschaft *{box-sizing:border-box}
+.landschaft-raum{position:absolute;overflow:auto;overscroll-behavior:contain;scrollbar-gutter:stable;touch-action:pan-y;padding:24px clamp(12px,3vw,44px) 56px;outline:none}
+.landschaft button{font:inherit;color:inherit;cursor:pointer;text-align:left;touch-action:manipulation}
+.landschaft button:focus-visible,.landschaft-raum:focus-visible{outline:3px solid #a74f26;outline-offset:4px}
+.landschaft button.ist-gewaehlt{outline:3px solid #a74f26;outline-offset:3px}
+.landschaft button.selbes-werk{outline:2px dotted #a74f26;outline-offset:3px}
+.landschaft-kopf{max-width:850px;margin:0 0 36px}
+.landschaft-einstieg{display:flex;align-items:center;gap:18px;flex-wrap:wrap;margin-bottom:14px}
+.landschaft-art{font-size:13px;letter-spacing:.03em}
+.landschaft-zurueck{border:0;border-bottom:1px solid #a6ad9c;background:none;padding:4px 0;font-size:12px!important}
+.landschaft h1{margin:0;font:normal clamp(32px,4vw,58px)/1.06 Georgia,"Times New Roman",serif;overflow-wrap:anywhere}
+.landschaft h2{font:normal 25px/1.2 Georgia,"Times New Roman",serif;margin:0 0 20px}
+.landschaft-satz{max-width:48em;margin:14px 0 0;font-size:14px;line-height:1.5;color:#5c665b}
+.landschaft-bild{display:block;position:relative;width:100%;height:150px;background:#e8e6da;overflow:hidden}
+.landschaft-bild img{display:block;width:100%;height:100%;object-fit:contain}
+.landschaft-bild.ohne-bild{height:84px;max-width:150px;background:#fcfaf2;border:1px solid #c3bfac;display:flex;flex-direction:column;justify-content:center;align-items:center;color:#6d6c60}
+.papierzeichen{font-family:Georgia,serif;font-size:28px;line-height:1}
+.papierwort{font-size:11px;margin-top:6px}
+.landschaft-material{display:flex;flex-direction:column;min-width:0;max-width:300px;padding:0;border:0;background:none;align-self:start}
+.material-name{font-size:13px;line-height:1.35;margin-top:8px;font-weight:600;overflow-wrap:anywhere}
+.material-zeit{font-size:11px;line-height:1.35;color:#667063;margin-top:4px}
+.landschaft-textknopf{display:flex;flex-direction:column;border:0;background:none;padding:9px 0;min-width:0}
+.textname{font-size:13px;overflow-wrap:anywhere}
+.textmenge{font-size:10px;color:#68705f;margin-top:3px;line-height:1.5}
+.landschaft-leer{max-width:36em;font-size:14px;color:#596456}
+
+/* Garten: ein verzweigter Weg, Beet für Beet, mit wirklichem Material an den Zweigen. */
+.landschaft-garten{background:#edf0df;color:#2f4936}
+.garten-wege{position:relative;max-width:1180px;padding:0 0 0 38px}
+.garten-wege:before{content:"";position:absolute;left:9px;top:0;bottom:12px;width:5px;border-radius:50%;background:#9bac7b}
+.garten-beet{position:relative;padding:22px 28px 24px;margin:0 0 32px;border:1px solid #bdc9a4;border-radius:6px 46px 6px 32px;background:#dbe3c8;max-width:960px}
+.garten-beet:nth-child(even){margin-left:48px;background:#e5e7d1;border-radius:38px 6px 28px 6px}
+.garten-beet:before{content:"";position:absolute;left:-30px;top:36px;width:29px;border-top:2px solid #8e9f70}
+.garten-beet:nth-child(even):before{left:-78px;width:77px}
+.garten-schild{padding:0 0 18px;border:0;background:none;display:flex;flex-direction:column;gap:5px}
+.garten-name{font:normal 28px/1.1 Georgia,"Times New Roman",serif}
+.garten-menge{font-size:11px;color:#5b6b4f}
+.garten-auslage{display:flex;align-items:flex-start;gap:20px;flex-wrap:wrap}
+.garten-auslage>.landschaft-material{flex:1 1 150px;max-width:260px}
+.garten-auslage .landschaft-bild{height:160px;background:#c9d3b8}
+.garten-auslage .landschaft-bild.ohne-bild{height:80px;max-width:130px;background:#faf8e9}
+.garten-zweige{display:flex;gap:6px 24px;flex-wrap:wrap;border-top:1px solid #b7c4a0;margin-top:20px;padding-top:5px}
+.garten-zweige .landschaft-textknopf{flex:1 1 150px;max-width:260px}
+.garten-weiter{border:0;background:none;border-bottom:1px solid #8b9d76;padding:6px 0;font-size:12px!important;margin-top:12px}
+.garten-ernte{padding:24px;background:#dce4cb;border:1px solid #b8c79f;border-radius:8px 40px 8px 30px}
+.garten-ernte .garten-auslage{gap:30px 22px}
+.garten-fassungen:before{background:#8aa36e}
+
+/* Dorf: Nachbarschaften zweigen von einer gemeinsamen Straße ab; Bilder sind die Fronten. */
+.landschaft-dorf{background:#eee5d5;color:#493c31}
+.landschaft-dorf .landschaft-satz,.landschaft-dorf .material-zeit{color:#786958}
+.dorf-plan{position:relative;max-width:1180px;padding-left:55px}
+.dorf-strasse{position:absolute;left:4px;top:6px;bottom:0;width:22px;background:#faf6eb;border-left:1px solid #d8c8ac;border-right:1px solid #d8c8ac}
+.dorf-strasse:after{content:"";position:absolute;top:0;bottom:0;left:10px;border-left:1px dashed #bcab8d}
+.dorf-quartier{position:relative;margin-bottom:48px;padding:0 0 20px;border-bottom:1px solid #cbbb9f}
+.dorf-quartier:before{content:"";position:absolute;top:24px;left:-40px;width:34px;height:11px;background:#faf6eb;border-top:1px solid #d8c8ac;border-bottom:1px solid #d8c8ac}
+.dorf-quartier:nth-child(odd){margin-left:45px}
+.dorf-quartier:nth-child(odd):before{left:-85px;width:79px}
+.dorf-wegweiser{border:0;background:none;display:flex;align-items:baseline;gap:16px;flex-wrap:wrap;padding:10px 0 22px}
+.dorf-ort{font:normal 29px/1.15 Georgia,"Times New Roman",serif}
+.dorf-menge{font-size:11px;color:#786958}
+.dorf-haeuser{display:flex;align-items:flex-end;gap:12px;flex-wrap:wrap;padding-bottom:5px}
+.dorf-haus{display:flex;flex-direction:column;flex:1 1 130px;max-width:250px;min-width:0;padding:9px 9px 14px;border:1px solid #c3b091;border-top:5px solid #a66e54;border-bottom:7px solid #bcac90;background:#f6efe2}
+.dorf-haus:nth-child(3n+2){border-top-color:#7e8c77}
+.dorf-haus:nth-child(3n){border-top-color:#a19369}
+.dorf-front{height:160px;background:#e4dccc}
+.dorf-haus:nth-child(even) .dorf-front:not(.ohne-bild){height:190px}
+.dorf-front.ohne-bild{height:82px;background:#fcf8ec}
+.dorf-haustitel{font:normal 17px/1.17 Georgia,"Times New Roman",serif;margin-top:10px;overflow-wrap:anywhere}
+.dorf-hausart{font-size:10px;line-height:1.4;margin-top:6px;color:#786958}
+.dorf-eintreten{border:0;background:none;padding:12px 0 0;font-size:12px!important}
+.dorf-offenes-haus{padding:24px;border:2px solid #af9270;border-top:8px solid #a66e54;background:#f8f1e5}
+.dorf-auslage{display:flex;gap:28px 20px;flex-wrap:wrap}
+.dorf-auslage .landschaft-material{flex:1 1 180px}
+.dorf-auslage .landschaft-bild{height:210px}
+.dorf-auslage .landschaft-bild.ohne-bild{height:85px}
+
+/* Campus: benannte Räume, tragende Wände, offene Arbeitsflächen. */
+.landschaft-campus{background:#eaf0ed;color:#294954}
+.landschaft-campus .landschaft-satz,.landschaft-campus .material-zeit{color:#5a7278}
+.campus-plan{max-width:1200px;border-top:5px solid #486a72}
+.campus-verzeichnis{display:flex;gap:0;flex-wrap:wrap;padding:12px 0 22px}
+.campus-weg{border:0;border-bottom:1px solid #a6b9b9;background:none;padding:8px 12px!important;font-size:12px!important}
+.campus-fluegel{display:grid;grid-template-columns:minmax(140px,27%) 1fr;border:2px solid #63818a;margin-bottom:25px;background:#f7f8f0;position:relative}
+.campus-fluegel:after{content:"";position:absolute;left:27%;top:22px;width:20px;height:40px;background:#eaf0ed;border-top:1px solid #849c9d;border-bottom:1px solid #849c9d;pointer-events:none}
+.campus-eingang{background:#d8e4df;border:0;border-right:2px solid #63818a;padding:22px 24px 22px 20px;display:flex;flex-direction:column;justify-content:flex-start;min-width:0}
+.campus-raumart{font-size:10px;color:#59777d;margin-bottom:18px}
+.campus-raumname{font:normal 27px/1.12 Georgia,"Times New Roman",serif;overflow-wrap:anywhere}
+.campus-raummenge{font-size:11px;line-height:1.5;color:#59777d;margin-top:13px}
+.campus-werkraum{padding:22px 24px 16px 30px;min-width:0}
+.campus-auslage{display:flex;align-items:flex-start;gap:20px;flex-wrap:wrap}
+.campus-auslage .landschaft-material{flex:1 1 140px;max-width:280px}
+.campus-auslage .landschaft-bild{height:170px;background:#e5e9df}
+.campus-auslage .landschaft-bild.ohne-bild{height:80px;background:#faf9ed}
+.campus-tueren{display:flex;flex-wrap:wrap;gap:0 20px;border-top:1px solid #bdcbca;margin-top:20px;padding-top:4px}
+.campus-tueren .landschaft-textknopf{flex:1 1 160px;max-width:250px}
+.campus-alle{border:0;background:none;font-size:11px!important;padding:8px 0}
+.campus-arbeitsraum{border:2px solid #63818a;border-top:0;padding:24px;background:#f8f9f1}
+.campus-tisch{display:flex;flex-wrap:wrap;gap:28px 24px}
+.campus-tisch .landschaft-material{flex:1 1 180px}
+.campus-tisch .landschaft-bild{height:220px}
+.campus-tisch .landschaft-bild.ohne-bild{height:85px}
+
+@media(max-width:760px){
+ .landschaft-raum{padding:16px 10px 34px;scrollbar-gutter:auto}
+ .landschaft-kopf{margin-bottom:24px}
+ .landschaft h1{font-size:36px}
+ .landschaft-satz{font-size:12px;line-height:1.5}
+ .landschaft-einstieg{gap:12px;margin-bottom:10px}
+ .landschaft-material{max-width:none}
+ .garten-wege{padding-left:18px}
+ .garten-wege:before{left:2px;width:3px}
+ .garten-beet{padding:18px 14px;margin-bottom:24px;border-radius:6px 28px 6px 22px}
+ .garten-beet:nth-child(even){margin-left:0}
+ .garten-beet:before,.garten-beet:nth-child(even):before{left:-15px;width:14px}
+ .garten-name{font-size:25px}
+ .garten-auslage{gap:18px 12px}
+ .garten-auslage>.landschaft-material{flex-basis:110px;max-width:100%}
+ .garten-auslage .landschaft-bild{height:125px}
+ .garten-zweige .landschaft-textknopf{flex-basis:100px}
+ .garten-ernte{padding:18px 12px}
+ .garten-ernte .garten-auslage>.landschaft-material{flex-basis:130px}
+ .dorf-plan{padding-left:27px}
+ .dorf-strasse{left:0;width:13px}
+ .dorf-strasse:after{left:6px}
+ .dorf-quartier:nth-child(odd){margin-left:0}
+ .dorf-quartier:before,.dorf-quartier:nth-child(odd):before{left:-18px;width:14px;height:7px}
+ .dorf-wegweiser{gap:6px;padding:8px 0 16px}
+ .dorf-ort{font-size:26px}
+ .dorf-haeuser{gap:10px}
+ .dorf-haus{flex-basis:110px;max-width:100%;padding:7px 7px 11px}
+ .dorf-front{height:125px}
+ .dorf-haus:nth-child(even) .dorf-front:not(.ohne-bild){height:150px}
+ .dorf-haustitel{font-size:16px}
+ .dorf-offenes-haus{padding:16px 12px}
+ .dorf-auslage .landschaft-material{flex-basis:120px}
+ .campus-fluegel{grid-template-columns:1fr;margin-bottom:20px}
+ .campus-fluegel:after{left:26px;top:initial;bottom:initial;width:40px;height:13px;transform:translateY(-1px);border:0}
+ .campus-eingang{padding:17px;border-right:0;border-bottom:2px solid #63818a}
+ .campus-raumart{margin-bottom:6px}
+ .campus-raumname{font-size:25px}
+ .campus-raummenge{margin-top:7px}
+ .campus-werkraum{padding:18px 14px}
+ .campus-auslage{gap:12px}
+ .campus-auslage .landschaft-material{flex-basis:110px;max-width:100%}
+ .campus-auslage .landschaft-bild{height:140px}
+ .campus-tueren .landschaft-textknopf{flex-basis:110px}
+ .campus-arbeitsraum{padding:20px 14px}
+ .campus-tisch{gap:22px 14px}
+ .campus-tisch .landschaft-material{flex-basis:120px}
+}

@@ -3,7 +3,7 @@
 
 const ruhig = matchMedia('(prefers-reduced-motion: reduce)');
 
-export function buehne(el, {zeichne, tipp, schwebe, lebendig = () => false}){
+export function buehne(el, {zeichne, tipp, schwebe, lebendig = () => false, doppelklickZoom = true}){
   const c = document.createElement('canvas'); c.className = 'flaeche'; c.setAttribute('aria-hidden', 'true'); el.appendChild(c);
   const x = c.getContext('2d');
   const B = {c, x, w: 1, h: 1, dpr: 1, cx: 0, cy: 0, s: 1, sMin: 0.2, sMax: 170, rand: {oben: 0, unten: 0, links: 0, rechts: 0}, ruhig: () => ruhig.matches, zeit: 0};
@@ -71,7 +71,7 @@ export function buehne(el, {zeichne, tipp, schwebe, lebendig = () => false}){
     if(e.ctrlKey || e.deltaMode !== 0 || (Math.abs(e.deltaX) < 1 && Math.abs(e.deltaY) >= 40)) naeher(px, py, Math.exp(-e.deltaY * (e.ctrlKey ? 0.012 : 0.0022)));
     else if(e.shiftKey || Math.abs(e.deltaX) > Math.abs(e.deltaY) * 0.6){ B.cx += e.deltaX / B.s; B.cy += e.deltaY / B.s; flug = null; B.neu(); }
     else naeher(px, py, Math.exp(-e.deltaY * 0.006)); }, {passive: false});
-  c.addEventListener('dblclick', e => { const [px, py] = ort(e); const wx = B.vonX(px), wy = B.vonY(py); B.fliege({cx: wx, cy: wy, s: Math.min(B.sMax, B.s * 2.2)}, 450); });
+  if(doppelklickZoom) c.addEventListener('dblclick', e => { const [px, py] = ort(e); const wx = B.vonX(px), wy = B.vonY(py); B.fliege({cx: wx, cy: wy, s: Math.min(B.sMax, B.s * 2.2)}, 450); });
 
   B.ende = () => { tot = true; ro.disconnect(); c.remove(); };
   return B;

@@ -4,7 +4,7 @@
    des Gewählten, das Lesen und der Wechsel der Ansicht. Eine Ansicht zeichnet nur; sie ändert nichts.
    Das gewählte Werk bleibt beim Wechsel gewählt. */
 
-import {baueInhalt, wegZu, adresse, mengenWort, zeitWort, ARTWORT} from './inhalt.js';
+import {baueInhalt, wegZu, adresse, bisherigeAdresse, mengenWort, zeitWort, ARTWORT} from './inhalt.js';
 import {lesetext} from './lesen.js';
 
 const $ = s => document.querySelector(s);
@@ -26,18 +26,21 @@ const bildchen = id => `<svg viewBox="0 0 24 24" width="20" height="20" fill="no
 const ANSICHTEN = [
   {id: 'baum', name: 'Baum', satz: 'Was woraus gewachsen ist', modul: () => import('./baum.js')},
   {id: 'tragwerk', name: 'Tragwerk', satz: 'Was worauf ruht', modul: () => import('./tragwerk.js')},
-  {id: 'kosmos', name: 'Kosmos', satz: 'Was um was kreist', alt: 'welten.html?welt=kosmos'},
-  {id: 'garten', name: 'Garten', satz: 'Was gerade blüht', alt: 'welten.html?welt=garten'},
-  {id: 'galaxie', name: 'Galaxie', satz: 'Alles auf einmal, in der Zeit', alt: 'welten.html?welt=galaxie'},
-  {id: 'dorf', name: 'Dorf', satz: 'Wer neben wem wohnt', alt: 'welten.html?welt=dorf'},
-  {id: 'campus', name: 'Campus', satz: 'Wo was seinen Platz hat', alt: 'welten.html?welt=campus'},
-  {id: 'buero', name: 'Büro', satz: 'Was auf dem Tisch liegt', alt: 'welten.html?welt=buero'},
-  {id: 'zelle', name: 'Zelle und Text', satz: 'Ein Werk von nah, mit seinem Wortlaut', alt: 'index.html'}
+  {id: 'kosmos', name: 'Kosmos', satz: 'Was um was kreist', modul: () => import('./kosmos.js')},
+  {id: 'garten', name: 'Garten', satz: 'Was gerade blüht', modul: () => import('./garten.js')},
+  {id: 'galaxie', name: 'Galaxie', satz: 'Alles auf einmal, in der Zeit', modul: () => import('./galaxie.js')},
+  {id: 'dorf', name: 'Dorf', satz: 'Wer neben wem wohnt', modul: () => import('./dorf.js')},
+  {id: 'campus', name: 'Campus', satz: 'Wo was seinen Platz hat', modul: () => import('./campus.js')},
+  {id: 'buero', name: 'Büro', satz: 'Was auf dem Tisch liegt', modul: () => import('./buero.js')},
+  {id: 'zelle', name: 'Zelle und Text', satz: 'Ein Werk von nah, mit seinem Wortlaut', modul: () => import('./zelle.js')}
 ];
 
 const Z = {inhalt: null, gewaehlt: null, ansicht: 'baum', laeuft: null, texte: new Map(), karteOffen: innerWidth >= 760};
 const buehneEl = $('#buehne'), kopf = $('#kopf'), karte = $('#karte'), lesen = $('#lesen'), hinweis = $('#hinweis');
 const schmal = () => innerWidth < 760;
+let perTastatur = false;
+document.addEventListener('keydown', () => { perTastatur = true; }, true);
+document.addEventListener('pointerdown', () => { perTastatur = false; }, true);
 
 /* ---------- Adresse: #baum/education/faska ---------- */
 function ausAdresse(){
@@ -45,24 +48,28 @@ function ausAdresse(){
   return {ansicht: a ? a.id : 'baum', pfad: (a ? t.slice(1) : t).join('/')};
 }
 function inAdresse(){ const p = Z.gewaehlt && Z.gewaehlt.art !== 'wurzel' ? '/' + adresse(Z.gewaehlt) : ''; const h = '#' + Z.ansicht + p; if(location.hash !== h) history.replaceState(null, '', h); }
-function nachPfad(p){ if(!p) return Z.inhalt.wurzel; return Z.inhalt.alle.find(k => k.art !== 'wurzel' && adresse(k) === p) || Z.inhalt.wurzel; }
+function nachPfad(p){ if(!p) return Z.inhalt.wurzel; return Z.inhalt.alle.find(k => k.art !== 'wurzel' && adresse(k) === p)
+  || Z.inhalt.alle.find(k => k.art !== 'wurzel' && bisherigeAdresse(k) === p) || Z.inhalt.wurzel; }
 
 /* ---------- Der Kontext, den jede Ansicht bekommt ---------- */
 const K = {
   get inhalt(){ return Z.inhalt; },
+  get texte(){ return Z.texte; },
   gewaehlt: () => Z.gewaehlt,
   still: new URLSearchParams(location.search).has('still'),   // ohne Wachsen: für Standbilder und Prüfungen
   waehle: k => waehle(k),
   oeffne: k => oeffne(k),
   bildUrl: (b, breit = 240) => `/lichtwerk/bild?w=${breit >= 600 ? 960 : 240}&pfad=${encodeURIComponent(b.pfad)}`,
   rand: () => { const o = kopf.getBoundingClientRect().bottom + 8;
-    if(schmal()) return {oben: o, unten: karte.getBoundingClientRect().height + 14, links: 6, rechts: 6};
-    return {oben: o, unten: 20, links: karte.hidden ? 20 : karte.getBoundingClientRect().width + 36, rechts: 20}; }
+    if(schmal()) return {oben: o, unten: karte.hidden ? 6 : Math.max(6, innerHeight - karte.getBoundingClientRect().top + 6), links: 6, rechts: 6};
+    return {oben: o, unten: 20, links: karte.hidden || !Z.karteOffen ? 20 : karte.getBoundingClientRect().width + 36, rechts: 20}; }
 };
 
 function waehle(k, o = {}){
   if(!k) k = Z.inhalt.wurzel;
+  const fokusFolgt = perTastatur && lesen.hidden && (karte.contains(document.activeElement) || $('#weg').contains(document.activeElement));
   Z.gewaehlt = k; zeichneWeg(); zeichneKarte(); inAdresse();
+  if(fokusFolgt) karte.querySelector('.kartenkopf')?.focus({preventScroll: true});
   if(Z.laeuft && Z.laeuft.zeige) Z.laeuft.zeige(k, o.sofort);
 }
 
@@ -86,6 +93,12 @@ function ortsWort(k){
   const auch = (k.auch || []).filter(n => !wegZu(k).some(q => q.name === n)); if(auch.length) teile.push('auch in ' + auch.join(', '));
   return teile.join(' · ');
 }
+function titelBild(k){
+  if(k.bild) return k.bild;
+  if(k.bilder?.length) return k.bilder[0];
+  for(const c of k.kinder || []){ const b=titelBild(c); if(b) return b; }
+  return null;
+}
 function zeichneKarte(){
   const k = Z.gewaehlt, blatt = !k.kinder; karte.replaceChildren(); karte.classList.toggle('offen', Z.karteOffen);
   const kopfteil = el('button', 'kartenkopf'); kopfteil.type = 'button'; kopfteil.setAttribute('aria-expanded', String(Z.karteOffen));
@@ -95,7 +108,11 @@ function zeichneKarte(){
   karte.append(kopfteil);
   const leib = el('div', 'kartenleib');
   if(blatt){
-    if(k.bilder.length){ const band = el('div', 'bildband'); for(const b of k.bilder.slice(0, 12)){ const i = new Image(); i.loading = 'lazy'; i.alt = b.text || ''; i.src = K.bildUrl(b, 240); i.onclick = () => oeffne(k, b); band.append(i); } leib.append(band); }
+    if(k.bilder.length){ const band = el('div', 'bildband'); for(const [n, b] of k.bilder.slice(0, 12).entries()){
+      const wahl = el('button', 'bildwahl'); wahl.type = 'button'; wahl.setAttribute('aria-label', b.text ? 'Bild öffnen: ' + b.text : 'Bild ' + (n + 1) + ' öffnen');
+      const i = new Image(); i.loading = 'lazy'; i.alt = b.text || ''; i.src = K.bildUrl(b, 240);
+      wahl.append(i); wahl.onclick = () => oeffne(k, b); band.append(wahl);
+    } leib.append(band); }
     if(k.stimme) leib.append(el('p', 'klein', 'Stimme: ' + k.stimme));
     const l = el('button', 'haupt', k.art === 'gespraech' ? 'Gespräch lesen' : 'Fassung lesen'); l.type = 'button'; l.onclick = () => oeffne(k); leib.append(l);
   } else {
@@ -103,22 +120,33 @@ function zeichneKarte(){
     if(k.bild){ const i = new Image(); i.className = 'titelbild'; i.alt = k.bild.text || ''; i.src = K.bildUrl(k.bild, 960); leib.append(i); }
     const liste = el('ul', 'kinder');
     for(const c of k.kinder){ const li = el('li'), b = el('button'); b.type = 'button';
-      if(c.bild){ const i = new Image(); i.loading = 'lazy'; i.alt = ''; i.src = K.bildUrl(c.bild, 240); b.append(i); } else b.append(el('span', 'punkt ' + c.art));
+      const cb = titelBild(c);
+      if(cb){ const i = new Image(); i.loading = 'lazy'; i.alt = ''; i.src = K.bildUrl(cb, 240); b.append(i); } else b.append(el('span', 'punkt ' + c.art));
       const t = el('span', 'name'); t.append(el('b', '', c.name), el('small', '', c.kinder ? mengenWort(c) : c.art === 'gespraech' ? 'Gespräch · ' + zeitWort(c) : zeitWort(c)));
       b.append(t); b.onclick = () => waehle(c); li.append(b); liste.append(li); }
     leib.append(liste);
   }
   karte.append(leib);
 }
-function nachKarte(){ if(Z.laeuft && Z.laeuft.zeige && schmal()) setTimeout(() => Z.laeuft.zeige(Z.gewaehlt), 260); }
+function nachKarte(){ requestAnimationFrame(() => Z.laeuft?.zeige?.(Z.gewaehlt)); }
 
 /* ---------- Lesen ---------- */
-async function oeffne(k, bild){
+let lesefokus = null, lesehintergrund = [];
+function bereiteLesen(){
+  if(lesen.hidden){
+    lesefokus = document.activeElement;
+    lesehintergrund = [buehneEl, kopf, karte, hinweis].map(e => [e, e.inert]);
+    for(const [e] of lesehintergrund) e.inert = true;
+  }
   lesen.hidden = false; lesen.replaceChildren(); document.body.classList.add('liest');
+}
+async function oeffne(k, bild){
+  bereiteLesen();
   const blatt = el('article', 'blatt'), zu = el('button', 'zu'); zu.type = 'button'; zu.setAttribute('aria-label', 'Schließen');
   zu.innerHTML = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>'; zu.onclick = schliesse;
   const w = wegZu(k).slice(1, -1).map(q => q.name).join(' › ');
-  blatt.append(zu, el('p', 'art', w), el('h1', '', k.name), el('p', 'menge', (k.art === 'gespraech' ? 'Gespräch' : mengenWort(k)) + ' · ' + zeitWort(k) + (k.stimme ? ' · ' + k.stimme : '')));
+  const titel = el('h1', '', k.name); titel.id = 'lesetitel';
+  blatt.append(zu, el('p', 'art', w), titel, el('p', 'menge', (k.art === 'gespraech' ? 'Gespräch' : mengenWort(k)) + ' · ' + zeitWort(k) + (k.stimme ? ' · ' + k.stimme : '')));
   if(k.bilder.length){ const g = el('div', 'bilder'); for(const b of k.bilder){ const f = el('figure'), i = new Image(); i.loading = 'lazy'; i.alt = b.text || ''; i.src = K.bildUrl(b, 960); if(b.b && b.h) i.style.aspectRatio = b.b + ' / ' + b.h;
       f.append(i); if(b.text) f.append(el('figcaption', '', b.text)); g.append(f); if(b === bild) requestAnimationFrame(() => f.scrollIntoView({block: 'center'})); } blatt.append(g); }
   const text = el('div', 'text'); text.append(el('p', 'klein', 'Der Wortlaut wird geholt …')); blatt.append(text);
@@ -130,13 +158,29 @@ async function oeffne(k, bild){
   catch(e){ text.replaceChildren(el('p', 'klein', 'Der Wortlaut ist gerade nicht erreichbar.')); }
   for(const im of text.querySelectorAll('img')) im.onerror = () => im.remove();
 }
-function schliesse(){ lesen.hidden = true; lesen.replaceChildren(); document.body.classList.remove('liest'); }
+function schliesse(){
+  if(lesen.hidden) return;
+  lesen.hidden = true; lesen.replaceChildren(); document.body.classList.remove('liest');
+  for(const [e, vorher] of lesehintergrund) e.inert = vorher;
+  const zurueck = lesefokus?.isConnected && lesefokus !== document.body ? lesefokus : karte.querySelector('.kartenkopf');
+  lesefokus = null; lesehintergrund = []; zurueck?.focus({preventScroll: true});
+}
 lesen.addEventListener('click', e => { if(e.target === lesen) schliesse(); });
+lesen.addEventListener('keydown', e => {
+  if(e.key !== 'Tab') return;
+  const ziele = [...lesen.querySelectorAll('a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])')]
+    .filter(e => e.tabIndex >= 0 && !e.closest('[hidden], [inert]') && e.getClientRects().length);
+  const erstes = ziele[0], letztes = ziele[ziele.length - 1];
+  if(!erstes){ e.preventDefault(); lesen.focus(); }
+  else if(e.shiftKey && (document.activeElement === erstes || !ziele.includes(document.activeElement))){ e.preventDefault(); letztes.focus(); }
+  else if(!e.shiftKey && (document.activeElement === letztes || !ziele.includes(document.activeElement))){ e.preventDefault(); erstes.focus(); }
+});
 
 function zeigeLegende(){
   const a = ANSICHTEN.find(x => x.id === Z.ansicht); if(!Z.legende) return;
-  lesen.hidden = false; lesen.replaceChildren(); const b = el('article', 'blatt schmal'), zu = el('button', 'zu', '×'); zu.type = 'button'; zu.setAttribute('aria-label', 'Schließen'); zu.onclick = schliesse;
-  const t = el('div', 'text'); t.innerHTML = Z.legende; b.append(zu, el('p', 'art', a.satz), el('h1', '', a.name), t); lesen.append(b); zu.focus();
+  bereiteLesen(); const b = el('article', 'blatt schmal'), zu = el('button', 'zu', '×'); zu.type = 'button'; zu.setAttribute('aria-label', 'Schließen'); zu.onclick = schliesse;
+  const titel = el('h1', '', a.name); titel.id = 'lesetitel';
+  const t = el('div', 'text'); t.innerHTML = Z.legende; b.append(zu, el('p', 'art', a.satz), titel, t); lesen.append(b); zu.focus();
 }
 
 /* ---------- Ansichten ---------- */
@@ -151,42 +195,56 @@ function zeichneLeiste(){
   wahl.onclick = () => { const auf = nav.classList.toggle('auf'); wahl.setAttribute('aria-expanded', String(auf)); };
   nav.append(wahl, reihe);
 }
-document.addEventListener('pointerdown', e => { const nav = $('#ansichten'); if(nav.classList.contains('auf') && !nav.contains(e.target)) nav.classList.remove('auf'); });
+function schliesseAnsichten(fokus = false){
+  const nav = $('#ansichten'), wahl = nav.querySelector('.wahl');
+  nav.classList.remove('auf'); wahl?.setAttribute('aria-expanded', 'false');
+  if(fokus) wahl?.focus();
+}
+document.addEventListener('pointerdown', e => { const nav = $('#ansichten'); if(nav.classList.contains('auf') && !nav.contains(e.target)) schliesseAnsichten(); });
 
-async function wechsle(id, sofort){
+let wechsel = 0;
+async function wechsle(id, sofort, ohneAnfang = false){
   const a = ANSICHTEN.find(x => x.id === id) || ANSICHTEN[0];
-  if(Z.laeuft){ buehneEl.classList.add('geht'); await new Promise(r => setTimeout(r, sofort ? 0 : 220)); Z.laeuft.ende && Z.laeuft.ende(); Z.laeuft = null; }
-  buehneEl.replaceChildren(); Z.ansicht = a.id; document.body.dataset.ansicht = a.id; Z.legende = ''; zeichneLeiste(); inAdresse();
-  if(a.modul){ const m = await a.modul(); Z.legende = m.legende || ''; Z.laeuft = m.starte(buehneEl, K); }
+  const auftrag = ++wechsel;
+  Z.ansicht = a.id; zeichneLeiste(); inAdresse();
+  if(Z.laeuft) buehneEl.classList.add('geht');
+  const [m] = await Promise.all([a.modul ? a.modul() : null, new Promise(r => setTimeout(r, Z.laeuft && !sofort ? 220 : 0))]);
+  if(auftrag !== wechsel) return false;   // Nur der zuletzt gewählte Blick darf die Bühne übernehmen.
+  if(Z.laeuft){ Z.laeuft.ende && Z.laeuft.ende(); Z.laeuft = null; }
+  buehneEl.replaceChildren(); document.body.dataset.ansicht = a.id; Z.legende = '';
+  if(m){ const kontext = Object.create(K); if(ohneAnfang) kontext.still = true;
+    Z.legende = m.legende || ''; Z.laeuft = m.starte(buehneEl, kontext); }
   else {   // noch nicht neu gebaut: ehrlich sagen, die bisherige Fassung bleibt erreichbar
     const p = el('div', 'kommt'); p.innerHTML = bildchen(a.id); p.append(el('h2', '', a.name), el('p', '', a.satz + '. Diese Ansicht wird gerade neu gebaut.'));
     const l = el('a', '', 'Die bisherige Fassung öffnen'); l.href = a.alt; p.append(l); buehneEl.append(p); Z.laeuft = {ende(){}};
   }
   buehneEl.classList.remove('geht');
+  return true;
 }
 
 addEventListener('keydown', e => {
   if(e.key !== 'Escape') return;
   if(!lesen.hidden) return schliesse();
-  if($('#ansichten').classList.contains('auf')) return $('#ansichten').classList.remove('auf');
+  if($('#ansichten').classList.contains('auf')) return schliesseAnsichten(true);
   if(Z.gewaehlt && Z.gewaehlt.eltern) waehle(Z.gewaehlt.eltern);
 });
-addEventListener('hashchange', () => { if(!Z.inhalt) return; const a = ausAdresse(), k = nachPfad(a.pfad); if(a.ansicht !== Z.ansicht) wechsle(a.ansicht).then(() => waehle(k)); else if(k !== Z.gewaehlt) waehle(k); });
+addEventListener('hashchange', () => { if(!Z.inhalt) return; const a = ausAdresse(), k = nachPfad(a.pfad);
+  if(a.ansicht !== Z.ansicht){ Z.gewaehlt = k; zeichneWeg(); zeichneKarte(); wechsle(a.ansicht); }
+  else if(k !== Z.gewaehlt) waehle(k); });
 
 /* ---------- Anfang ---------- */
 async function beginne(){
   hinweis.textContent = 'Der Inhalt wird gelesen …';
+  let bilderSpaeter = null, graph, gespraeche;
   try {
     const hole = async u => { const r = await fetch(u); if(!r.ok) throw new Error(u); return r.json(); };
     // Die Bilderliste braucht manchmal Sekunden. Darauf wartet nichts: erst steht alles ohne Bilder da, dann kommen sie dazu.
     const bilderDa = hole('/lichtwerk/bilder').catch(() => null);
-    const [g, gespraeche] = await Promise.all([hole('/api/graph'), hole('/lichtwerk/gespraeche').catch(() => [])]);
+    [graph, gespraeche] = await Promise.all([hole('/api/graph'), hole('/lichtwerk/gespraeche').catch(() => [])]);
+    const g = graph;
     const frueh = await Promise.race([bilderDa, new Promise(r => setTimeout(() => r(undefined), 250))]);
     Z.inhalt = baueInhalt(g, frueh || {}, gespraeche);
-    if(frueh === undefined) bilderDa.then(async bilder => { if(!bilder) return;
-      const pfad = Z.gewaehlt && Z.gewaehlt.art !== 'wurzel' ? adresse(Z.gewaehlt) : '', war = K.still;
-      Z.inhalt = baueInhalt(g, bilder, gespraeche); Z.gewaehlt = nachPfad(pfad); zeichneWeg(); zeichneKarte();
-      K.still = true; await wechsle(Z.ansicht, true); K.still = war; });
+    if(frueh === undefined) bilderSpaeter = bilderDa;
     for(const v of g.variants || []) Z.texte.set(v.id, v.content || '');
   } catch(e){
     hinweis.replaceChildren(el('span', '', 'Das Lichtwerk antwortet gerade nicht. ')); const b = el('button', '', 'Noch einmal versuchen'); b.type = 'button'; b.onclick = beginne; hinweis.append(b); return;
@@ -194,5 +252,12 @@ async function beginne(){
   hinweis.textContent = ''; hinweis.hidden = true;
   const a = ausAdresse(); Z.gewaehlt = nachPfad(a.pfad); Z.ansicht = a.ansicht;
   zeichneWeg(); zeichneKarte(); await wechsle(Z.ansicht, true);
+  if(bilderSpaeter){ const bilder = await bilderSpaeter; if(!bilder) return;
+    const vorher = Z.gewaehlt, pfad = vorher && vorher.art !== 'wurzel' ? adresse(vorher) : '';
+    Z.inhalt = baueInhalt(graph, bilder, gespraeche);
+    const stellen = vorher ? Z.inhalt.nachSchluessel.get(vorher.schluessel) || [] : [];
+    Z.gewaehlt = stellen.find(k => adresse(k) === pfad) || stellen[0] || Z.inhalt.wurzel;
+    zeichneWeg(); zeichneKarte(); await wechsle(Z.ansicht, true, true);
+  }
 }
 beginne();

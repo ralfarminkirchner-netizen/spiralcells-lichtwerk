@@ -12,7 +12,6 @@ export const FOLGE = ['Tragwerk System', 'Mitte', 'MiND-BODY-SOUL', 'GAMES', 'MU
 export const TRAGEND = new Set(['Tragwerk System', 'Mitte', 'Tragwerk']);   // was trägt: im Baum die Wurzeln, im Kosmos die Sonne
 export const OFFEN = new Set(['Zur Prüfung']);                               // noch ohne Ort
 const ORTSARTEN = new Set(['Oberdach', 'Mitte', 'Tragwerk', 'Sammlung']);
-export const SCHARF = 360;   // kürzere Seite eines Bildes, ab der es gezeigt wird
 
 const datum = s => { const m = typeof s === 'string' && s.match(/^(\d{4})-(\d{2})(?:-(\d{2}))?/); return m ? Date.UTC(+m[1], +m[2] - 1, m[3] ? +m[3] : 15) : null; };
 const vorname = t => { const i = t.indexOf(' · '); return i > 0 ? t.slice(0, i).trim() : ''; };
@@ -39,7 +38,7 @@ export function baueInhalt(g, bilder = {}, gespraeche = []){
   const blaetter = id => {
     const vs = roh.get(id) || [], werk = titel(id);
     const namen = fassungsNamen(vs.map(v => ({label: v.label, zeit: datum(v.fundus && v.fundus.sortierung), zweig: (zweig.get(v.worktree_id) || {}).name, stimme: stimme.get(v.author_id)})), werk, woerter);
-    return vs.map((v, i) => { const t = datum(v.fundus && v.fundus.sortierung), b = (bilder[v.id] || []).filter(x => !(x.b && x.h) || Math.min(x.b, x.h) >= SCHARF);
+    return vs.map((v, i) => { const t = datum(v.fundus && v.fundus.sortierung), b = (bilder[v.id] || []).filter(x => x && typeof x.pfad === 'string' && x.pfad.trim());
       return {art: 'fassung', name: namen[i], werk, kennung: v.id, zeichen: (v.content || '').length, bilder: b, von: t, bis: t,
         stimme: stimme.get(v.author_id) || '', urteil: (v.fundus && v.fundus.urteil) || 'offen', schluessel: 'f:' + v.id}; }).sort(nachZeit);
   };
@@ -57,7 +56,7 @@ export function baueInhalt(g, bilder = {}, gespraeche = []){
   for(const c of gespraeche){ if(c.zu && c.zu.length) for(const z of c.zu) merke(anName, z.toLowerCase(), c); else for(const o of c.orte || []) merke(anOrt, o, c); }
   const vergeben = new Set();
   const gespraechsBlaetter = liste => (liste || []).map(c => { vergeben.add(c.n); const t = datum(c.datum);
-    return {art: 'gespraech', name: c.titel, nr: c.n, zeichen: 0, bilder: [], von: t, bis: t, schluessel: 'g:' + c.n}; });
+    return {art: 'gespraech', name: c.titel, gespraechNr: c.n, zeichen: 0, bilder: [], von: t, bis: t, schluessel: 'g:' + c.n}; });
 
   function knoten(id, art, weg){
     const nm = titel(id), unten = (runter.get(id) || []).filter(c => !weg.has(c)), weiter = new Set(weg).add(id);
@@ -97,6 +96,7 @@ export function baueInhalt(g, bilder = {}, gespraeche = []){
     if(!nachSchluessel.has(k.schluessel)) nachSchluessel.set(k.schluessel, []); nachSchluessel.get(k.schluessel).push(k);
     if(!k.kinder){ k.blaetter = 1; k.fassungen = k.art === 'fassung' ? 1 : 0; k.gespraeche = k.art === 'gespraech' ? 1 : 0; k.bildzahl = k.bilder.length; return; }
     eindeutig(k.kinder);
+    adressiere(k.kinder);
     let z = 0, f = 0, gs = 0, bz = 0, bl = 0, von = null, bis = null;
     for(const c of k.kinder){ lauf(c, k, tiefe + 1); z += c.zeichen; f += c.fassungen; gs += c.gespraeche; bz += c.bildzahl; bl += c.blaetter;
       if(c.von != null && (von == null || c.von < von)) von = c.von; if(c.bis != null && (bis == null || c.bis > bis)) bis = c.bis; }
@@ -145,5 +145,19 @@ export function zeitWort(k){
   const a = new Date(k.von).toLocaleDateString('de-DE', MON), b = new Date(k.bis).toLocaleDateString('de-DE', MON);
   return a === b ? a : `${a} bis ${b}`;
 }
-/* lesbare Adresse eines Knotens: nur Buchstaben, Ziffern, Bindestriche */
-export const adresse = k => wegZu(k).slice(1).map(q => q.name.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/ß/g, 'ss').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 40)).join('/');
+/* Lesbare Adressen. Bestehende kurze Namen bleiben; Kollisionen bekommen mehr vom Namen,
+   erst bei identischen Schreibformen eine verständliche Zählung. Keine Kennungen in der Adresse. */
+const namensAdresse = name => name.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/ß/g, 'ss').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+function adressiere(kinder){
+  const kurz = k => namensAdresse(k.name).slice(0, 40) || 'eintrag';
+  const belegt = new Set(kinder.map(kurz)), vergeben = new Set();
+  for(const k of kinder){
+    const basis = kurz(k);
+    if(!vergeben.has(basis)){ k.adressTeil = basis; vergeben.add(basis); continue; }
+    const voll = namensAdresse(k.name) || 'eintrag'; let teil = voll, n = 2;
+    while(belegt.has(teil)) teil = voll + '-' + n++;
+    k.adressTeil = teil; belegt.add(teil);
+  }
+}
+export const bisherigeAdresse = k => wegZu(k).slice(1).map(q => namensAdresse(q.name).slice(0, 40)).join('/');
+export const adresse = k => wegZu(k).slice(1).map(q => q.adressTeil || namensAdresse(q.name).slice(0, 40)).join('/');

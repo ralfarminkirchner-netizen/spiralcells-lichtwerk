@@ -31,7 +31,7 @@ export function alsText(roh, bildUrl){
 }
 
 export async function lesetext(k, texte, bildUrl){
-  if(k.art === 'gespraech'){ const r = await fetch('/lichtwerk/gespraech?n=' + k.nr); if(!r.ok) throw new Error('gespraech'); const d = await r.json(); return alsText(String(d.text || '').replace(/^#\s+.*\n/, ''), bildUrl); }
+  if(k.art === 'gespraech'){ const r = await fetch('/lichtwerk/gespraech?n=' + encodeURIComponent(k.gespraechNr)); if(!r.ok) throw new Error('gespraech'); const d = await r.json(); return alsText(String(d.text || '').replace(/^#\s+.*\n/, ''), bildUrl); }
   const roh = (texte.get(k.kennung) || '').trim();
   if(roh.startsWith('{')){ try { const d = JSON.parse(roh);
       let h = alsText(d.summary || '', bildUrl);
