@@ -1,0 +1,143 @@
+/* Ein Inhalt, viele Ansichten: die gemeinsame Hülle. Papier und Tinte; die Ansicht selbst ist das Bild. */
+:root{
+  --papier:#f8f1e2; --papier2:#efe6d0; --tinte:#2b241c; --tinte2:#6a5f51; --linie:rgba(43,36,28,.14); --gruen:#2f6b3f; --gruen2:#e3ecd4;
+  --serif:ui-serif,"New York","Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;
+  --sans:ui-sans-serif,system-ui,-apple-system,"Helvetica Neue",sans-serif;
+  --schatten:0 1px 2px rgba(43,36,28,.08),0 8px 28px rgba(43,36,28,.14);
+  --oben:env(safe-area-inset-top,0px); --unten:env(safe-area-inset-bottom,0px);
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0;overflow:hidden;overscroll-behavior:none}
+body{font:15px/1.45 var(--sans);color:var(--tinte);background:linear-gradient(#cfe0e6,#e9ecdf 45%,#f9ebcf 72%,#4a3324 72.2%,#1d1410);-webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent}
+button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer;text-align:inherit}
+button:focus-visible,a:focus-visible{outline:2px solid var(--gruen);outline-offset:2px;border-radius:8px}
+
+#buehne{position:fixed;inset:0;transition:opacity .22s ease;touch-action:none}
+#buehne.geht{opacity:0}
+.flaeche{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none;cursor:grab}
+.flaeche.zieht{cursor:grabbing}
+
+/* ---------- Kopf: Weg und Ansichten ---------- */
+#kopf{position:fixed;left:0;right:0;top:0;padding:calc(10px + var(--oben)) 12px 0;display:flex;gap:10px;align-items:flex-start;justify-content:space-between;pointer-events:none;z-index:5}
+#kopf>*{pointer-events:auto}
+#weg,#ansichten .wahl,#ansichten .reihe,#karte{background:rgba(248,241,226,.86);backdrop-filter:blur(14px) saturate(1.2);-webkit-backdrop-filter:blur(14px) saturate(1.2);border:1px solid var(--linie);box-shadow:var(--schatten)}
+#weg{display:flex;align-items:center;min-width:0;max-width:min(100%,62vw);height:44px;border-radius:22px;padding:0 6px}
+#weg .zurueck{flex:none;width:34px;height:34px;border-radius:17px;display:grid;place-items:center}
+#weg .zurueck:hover{background:var(--papier2)}
+#weg .stufen{list-style:none;margin:0;padding:0 8px 0 4px;display:flex;align-items:center;overflow-x:auto;scrollbar-width:none;white-space:nowrap;min-width:0}
+#weg .stufen::-webkit-scrollbar{display:none}
+#weg .zurueck+.stufen{-webkit-mask-image:linear-gradient(90deg,transparent,#000 22px);mask-image:linear-gradient(90deg,transparent,#000 22px)}
+#weg li{display:flex;align-items:center;flex:none}
+#weg li+li::before{content:"›";color:var(--tinte2);margin:0 7px;opacity:.7}
+#weg li button{padding:6px 2px;color:var(--tinte2);font-size:14px;max-width:44vw;overflow:hidden;text-overflow:ellipsis}
+#weg li button:hover{color:var(--tinte)}
+#weg li button.hier{color:var(--tinte);font:600 16px/1.2 var(--serif)}
+
+#ansichten{position:relative;flex:none}
+#ansichten .wahl{display:none;align-items:center;gap:8px;height:44px;padding:0 14px 0 12px;border-radius:22px;font-weight:600}
+#ansichten .reihe{display:flex;gap:2px;padding:4px;border-radius:22px}
+#ansichten .reihe button{display:flex;align-items:center;gap:7px;height:34px;padding:0 12px 0 9px;border-radius:17px;color:var(--tinte2);white-space:nowrap;font-size:14px;transition:background .15s,color .15s}
+#ansichten .reihe button svg{flex:none}
+#ansichten .reihe button .s{display:none}
+#ansichten .reihe button:hover{background:var(--papier2);color:var(--tinte)}
+#ansichten .reihe button.an{background:var(--tinte);color:var(--papier)}
+@media (max-width:1180px){
+  #ansichten .wahl{display:flex}
+  #ansichten .reihe{display:none;position:absolute;right:0;top:52px;width:min(340px,calc(100vw - 24px));flex-direction:column;gap:2px;padding:8px;border-radius:20px;background:rgba(248,241,226,.97)}
+  #ansichten.auf .reihe{display:flex}
+  #ansichten .reihe button{height:auto;min-height:52px;padding:8px 12px;border-radius:14px;display:grid;grid-template-columns:28px 1fr;column-gap:10px;row-gap:0;white-space:normal;align-items:center}
+  #ansichten .reihe button svg{grid-row:1 / span 2;width:24px;height:24px}
+  #ansichten .reihe button .n{font:600 16px/1.2 var(--serif);color:inherit}
+  #ansichten .reihe button .s{display:block;font-size:12.5px;opacity:.75}
+}
+
+/* ---------- Karte des Gewählten ---------- */
+#karte{position:fixed;left:14px;bottom:14px;width:340px;max-height:min(64vh,620px);border-radius:20px;display:flex;flex-direction:column;overflow:hidden;z-index:4}
+.kartenkopf{display:grid;gap:2px;padding:14px 18px 12px;width:100%;flex:none}
+.kartenkopf .griff{display:none}
+.kartenkopf .art{font-size:12px;letter-spacing:.04em;color:var(--tinte2)}
+.kartenkopf .titel{font:600 21px/1.18 var(--serif);text-wrap:balance}
+.kartenkopf .menge{font-size:12.5px;color:var(--tinte2);margin-top:2px}
+.kartenleib{overflow-y:auto;padding:0 10px 10px;display:none;overscroll-behavior:contain}
+#karte.offen .kartenleib{display:block}
+.kartenleib .klein,.blatt .klein{font-size:12.5px;color:var(--tinte2);margin:0 8px 8px}
+.kartenleib .titelbild{display:block;width:calc(100% - 4px);margin:0 2px 8px;border-radius:12px;aspect-ratio:16/10;object-fit:cover;background:var(--papier2)}
+.kartenleib .bildband{display:flex;gap:6px;overflow-x:auto;padding:0 2px 8px;scrollbar-width:none}
+.kartenleib .bildband img{height:120px;border-radius:10px;flex:none;background:var(--papier2);cursor:zoom-in}
+.kartenleib button.haupt{display:block;width:calc(100% - 4px);margin:2px;padding:12px;border-radius:13px;background:var(--tinte);color:var(--papier);text-align:center;font-weight:600}
+.kartenleib button.leise{margin:0 8px 8px;font-size:13px;color:var(--gruen);text-decoration:underline;text-underline-offset:3px}
+.kinder{list-style:none;margin:0;padding:0;border-top:1px solid var(--linie)}
+.kinder button{display:flex;align-items:center;gap:11px;width:100%;padding:7px 8px;border-radius:11px;min-height:46px}
+.kinder button:hover{background:var(--papier2)}
+.kinder img,.kinder .punkt{flex:none;width:36px;height:36px;border-radius:50%;object-fit:cover;background:var(--papier2)}
+.kinder .punkt{display:grid;place-items:center}
+.kinder .punkt::after{content:"";width:14px;height:22px;border-radius:14px 0 14px 0;background:#6a9a4a;transform:rotate(38deg)}
+.kinder .punkt.ort::after,.kinder .punkt.bereich::after{width:22px;height:22px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#8fb85c,#2f6b3f)}
+.kinder .punkt.app::after{width:18px;height:18px;border-radius:50%;background:#4f8a45}
+.kinder .punkt.gespraech::after{width:16px;height:16px;border-radius:50%;background:#fff;box-shadow:inset 0 0 0 4px #f3c9c2,inset 0 0 0 8px #e9b23a;transform:none}
+.kinder .name{display:grid;min-width:0}
+.kinder .name b{font:600 15px/1.25 var(--serif);overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.kinder .name small{font-size:12px;color:var(--tinte2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+@media (max-width:759px){
+  #kopf{padding:calc(8px + var(--oben)) 8px 0;gap:8px}
+  #weg{max-width:none;flex:1}
+  #weg li button{max-width:52vw}
+  #ansichten .wahl{padding:0 11px 0 10px}
+  #karte{left:8px;right:8px;bottom:calc(8px + var(--unten));width:auto;max-height:62vh;border-radius:22px}
+  .kartenkopf{padding:8px 18px 12px}
+  .kartenkopf .griff{display:block;width:38px;height:4px;border-radius:2px;background:rgba(43,36,28,.25);justify-self:center;margin-bottom:6px}
+  .kartenkopf .titel{font-size:19px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+}
+
+/* ---------- Lesen ---------- */
+#lesen{position:fixed;inset:0;z-index:20;background:rgba(29,20,16,.5);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);overflow-y:auto;overscroll-behavior:contain;padding:calc(24px + var(--oben)) 16px 40px;animation:ein .2s ease}
+#lesen[hidden]{display:none}
+@keyframes ein{from{opacity:0}}
+.blatt{position:relative;max-width:760px;margin:0 auto;background:var(--papier);border-radius:22px;padding:36px clamp(20px,6vw,64px) 28px;box-shadow:0 20px 80px rgba(0,0,0,.35);animation:hoch .28s cubic-bezier(.2,.8,.2,1)}
+.blatt.schmal{max-width:480px}
+@keyframes hoch{from{transform:translateY(18px);opacity:0}}
+.blatt .zu{position:sticky;float:right;top:0;margin:-18px -6px 0 12px;width:40px;height:40px;border-radius:20px;display:grid;place-items:center;background:var(--papier2);font-size:22px;z-index:2}
+.blatt .art{font-size:12.5px;letter-spacing:.04em;color:var(--tinte2);margin:0 0 6px}
+.blatt h1{font:600 clamp(26px,4.6vw,38px)/1.12 var(--serif);margin:0 0 8px;text-wrap:balance}
+.blatt .menge{font-size:13px;color:var(--tinte2);margin:0 0 22px}
+.blatt .bilder{display:grid;gap:14px;margin:0 0 24px}
+.blatt figure{margin:0}
+.blatt figure img{display:block;width:100%;height:auto;border-radius:12px;background:var(--papier2);box-shadow:0 1px 0 var(--linie),0 6px 24px rgba(43,36,28,.12)}
+.blatt figcaption{font-size:12.5px;color:var(--tinte2);margin-top:6px}
+.blatt .text{font:18px/1.62 var(--serif);overflow-wrap:anywhere}
+.blatt .text h2,.blatt .text h3,.blatt .text h4{font:600 22px/1.25 var(--serif);margin:1.5em 0 .4em}
+.blatt .text h3{font-size:19px}.blatt .text h4{font-size:17px}
+.blatt .text p{margin:0 0 .9em}
+.blatt .text ul,.blatt .text ol{padding-left:1.3em;margin:0 0 .9em}
+.blatt .text img{max-width:100%;border-radius:10px;margin:.4em 0}
+.blatt .text code{font:13.5px/1.5 ui-monospace,Menlo,monospace;background:var(--papier2);padding:1px 5px;border-radius:5px}
+.blatt .text pre{font:12.5px/1.5 ui-monospace,Menlo,monospace;background:var(--papier2);padding:12px;border-radius:10px;overflow-x:auto;white-space:pre-wrap}
+.blatt .text blockquote{margin:0 0 .9em;padding-left:14px;border-left:3px solid var(--linie);color:var(--tinte2)}
+.blatt .text hr{border:0;border-top:1px solid var(--linie);margin:1.4em 0}
+.blatt .text a{color:var(--gruen)}
+.blatt .technik{margin-top:1.4em;font:14px/1.5 var(--sans);color:var(--tinte2)}
+.blatt .technik summary{cursor:pointer;padding:8px 0}
+.blatt .weiter{display:flex;justify-content:space-between;gap:12px;margin-top:28px;padding-top:16px;border-top:1px solid var(--linie)}
+.blatt .weiter button{font-size:13.5px;color:var(--gruen);max-width:48%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:8px 0}
+.blatt .weiter button:disabled{visibility:hidden}
+.blatt .zeichen{list-style:none;padding:0;margin:0 0 1em;display:grid;gap:8px;font:15px/1.4 var(--sans)}
+.blatt .zeichen li{display:flex;align-items:center;gap:12px}
+.z{flex:none;width:22px;height:22px;display:inline-block;border-radius:50%}
+.z.blatt{all:unset;flex:none;width:12px;height:22px;margin:0 5px;border-radius:12px 0 12px 0;transform:rotate(38deg);display:inline-block}
+.z.jung{background:hsl(80 68% 50%)}.z.frueh{background:hsl(150 40% 25%)}.z.offen{background:hsl(108 26% 43%)}
+.z.frucht{background:#d9532f;box-shadow:0 0 0 2px #fffaf0,0 0 0 3px var(--linie)}
+.z.bluete{background:radial-gradient(circle,#e9b23a 28%,#fffaf6 30%);box-shadow:0 0 0 1px rgba(190,120,120,.55)}
+.z.knolle{background:radial-gradient(circle at 35% 35%,#ffe9b0,#d9952f);box-shadow:0 0 0 4px #3a281d}
+.z.keim{background:linear-gradient(#8fb85c,#8fb85c) center bottom/2px 14px no-repeat,radial-gradient(circle at 50% 30%,#6f9a48 5px,transparent 6px)}
+
+/* ---------- Übriges ---------- */
+#hinweis{position:fixed;left:50%;top:46%;transform:translate(-50%,-50%);margin:0;font:italic 17px var(--serif);color:var(--tinte2);text-align:center;z-index:3}
+#hinweis[hidden]{display:none}
+#hinweis button{color:var(--gruen);text-decoration:underline}
+.kommt{position:absolute;left:50%;top:44%;transform:translate(-50%,-50%);width:min(420px,calc(100vw - 48px));text-align:center;background:rgba(248,241,226,.9);border:1px solid var(--linie);border-radius:22px;padding:28px 24px;box-shadow:var(--schatten)}
+.kommt svg{width:44px;height:44px;color:var(--gruen)}
+.kommt h2{font:600 26px/1.2 var(--serif);margin:8px 0 6px}
+.kommt p{margin:0 0 14px;color:var(--tinte2)}
+.kommt a{color:var(--gruen);font-weight:600}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
