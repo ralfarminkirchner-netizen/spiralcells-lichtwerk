@@ -78,16 +78,16 @@ export function buehne(el, {zeichne, tipp, schwebe, lebendig = () => false}){
 }
 
 /* Bilder: klein aus der Ferne, scharf von nah; nur was zu sehen ist, wird geholt */
-export function bildlager(url, grenze = 500){
+export function bildlager(url, grenze = 500, zugleich = 6){
   const lager = new Map(); let laufend = 0; const warten = [];
   const hole = e => { laufend++; const i = new Image(); i.decoding = 'async';
     i.onload = () => { e.bild = i; e.da = performance.now(); fertig(); }; i.onerror = () => { e.fehlt = true; fertig(); }; i.src = e.url; };
-  const fertig = () => { laufend--; L.beiBild && L.beiBild(); while(laufend < 6 && warten.length) hole(warten.pop()); };
+  const fertig = () => { laufend--; L.beiBild && L.beiBild(); while(laufend < zugleich && warten.length) hole(warten.pop()); };
   const L = {
     /* gibt das Bild, wenn es da ist; sonst wird es geholt und null kommt zurück */
     nimm(b, breit){ const k = b.pfad + '|' + breit; let e = lager.get(k);
       if(!e){ e = {url: url(b, breit), bild: null}; lager.set(k, e); if(lager.size > grenze){ const erster = lager.keys().next().value; lager.delete(erster); }
-        if(laufend < 6) hole(e); else warten.push(e); }
+        if(laufend < zugleich) hole(e); else warten.push(e); }
       else { lager.delete(k); lager.set(k, e); }
       return e.bild ? e : null; },
     beiBild: null

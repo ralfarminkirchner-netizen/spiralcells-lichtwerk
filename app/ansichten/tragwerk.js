@@ -13,24 +13,18 @@ import {TRAGEND, OFFEN, mengenWort} from './inhalt.js';
 
 const TINTE = '#2b241c', SERIF = 'ui-serif, "New York", "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif', SANS = 'ui-sans-serif, system-ui, -apple-system, "Helvetica Neue", sans-serif';
 const klemme = (v, a = 0, b = 1) => v < a ? a : v > b ? b : v;
-const STUFEN = 10;
-const GRUEN = Array.from({length: STUFEN}, (_, i) => { const u = i / (STUFEN - 1); return `hsl(${150 - u * 74} ${40 + u * 30}% ${25 + u * 27}%)`; });
-const GRAU = ['hsl(108 26% 43%)', 'hsl(100 28% 49%)', 'hsl(116 25% 38%)'];
-const GLUT = Array.from({length: STUFEN}, (_, i) => { const u = i / (STUFEN - 1); return `hsl(${30 + u * 16} ${62 + u * 30}% ${40 + u * 26}%)`; });
-const ASCHE = ['hsl(30 26% 46%)', 'hsl(34 24% 52%)', 'hsl(27 24% 40%)'];
 const HOCH = 5, GURT = 1.5, LUECKE_APP = 0.9, LUECKE_WERK = 0.28, RAND = 1.6;   // Felder je Geschoss, Höhe des Trägers, Pfosten, Fuge, Außenstütze
 
 export const legende = `
   <p><b>Das Tragwerk</b> zeigt, was worauf ruht. Unten das Fundament: das Tragwerk System. Darauf die Orte als Geschosse, das schwerste zuunterst.</p>
   <ul class="zeichen">
-    <li><i class="z fenster"></i>erleuchtetes Fenster: Fassung mit Bild</li>
-    <li><i class="z feld jung"></i>helles Feld: junge Fassung</li>
-    <li><i class="z feld frueh"></i>dunkles Feld: frühe Fassung</li>
-    <li><i class="z feld offen"></i>mattes Feld: Zeit nicht belegt</li>
+    <li><i class="z fenster"></i>Bild: das echte Bild dieser Fassung</li>
+    <li><i class="z papier"></i>Blatt Papier: Fassung ohne Bild, mit ihrem Namen</li>
     <li><i class="z knolle"></i>im Fundament: was trägt</li>
     <li><i class="z geruest"></i>im Gerüst: noch zur Prüfung</li>
   </ul>
-  <p>Ein Stapel ist ein Werk, zwischen zwei Pfosten steht eine App. Stützen sind unten stärker, weil mehr auf ihnen liegt. Das Gewählte zeigt den Weg seiner Last bis ins Fundament.</p>`;
+  <p>Ein Stapel ist ein Werk, zwischen zwei Pfosten steht eine App. Stützen sind unten stärker, weil mehr auf ihnen liegt. Das Gewählte zeigt den Weg seiner Last bis ins Fundament.</p>
+  <p>Über einem Bild wird es groß. Ein Tipp wählt die Fassung, ein zweiter öffnet sie.</p>`;
 
 /* ---------- Der Bau: reine Rechnung ---------- */
 function baue(I, breit){
@@ -90,7 +84,7 @@ function baue(I, breit){
 }
 
 export function starte(el, K){
-  const I = K.inhalt, spanne = Math.max(1, (I.bis ?? 1) - (I.von ?? 0)), lager = bildlager(K.bildUrl);
+  const I = K.inhalt, lager = bildlager(K.bildUrl, 3000, 12);
   let W, start = K.still ? -1e9 : performance.now(), fertig = false, schweb = null;
   const feldVon = new Map();
   const B = buehne(el, {zeichne, tipp, schwebe, lebendig: () => !fertig});
@@ -100,8 +94,7 @@ export function starte(el, K){
 
   function lege(){
     W = baue(I, breitFuer()); feldVon.clear();
-    for(const f of W.felder){ feldVon.set(f.q, f); const q = f.q, u = q.von == null ? -1 : klemme((q.von - I.von) / spanne), st = u < 0 ? -1 - (q.nr % 3) : Math.round(u * (STUFEN - 1)), unten = f.z.teil === 'fund';
-      f.farbe = unten ? (st < 0 ? ASCHE[-1 - st] : GLUT[st]) : (st < 0 ? GRAU[-1 - st] : GRUEN[st]); }
+    for(const f of W.felder) feldVon.set(f.q, f);
     const n = W.zeilen.length; let i = 0;
     for(const b of [...W.fund].reverse()) for(const z of [...b.z].reverse()) z.zeit = i++ / n;
     for(const b of W.bloecke) for(const z of b.z) z.zeit = i++ / n;
@@ -114,11 +107,14 @@ export function starte(el, K){
     const r = {x0: Math.min(...l.map(a => a.x0)), x1: Math.max(...l.map(a => a.x1)), y0: Math.min(...l.map(a => a.y0)), y1: Math.max(...l.map(a => a.y1))};
     const p = !k.kinder ? 2.6 : Math.max(1.2, (r.x1 - r.x0) * 0.08); return {x0: r.x0 - p, x1: r.x1 + p, y0: r.y0 - p, y1: r.y1 + p + (k.kinder ? GURT : 0)};
   }
-  function zeige(k, sofort){ B.rand = K.rand(); const z = B.blickAuf(rahmenVon(k), 1.06); sofort ? B.setze(z) : B.fliege(z); }
+  function zeige(k, sofort){ B.rand = K.rand();
+    const f = feldVon.get(k);   // ein Bild, das man schon sieht, bleibt, wo es ist: es wird nur groß
+    if(f && !sofort && B.s >= 11){ const px = B.zuX(f.x + 0.5), py = B.zuY(f.y + 0.5); if(px > 0 && px < B.w && py > B.rand.oben && py < B.h - B.rand.unten) return B.neu(); } const z = B.blickAuf(rahmenVon(k), 1.06); sofort ? B.setze(z) : B.fliege(z); }
 
   function treffer(px, py){
     const wx = B.vonX(px), wy = B.vonY(py); let kette = null;
     const f = W.felder.find(f => wx >= f.x && wx < f.x + 1 && wy >= f.y && wy < f.y + 1);
+    if(f && B.s >= 11) return f.q;   // ein Bild, das man sieht, wählt man direkt
     if(f){ kette = []; for(let q = f.q; q && q.art !== 'wurzel'; q = q.eltern) kette.unshift(q); }
     else {   // die Luft über einem Stapel gehört zu seinem Werk und seiner App
       let tief = null; for(const [k, l] of W.rechtecke) if((!tief || k.tiefe > tief.tiefe) && l.some(r => wx >= r.x0 && wx <= r.x1 && wy >= r.y0 && wy <= r.y1)) tief = k;
@@ -131,8 +127,10 @@ export function starte(el, K){
     while(i < kette.length - 1 && gross(kette[i])) i++;
     return kette[i];
   }
-  function tipp(px, py){ const k = treffer(px, py); if(!k) return; if(k === K.gewaehlt()){ if(!k.kinder) K.oeffne(k); else zeige(k); } else K.waehle(k); }
-  function schwebe(px, py){ const k = px < 0 ? null : treffer(px, py); if(k !== schweb){ schweb = k; B.c.style.cursor = k ? 'pointer' : ''; B.neu(); } }
+  function tipp(px, py){ const fg = feldVon.get(K.gewaehlt()); if(fg && fg.gross && px >= fg.gross[0] && px <= fg.gross[0] + fg.gross[2] && py >= fg.gross[1] && py <= fg.gross[1] + fg.gross[3]) return K.oeffne(fg.q);
+    const k = treffer(px, py); if(!k) return; if(k === K.gewaehlt()){ if(!k.kinder) K.oeffne(k); else zeige(k); } else K.waehle(k); }
+  function schwebe(px, py){ let k = px < 0 ? null : treffer(px, py);
+    if(px >= 0 && B.s >= 4){ const wx = B.vonX(px), wy = B.vonY(py), f = W.felder.find(f => wx >= f.x && wx < f.x + 1 && wy >= f.y && wy < f.y + 1); if(f) k = f.q; } if(k !== schweb){ schweb = k; B.c.style.cursor = k ? 'pointer' : ''; B.neu(); } }
 
   /* ---------- Zeichnen ---------- */
   const zufall = (a, b) => { const s = Math.sin(a * 127.1 + b * 311.7) * 43758.5453; return s - Math.floor(s); };
@@ -190,18 +188,11 @@ export function starte(el, K){
       const a = z.x0 - 0.6, b = z.x0 + z.weit + 0.6; for(const xx of [a, b]){ x.moveTo(X(xx), Y(z.yt - 0.8)); x.lineTo(X(xx), Y(z.nr === 0 ? 0 : z.yb + 0.5)); } x.moveTo(X(a - 0.5), Y(z.yb)); x.lineTo(X(b + 0.5), Y(z.yb)); x.moveTo(X(a - 0.5), Y(z.yt - 0.5)); x.lineTo(X(b + 0.5), Y(z.yt - 0.5));
       x.moveTo(X(a), Y(z.yb)); x.lineTo(X(b), Y(z.yt - 0.5)); x.moveTo(X(a), Y(z.yt - 0.5)); x.lineTo(X(b), Y(z.yb)); x.stroke(); x.globalAlpha = 1; }
 
-    // die Felder: Fassungen. Mit Bild ein erleuchtetes Fenster
-    const klein = s < 5, mitBild = s >= 13, fuge = klein ? 0 : Math.min(0.09 * s, 3), ecke = Math.min(0.12 * s, 5);
+    // die Felder: Fassungen. Mit Bild das Bild selbst, in jeder Entfernung. Ohne Bild ein Blatt Papier mit dem Namen: nichts wird vorgetäuscht.
+    const fuge = s < 5 ? 0.4 : Math.min(0.07 * s, 3), ecke = Math.min(0.1 * s, 5);
     for(const f of W.felder){ const px = X(f.x), py = Y(f.y); if(px > w || px + s < 0 || py > h || py + s < 0) continue; const d = da(f.z); if(d <= 0) continue;
-      const a = fertig ? 1 : klemme(d * 2 - (f.r / HOCH)), unten = f.z.teil === 'fund'; if(a <= 0) continue; x.globalAlpha = a;
-      const bild = f.q.bild, gs = f.q.art === 'gespraech';
-      if(klein){ x.fillStyle = bild ? (unten ? '#ffd27a' : '#f4c56a') : gs ? '#fff6f2' : f.farbe; x.fillRect(px + 0.5, py + 0.5, s - 0.6, s - 0.6); continue; }
-      x.fillStyle = bild ? (unten ? '#e9b65a' : '#f4d08a') : gs ? '#fbf3ec' : f.farbe; x.beginPath(); x.roundRect(px + fuge, py + fuge, s - fuge * 2, s - fuge * 2, ecke); x.fill();
-      if(bild && mitBild){ const e = lager.nimm(bild, s * B.dpr > 300 ? 960 : 240) || (s * B.dpr > 300 ? lager.nimm(bild, 240) : null);
-        if(e){ const im = e.bild, k = Math.max((s - fuge * 2) / im.naturalWidth, (s - fuge * 2) / im.naturalHeight), bw = im.naturalWidth * k, bh = im.naturalHeight * k;
-          x.save(); x.beginPath(); x.roundRect(px + fuge, py + fuge, s - fuge * 2, s - fuge * 2, ecke); x.clip(); const al = klemme((t - e.da) / 300); x.globalAlpha = a * al; if(al < 1) B.neu(); x.drawImage(im, px + s / 2 - bw / 2, py + s / 2 - bh / 2, bw, bh); x.restore(); x.globalAlpha = a; } }
-      else if(!bild && s > 9){ x.fillStyle = 'rgba(255,255,255,.14)'; x.fillRect(px + fuge, py + fuge, s - fuge * 2, (s - fuge * 2) * 0.42);
-        if(gs && s > 14){ x.fillStyle = '#d8a0a0'; for(let i = 0; i < 3; i++) x.fillRect(px + s * 0.24, py + s * (0.32 + i * 0.16), s * (i === 2 ? 0.3 : 0.52), Math.max(1, s * 0.05)); } }
+      const a = fertig ? 1 : klemme(d * 2 - (f.r / HOCH)); if(a <= 0) continue; x.globalAlpha = a;
+      feld(x, f, px + fuge, py + fuge, s - fuge * 2, ecke, t, a);
     }
     x.globalAlpha = 1;
 
@@ -209,10 +200,7 @@ export function starte(el, K){
     const gew = K.gewaehlt();
     if(gew && gew.art !== 'wurzel'){
       const stellen = (I.nachSchluessel.get(gew.schluessel) || [gew]).map(k => ({k, l: rechteVon(k)})).filter(a => a.l);
-      if(stellen.length){ const p = new Path2D(); p.rect(0, 0, w, h); const pad = gew.kinder ? 0.25 : 0.12;
-        for(const a of stellen) for(const r of a.l) p.roundRect(X(r.x0 - pad), Y(r.y0 - pad), (r.x1 - r.x0 + pad * 2) * s, (r.y1 - r.y0 + pad * 2) * s, 6);
-        const yy = klemme(y0, 0, h); x.save(); x.beginPath(); x.rect(0, 0, w, yy); x.clip(); x.fillStyle = 'rgba(246,240,226,.55)'; x.fill(p, 'evenodd'); x.restore();
-        x.save(); x.beginPath(); x.rect(0, yy, w, h - yy); x.clip(); x.fillStyle = 'rgba(16,11,8,.55)'; x.fill(p, 'evenodd'); x.restore();
+      if(stellen.length){ const pad = gew.kinder ? 0.25 : 0.1;
         x.strokeStyle = '#ffb53d'; x.lineCap = 'round'; x.lineJoin = 'round'; x.shadowColor = 'rgba(255,170,40,.9)'; x.shadowBlur = 12; x.lineWidth = Math.max(2, Math.min(0.3 * s, 5));
         const puls = B.ruhig() ? 1 : 0.75 + 0.25 * Math.sin(t * 0.004); x.globalAlpha = puls; x.beginPath();
         for(const r of (rechteVon(gew) || [])){ const z = r.z; if(z.teil !== 'bau') { if(z.teil === 'fund'){ x.moveTo(X(r.x0), Y(r.y1 + 0.18)); x.lineTo(X(r.x1), Y(r.y1 + 0.18)); } continue; }
@@ -221,11 +209,46 @@ export function starte(el, K){
         if((rechteVon(gew) || []).some(r => r.z.teil === 'bau')){ x.moveTo(X(-3 - RAND), Y(0.75)); x.lineTo(X(-3 + W.fb + RAND), Y(0.75)); }
         x.stroke(); x.shadowColor = 'transparent'; x.shadowBlur = 0; x.globalAlpha = 1;
         if(!B.ruhig() && fertig) setTimeout(B.neu, 60);
-        x.strokeStyle = 'rgba(255,255,255,.9)'; x.lineWidth = 1.4; for(const a of stellen){ x.setLineDash(a.k === gew ? [] : [2, 5]); for(const r of a.l){ x.beginPath(); x.roundRect(X(r.x0 - pad), Y(r.y0 - pad), (r.x1 - r.x0 + pad * 2) * s, (r.y1 - r.y0 + pad * 2) * s, 6); x.stroke(); } } x.setLineDash([]); }
+        x.strokeStyle = '#2b241c'; x.lineWidth = 2; for(const a of stellen){ x.setLineDash(a.k === gew ? [] : [2, 5]); for(const r of a.l){ x.beginPath(); x.roundRect(X(r.x0 - pad), Y(r.y0 - pad), (r.x1 - r.x0 + pad * 2) * s, (r.y1 - r.y0 + pad * 2) * s, 6); x.stroke(); } } x.setLineDash([]); }
     }
-    if(schweb && schweb !== gew){ x.strokeStyle = 'rgba(43,36,28,.5)'; x.lineWidth = 1.2; for(const r of rechteVon(schweb) || []){ x.beginPath(); x.roundRect(X(r.x0), Y(r.y0), (r.x1 - r.x0) * s, (r.y1 - r.y0) * s, 5); x.stroke(); } }
+    if(schweb && schweb !== gew && schweb.kinder){ x.strokeStyle = 'rgba(43,36,28,.5)'; x.lineWidth = 1.2; for(const r of rechteVon(schweb) || []){ x.beginPath(); x.roundRect(X(r.x0), Y(r.y0), (r.x1 - r.x0) * s, (r.y1 - r.y0) * s, 5); x.stroke(); } }
 
     schrift(x, P, gew);
+    // groß: das Gewählte und das, worüber der Zeiger steht
+    const fg = feldVon.get(gew), fs = feldVon.get(schweb);
+    if(fg) gross(x, fg, t, true); if(fs && fs !== fg) gross(x, fs, t, false);
+  }
+
+  /* Ein Feld zeichnen: das echte Bild, sonst ein Blatt Papier mit dem Namen */
+  function umbruch(x, text, breit, zeilen){ const w = text.split(/\s+/), l = []; let z = '';
+    for(const wort of w){ const p = z ? z + ' ' + wort : wort; if(x.measureText(p).width <= breit || !z) z = p; else { l.push(z); z = wort; if(l.length === zeilen) break; } }
+    if(l.length < zeilen && z) l.push(z); else if(l.length === zeilen) l[zeilen - 1] = l[zeilen - 1].replace(/.{0,2}$/, '…'); return l; }
+  function feld(x, f, px, py, g, ecke, t, a, scharf){
+    const bild = f.q.bild, unten = f.z.teil === 'fund', gs = f.q.art === 'gespraech';
+    if(bild){ const gr = g * B.dpr > 300 || scharf, e = (gr && lager.nimm(bild, 960)) || lager.nimm(bild, 240);
+      x.fillStyle = unten ? '#2c2019' : '#e6dcc6'; if(g < 4){ x.fillRect(px, py, g, g); } else { x.beginPath(); x.roundRect(px, py, g, g, ecke); x.fill(); }
+      if(e){ const im = e.bild, k = Math.max(g / im.naturalWidth, g / im.naturalHeight), bw = im.naturalWidth * k, bh = im.naturalHeight * k, al = klemme((t - e.da) / 250);
+        x.save(); x.beginPath(); if(g < 4) x.rect(px, py, g, g); else x.roundRect(px, py, g, g, ecke); x.clip(); x.globalAlpha = a * al; if(al < 1) B.neu();
+        x.imageSmoothingQuality = 'high'; x.drawImage(im, px + g / 2 - bw / 2, py + g / 2 - bh / 2, bw, bh); x.restore(); x.globalAlpha = a; }
+      return; }
+    x.fillStyle = unten ? '#cbbd9f' : '#fdf9ef'; if(g < 4){ x.fillRect(px, py, g, g); return; }
+    x.beginPath(); x.roundRect(px, py, g, g, ecke); x.fill(); x.strokeStyle = 'rgba(43,36,28,.22)'; x.lineWidth = 1; x.stroke();
+    if(g >= 46){ const gr = klemme(g * 0.115, 9.5, 17); x.font = `${gs ? 'italic ' : ''}500 ${gr}px ${SERIF}`; x.fillStyle = TINTE; x.textAlign = 'left'; x.textBaseline = 'top';
+      const l = umbruch(x, f.q.name, g * 0.84, Math.max(2, Math.floor(g * 0.62 / (gr * 1.22)))); l.forEach((z, i) => x.fillText(z, px + g * 0.08, py + g * 0.09 + i * gr * 1.22));
+      x.font = `${klemme(g * 0.075, 8.5, 11.5)}px ${SANS}`; x.fillStyle = 'rgba(43,36,28,.55)'; x.textBaseline = 'bottom'; x.fillText(gs ? 'Gespräch' : 'ohne Bild', px + g * 0.08, py + g * 0.93); }
+    else if(gs && g > 10){ x.fillStyle = 'rgba(190,120,120,.7)'; x.beginPath(); x.arc(px + g / 2, py + g / 2, g * 0.14, 0, 6.2832); x.fill(); }
+  }
+  /* Ein Feld groß zeigen, über allem, ganz im Bild; mit seinem Namen darunter */
+  function gross(x, f, t, gewaehlt){
+    const {w, h, s} = B, G = klemme(Math.min(w, h) * 0.34, 150, 340); if(s >= G * 0.8){ f.gross = null; return; }
+    const mx = B.zuX(f.x + 0.5), my = B.zuY(f.y + 0.5), fuss = 46, r = B.rand;
+    const px = klemme(mx - G / 2, 8, w - G - 8), py = klemme(my - G / 2, r.oben, Math.max(r.oben, h - r.unten - G - fuss));
+    x.save(); x.shadowColor = 'rgba(20,14,8,.45)'; x.shadowBlur = 28; x.shadowOffsetY = 8 * B.dpr; x.fillStyle = '#fdf9ef'; x.beginPath(); x.roundRect(px - 6, py - 6, G + 12, G + fuss + 8, 12); x.fill(); x.restore();
+    feld(x, f, px, py, G, 7, t, 1, true);
+    x.font = `600 13.5px ${SERIF}`; x.fillStyle = TINTE; x.textAlign = 'left'; x.textBaseline = 'top'; const l = umbruch(x, f.q.name, G - 6, 1); x.fillText(l[0] || '', px + 2, py + G + 7);
+    x.font = `11.5px ${SANS}`; x.fillStyle = 'rgba(43,36,28,.6)'; x.fillText(gewaehlt ? 'Noch einmal tippen: lesen' : f.q.eltern.name, px + 2, py + G + 26, G - 6);
+    if(gewaehlt){ x.strokeStyle = '#ffb53d'; x.lineWidth = 2.5; x.beginPath(); x.roundRect(px - 6, py - 6, G + 12, G + fuss + 8, 12); x.stroke(); }
+    f.gross = gewaehlt ? [px - 6, py - 6, G + 12, G + fuss + 8] : f.gross;
   }
 
   const breiten = new Map();
@@ -250,9 +273,6 @@ export function starte(el, K){
       const r = l[0], bw = (r.x1 - r.x0) * s, unten = r.z.teil === 'fund', werk = k.art === 'werk'; if(X(r.x1) < 0 || X(r.x0) > w || Y(r.y1) < -20 || Y(r.y0) > h + 20) continue;
       if(werk){ if(s >= 15) setze(kuerze(k.name, Math.max(6, Math.floor(bw / 6.2))), X((r.x0 + r.x1) / 2), Y(r.y1) + (unten ? 0.22 * s : GURT * s * 0.5), klemme(s * 0.42, 10, 13), {sans: true, hell: !unten, dunkel: unten, ohneHof: !unten, alpha: 0.95}); }
       else if(bw > 34) setze(kuerze(k.name, Math.max(5, Math.floor(bw / 7.5))), X(r.x0) + 3, Y(r.y0) + (s >= 15 ? -0.02 * s : 0) + klemme(s * 0.6, 10, 15) * 0.7, klemme(s * 0.6, 10.5, 15), {gewicht: 620, links: true, dunkel: unten}); }
-    if(s >= 46) for(const f of W.felder){ const px = X(f.x), py = Y(f.y); if(px > w || px + s < 0 || py > h || py + s < 0) continue; setze(kuerze(f.q.name, Math.floor(s / 5.6)), px + s / 2, py + s - 9, 10.5, {sans: true, dunkel: f.z.teil === 'fund'}); }
-    const fs = feldVon.get(schweb); if(fs && s < 46) setze(kuerze(schweb.name, 44), X(fs.x + 0.5), Y(fs.y) - 10, 12, {sans: true, gewicht: 600});
-    const fg = feldVon.get(gew); if(fg && s < 46) setze(kuerze(gew.name, 44), X(fg.x + 0.5), Y(fg.y + 1) + 11, 12, {sans: true, gewicht: 600});
   }
 
   lege(); B.rand = K.rand(); B.setze(B.blickAuf(rahmenVon(K.gewaehlt()), 1.04));
