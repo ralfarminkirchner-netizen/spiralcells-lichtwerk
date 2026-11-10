@@ -12,6 +12,7 @@ const el = (tag, klasse, text) => { const e = document.createElement(tag); if(kl
 
 const ZEICHEN = {
   baum: '<path d="M12 21v-8M12 13c-5 0-7-3-7-6a4 4 0 0 1 5-3.5A4 4 0 0 1 17 4a4 4 0 0 1 2 7c-1 1.500-3 2-7 2Z"/><path d="M12 16l3-2.500M12 14l-2.500-2"/>',
+  tragwerk: '<path d="M3 20h18M5 20V8M19 20V8M3 8h18M5 8l7-5 7 5M5 14h14M5 20l7-6 7 6M5 14l7-6 7 6"/>',
   kosmos: '<circle cx="12" cy="12" r="3"/><ellipse cx="12" cy="12" rx="10" ry="4.200" transform="rotate(-24 12 12)"/><circle cx="20.300" cy="7.800" r="1.100" fill="currentColor"/>',
   garten: '<path d="M12 21V11"/><path d="M12 14c-4 0-6-2-6-5 4 0 6 2 6 5ZM12 12c0-4 2-6 6-6 0 4-2 6-6 6Z"/><path d="M4 21h16"/>',
   galaxie: '<path d="M12 12c0-3 2.500-5 5.500-5M12 12c3 0 5 2.500 5 5.500M12 12c0 3-2.500 5-5.500 5M12 12c-3 0-5-2.500-5-5.500"/><circle cx="12" cy="12" r="1.300" fill="currentColor"/>',
@@ -24,6 +25,7 @@ const bildchen = id => `<svg viewBox="0 0 24 24" width="20" height="20" fill="no
 
 const ANSICHTEN = [
   {id: 'baum', name: 'Baum', satz: 'Was woraus gewachsen ist', modul: () => import('./baum.js')},
+  {id: 'tragwerk', name: 'Tragwerk', satz: 'Was worauf ruht', modul: () => import('./tragwerk.js')},
   {id: 'kosmos', name: 'Kosmos', satz: 'Was um was kreist', alt: 'welten.html?welt=kosmos'},
   {id: 'garten', name: 'Garten', satz: 'Was gerade blüht', alt: 'welten.html?welt=garten'},
   {id: 'galaxie', name: 'Galaxie', satz: 'Alles auf einmal, in der Zeit', alt: 'welten.html?welt=galaxie'},
@@ -176,8 +178,15 @@ async function beginne(){
   hinweis.textContent = 'Der Inhalt wird gelesen …';
   try {
     const hole = async u => { const r = await fetch(u); if(!r.ok) throw new Error(u); return r.json(); };
-    const [g, bilder, gespraeche] = await Promise.all([hole('/api/graph'), hole('/lichtwerk/bilder').catch(() => ({})), hole('/lichtwerk/gespraeche').catch(() => [])]);
-    Z.inhalt = baueInhalt(g, bilder, gespraeche);
+    // Die Bilderliste braucht manchmal Sekunden. Darauf wartet nichts: erst steht alles ohne Bilder da, dann kommen sie dazu.
+    const bilderDa = hole('/lichtwerk/bilder').catch(() => null);
+    const [g, gespraeche] = await Promise.all([hole('/api/graph'), hole('/lichtwerk/gespraeche').catch(() => [])]);
+    const frueh = await Promise.race([bilderDa, new Promise(r => setTimeout(() => r(undefined), 250))]);
+    Z.inhalt = baueInhalt(g, frueh || {}, gespraeche);
+    if(frueh === undefined) bilderDa.then(async bilder => { if(!bilder) return;
+      const pfad = Z.gewaehlt && Z.gewaehlt.art !== 'wurzel' ? adresse(Z.gewaehlt) : '', war = K.still;
+      Z.inhalt = baueInhalt(g, bilder, gespraeche); Z.gewaehlt = nachPfad(pfad); zeichneWeg(); zeichneKarte();
+      K.still = true; await wechsle(Z.ansicht, true); K.still = war; });
     for(const v of g.variants || []) Z.texte.set(v.id, v.content || '');
   } catch(e){
     hinweis.replaceChildren(el('span', '', 'Das Lichtwerk antwortet gerade nicht. ')); const b = el('button', '', 'Noch einmal versuchen'); b.type = 'button'; b.onclick = beginne; hinweis.append(b); return;

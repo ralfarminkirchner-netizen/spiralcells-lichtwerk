@@ -41,7 +41,7 @@ button:focus-visible,a:focus-visible{outline:2px solid var(--gruen);outline-offs
 #ansichten .reihe button .s{display:none}
 #ansichten .reihe button:hover{background:var(--papier2);color:var(--tinte)}
 #ansichten .reihe button.an{background:var(--tinte);color:var(--papier)}
-@media (max-width:1180px){
+@media (max-width:1290px){
   #ansichten .wahl{display:flex}
   #ansichten .reihe{display:none;position:absolute;right:0;top:52px;width:min(340px,calc(100vw - 24px));flex-direction:column;gap:2px;padding:8px;border-radius:20px;background:rgba(248,241,226,.97)}
   #ansichten.auf .reihe{display:flex}
@@ -129,6 +129,9 @@ button:focus-visible,a:focus-visible{outline:2px solid var(--gruen);outline-offs
 .z.frucht{background:#d9532f;box-shadow:0 0 0 2px #fffaf0,0 0 0 3px var(--linie)}
 .z.bluete{background:radial-gradient(circle,#e9b23a 28%,#fffaf6 30%);box-shadow:0 0 0 1px rgba(190,120,120,.55)}
 .z.knolle{background:radial-gradient(circle at 35% 35%,#ffe9b0,#d9952f);box-shadow:0 0 0 4px #3a281d}
+.z.feld,.z.fenster{border-radius:5px}.z.feld.jung{background:hsl(80 68% 50%)}.z.feld.frueh{background:hsl(150 40% 25%)}.z.feld.offen{background:hsl(108 26% 43%)}
+.z.fenster{background:linear-gradient(135deg,#f4d08a,#e9a94a);box-shadow:0 0 0 2px #3d2a1f}
+.z.geruest{border-radius:0;background:linear-gradient(45deg,transparent 46%,#8a6a48 46% 54%,transparent 54%),linear-gradient(-45deg,transparent 46%,#8a6a48 46% 54%,transparent 54%);box-shadow:inset 0 0 0 2px #8a6a48}
 .z.keim{background:linear-gradient(#8fb85c,#8fb85c) center bottom/2px 14px no-repeat,radial-gradient(circle at 50% 30%,#6f9a48 5px,transparent 6px)}
 
 /* ---------- Übriges ---------- */
