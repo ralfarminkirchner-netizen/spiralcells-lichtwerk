@@ -8,8 +8,17 @@ const tagWort = t => new Date(t).toLocaleDateString('de-DE', TAG);
 const gross = w => w.charAt(0).toUpperCase() + w.slice(1);
 
 /* „faska-lernlandschaft-frisch“ → „FASKA Lernlandschaft · frisch“; ein Datum am Ende wird ein Datum */
+/* Zahlfolgen wie „20261015 224747“ als Datum und Uhrzeit lesen; sonst unverändert */
+const MONATE = ['Januar', 'Februar', 'März', 'April', 'Mai', 'Juni', 'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember'];
+function datumsWoerter(t){
+  return t.replace(/\b(20\d{2})(\d{2})(\d{2})(?:[ _-]?(\d{2})(\d{2})(\d{2})?)?\b/g, (m, j, mo, d, h, mi) => {
+    if(+mo < 1 || +mo > 12 || +d < 1 || +d > 31) return m;
+    const tag = `${+d}. ${MONATE[+mo - 1]} ${j}`;
+    return h != null && +h < 24 && +mi < 60 ? `${tag}, ${h}:${mi} Uhr` : tag; });
+}
 export function lesbarerName(s, woerter = new Map()){
-  const t = String(s || '').trim();
+  const t = datumsWoerter(String(s || '').trim());
+  if(/^[a-z][a-z0-9]{3,}$/.test(t)) return woerter.get(t) || gross(t);   // einzelner Ordnername: nur groß geschrieben
   if(!ORDNER.test(t)) return t;
   let teile = t.split(/[-_]/), tag = '';
   const letzter = teile[teile.length - 1], m = letzter.match(/^(20\d{2})(\d{2})(\d{2})$/);
