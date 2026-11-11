@@ -171,7 +171,7 @@ export function starte(flaeche, K){
   /* Kleine Übersicht: das Ganze mit dem Rahmen des Blicks */
   function uebersicht(){
     if(fokus === W && B.s * W._kr * 2 < Math.min(B.w, B.h) * 1.3) return;
-    const x = B.x, g = K.schmal() ? 92 : 128, pad = 12, ox = B.w - g - pad, oy = K.schmal() ? pad : B.h - g - pad, sk = g / (W._kr * 2.1);
+    const x = B.x, g = K.schmal() ? 92 : 128, pad = 12, ox = B.w - g - pad, oy = K.schmal() ? 118 : B.h - g - pad, sk = g / (W._kr * 2.1);
     x.fillStyle = 'rgba(251,248,241,.94)'; x.strokeStyle = 'rgba(40,30,20,.25)'; x.lineWidth = 1; x.beginPath(); x.roundRect ? x.roundRect(ox, oy, g, g, 10) : x.rect(ox, oy, g, g); x.fill(); x.stroke();
     const mx = ox + g / 2, my = oy + g / 2;
     for(const o of W.kinder.filter(c => c.kinder)){ const f = farbe(o); x.fillStyle = f.h; x.strokeStyle = f.f; x.beginPath(); x.arc(mx + o._kx * sk, my + o._ky * sk, Math.max(2, o._kr * sk), 0, 7); x.fill(); x.stroke(); }

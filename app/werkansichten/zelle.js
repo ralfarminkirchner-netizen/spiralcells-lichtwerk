@@ -7,7 +7,7 @@
 
 import {lesetext} from './lesen.js';
 import {el, knopf, farbe, behaelter, fassungenUnter, bildEl, tagWort, n} from './gemein.js';
-import {mengenWort} from './inhalt.js';
+import {mengenWort, adresse} from './inhalt.js';
 
 export const legende = `<p>Links: alle Fassungen dieses Werks. Oben die mit belegter Zeit, in ihrer Folge; darunter die ohne belegte Zeit.</p>
 <p>In der Mitte steht der Wortlaut unverändert. <b>Im Text suchen</b> markiert jede Stelle; <b>Vergleichen</b> legt eine zweite Fassung daneben und färbt, was nur in einer von beiden steht.</p>
@@ -67,6 +67,10 @@ export function starte(flaeche, K){
     const zahl = el('span', 'klein zzahl'); const vor = knopf('knopf klein2', '↑', () => springe(-1), 'Vorige Stelle'), nach = knopf('knopf klein2', '↓', () => springe(1), 'Nächste Stelle');
     f.oninput = () => markiere(f.value, zahl); f.onkeydown = e => { if(e.key === 'Enter'){ springe(e.shiftKey ? -1 : 1); e.preventDefault(); } if(e.key === 'Escape'){ f.value = ''; markiere('', zahl); e.stopPropagation(); } };
     such.append(f, zahl, vor, nach); werkzeug.append(such);
+    if(fassung){ const bz = K.bezug.von(fassung).length + K.bezug.von(werk).length;
+      werkzeug.append(knopf('knopf', 'Im Baum', () => K.wechsle('baum', fassung)));
+      if(bz) werkzeug.append(knopf('knopf', 'Zusammenhang', () => K.wechsle('galaxie', fassung)));
+      werkzeug.append(knopf('knopf', 'Auf den Tisch', () => { try { const t = JSON.parse(localStorage.getItem('werkansichten.tisch') || '[]'), a = adresse(fassung); if(!t.includes(a)){ t.push(a); localStorage.setItem('werkansichten.tisch', JSON.stringify(t)); } K.sage('„' + fassung.name + '“ liegt auf dem Tisch im Büro.'); } catch(e){ K.sage('Der Tisch kann in diesem Browser nicht gespeichert werden.'); } })); }
     const andere = fassungenUnter(werk).filter(x => x !== fassung && x.art === 'fassung');
     if(fassung && fassung.art === 'fassung' && andere.length){
       const v = knopf('knopf', vergleich ? 'Vergleich beenden' : 'Vergleichen', () => { vergleich = vergleich ? null : (andere.find(x => x.von != null && fassung.von != null && x.von < fassung.von && false) || naechste(andere)); zeige(); });

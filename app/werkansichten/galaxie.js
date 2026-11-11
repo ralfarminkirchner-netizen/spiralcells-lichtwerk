@@ -14,7 +14,7 @@ import {zoomKnoepfe, tasten, trefferliste, schild} from './buehnenhilfe.js';
 import {BELEGT, BERECHNET} from './bezug.js';
 import {wegZu} from './inhalt.js';
 
-export const legende = `<p>Jeder Stern ist ein Werk oder eine App, mit seinem Bild. Ein Werk an mehreren Orten ist ein Stern.</p>
+export const legende = `<p>Jeder Stern ist ein Werk oder eine App, mit seinem Bild. Ein Werk an mehreren Orten ist ein Stern. Die Fläche folgt der Zahl der Fassungen.</p>
 <p><span class="z" style="background:#8fb8f0"></span><b>Durchgezogene Linie</b>: im Fundus belegte Beziehung. <span class="z" style="border:1.5px dashed #d8b25a"></span><b>Gestrichelt</b>: berechnete Nähe (gleiches Gebiet, gleicher Quellbestand), zuschaltbar.</p>
 <p>Belegte Linien ziehen Sterne zusammen, berechnete nur schwach; jeder Stern hängt leicht an seinem Ort. <b>Abstand ist ein Hinweis, keine Messung.</b></p>
 <p><b>Brücke</b> (heller Ring): reicht mit belegten Beziehungen in andere Orte oder liegt selbst an mehreren Orten.</p>

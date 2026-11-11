@@ -245,7 +245,7 @@ mark.zt.jetzt{background: #ff9f43; box-shadow: 0 0 0 2px #ff9f43}
 .kmasstab li.vorbei{color: var(--tinte2)}
 .kmasstab li.an{background: var(--tinte); color: var(--papier); font-weight: 600}
 .kmasstab p{margin: 4px 0 0; font-size: 13px; color: var(--tinte2)}
-@media (max-width: 759px){ .kmasstab{bottom: auto; top: 58px; left: 8px; right: 8px; transform: none; max-width: none; padding: 5px 8px} .kmasstab li{padding: 1px 5px; font-size: 11px} }
+@media (max-width: 759px){ .kmasstab{bottom: auto; top: 58px; left: 8px; right: 8px; transform: none; max-width: none; padding: 4px 8px} .kmasstab li{padding: 1px 5px; font-size: 11px} .kmasstab p{font-size: 12px; margin-top: 2px} }
 
 /* ================= Galaxie ================= */
 body[data-ansicht="galaxie"] #buehne{background: #17161d}

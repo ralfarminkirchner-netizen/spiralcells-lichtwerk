@@ -177,6 +177,8 @@ function zeichneWeg(){
 /* ---------- Das Blatt zum Gewählten ---------- */
 function zeichneBlatt(){
   const k = Z.gewaehlt; if(!k) return;
+  // Am Handy brauchen Lesen und Büro die ganze Fläche; sie bringen ihre Handlungen selbst mit
+  if(schmal() && (Z.ansicht === 'zelle' || Z.ansicht === 'buero')){ blatt.hidden = true; return; }
   const f = farbe(k); blatt.style.setProperty('--ort', f.f); blatt.style.setProperty('--ort-d', f.d); blatt.style.setProperty('--ort-h', f.h);
   blatt.classList.toggle('zu', !schmal() && !Z.blattOffen); blatt.classList.toggle('gross', Z.blattGross);
   const kopf = el('div', 'blattkopf');
