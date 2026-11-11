@@ -1,0 +1,195 @@
+/* ================= Garten ================= */
+/* Jahreszeitfarben: nur an Fassungen mit belegtem Monat */
+.gjz-winter{--jz: #5f7d8f} .gjz-fruehling{--jz: #5d8f45} .gjz-sommer{--jz: #b98f1f} .gjz-herbst{--jz: #ad5a33}
+.legtext .z.gjz-winter, .legtext .z.gjz-fruehling, .legtext .z.gjz-sommer, .legtext .z.gjz-herbst{background: var(--jz); border-radius: 50%; margin-left: 4px}
+
+.garten{position: absolute; inset: 0; overflow-y: auto; overflow-x: hidden; background: #efe9dc; padding-bottom: var(--unten, 24px); overscroll-behavior: contain}
+.gbild, .gkbild{display: block; overflow: hidden; background: var(--papier2); position: relative}
+.gbild img, .gkbild img{display: block; width: 100%; height: 100%; object-fit: cover}
+.gbild.ohne, .gkbild.ohne{display: grid; place-items: center}
+
+/* ---- Gartenplan: alle Beete auf einen Blick ---- */
+.gplan{position: sticky; top: 0; z-index: 6; display: flex; gap: 6px; padding: 8px 20px; background: var(--papier); border-bottom: 1px solid var(--linie2); overflow-x: auto; scrollbar-width: none}
+.gplan::-webkit-scrollbar{display: none}
+.gplanort{flex: none; display: flex; flex-direction: column; align-items: flex-start; gap: 0; border: 1px solid var(--linie2); border-left: 5px solid var(--ort-f, #8c8a80); background: var(--karton); border-radius: 6px; padding: 4px 10px 4px 8px; min-height: 42px; text-align: left}
+.gplanort:hover{border-color: var(--ort-d, var(--tinte2))}
+.gpname{font: 600 14px/1.2 var(--serif); white-space: nowrap}
+.gpzahl{font-size: 12px; color: var(--tinte2); white-space: nowrap}
+.gplanort.hier{background: var(--ort-h, var(--papier2)); border-color: var(--ort-d, var(--tinte2))}
+.gplanort.hat .gpname::after{content: " ●"; color: var(--wahl); font-size: 11px}
+
+/* ---- Beet und Kiesweg ---- */
+.gbeet{position: relative}
+.gweg{position: sticky; top: var(--plan-h, 0px); z-index: 5; display: flex; align-items: center; flex-wrap: wrap; gap: 4px 14px; padding: 9px 20px;
+  background: #d9d0be radial-gradient(rgba(70,55,35,.13) .9px, transparent 1.3px) 0 0 / 6px 6px;
+  border-top: 2px solid #c6bba6; border-bottom: 2px solid #c6bba6}
+.gwegschild{display: inline-flex; align-items: baseline; gap: 8px; border: 0; background: var(--ort-d, #4a4842); color: #fbf8f1; border-radius: 5px; padding: 7px 14px 8px 12px; min-height: 44px;
+  font: 600 21px/1.15 var(--serif); letter-spacing: .01em; box-shadow: 0 2px 0 rgba(30,20,10,.25); position: relative}
+.gwegschild.ohneort{background: #5c5a52}
+.gwegschild:hover{filter: brightness(1.12)}
+.gwart{font: 600 12px/1 var(--sans); letter-spacing: .06em; text-transform: uppercase; opacity: .85}
+.gwinfo{font-size: 13px; color: #4a4238}
+.gbeetleib{position: relative; display: flex; flex-wrap: wrap; align-items: flex-end; padding: 16px 20px 14px; gap: 0}
+
+/* Unterbeet: Bereich oder Ort im Ort */
+.gbeet.unter{flex: 0 0 100%; min-width: 0; max-width: 100%; margin: 10px 0 18px; border-left: 5px solid var(--ort-f); border-radius: 0 10px 10px 0; background: rgba(255,253,248,.45)}
+.gunterweg{display: flex; align-items: center; flex-wrap: wrap; gap: 4px 12px; padding: 8px 14px; border-bottom: 1px dashed #c6bba6}
+.gunterweg .gwegschild{font-size: 18px; min-height: 42px; padding: 6px 12px; background: var(--karton); color: var(--ort-d); border: 2px solid var(--ort-d); box-shadow: none}
+.gbeet.unter .gbeetleib{padding: 12px 12px 6px}
+
+/* ---- Gruppe = App ---- */
+.ggruppe{display: flex; flex-direction: column; justify-content: flex-end; min-width: 0; max-width: 100%; margin: 0 18px 20px 0; position: relative}
+.ggkopf{display: flex; flex-direction: column; align-items: flex-start; border: 0; background: none; text-align: left; padding: 4px 6px 6px; border-radius: 6px; min-height: 40px; max-width: 100%;
+  border-bottom: 2px solid var(--ort-f)}
+.ggkopf:hover{background: rgba(255,255,255,.6)}
+.ggname{font: 600 16px/1.2 var(--serif); overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; max-width: 100%}
+.gginfo{font-size: 12px; color: var(--tinte2)}
+.ggkopf.gewaehlt{outline: 3px solid var(--wahl); outline-offset: 1px; background: #fff}
+.gpflanzen{position: relative; display: flex; flex-wrap: wrap; align-items: flex-end; min-width: 0}
+.gleer{font-size: 13px; color: var(--tinte2); font-style: italic; margin: 8px}
+
+/* ---- Pflanze ---- */
+.pflanze{position: relative; display: flex; flex-direction: column; align-items: center; width: 150px; flex: none; cursor: pointer; border-radius: 8px 8px 0 0}
+.pflanze.offen{background: linear-gradient(to top, rgba(255,253,248,.9), rgba(255,253,248,.35))}
+.goben{display: flex; flex-direction: column; align-items: center; justify-content: flex-end; padding-top: 6px}
+.gtrieb{position: relative; flex: none}
+.gstiel{position: absolute; inset: 0; pointer-events: none; overflow: visible}
+.gstiel path{fill: none; stroke: var(--ort-d); stroke-width: 2.4; stroke-linecap: round; opacity: .78}
+.gblatt, .gbluete, .gsaat{position: absolute; padding: 0; border: 0; background: none; cursor: pointer}
+.gblatt{width: 56px; height: 56px}
+.gbluete{width: 88px; height: 88px}
+.gblatt .gbild, .gblatt .gpapier{width: 100%; height: 100%; box-shadow: 0 1px 2px rgba(40,30,20,.25); border: 2px solid #fbf8f1}
+.gblatt.links .gbild, .gblatt.links .gpapier{border-radius: 18px 3px 18px 3px}
+.gblatt.rechts .gbild, .gblatt.rechts .gpapier{border-radius: 3px 18px 3px 18px}
+.gbluete .gbild, .gbluete .gpapier{width: 100%; height: 100%; border-radius: 12px; border: 3px solid var(--ort-f); box-shadow: 0 0 0 2px #fbf8f1, 0 3px 10px -3px rgba(40,30,20,.45)}
+.gmonat{position: absolute; font: 12px/14px var(--sans); color: var(--tinte2); white-space: nowrap; pointer-events: none; display: flex; align-items: center; gap: 4px}
+.gmonat::before{content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--jz); flex: none}
+.gmonat.oben{left: 0; right: 0; justify-content: center}
+.gfalte{position: absolute; left: 50%; transform: translateX(-50%); height: 40px; padding: 0 12px; border: 1.5px dashed var(--ort-d); background: #fbf8f1; color: var(--ort-d); border-radius: 20px; font-size: 12.5px; white-space: nowrap; z-index: 1}
+.gfalte:hover{background: #fff}
+
+/* Papierblatt: Fassung ohne Bild */
+.gpapier{display: block; position: relative; background: #fbf8f1; overflow: hidden}
+.gpapier .gpzeilen{position: absolute; left: 18%; right: 18%; top: 30%; bottom: 22%;
+  background: repeating-linear-gradient(to bottom, rgba(60,45,30,.32) 0 1.5px, transparent 1.5px 7px)}
+.gpapier.gespraech .gpzeilen{background: repeating-linear-gradient(to bottom, rgba(44,79,124,.45) 0 1.5px, transparent 1.5px 7px)}
+.gpapier::after{content: ""; position: absolute; right: 0; top: 0; border-style: solid; border-width: 0 12px 12px 0; border-color: transparent #e7dfcf transparent transparent; filter: drop-shadow(-1px 1px 0 rgba(60,45,30,.18))}
+.gpapier.gespraech{background: #eef2f7}
+
+/* Saatschale: ohne belegte Zeit */
+.gschale{width: 138px; margin-top: 2px; padding: 6px 6px 5px; background: linear-gradient(#e6dbc6, #d6c7aa); border: 1px solid #b9a685; border-radius: 6px 6px 26px 26px / 6px 6px 16px 16px;
+  display: flex; flex-direction: column; align-items: center; gap: 3px; box-shadow: inset 0 3px 4px -2px rgba(60,40,20,.25)}
+.gsaaten{display: grid; grid-template-columns: repeat(3, 40px); gap: 3px; justify-content: center}
+.gschale.wenig .gsaaten{grid-template-columns: repeat(2, 56px)}
+.gsaat{position: relative; width: 40px; height: 40px}
+.gschale.wenig .gsaat{width: 56px; height: 56px}
+.gsaat .gbild, .gsaat .gpapier{width: 100%; height: 100%; border-radius: 9px; border: 2px solid #fbf8f1; box-shadow: 0 1px 2px rgba(40,30,20,.3)}
+.gsaat .gpapier .gpzeilen{left: 24%; right: 24%; top: 32%; bottom: 30%}
+.gsaat .gpapier::after{display: none}
+.gsaatmehr{width: 40px; height: 40px; border-radius: 50%; border: 1.5px dashed #8f7b5a; background: #f3ecdd; font-size: 12.5px; font-weight: 600; color: #5a4a35; padding: 0}
+.gschalewort{font-size: 12px; color: #5a4a35; text-align: center; line-height: 1.2}
+
+/* Erde und Schild */
+.gerde{align-self: stretch; height: 11px; margin-top: 4px; background: linear-gradient(#a99172, #c2ad8b); border-top: 1px solid #8f7859}
+.gschild{position: relative; display: flex; flex-direction: column; align-items: stretch; width: calc(100% - 12px); height: 78px; margin: 7px 6px 4px; padding: 5px 8px 4px; text-align: left; cursor: pointer;
+  border: 1px solid var(--linie2); border-top: 3px solid var(--ort-f); background: var(--karton); border-radius: 3px 3px 6px 6px; overflow: hidden}
+.gschild::before{content: ""; position: absolute; left: 50%; top: -11px; width: 2px; height: 8px; background: #8f7859}
+.gschild:hover{border-color: var(--ort-d)}
+.gsname{font: 600 13.5px/1.22 var(--serif); overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow-wrap: break-word; hyphens: auto}
+.gszeit, .gszahl{font-size: 12px; line-height: 1.3; color: var(--tinte2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis}
+.gszahl{color: var(--tinte3); margin-top: auto}
+
+/* Wahl, Verwandtschaft, Suche */
+.pflanze.gewaehlt .gschild, .gschild:focus-visible{outline: 3px solid var(--wahl); outline-offset: 1px}
+.gschild:focus-visible, .pflanze.gewaehlt .gschild:focus-visible, .pflanze.verwandt .gschild:focus-visible{outline: 3px solid var(--fokus); outline-offset: 1px}
+.pflanze.gewaehlt .gschild{background: #fff6ef}
+.gblatt.gewaehlt .gbild, .gblatt.gewaehlt .gpapier, .gbluete.gewaehlt .gbild, .gbluete.gewaehlt .gpapier, .gsaat.gewaehlt .gbild, .gsaat.gewaehlt .gpapier{border-color: var(--wahl); box-shadow: 0 0 0 2px var(--wahl)}
+.gblatt.gewaehlt, .gbluete.gewaehlt, .gsaat.gewaehlt{z-index: 2}
+.pflanze.verwandt .gschild{outline: 2.5px solid var(--belegt); outline-offset: 1px}
+.pflanze.verwandt .gszahl::before{content: "verwandt · "; color: var(--belegt); font-weight: 600}
+.gedaempft{opacity: .25; filter: grayscale(.7)}
+.pflanze.gedaempft .gedaempft{opacity: 1; filter: none}
+.pflanze.offen.gedaempft, .pflanze.gewaehlt.gedaempft{opacity: 1; filter: none}
+.gwegschild.gewaehlt{outline: 3px solid var(--wahl); outline-offset: 2px}
+
+/* ---- Entwicklungsstreifen ---- */
+.gstreifen{contain: inline-size; flex: 0 0 100%; width: 100%; max-width: 100%; position: relative; margin: 10px 0 22px; padding: 14px 18px 16px; background: var(--karton); border: 1px solid var(--linie2); border-top: 4px solid var(--ort-f); border-radius: 10px; box-shadow: var(--schatten); cursor: auto; min-width: 0}
+.gstreifen::before{content: ""; position: absolute; top: -17px; left: var(--zeiger, 60px); transform: translateX(-50%); border: 9px solid transparent; border-bottom: 9px solid var(--ort-f)}
+.gstkopf{display: flex; align-items: flex-start; gap: 12px}
+.gsttitel{flex: 1; min-width: 0}
+.gstweg{margin: 0; font-size: 12.5px; color: var(--ort-d); font-weight: 600}
+.gstreifen h3{margin: 1px 0 3px; font: 600 22px/1.2 var(--serif); overflow-wrap: anywhere}
+.gstmenge{margin: 0; font-size: 13px; color: var(--tinte2)}
+.gzu{flex: none}
+.gsth{margin: 14px 0 6px; font: 600 12.5px var(--sans); letter-spacing: .05em; text-transform: uppercase; color: var(--tinte2)}
+.gstklein{font-size: 12.5px; color: var(--tinte2); margin: 0 0 6px}
+.gstauch{display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 10px}
+.gstauch .gstklein{margin: 0 4px 0 0}
+
+.grolle{position: relative}
+.gfolge, .gohne{list-style: none; margin: 0; padding: 2px 2px 10px; display: flex; gap: 10px; overflow-x: auto; scroll-snap-type: x proximity; scrollbar-width: thin; align-items: stretch}
+.gohne.zweireihig{display: grid; grid-auto-flow: column; grid-template-rows: auto auto; grid-auto-columns: 158px}
+.gfolge > li, .gohne > li{flex: none; scroll-snap-align: start; display: flex}
+.gtrenner{flex-direction: column; justify-content: flex-start; width: 74px; padding: 4px 0 0 8px; border-left: 3px solid var(--jz); font: 600 13px/1.25 var(--serif); color: var(--tinte)}
+.gkarte{display: flex; flex-direction: column; width: 158px; padding: 0 0 8px; border: 1px solid var(--linie2); border-top: 4px solid var(--jz, var(--linie2)); background: #fff; border-radius: 7px; text-align: left; overflow: hidden; cursor: pointer}
+.gkarte.ohnezeit{border-style: dashed; border-top-width: 1px; background: #fdfbf6}
+.gkarte:hover{border-color: var(--tinte2)}
+.gkarte .gkbild{width: 100%; height: 106px; border-radius: 0; flex: none}
+.gkarte .gkpapier{background: #fbf8f1; height: 106px; border-bottom: 1px solid var(--linie)}
+.gkarte .gkpapier .gpzeilen{left: 30%; right: 30%; top: 26%; bottom: 22%}
+.gkdatum{font-size: 12px; color: var(--tinte2); padding: 6px 8px 0}
+.gkname{font: 600 13.5px/1.25 var(--serif); padding: 2px 8px 0; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow-wrap: anywhere}
+.gkmehr{font-size: 12px; color: var(--tinte3); padding: 3px 8px 0; margin-top: auto}
+.gkarte.gewaehlt{outline: 3px solid var(--wahl); outline-offset: 1px; border-color: var(--wahl)}
+.grknopf{position: absolute; top: 40px; width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--linie2); background: rgba(251,248,241,.95); box-shadow: var(--schatten); font-size: 22px; line-height: 1; padding: 0; z-index: 2}
+.grknopf.zurueck{left: -8px} .grknopf.vor{right: -8px}
+
+/* Wegweiser zu verwandten Werken */
+.gwege{margin-top: 4px}
+.gwliste{display: flex; flex-wrap: wrap; gap: 6px}
+.gwegweiser{display: inline-flex; align-items: center; gap: 8px; max-width: 100%; min-height: 40px; padding: 5px 16px 5px 8px; border: 1px solid var(--linie2); border-left: 5px solid var(--ort-f); background: #fff; border-radius: 3px 20px 20px 3px; text-align: left; cursor: pointer}
+.gwegweiser:hover{border-color: var(--ort-d); border-left-color: var(--ort-f)}
+.gwwart{font-size: 12px; line-height: 1.2; border-radius: 4px; padding: 2px 6px; background: #e3ebf6; color: var(--belegt); flex: none; max-width: 24ch; white-space: nowrap; overflow: hidden; text-overflow: ellipsis}
+.gwegweiser.berechnet{border-style: dashed; border-left-style: solid; background: #fdfbf6}
+.gwegweiser.berechnet .gwwart{background: transparent; color: var(--berechnet); border: 1px dashed var(--berechnet)}
+.gwwname{font: 600 13.5px/1.2 var(--serif); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 34ch}
+.gwwort{font-size: 12px; color: var(--ort-d); white-space: nowrap}
+.gwwpfeil{color: var(--ort-d); font-size: 16px}
+.gwmehr{min-height: 40px}
+.gwwbild{width: 40px; height: 40px; border-radius: 4px; flex: none}
+.gwwtext{display: flex; flex-direction: column; align-items: flex-start; gap: 2px; min-width: 0}
+.gwegweiser .gwwart{font-size: 12px}
+
+/* ---- Mittlere Breite ---- */
+@media (max-width: 1180px){ .gbeetleib{padding: 14px 14px 12px} .gweg{padding: 8px 14px} .gplan{padding: 8px 14px} }
+
+/* ---- Handy: Beete volle Breite, Pflanzen als waagrechte Reihe je App ---- */
+.garten.schmal .gplan{position: static; padding: 8px 10px}
+.garten.schmal .gweg{top: 0; padding: 8px 10px}
+.garten.schmal .gweg{flex-wrap: nowrap; gap: 10px}
+.garten.schmal .gwegschild{font-size: 20px; min-height: 46px; flex: none; max-width: 62%}
+.garten.schmal .gwegschild .gwname{min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap}
+.garten.schmal .gwinfo{font-size: 12px; line-height: 1.3; min-width: 0; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical}
+.garten.schmal .gbeetleib{display: block; padding: 10px 0 6px}
+.garten.schmal .gbeet.unter{margin: 6px 0 14px}
+.garten.schmal .gbeet.unter .gbeetleib{padding: 8px 0 4px}
+.garten.schmal .ggruppe{margin: 0 0 14px; width: 100%}
+.garten.schmal .ggkopf{margin: 0 10px; max-width: calc(100% - 20px)}
+.garten.schmal .gpflanzen{flex-wrap: nowrap; overflow-x: auto; overscroll-behavior-x: contain; scroll-snap-type: x proximity; padding: 0 4px; scrollbar-width: none}
+.garten.schmal .gpflanzen::-webkit-scrollbar{display: none}
+.garten.schmal .pflanze{width: 132px; scroll-snap-align: start}
+.garten.schmal .gblatt{width: 48px; height: 48px}
+.garten.schmal .gbluete{width: 76px; height: 76px}
+.garten.schmal .gschale{width: 122px}
+.garten.schmal .gsaaten{grid-template-columns: repeat(2, 46px)}
+.garten.schmal .gsaat, .garten.schmal .gsaatmehr{width: 46px; height: 46px}
+.garten.schmal .gschale.wenig .gsaaten{grid-template-columns: repeat(2, 50px)}
+.garten.schmal .gschale.wenig .gsaat{width: 50px; height: 50px}
+.garten.schmal .gstreifen{margin: 10px 8px 6px; width: auto; padding: 12px 12px 12px}
+.garten.schmal .gstreifen h3{font-size: 19px}
+.garten.schmal .gkarte{width: 138px}
+.garten.schmal .gohne.zweireihig{grid-auto-columns: 138px}
+.garten.schmal .grknopf{display: none}
+.garten.schmal .gwwname{max-width: 22ch}
+
+@media (prefers-reduced-motion: reduce){ .garten *{scroll-behavior: auto !important} }

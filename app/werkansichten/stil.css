@@ -116,7 +116,7 @@ canvas.flaeche.zieht{cursor: grabbing}
 .zeile small{color: var(--tinte2); font-size: 12px}
 .bezuege .zeile{display: grid; grid-template-columns: auto 1fr; gap: 0 8px}
 .bezuege .zeile small{grid-column: 2}
-.rart{font-size: 11px; border-radius: 4px; padding: 1px 6px; white-space: nowrap; grid-row: span 2; align-self: start; margin-top: 2px}
+.rart{font-size: 12px; border-radius: 4px; padding: 1px 6px; white-space: nowrap; grid-row: span 2; align-self: start; margin-top: 2px}
 .rart.belegt{background: #e3ebf6; color: var(--belegt)}
 .rart.berechnet{background: transparent; color: var(--berechnet); border: 1px dashed var(--berechnet)}
 details.technik{margin-top: 22px; font-size: 12.5px; color: var(--tinte2)}

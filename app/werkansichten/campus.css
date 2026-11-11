@@ -1,0 +1,210 @@
+/* Campus — Häuser der Gebiete, Material, Lernweg.
+   Durchgezogen und blau: belegt. Gestrichelt und ocker: berechnet. Orange: die Wahl. Farbe sonst nur für Orte. */
+
+.campus{position: absolute; inset: 0; display: grid; grid-template-rows: auto minmax(0, 1fr); background: var(--papier); container-type: inline-size; container-name: campus}
+.campus .gedaempft{opacity: .34}
+.campus .gedaempft:hover, .campus .gedaempft:focus-visible{opacity: .8}
+.campus .chaus.gedaempft{opacity: 1; box-shadow: none}
+.campus .chaus.gedaempft > *{opacity: .3}
+.campus .chaus.gedaempft:hover > *, .campus .chaus.gedaempft:focus-visible > *{opacity: .75}
+
+/* ---- Kopf ---- */
+.ckopf{display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 8px 18px 9px; border-bottom: 1px solid var(--linie)}
+.ckopflinks{min-width: 0}
+.cueber{margin: 0; font-size: 13px; color: var(--tinte2)}
+.cueber b{color: var(--tinte); font-weight: 600}
+.chinweis{margin: 1px 0 0; font: italic 15px/1.3 var(--serif); color: var(--tinte)}
+.ckopfrechts{display: flex; gap: 8px; flex: none}
+.ckopfrechts .knopf{max-width: 340px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap}
+
+.cleib{overflow-y: auto; overflow-x: hidden; min-height: 0; overscroll-behavior: contain}
+.cunten{flex: none}
+
+/* ---- Campusplan ---- */
+.cplan{padding: 16px 20px 6px}
+.cplanhier{margin: 0 0 10px; font-size: 14px; color: var(--wahl); font-weight: 500}
+.cplanlese{margin: 0 0 10px; font-size: 13px; color: var(--tinte2)}
+.cfeld{position: relative; margin: 0 auto}
+.cwege{position: absolute; left: 0; top: 0; overflow: visible; pointer-events: none}
+.cpflaster{fill: none; stroke: #e4dac6; stroke-linecap: round}
+.cstrich{fill: none; stroke: var(--berechnet); stroke-dasharray: 5 8; stroke-linecap: round; opacity: .75}
+
+.chaus{display: flex; flex-direction: column; text-align: left; padding: 0; border: 1px solid var(--linie2); background: var(--karton); border-radius: 10px; overflow: hidden; box-shadow: var(--schatten); color: var(--tinte)}
+.cfeld .chaus{position: absolute}
+.chaus:hover{border-color: var(--tinte2); box-shadow: 0 2px 4px rgba(40,30,20,.1), 0 14px 30px -12px rgba(40,30,20,.35)}
+.chaus.hier{outline: 3px solid var(--wahl); outline-offset: 2px}
+.chaus:focus-visible{outline: 3px solid var(--fokus); outline-offset: 3px}
+.cdach{display: flex; flex-direction: column; gap: 2px; padding: 8px 11px 7px; border-bottom: 1px solid var(--linie); background: var(--papier)}
+.cname{font: 600 17px/1.15 var(--serif); min-width: 0; hyphens: auto; -webkit-hyphens: auto; overflow-wrap: break-word}
+.czahl{font-size: 12.5px; color: var(--tinte2); display: flex; flex-wrap: wrap; align-items: center; gap: 2px 0}
+.czahl b{font-weight: 600; color: var(--tinte); margin-right: 6px}
+.czahl .cdazu{margin-right: 6px; white-space: nowrap}
+.czahl .cdazu::before{content: "· "}
+.czahl .ctreffer{margin-left: 8px}
+.cmosaik{flex: 1; min-height: 0; display: grid; gap: 3px; padding: 5px; overflow: hidden}
+.cbild{border-radius: 4px; min-height: 0; min-width: 0}
+.cmosaik .cbild.ohne .ohnewort{font-size: 12px}
+.cfuss{display: flex; justify-content: space-between; align-items: center; gap: 6px; padding: 3px 12px 5px; font-size: 12.5px; color: var(--tinte2); min-height: 24px}
+.ctreffer{background: #fff1d6; border: 1px solid #e3c27a; color: var(--tinte); border-radius: 10px; padding: 0 7px; white-space: nowrap}
+.cortleiste{display: flex; height: 6px; flex: none}
+.cortleiste span{min-width: 2px}
+.cortleiste span.blass{opacity: .16}
+.cnachbarn{display: block; padding: 0 12px 8px; font-size: 12.5px; color: var(--tinte2)}
+
+/* Raumschilder als Liste (schmal) */
+.cschilder{list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 12px}
+.alsliste .chaus{width: 100%}
+.alsliste .cname{font-size: 21px}
+.alsliste .cmosaik{grid-template-columns: repeat(4, 1fr); grid-auto-rows: auto}
+.alsliste .cbild{aspect-ratio: 1}
+
+/* Anbau und offene Zuordnung */
+.canbau, .cohnegebiet{padding: 14px 20px 4px}
+.canbau h3{font: 600 13px var(--sans); letter-spacing: .06em; text-transform: uppercase; color: var(--tinte2); margin: 6px 0 8px}
+.cchips{display: flex; flex-wrap: wrap; gap: 6px; align-items: center}
+.cchip{display: inline-flex; align-items: baseline; gap: 7px; border: 1px solid var(--linie2); background: var(--karton); border-radius: 18px; padding: 7px 12px; min-height: 40px; font-size: 14px; text-align: left}
+.cchip small{font-size: 12px; color: var(--tinte2)}
+.cchip:hover{border-color: var(--tinte2)}
+.cchip.hier, .cchip.an{border-color: var(--wahl); box-shadow: inset 0 0 0 1px var(--wahl)}
+.cchip.belegt{border-color: var(--belegt)}
+.cchip.belegt small{color: var(--belegt); font-weight: 600}
+.chaus.offen{width: 100%; border-style: dashed; background: transparent; box-shadow: none}
+.chaus.offen .cdach{background: transparent}
+.cmosaik.reihe{grid-template-columns: repeat(12, 1fr); grid-auto-rows: auto}
+.cmosaik.reihe .cbild{aspect-ratio: 1}
+
+/* ---- Im Haus ---- */
+.czwei{display: grid; grid-template-columns: minmax(300px, 37%) minmax(0, 1fr); height: 100%}
+.czwei:not(.einzeln) ~ .cunten{display: none}
+.cmaterial{overflow-y: auto; padding: 16px 14px 28px 18px; border-right: 1px solid var(--linie); overscroll-behavior: contain}
+.clernweg{overflow-y: auto; padding: 16px 22px 32px; background: var(--karton); overscroll-behavior: contain; min-width: 0}
+.cartwort{margin: 0; font-size: 12.5px; font-weight: 600; letter-spacing: .02em; color: var(--tinte2)}
+.chauskopf h2{font: 600 27px/1.12 var(--serif); margin: 2px 0 4px; overflow-wrap: anywhere; outline: none}
+.cmenge{margin: 0 0 10px; font-size: 13.5px; color: var(--tinte2)}
+.cnachbarhaeuser{display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-bottom: 4px}
+.cnachbarhaeuser .cchip{border-style: dashed; border-color: var(--berechnet)}
+.cfilter{display: flex; border: 1px solid var(--linie2); border-radius: 9px; overflow: hidden; margin: 12px 0 6px; background: var(--karton)}
+.cfilterknopf{flex: 1; display: flex; align-items: baseline; justify-content: center; gap: 6px; border: 0; background: none; padding: 8px 6px; min-height: 42px; font-size: 14px}
+.cfilterknopf + .cfilterknopf{border-left: 1px solid var(--linie2)}
+.cfilterknopf small{font-size: 12px; color: var(--tinte2)}
+.cfilterknopf[aria-pressed="true"]{background: var(--tinte); color: var(--papier)}
+.cfilterknopf[aria-pressed="true"] small{color: #d8cfbf}
+.cfilterknopf:focus-visible{outline-offset: -3px}
+.cerkl{margin: 4px 0 10px}
+.cliste{list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 3px}
+.cmat{display: flex; align-items: center; gap: 12px; width: 100%; text-align: left; border: 0; border-left: 4px solid var(--ort); background: none; padding: 6px 8px 6px 7px; border-radius: 4px 9px 9px 4px; min-height: 58px}
+.cmat:hover{background: var(--karton)}
+.cmat.an{background: #fff; box-shadow: 0 0 0 2px var(--wahl)}
+.cmatbild{width: 78px; height: 58px; border-radius: 6px; flex: none}
+.cmattext{display: flex; flex-direction: column; min-width: 0; gap: 1px}
+.cmatname{font: 500 15.5px/1.25 var(--serif); overflow-wrap: anywhere; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden}
+.cmatdaten{font-size: 12.5px; color: var(--tinte2)}
+.cort{color: var(--ort-d); font-weight: 600}
+.cauch{font-size: 12px; color: var(--tinte2); font-style: italic}
+.cmat.an .cauch{color: var(--wahl); font-style: normal; font-weight: 500}
+.cleszeichen{width: 42px; height: 42px; display: grid; place-items: center; flex: none; border-radius: 6px; background: var(--karton); color: var(--ort-d); border: 1px solid var(--linie)}
+.cleer{color: var(--tinte2); font-style: italic; margin: 6px 0}
+.cmehr{margin-top: 10px}
+
+/* ---- Lernweg ---- */
+.cspurzeile{display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; justify-content: space-between; margin-bottom: 12px}
+.cspur{min-width: 0}
+.cspur ol{display: flex; flex-wrap: wrap; align-items: center; list-style: none; margin: 0; padding: 0; gap: 2px 0}
+.cspur li + li::before{content: "→"; color: var(--tinte3); margin: 0 5px}
+.cspur button{border: 0; background: none; padding: 6px 4px; min-height: 36px; font-size: 13.5px; color: var(--tinte2); border-bottom: 2px solid var(--linie2); border-radius: 4px 4px 0 0; max-width: 30ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: middle}
+.cspur button:hover{color: var(--tinte); background: var(--papier)}
+.cspur button.hier{color: var(--tinte); font-weight: 600; border-bottom-color: var(--wahl)}
+.czurueck{flex: none}
+
+.cstart{display: grid; grid-template-columns: minmax(180px, 34%) minmax(0, 1fr); gap: 16px; padding: 12px; background: #fff; border: 1px solid var(--linie2); border-top: 4px solid var(--ort); border-radius: 10px; outline: none}
+.cstart.lesbar{cursor: pointer}
+.cstart.lesbar:focus-visible{outline: 3px solid var(--fokus); outline-offset: 2px}
+.cstartbild{aspect-ratio: 4/3; border-radius: 7px; align-self: start}
+.cstarttext{min-width: 0}
+.cstart .cartwort{color: var(--ort-d)}
+.cstart h3{font: 600 22px/1.2 var(--serif); margin: 2px 0 4px; overflow-wrap: anywhere}
+.cstart .cchips{margin-top: 10px}
+.cstart .cchip{min-height: 36px; padding: 5px 11px; font-size: 13.5px}
+.cnoch{margin: 10px 0 0; color: var(--wahl)}
+
+.cbelegt, .cvorschlag, .cquer{margin-top: 22px}
+.clernweg > section > h3, .cleerweg h3{display: flex; align-items: center; gap: 10px; font: 600 13px var(--sans); letter-spacing: .06em; text-transform: uppercase; color: var(--tinte2); margin: 0 0 4px}
+.cbelegt > h3::before{content: ""; width: 30px; border-top: 3px solid var(--belegt)}
+.cvorschlag > h3::before{content: ""; width: 30px; border-top: 3px dashed var(--berechnet)}
+.cquer > h3::before{content: ""; width: 30px; border-top: 1.5px solid var(--belegt)}
+.cbahnhalter{position: relative}
+.clinien{position: absolute; left: 0; top: 0; pointer-events: none; z-index: 0}
+.clinie{fill: none; stroke: var(--belegt); stroke-width: 2; opacity: .8}
+.clinie.an{stroke: var(--wahl); stroke-width: 3; opacity: 1}
+.cbahn{position: relative; z-index: 1; display: flex; align-items: flex-start; gap: 46px; overflow-x: auto; padding: 4px 4px 14px; scrollbar-width: thin}
+.cspalte{flex: none; width: 172px; display: flex; flex-direction: column; gap: 10px}
+.cstufe{margin: 0; font-size: 12px; letter-spacing: .05em; text-transform: uppercase; color: var(--tinte3)}
+.cst{display: flex; flex-direction: column; text-align: left; padding: 0; background: #fff; border: 1.5px solid rgba(44,79,124,.45); border-top: 4px solid var(--ort); border-radius: 8px; overflow: hidden; width: 100%}
+.cst:hover{border-color: var(--belegt)}
+.cst.an{box-shadow: 0 0 0 3px var(--wahl); border-color: var(--wahl)}
+.cst.besucht{background: #f6f1e6}
+.cst.lose{border-color: var(--linie2); border-style: solid}
+.cstbild{width: 100%; aspect-ratio: 16/10}
+.cst .cmattext{padding: 6px 9px 8px}
+.cst .cmatname{font-size: 14.5px}
+.cstart2{font-size: 12px; font-weight: 600; color: var(--belegt)}
+.cfremd{font-size: 12px; color: var(--ort-d); font-weight: 600}
+.cst.an .cauch{color: var(--wahl); font-style: normal; font-weight: 500}
+.cohneweg{margin-top: 12px}
+.cohneweg summary{cursor: pointer; font-size: 13.5px; color: var(--tinte2); min-height: 40px; display: flex; align-items: center}
+.cfassreihe{display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px}
+
+.cvreihe{display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 8px}
+.cvst{display: flex; align-items: center; gap: 10px; text-align: left; border: 1.5px dashed var(--berechnet); background: transparent; border-radius: 9px; padding: 6px 8px 6px 6px; min-height: 64px}
+.cvst:hover{background: #fff}
+.cvst.besucht{background: #f6f1e6}
+.cvbild{width: 58px; height: 58px; border-radius: 6px; flex: none}
+.cvgrund{font-size: 12px; font-weight: 600; color: var(--berechnet)}
+.cvst .cmatname{font-size: 14.5px; -webkit-line-clamp: 2}
+.cleerweg{max-width: 52ch; margin: 40px auto; text-align: center; color: var(--tinte2); font: 17px/1.5 var(--serif)}
+.cleerweg h3{justify-content: center}
+.ceinstiege{margin-top: 18px; text-align: left; font: 15px var(--sans)}
+
+/* ---- Schmal: eigene Komposition ---- */
+@container campus (max-width: 639px){
+  .ckopf{padding: 8px 12px; flex-wrap: wrap}
+  .chinweis{font-size: 14px}
+  .cueber{display: none}
+  .ckopfrechts{width: 100%}
+  .ckopfrechts .knopf{flex: 1; max-width: none}
+  .cplan{padding: 12px 12px 4px}
+  .canbau, .cohnegebiet{padding: 12px 12px 4px}
+  .cmosaik.reihe{grid-template-columns: repeat(4, 1fr)}
+  .czwei.einzeln{display: block; height: auto}
+  .cmaterial, .clernweg{overflow: visible; border-right: 0; padding: 14px 12px 18px}
+  .cmaterial{border-top: 1px solid var(--linie)}
+  .chauskopf h2{font-size: 24px}
+  .cstart{grid-template-columns: 96px minmax(0, 1fr); gap: 12px; padding: 10px}
+  .cstartbild{aspect-ratio: 1}
+  .cstart .cchips{grid-column: 1 / -1}
+  .cstart h3{font-size: 20px}
+  .cbahn{flex-direction: column; gap: 18px; overflow: visible; padding: 4px 0 6px 26px}
+  .cspalte{width: 100%; gap: 8px}
+  .cst{flex-direction: row; align-items: center}
+  .cstbild{width: 74px; height: 74px; aspect-ratio: auto; flex: none}
+  .cvreihe{grid-template-columns: 1fr}
+  .cfassreihe{grid-template-columns: 1fr}
+  .cspur button{max-width: 20ch}
+}
+@media (prefers-reduced-motion: reduce){ .campus *{transition: none !important} }
+
+/* Bilder: immer ganz gefüllt, nie verzerrt */
+.cbild, .cmatbild, .cstbild, .cvbild, .cstartbild{display: block; overflow: hidden; position: relative; background: var(--papier2)}
+.cbild img, .cmatbild img, .cstbild img, .cvbild img, .cstartbild img{display: block; width: 100%; height: 100%; object-fit: cover}
+.cbild.ohne, .cmatbild.ohne, .cstbild.ohne, .cvbild.ohne, .cstartbild.ohne{background: repeating-linear-gradient(135deg, var(--karton) 0 8px, #f1ebdf 8px 9px); display: grid; place-items: center; border: 1px dashed var(--linie2)}
+.cmatbild .ohnewort, .cvbild .ohnewort, .cstbild .ohnewort{font-size: 12px; line-height: 1.15}
+.cvst.belegt{border-style: solid; border-color: rgba(44,79,124,.45); background: #fff}
+.cvst.belegt:hover{border-color: var(--belegt)}
+.cstbild.ohne{aspect-ratio: auto; height: 30px; border-width: 0 0 1px}
+.cstartbild.ohne{aspect-ratio: auto; min-height: 72px}
+@container campus (max-width: 639px){ .cstbild.ohne{width: 52px; height: 52px; border-width: 1px} }
+.cbahnnav{display: flex; align-items: center; gap: 10px; margin: 2px 0 8px}
+.cbahnnav .knopf{min-height: 36px; padding: 5px 11px; font-size: 13px}
+.cortwahl{margin: 0 0 14px}
+.cortwahl > .klein{color: var(--ort-d); font-weight: 600; margin-right: 4px}
+.cortwahl .cchip{border-color: var(--ort-d)}
