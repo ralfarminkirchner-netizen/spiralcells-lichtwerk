@@ -208,8 +208,8 @@ function zeichneBlatt(){
   if(k.gebiete && k.gebiete.length){ const p = el('p', 'gebiete klein'); p.append(el('span', '', 'Gebiete (berechnet): '), el('span', '', k.gebiete.join(', '))); leib.append(p); }
   // Bilder
   if(k.art === 'fassung' && k.bilder.length){ const band = el('div', 'bildband');
-    k.bilder.slice(0, 24).forEach((b, i) => { const x = knopf('bildwahl', null, () => oeffne(k), b.text ? 'Bild: ' + b.text : 'Bild ' + (i + 1)); x.append(bildEl(K, b, i === 0 ? 960 : 240, 'bild')); band.append(x); });
-    if(k.bilder.length > 24) band.append(el('p', 'klein', 'und ' + n(k.bilder.length - 24, 'weiteres Bild', 'weitere Bilder') + ' im Text'));
+    k.bilder.slice(0, 7).forEach((b, i) => { const x = knopf('bildwahl', null, () => oeffne(k), b.text ? 'Bild: ' + b.text : 'Bild ' + (i + 1)); x.append(bildEl(K, b, i === 0 ? 960 : 240, 'bild')); band.append(x); });
+    if(k.bilder.length > 7) band.append(knopf('knopf zalle', 'Alle ' + k.bilder.length + ' Bilder beim Lesen', () => oeffne(k)));
     leib.append(band);
   } else if(k.art !== 'wurzel' && k.art !== 'gespraech'){ const b = titelBild(k); leib.append(bildEl(K, b, 960, 'titelbild')); if(!b) leib.lastChild.title = ''; }
   if(k.art === 'fassung'){ const z = el('dl', 'daten');
