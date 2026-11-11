@@ -1,0 +1,160 @@
+/* Dorf — Draufsicht, Häuser, Grundriss. Farbe gehört dem Ort (--f Fläche, --d dunkel, --h hell). */
+
+.dorf{position: absolute; inset: 0; overflow: hidden; background: var(--papier)}
+
+/* ================= Karte ================= */
+.dkarte{position: absolute; inset: 0; overflow: hidden; touch-action: none; cursor: grab; user-select: none; -webkit-user-select: none}
+.dkarte.zieht{cursor: grabbing}
+.dorf.drinnen .dkarte, .dorf.drinnen .dhandy{visibility: hidden}
+.dwelt{position: absolute; left: 0; top: 0; transform-origin: 0 0; --s: 1}
+.dwelt > svg{position: absolute; overflow: visible; pointer-events: none}
+.dgrund.an{stroke-opacity: 1}
+
+/* Ein Haus: Dach, Wand, Fenster (echtes Bild oder leeres Papierblatt), Tür */
+.dhaus{position: absolute}
+.dtuer{position: absolute; inset: 0; padding: 0; border: 0; background: none; display: block; cursor: pointer}
+.ddach{position: absolute; left: -7%; right: -7%; top: 0; height: 33%; background: var(--f); clip-path: polygon(50% 0, 100% 100%, 0 100%)}
+.dwand{position: absolute; left: 4%; right: 4%; top: 31%; bottom: 0; background: #fbf8f1; border: calc(1.2px / var(--s)) solid var(--d); border-top-width: 0; box-shadow: 0 calc(2px / var(--s)) calc(4px / var(--s)) -1px rgba(50,35,20,.35)}
+.dfenster{position: absolute; left: 14%; right: 14%; top: 39%; bottom: 25%; overflow: hidden; background: var(--papier2); outline: calc(1px / var(--s)) solid var(--d)}
+.dfenster img{display: block; width: 100%; height: 100%; object-fit: cover}
+.dfenster.ohne{background: #fdfbf6; clip-path: polygon(0 0, 78% 0, 100% 24%, 100% 100%, 0 100%)}
+.dfenster.ohne::before{content: ""; position: absolute; left: 16%; right: 16%; top: 40%; height: 40%;
+  background: repeating-linear-gradient(to bottom, rgba(70,55,35,.38) 0 1.5px, transparent 1.5px 30%)}
+.dtuerblatt{position: absolute; left: 42%; width: 16%; bottom: 0; height: 18%; background: var(--d); border-radius: 30% 30% 0 0}
+.dhaus.st3 .dtuerblatt{left: 40%; width: 20%}
+.dtuer:hover .dwand{background: #fff}
+.dtuer:hover .ddach{filter: brightness(1.08)}
+.dtuer:focus-visible{outline: calc(3px / var(--s)) solid var(--fokus); outline-offset: calc(3px / var(--s)); border-radius: 2px}
+.dhaus.zuletzt .dtuer{outline: calc(3px / var(--s)) dashed var(--wahl); outline-offset: calc(3px / var(--s))}
+.dhaus.matt{opacity: .2}
+
+/* Aushang: Brett auf zwei Pfosten */
+.dbrettflaeche{position: absolute; left: 4%; right: 4%; top: 18%; height: 52%; background: #c9b48e; border: calc(1.2px / var(--s)) solid #6b5236; border-radius: 2px; display: flex; gap: 8%; padding: 8% 10%; justify-content: center}
+.dbrettflaeche i{display: block; flex: 1; background: #fdfbf6; box-shadow: 0 1px 1px rgba(0,0,0,.25)}
+.dbrettflaeche i:nth-child(2){transform: translateY(12%)}
+.dpfosten{position: absolute; left: 18%; right: 18%; top: 70%; bottom: 0; border-left: calc(2.5px / var(--s)) solid #6b5236; border-right: calc(2.5px / var(--s)) solid #6b5236}
+
+/* Doppelhaus-Zeichen: dasselbe Werk wohnt auch woanders */
+.dauch{position: absolute; right: -22%; top: -14%; width: 46%; aspect-ratio: 1; padding: 6%; border-radius: 50%; border: calc(1.2px / var(--s)) solid var(--d); background: #fff; color: var(--d); cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,.25)}
+.dauch svg{display: block; width: 100%; height: 100%}
+.dauch:hover{background: var(--h)}
+.dauch:focus-visible{outline: calc(3px / var(--s)) solid var(--fokus); outline-offset: 1px}
+
+/* Schilder und Namen: auf dem Bildschirm, nicht mitgezoomt */
+.dschilder{position: absolute; inset: 0; pointer-events: none}
+.dname{position: absolute; left: 0; top: 0; font: 500 12.5px/18px var(--sans); color: var(--tinte); background: rgba(251,248,241,.94); padding: 0 6px; border-radius: 4px; white-space: nowrap; box-shadow: inset 0 -2px 0 var(--f)}
+.dname.weg, .dhofname.weg{display: none}
+.dname.matt{opacity: .35}
+.dschild{position: absolute; left: 0; top: 0; pointer-events: auto; display: flex; flex-direction: column; align-items: flex-start; gap: 1px; text-align: left;
+  background: var(--karton); border: 1px solid var(--d); border-top: 6px solid var(--f); border-radius: 4px 4px 7px 7px; padding: 6px 12px 7px; min-height: 40px; box-shadow: var(--schatten); white-space: nowrap}
+.dschild .dsart{font: 600 11.5px/1.2 var(--sans); letter-spacing: .08em; text-transform: uppercase; color: var(--d); opacity: .85}
+.dschild .dsname{font: 600 20px/1.15 var(--serif); color: var(--d)}
+.dschild .dsmenge{font: 12.5px/1.3 var(--sans); color: var(--tinte2)}
+.dschild:hover{background: var(--h)}
+.dschild.knapp .dsart, .dschild.knapp .dsmenge{display: none}
+.dschild.knapp{padding: 4px 10px 5px; min-height: 0; border-top-width: 5px}
+.dschild.knapp .dsname{font-size: 17px}
+.dschild.platz.knapp .dsname{font-size: 15px}
+.dschild.platz.knapp .dsart{display: block}
+.dschild.an{outline: 3px solid var(--wahl); outline-offset: 2px}
+.dschild.matt{opacity: .45}
+.dschild.platz{align-items: center; text-align: center; border-radius: 22px; border-top-width: 1px; border-width: 2px; padding: 7px 16px 8px; background: #fbf8f1}
+.dschild.platz .dsname{font-size: 17px; white-space: normal; max-width: 112px; line-height: 1.12}
+.dschild.platz .dsmenge{white-space: normal; max-width: 112px}
+.dschild.bau{border-style: dashed; border-top-style: solid; border-top-color: #b8a46a; background: #f6f4ec}
+.dhofname{position: absolute; left: 0; top: 0; pointer-events: auto; display: flex; align-items: baseline; gap: 6px; border: 1px solid var(--d); border-left: 5px solid var(--f); background: var(--karton); border-radius: 4px; padding: 3px 9px; white-space: nowrap; box-shadow: var(--schatten); min-height: 28px}
+.dhofname small{font: 600 11.5px var(--sans); text-transform: uppercase; letter-spacing: .07em; color: var(--d)}
+.dhofname span{font: 600 15px var(--serif); color: var(--d)}
+.dhofname:hover{background: #fff}
+
+/* ================= Innen: Grundriss ================= */
+.dinnen{position: absolute; inset: 0; overflow-y: auto; background: #ece4d4; z-index: 4; overscroll-behavior: contain; border-top: 8px solid var(--papier)}
+.dikopf{position: sticky; top: 0; z-index: 2; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 18px; padding: 0 22px 12px; background: var(--karton); border-bottom: 1px solid var(--linie2); box-shadow: 0 6px 14px -12px rgba(0,0,0,.4)}
+.dikopf::before{content: ""; flex: 0 0 100%; height: 18px; margin: 0 -22px 0; background: var(--f); clip-path: polygon(0 100%, 3% 0, 97% 0, 100% 100%)}
+.dititel{min-width: 0; flex: 1}
+.dititel .artwort{margin: 0; color: var(--d)}
+.dititel h2{margin: 0; font: 600 26px/1.15 var(--serif); overflow-wrap: anywhere}
+.dititel .klein{margin: 2px 0 0}
+.draus{font-weight: 600}
+.diauch, .drauch{display: flex; flex-wrap: wrap; gap: 6px; align-items: center; flex: 0 0 100%}
+.drauch{flex: none; margin: 4px 0 0}
+.digrund{display: grid; gap: 7px; margin: 18px 22px 40px; padding: 7px; background: var(--wand); border-radius: 3px; grid-auto-flow: dense; box-shadow: 0 10px 30px -18px rgba(0,0,0,.6)}
+.draum{background: #fbf8f1; padding: 12px 14px 16px; min-width: 0; position: relative}
+.draum::before{content: ""; position: absolute; left: 22px; top: -7px; width: 34px; height: 7px; background: #fbf8f1}   /* Tür im Mauerwerk */
+.draum.flur{background: #f4efe4}
+.draum.aushang{background: #efe6d2}
+.draum.an{box-shadow: inset 0 0 0 3px var(--wahl)}
+.draum.matt > .dwandreihe{opacity: .3}
+.drkopf{margin-bottom: 10px}
+.drkopf h3{margin: 0; font: 600 16px/1.25 var(--serif)}
+.drkopf .klein{margin: 2px 0 0}
+.drname{border: 0; background: none; padding: 2px 0; text-align: left; font: 600 16px/1.25 var(--serif); color: var(--tinte); border-bottom: 2px solid var(--f); min-height: 32px}
+.drname:hover{color: var(--d)}
+.dwandreihe{display: flex; flex-wrap: wrap; gap: 12px 10px; align-items: flex-start}
+.dohnezeit{flex: 0 0 100%; margin: 4px 0 -2px; font-size: 12.5px; color: var(--tinte2); font-style: italic; border-top: 1px dashed var(--linie2); padding-top: 6px}
+.drahmen{width: 116px; border: 0; background: none; padding: 0; text-align: left; display: flex; flex-direction: column; gap: 3px; border-radius: 4px}
+.drahmen .dbild{display: block; width: 116px; height: 87px; background: #fff; padding: 4px; border: 1px solid #cdbfa3; box-shadow: 0 1px 2px rgba(0,0,0,.18), 0 4px 10px -6px rgba(0,0,0,.45)}
+.drahmen .dbild img{display: block; width: 100%; height: 100%; object-fit: cover; background: var(--papier2)}
+.drahmen .dbild.kaputt{display: grid; place-items: center; background: var(--karton)}
+.dpapier{display: flex; flex-direction: column; gap: 3px; width: 116px; height: 87px; padding: 8px 14px 8px 9px; background: #fdfbf6; border: 1px solid #d5cab5; clip-path: polygon(0 0, 84% 0, 100% 20%, 100% 100%, 0 100%); box-shadow: inset 0 -12px 18px -16px rgba(0,0,0,.25)}
+.dpwort{font: italic 12px/1.1 var(--sans); color: var(--tinte3)}
+.dptext{font: 12.5px/1.25 var(--serif); color: var(--tinte); overflow: hidden; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow-wrap: anywhere}
+.drahmen.gespraech .dpapier{background: #f7f1e3; clip-path: none; border-radius: 10px 10px 10px 2px}
+.drname2{font: 12.5px/1.25 var(--sans); color: var(--tinte); overflow: hidden; text-overflow: ellipsis; white-space: nowrap}
+.drzeit{font: 12px/1.2 var(--sans); color: var(--tinte2)}
+.drahmen:hover .dbild, .drahmen:hover .dpapier{transform: translateY(-2px); transition: transform .12s}
+.drahmen.an .dbild, .drahmen.an .dpapier{outline: 3px solid var(--wahl); outline-offset: 2px}
+.drahmen.an .drname2{font-weight: 600}
+.drahmen.matt{opacity: .25}
+
+/* ================= Handy: Plan oben, Straße darunter ================= */
+.dhandy{position: absolute; inset: 0; display: flex; flex-direction: column; overflow: hidden; padding-bottom: var(--dunten, 0px)}
+.dplan{position: relative; flex: 1 1 auto; min-height: 170px}
+.dplan > svg{position: absolute; inset: 6px; width: calc(100% - 12px); height: calc(100% - 12px)}
+.dplannamen{position: absolute; inset: 0}
+.dplanname{position: absolute; left: 0; top: 0; min-height: 40px; display: flex; align-items: center; padding: 4px 9px; border: 1px solid var(--d); border-top: 4px solid var(--f); border-radius: 6px; background: rgba(251,248,241,.95); font: 600 13px/1.1 var(--serif); color: var(--d); white-space: nowrap; box-shadow: 0 2px 6px -3px rgba(0,0,0,.35)}
+.dplanname.bau{border-style: dashed; border-top-style: solid}
+.dplanname.an{background: var(--d); color: #fff; border-color: var(--d); outline: 3px solid var(--wahl); outline-offset: 1px}
+.dplanname.matt{opacity: .45}
+.dzug{flex: 0 0 auto; display: flex; flex-direction: column; background: var(--papier)}
+.dzkopf{display: flex; align-items: baseline; flex-wrap: wrap; gap: 0 8px; padding: 6px 14px 0; border-top: 5px solid var(--f)}
+.dzkopf small{font: 600 11.5px var(--sans); text-transform: uppercase; letter-spacing: .08em; color: var(--d)}
+.dzkopf h3{margin: 0; font: 600 19px/1.2 var(--serif); color: var(--d)}
+.dzkopf .klein{flex: 0 0 100%; margin: 0}
+.dstrasse{display: flex; align-items: flex-end; gap: 4px; overflow-x: auto; overflow-y: hidden; padding: 4px 14px 26px; scroll-snap-type: x proximity; outline: none; scroll-padding: 0 14px;
+  background: linear-gradient(to top, transparent 4px, #cbbd9f 4px, #cbbd9f 6px, #ece3d0 6px, #ece3d0 20px, #cbbd9f 20px, #cbbd9f 22px, transparent 22px) local}
+.dstrasse.bau{background-color: #ecebe6}
+.hhaus{scroll-snap-align: start; display: flex; align-items: flex-end; flex: none}
+.htuer{display: flex; flex-direction: column; align-items: center; gap: 3px; border: 0; background: none; padding: 4px 2px; border-radius: 8px; position: relative; min-height: 44px}
+.hbau{position: relative; display: block; width: var(--w); height: calc(var(--w) * .86); --s: 1}
+.hhaus.st1 .htuer{--w: 58px} .hhaus.st2 .htuer{--w: 72px} .hhaus.st3 .htuer{--w: 90px}
+.hhaus .dfenster{left: 12%; right: 12%; top: 38%; bottom: 22%}
+.hname{font: 500 12.5px/1.2 var(--sans); width: max(var(--w), 98px); min-height: 2.4em; text-align: center; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow-wrap: break-word; hyphens: manual; color: var(--tinte)}
+.hauch{display: flex; align-items: center; gap: 3px; font: 12px var(--sans); color: var(--d); max-width: 110px}
+.hauch svg{width: 14px; height: 14px; flex: none}
+.hauch span{overflow: hidden; text-overflow: ellipsis; white-space: nowrap}
+.hhaus.brett .htuer{--w: 64px}
+.hhaus.brett .htuer > .dbrettflaeche, .hhaus.brett .htuer > .dpfosten{position: relative; display: flex; width: var(--w); left: auto; right: auto; top: auto; --s: 1}
+.hhaus.brett .htuer > .dbrettflaeche{height: 36px}
+.hhaus.brett .htuer > .dpfosten{height: 14px; display: block}
+.hhaus.matt{opacity: .25}
+.hhaus.zuletzt .hbau{outline: 3px dashed var(--wahl); outline-offset: 3px}
+.htuer:focus-visible{outline: 3px solid var(--fokus); outline-offset: 2px}
+.hhof{flex: none; align-self: flex-end; display: flex; flex-direction: column; border: 2px dashed var(--d); border-radius: 12px; background: rgba(251,248,241,.75); padding: 4px 6px; margin: 0 6px; scroll-snap-align: start}
+.hhofname{display: flex; align-items: baseline; gap: 6px; border: 0; background: none; padding: 4px 4px; min-height: 40px; text-align: left; font: 600 15px var(--serif); color: var(--d)}
+.hhofname small{font: 600 11.5px var(--sans); text-transform: uppercase; letter-spacing: .07em}
+.hhofinnen{display: flex; gap: 2px; align-items: flex-end}
+.hhofinnen .htuer{--w: 52px !important}
+.hhofinnen .hname{width: 84px}
+
+@media (max-width: 759px){
+  .dikopf{padding: 0 12px 10px; gap: 6px 10px}
+  .dikopf::before{margin: 0 -12px; height: 12px}
+  .dititel h2{font-size: 20px}
+  .digrund{margin: 12px 10px calc(var(--dunten, 0px) + 30px)}
+  .draum{padding: 10px 10px 12px}
+  .drahmen, .drahmen .dbild, .dpapier{width: 100px}
+  .drahmen .dbild, .dpapier{height: 75px}
+  .dptext{-webkit-line-clamp: 2}
+}
+@media (prefers-reduced-motion: reduce){ .drahmen:hover .dbild, .drahmen:hover .dpapier{transform: none} }
