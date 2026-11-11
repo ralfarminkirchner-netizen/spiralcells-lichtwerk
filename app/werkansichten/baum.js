@@ -122,6 +122,7 @@ export function starte(flaeche, K){
   const T = trefferliste(), sch = schild(flaeche);
   let schwebend = null, pfad = new Set(), gew = null;
   const B = buehne(flaeche, {zeichne, tipp, schwebe});
+  B.randVon = K.rand;
   B.sMin = 0.05; B.sMax = 12;
   lager.beiBild = () => B.neu();
   zoomKnoepfe(flaeche, B, () => B.fliege(B.blickAuf(gesamt, 1.03), 600), 'Ganzer Baum');

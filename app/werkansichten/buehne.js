@@ -15,7 +15,7 @@ export function buehne(el, {zeichne, tipp, schwebe, lebendig = () => false, dopp
 
   /* Der Blick, der einen Rahmen ganz zeigt, mit Platz für das, was darüber liegt (Leiste, Karte) */
   B.blickAuf = (r, luft = 1.08) => {
-    const {oben, unten, links, rechts} = B.rand, bw = Math.max(40, B.w - links - rechts), bh = Math.max(40, B.h - oben - unten);
+    const {oben, unten, links, rechts} = B.randVon ? B.randVon() : B.rand, bw = Math.max(40, B.w - links - rechts), bh = Math.max(40, B.h - oben - unten);
     const s = Math.min(B.sMax, bw / ((r.x1 - r.x0) * luft), bh / ((r.y1 - r.y0) * luft));
     return {s, cx: (r.x0 + r.x1) / 2 - ((links - rechts) / 2) / s, cy: (r.y0 + r.y1) / 2 - ((oben - unten) / 2) / s};
   };

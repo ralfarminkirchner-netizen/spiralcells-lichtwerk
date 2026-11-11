@@ -125,6 +125,8 @@ function zurueck(){
 async function starteAnsicht(id, k, neu){
   const a = ANSICHTEN.find(x => x.id === id) || ANSICHTEN[0], nr = ++Z.ladeNr;
   Z.ansicht = a.id; document.body.dataset.ansicht = a.id;
+  // Büro und Text brauchen die Breite selbst: dort ist das Blatt eingeklappt, bis man es öffnet
+  if(!schmal()){ if(a.id === 'buero' || a.id === 'zelle'){ if(Z.blattWunsch == null) Z.blattWunsch = Z.blattOffen; Z.blattOffen = false; } else if(Z.blattWunsch != null){ Z.blattOffen = Z.blattWunsch; Z.blattWunsch = null; } }
   for(const b of document.querySelectorAll('#leiste [data-id]')){ const an = b.dataset.id === a.id; b.classList.toggle('an', an); an ? b.setAttribute('aria-current', 'page') : b.removeAttribute('aria-current'); }
   $('#leiste [aria-current]')?.scrollIntoView?.({block: 'nearest', inline: 'center'});
   document.title = a.name + ' · Ralfs Werke';
@@ -162,7 +164,8 @@ function zeichneLegende(a, legende){
 /* ---------- Der Weg ---------- */
 function zeichneWeg(){
   const nav = $('#weg'); nav.replaceChildren();
-  const w = wegZu(Z.gewaehlt), ol = el('ol');
+  const w = wegZu(Z.gewaehlt).slice(1), ol = el('ol');   // „Ralfs Werke“ steht schon links als Marke
+  if(!w.length) ol.append(el('li', 'klein', 'Der ganze Bestand'));
   w.forEach((k, i) => { const li = el('li'), b = knopf(i === w.length - 1 ? 'hier' : '', k.name, () => waehle(k));
     if(i === w.length - 1) b.setAttribute('aria-current', 'location');
     if(k.art === 'ort') b.style.setProperty('--ort', farbe(k).d);
@@ -174,7 +177,7 @@ function zeichneWeg(){
 function zeichneBlatt(){
   const k = Z.gewaehlt; if(!k) return;
   const f = farbe(k); blatt.style.setProperty('--ort', f.f); blatt.style.setProperty('--ort-d', f.d); blatt.style.setProperty('--ort-h', f.h);
-  blatt.classList.toggle('zu', !Z.blattOffen); blatt.classList.toggle('gross', Z.blattGross);
+  blatt.classList.toggle('zu', !schmal() && !Z.blattOffen); blatt.classList.toggle('gross', Z.blattGross);
   const kopf = el('div', 'blattkopf');
   const griff = knopf('griff', null, () => { if(schmal()){ Z.blattGross = !Z.blattGross; } else Z.blattOffen = !Z.blattOffen; zeichneBlatt(); nachBlatt(); },
     schmal() ? (Z.blattGross ? 'Blatt verkleinern' : 'Blatt vergrößern') : (Z.blattOffen ? 'Blatt einklappen' : 'Blatt ausklappen'));

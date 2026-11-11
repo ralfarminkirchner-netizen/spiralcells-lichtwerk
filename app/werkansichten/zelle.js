@@ -126,7 +126,7 @@ export function starte(flaeche, K){
       const t = lese.querySelector('.ztext');
       if(h === null) t.replaceChildren(el('p', 'zleer', 'Der Wortlaut ist gerade nicht erreichbar.'));
       else if(!h.trim()) t.replaceChildren(el('p', 'zleer', 'Zu dieser Fassung liegt kein Wortlaut vor.'));
-      else t.innerHTML = h;
+      else { t.innerHTML = h; reinige(t); }
       for(const img of t.querySelectorAll('img')) img.onerror = () => { const s = el('span', 'ohne bild'); s.append(el('span', 'ohnewort', 'Bild nicht erreichbar')); img.replaceWith(s); };
       zeichneGliederung();
       lese.scrollTop = K.lesestand.hole(fassung.schluessel);
@@ -147,7 +147,16 @@ export function starte(flaeche, K){
       zeichneGliederung();
     }
   }
-  const bloecke = h => { const d = document.createElement('div'); d.innerHTML = h || ''; d.querySelectorAll('details').forEach(x => x.remove());
+  /* Nachreinigung: keine Ereignis-Attribute, Verweise nur auf http(s) oder eigene Bilder */
+  function reinige(wurzel){
+    for(const e of wurzel.querySelectorAll('*')){
+      if(/^(SCRIPT|IFRAME|OBJECT|EMBED|STYLE|LINK|META)$/.test(e.tagName)){ e.remove(); continue; }
+      for(const a of [...e.attributes]){ const nm = a.name.toLowerCase(), v = a.value.trim().toLowerCase();
+        if(nm.startsWith('on') || nm === 'style') e.removeAttribute(a.name);
+        else if((nm === 'href' || nm === 'src') && !(v.startsWith('https://') || v.startsWith('http://') || v.startsWith('/lichtwerk/bild?'))) e.removeAttribute(a.name); }
+    }
+  }
+  const bloecke = h => { const d = new DOMParser().parseFromString(h || '', 'text/html').body; d.querySelectorAll('details').forEach(x => x.remove());
     return [...d.querySelectorAll('p, h2, h3, h4, li, pre, blockquote')].map(e => ({tag: /^H/.test(e.tagName) ? e.tagName.toLowerCase() : e.tagName === 'PRE' ? 'pre' : 'p', t: e.textContent.trim()})).filter(x => x.t); };
   /* Absätze in längster gemeinsamer Folge; was nicht passt, steht nur in einer der beiden */
   function vergleiche(a, b){

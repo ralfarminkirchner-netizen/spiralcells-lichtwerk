@@ -37,7 +37,7 @@ button{font: inherit; color: inherit; cursor: pointer}
 #weg{flex: 1; min-width: 0; overflow-x: auto; scrollbar-width: none}
 #weg::-webkit-scrollbar{display: none}
 #weg ol{display: flex; align-items: center; list-style: none; margin: 0; padding: 0; white-space: nowrap}
-#weg li + li::before{content: "›"; color: var(--tinte3); margin: 0 4px}
+#weg li + li::before, #weg li:first-child::before{content: "›"; color: var(--tinte3); margin: 0 4px}
 #weg button{border: 0; background: none; padding: 6px 6px; border-radius: 6px; color: var(--tinte2); max-width: 26ch; overflow: hidden; text-overflow: ellipsis; vertical-align: middle; border-bottom: 2px solid var(--ort, transparent)}
 #weg button:hover{background: var(--papier2); color: var(--tinte)}
 #weg button.hier{color: var(--tinte); font-weight: 600}
@@ -154,8 +154,6 @@ details.technik pre{white-space: pre-wrap; word-break: break-all; background: va
   #frage span{display: none}
   #blatt{position: fixed; left: 0; right: 0; bottom: 62px; width: auto; max-height: 46vh; border-left: 0; border-top: 1px solid var(--linie2); border-radius: 16px 16px 0 0; box-shadow: 0 -10px 30px -12px rgba(0,0,0,.3); z-index: 8}
   #blatt::before{border-radius: 16px 16px 0 0}
-  #blatt.zu{width: auto}
-  #blatt.zu .blattleib, #blatt.zu .blattkopf > :not(.griff){display: initial}
   #blatt:not(.gross) .blattleib{display: none}
   #blatt.gross{max-height: calc(100dvh - 62px - var(--kopf) - 10px)}
   .blattkopf{padding: 14px 14px 10px}
@@ -239,3 +237,72 @@ mark.zt.jetzt{background: #ff9f43; box-shadow: 0 0 0 2px #ff9f43}
 .schild{position: absolute; z-index: 3; pointer-events: none; background: var(--tinte); color: var(--papier); font-size: 13px; padding: 5px 9px; border-radius: 6px; max-width: 320px; box-shadow: var(--schatten)}
 .ansichtsflaeche:focus-visible{outline: 3px solid var(--fokus); outline-offset: -3px}
 @media (max-width: 759px){ .zoomknoepfe{left: 8px; bottom: auto; top: 8px} }
+
+/* ================= Kosmos ================= */
+.kmasstab{position: absolute; left: 50%; bottom: 14px; transform: translateX(-50%); background: rgba(251,248,241,.95); border: 1px solid var(--linie2); border-radius: 12px; padding: 7px 14px 8px; box-shadow: var(--schatten); pointer-events: none; text-align: center; max-width: calc(100% - 300px)}
+.kmasstab ol{display: flex; gap: 4px; list-style: none; margin: 0; padding: 0; justify-content: center; flex-wrap: wrap}
+.kmasstab li{font-size: 12px; color: var(--tinte3); padding: 1px 8px; border-radius: 10px}
+.kmasstab li.vorbei{color: var(--tinte2)}
+.kmasstab li.an{background: var(--tinte); color: var(--papier); font-weight: 600}
+.kmasstab p{margin: 4px 0 0; font-size: 13px; color: var(--tinte2)}
+@media (max-width: 759px){ .kmasstab{bottom: auto; top: 58px; left: 8px; right: 8px; transform: none; max-width: none; padding: 5px 8px} .kmasstab li{padding: 1px 5px; font-size: 11px} }
+
+/* ================= Galaxie ================= */
+body[data-ansicht="galaxie"] #buehne{background: #17161d}
+.gleiste{position: absolute; right: 14px; top: 12px; display: flex; gap: 8px; align-items: center; z-index: 2; flex-wrap: wrap; justify-content: flex-end}
+.gleiste .knopf{background: rgba(251,248,241,.95)}
+.gleiste .knopf[aria-pressed="true"]{background: #d8b25a; color: #1d1a10; border-color: #d8b25a}
+.gzahl{color: #d8d2c4; background: rgba(23,22,29,.8); padding: 4px 8px; border-radius: 6px}
+.gspur{position: absolute; left: 14px; top: 12px; right: 380px; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; z-index: 2; background: rgba(251,248,241,.95); padding: 6px 10px; border-radius: 10px; box-shadow: var(--schatten)}
+.gspur .pfeil{color: var(--tinte2)}
+@media (max-width: 759px){ .gleiste{top: auto; bottom: 8px; right: 8px} .gzahl{display: none} .gspur{right: 8px; left: 8px; top: 56px} }
+
+/* ================= Büro ================= */
+.buero{position: absolute; inset: 0; display: grid; grid-template-columns: 340px minmax(0, 1fr); background: #ebe5d8}
+.bfinden{display: flex; flex-direction: column; min-height: 0; border-right: 1px solid var(--linie); background: var(--papier)}
+.bfkopf{padding: 12px; display: flex; flex-direction: column; gap: 8px; border-bottom: 1px solid var(--linie)}
+.bfkopf input[type=search], .bfkopf select{font: 14px var(--sans); padding: 8px 10px; border: 1px solid var(--linie2); border-radius: 8px; background: #fff; min-height: 40px; min-width: 0}
+.bfreihe{display: flex; gap: 6px; flex-wrap: wrap; align-items: center}
+.bfreihe select{flex: 1}
+.bhak{font-size: 13.5px; display: flex; align-items: center; gap: 4px; min-height: 36px}
+.bfzahl{margin: 8px 12px 4px}
+.bfliste{list-style: none; margin: 0; padding: 0 6px 30px; overflow-y: auto; flex: 1}
+.bfeintrag{display: flex; align-items: center; gap: 2px; border-radius: 8px}
+.bfeintrag.an{background: #fff5e8; box-shadow: inset 3px 0 0 var(--wahl)}
+.bfwahl{display: flex; gap: 9px; align-items: center; flex: 1; min-width: 0; text-align: left; border: 0; background: none; padding: 5px 6px; border-radius: 8px; min-height: 52px; border-left: 3px solid var(--ort)}
+.bfwahl:hover{background: var(--papier2)}
+.bfauf{width: 40px; height: 40px; border: 1px solid var(--linie2); background: var(--karton); border-radius: 50%; flex: none; font-size: 18px}
+.bfauf:hover{background: var(--tinte); color: var(--papier)}
+.btisch{display: grid; grid-template-columns: minmax(0, 1fr) 250px; grid-template-rows: auto minmax(0, 1fr); min-height: 0}
+.btkopf{grid-column: 1 / -1; padding: 12px 18px; display: flex; flex-wrap: wrap; gap: 6px 16px; align-items: center; border-bottom: 1px solid var(--linie); background: var(--karton)}
+.btkopf h2{margin: 0; font: 600 22px var(--serif)}
+.bstand{margin: 0; flex: 1; min-width: 200px}
+.bstuecke{display: grid; grid-auto-flow: column; grid-auto-columns: minmax(280px, 1fr); gap: 14px; padding: 16px; overflow-x: auto; overflow-y: hidden; min-height: 0; align-items: stretch}
+.bstuecke[data-zahl="1"]{grid-auto-columns: minmax(280px, 640px)}
+.bleer{grid-column: 1 / -1; align-self: center; text-align: center; font: 18px var(--serif); color: var(--tinte2)}
+.bstueck{background: var(--karton); border-radius: 12px; box-shadow: var(--schatten); border-top: 5px solid var(--ort); padding: 14px; display: flex; flex-direction: column; gap: 8px; min-height: 0; overflow-y: auto}
+.bstueck .artwort{color: var(--ort-d); margin: 0}
+.bsname{border: 0; background: none; padding: 0; text-align: left; font: 600 19px/1.2 var(--serif); overflow-wrap: anywhere}
+.bstueck header .klein{margin: 2px 0 0}
+.bsbilder{display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px}
+.bsbilder .bild{aspect-ratio: 4/3; border-radius: 6px}
+.bsbilder .bild:first-child{grid-column: 1 / -1; aspect-ratio: 16/10}
+.bsohne{aspect-ratio: 16/7; border-radius: 6px}
+.bstext{font: 15px/1.55 var(--serif); white-space: pre-line; color: #2b241b; max-height: 360px; overflow-y: auto; background: #fff; border-radius: 8px; padding: 10px 12px; border: 1px solid var(--linie)}
+.bsfolge{margin: 0; padding-left: 20px; font-size: 13.5px}
+.bsfolge button{border: 0; background: none; padding: 3px 0; text-align: left; color: #24508f; text-decoration: underline; text-underline-offset: 2px}
+.bmappen{border-left: 1px solid var(--linie); padding: 12px; overflow-y: auto; background: var(--papier); display: flex; flex-direction: column; gap: 8px}
+.bmappen h3{margin: 0; font: 600 13px var(--sans); letter-spacing: .06em; text-transform: uppercase; color: var(--tinte2)}
+.bmappe{display: flex; align-items: center; gap: 4px}
+.bmappe.an .zeile{background: #fff5e8}
+.bdatei{display: inline-flex; align-items: center; cursor: pointer; align-self: flex-start}
+@media (max-width: 1180px){ .btisch{grid-template-columns: 1fr} .bmappen{border-left: 0; border-top: 1px solid var(--linie); max-height: 220px} .buero{grid-template-columns: 290px minmax(0, 1fr)} }
+@media (max-width: 759px){
+  .buero{grid-template-columns: 1fr; grid-template-rows: minmax(0, 46%) minmax(0, 54%); overflow: hidden}
+  .bfinden{border-right: 0; border-bottom: 1px solid var(--linie2)}
+  .bfkopf{padding: 8px; gap: 6px}
+  .btisch{overflow-y: auto; display: block}
+  .bstuecke{grid-auto-columns: 86%; padding: 10px; scroll-snap-type: x mandatory; overflow-y: visible}
+  .bstueck{scroll-snap-align: start; max-height: none}
+  .bmappen{max-height: none}
+}
