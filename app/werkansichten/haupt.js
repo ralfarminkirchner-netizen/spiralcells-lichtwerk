@@ -142,6 +142,7 @@ async function starteAnsicht(id, k, neu){
   zeichneLegende(a, m.legende);
   if(Z.laeuft.zeige) Z.laeuft.zeige(Z.gewaehlt, true);
   if(Z.suche.q && Z.laeuft.suche) Z.laeuft.suche(Z.suche);
+  try { performance.mark('ansicht-bereit:' + a.id); } catch(e){ /* nur Messung */ }
 }
 function fehlerEl(satz, nochmal){ const d = el('div', 'fehler'); d.append(el('p', '', satz), knopf('knopf', 'Noch einmal versuchen', nochmal)); return d; }
 
@@ -306,7 +307,20 @@ addEventListener('keydown', e => {
 let hinweisZeit = 0;
 function sage(t){ hinweis.textContent = t; hinweis.classList.add('da'); clearTimeout(hinweisZeit); hinweisZeit = setTimeout(() => hinweis.classList.remove('da'), 4200); }
 
-addEventListener('resize', () => { const s = schmal(); if(s !== document.body.classList.contains('schmal')){ document.body.classList.toggle('schmal', s); zeichneBlatt(); } });
+addEventListener('resize', () => { const s = schmal(); if(s !== document.body.classList.contains('schmal')){ document.body.classList.toggle('schmal', s); if(!s) Z.blattOffen = true; zeichneBlatt(); } });
+
+/* ---------- Der Bestand: zuletzt gelesener Stand sofort, der frische im Hintergrund ---------- */
+async function holeBestand(url = '/api/graph'){
+  let lager = null; try { lager = await caches.open('werkansichten-bestand'); } catch(e){ /* ohne Ablage: immer frisch */ }
+  const frisch = fetch(url).then(r => { if(!r.ok) throw new Error('Bestand ' + r.status); if(lager) lager.put(url, r.clone()).catch(() => {}); return r.text(); });
+  const alt = lager ? await lager.match(url).catch(() => null) : null;
+  if(alt){
+    const t = await alt.text();
+    frisch.then(neu => { if(neu !== t && !Z.veraltet){ Z.veraltet = true; sage('Der Bestand hat sich seit dem letzten Besuch geändert. Neu laden zeigt den neuen Stand.'); } }).catch(() => { if(url === '/api/graph') sage('Der Dienst ist gerade nicht erreichbar. Du siehst den zuletzt gelesenen Stand.'); });
+    try { return JSON.parse(t); } catch(e){ /* kaputte Ablage: frisch lesen */ }
+  }
+  return JSON.parse(await frisch);
+}
 
 /* ---------- Start: sofort etwas sehen, dann den Bestand ---------- */
 async function start(){
@@ -321,13 +335,14 @@ async function start(){
   try {
     const hole = async u => { const r = await fetch(u); if(!r.ok) throw new Error(r.status + ' ' + u); return r.json(); };
     const bilderDa = hole('/lichtwerk/bilder').catch(() => null);
-    [g, gespraeche] = await Promise.all([hole('/api/graph'), hole('/lichtwerk/gespraeche').catch(() => [])]);
+    [g, gespraeche] = await Promise.all([holeBestand(), holeBestand('/lichtwerk/gespraeche').catch(() => [])]);
     bilder = (await bilderDa) || {};
     if(!Object.keys(bilder).length) setTimeout(() => sage('Die Bilder sind gerade nicht erreichbar. Alle Werke bleiben ohne Bild erreichbar.'), 400);
   } catch(e){
     console.error(e); buehne.replaceChildren(fehlerEl('Der Bestand ist gerade nicht erreichbar. Läuft der Lichtwerk-Dienst?', () => location.reload())); return;
   }
   for(const v of g.variants || []) Z.texte.set(v.id, v.content || '');
+  try { performance.mark('bestand-geladen'); } catch(e){ /* nur Messung */ }
   Z.inhalt = baueInhalt(g, bilder, gespraeche);
   Z.bezug = baueBezuege(g, Z.inhalt);
   baueIndex();

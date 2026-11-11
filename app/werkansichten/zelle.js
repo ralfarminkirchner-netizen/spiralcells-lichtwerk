@@ -100,11 +100,13 @@ export function starte(flaeche, K){
     h.append(el('p', 'zdaten', d.join(' · ')));
     return h;
   }
-  function bilderVon(f, max = 60){
+  function bilderVon(f, max = 400){
     if(!f.bilder || !f.bilder.length) return f.art === 'fassung' ? el('p', 'zohne klein', 'Zu dieser Fassung liegt kein Bild vor.') : el('span');
     const fig = el('div', 'zbilder' + (f.bilder.length === 1 ? ' eins' : ''));
-    for(const b of f.bilder.slice(0, max)){ const a = el('figure'); const gross = knopf('zbildknopf', null, () => zeigeGross(b), 'Bild groß ansehen' + (b.text ? ': ' + b.text : '')); gross.append(bildEl(K, b, 960, 'bild')); a.append(gross); if(b.text) a.append(el('figcaption', '', b.text)); fig.append(a); }
-    if(f.bilder.length > max) fig.append(el('p', 'klein', 'und ' + (f.bilder.length - max) + ' weitere Bilder'));
+    const setze = bis => { fig.replaceChildren();
+      for(const b of f.bilder.slice(0, bis)){ const a = el('figure'); const gross = knopf('zbildknopf', null, () => zeigeGross(b), 'Bild groß ansehen' + (b.text ? ': ' + b.text : '')); gross.append(bildEl(K, b, f.bilder.length === 1 ? 960 : 240, 'bild')); a.append(gross); if(b.text) a.append(el('figcaption', '', b.text)); fig.append(a); }
+      if(f.bilder.length > bis){ const m = knopf('knopf zalle', `Alle ${f.bilder.length} Bilder zeigen`, () => setze(f.bilder.length)); fig.append(m); } };
+    setze(Math.min(max, 8));
     return fig;
   }
   function zeigeGross(b){

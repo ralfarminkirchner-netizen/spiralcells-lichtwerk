@@ -306,3 +306,4 @@ body[data-ansicht="galaxie"] #buehne{background: #17161d}
   .bstueck{scroll-snap-align: start; max-height: none}
   .bmappen{max-height: none}
 }
+.zalle{grid-column: 1 / -1; justify-self: start}
