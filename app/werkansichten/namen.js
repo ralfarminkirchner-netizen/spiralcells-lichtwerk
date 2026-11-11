@@ -4,7 +4,7 @@
 
 const ORDNER = /^[a-z0-9]+(?:[-_][a-z0-9]+)+$/;
 const TAG = {day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC'};
-const tagWort = t => new Date(t).toLocaleDateString('de-DE', TAG);
+const tagWort = t => new Date(t).toLocaleDateString('de-DE', t % 1000 === 1 ? {month: 'long', year: 'numeric', timeZone: 'UTC'} : TAG);
 const gross = w => w.charAt(0).toUpperCase() + w.slice(1);
 
 /* „faska-lernlandschaft-frisch“ → „FASKA Lernlandschaft · frisch“; ein Datum am Ende wird ein Datum */

@@ -13,7 +13,7 @@ export const TRAGEND = new Set(['Tragwerk System', 'Mitte', 'Tragwerk']);   // w
 export const OFFEN = new Set(['Zur Prüfung']);                               // noch ohne Ort
 const ORTSARTEN = new Set(['Oberdach', 'Mitte', 'Tragwerk', 'Sammlung']);
 
-const datum = s => { const m = typeof s === 'string' && s.match(/^(\d{4})-(\d{2})(?:-(\d{2}))?/); return m ? Date.UTC(+m[1], +m[2] - 1, m[3] ? +m[3] : 15) : null; };
+const datum = s => { const m = typeof s === 'string' && s.match(/^(\d{4})-(\d{2})(?:-(\d{2}))?/); return m ? (m[3] ? Date.UTC(+m[1], +m[2] - 1, +m[3]) : Date.UTC(+m[1], +m[2] - 1, 15) + 1) : null; };   // +1 ms: nur der Monat ist belegt
 const vorname = t => { const i = t.indexOf(' · '); return i > 0 ? t.slice(0, i).trim() : ''; };
 const rang = t => { const r = FOLGE.indexOf(t); return r < 0 ? FOLGE.length : r; };
 const nachZeit = (a, b) => (a.von == null) - (b.von == null) || (a.von ?? 0) - (b.von ?? 0) || a.name.localeCompare(b.name, 'de');
@@ -119,7 +119,7 @@ export function baueInhalt(g, bilder = {}, gespraeche = []){
 function eindeutig(kinder){
   const zaehle = () => { const z = new Map(); for(const c of kinder) z.set(c.name, (z.get(c.name) || 0) + 1); return z; };
   let z = zaehle();
-  for(const c of kinder) if(z.get(c.name) > 1 && !c.kinder && c.von != null) c.name += ' · ' + new Date(c.von).toLocaleDateString('de-DE', {day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC'});
+  for(const c of kinder) if(z.get(c.name) > 1 && !c.kinder && c.von != null) c.name += ' · ' + new Date(c.von).toLocaleDateString('de-DE', c.von % 1000 === 1 ? {month: 'long', year: 'numeric', timeZone: 'UTC'} : {day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC'});
   z = zaehle(); const lauf = new Map();
   for(const c of kinder) if(z.get(c.name) > 1){ const i = (lauf.get(c.name) || 0) + 1; lauf.set(c.name, i); c.name2 = `${i} von ${z.get(c.name)}`; }
   for(const c of kinder) if(c.name2){ c.name += ' · ' + c.name2; delete c.name2; }

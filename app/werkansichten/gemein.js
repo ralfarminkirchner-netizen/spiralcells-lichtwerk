@@ -41,7 +41,8 @@ export const behaelter = k => { for(let q = k; q; q = q.eltern) if(q.art === 'we
 
 export const n = (x, e, m) => `${x.toLocaleString('de-DE')} ${x === 1 ? e : m}`;
 const TAG = {day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC'};
-export const tagWort = t => t == null ? 'ohne belegte Zeit' : new Date(t).toLocaleDateString('de-DE', TAG);
+export const nurMonat = t => t != null && t % 1000 === 1;   // inhalt.js markiert so Zeiten ohne belegten Tag
+export const tagWort = t => t == null ? 'ohne belegte Zeit' : nurMonat(t) ? new Date(t).toLocaleDateString('de-DE', {month: 'long', year: 'numeric', timeZone: 'UTC'}) : new Date(t).toLocaleDateString('de-DE', TAG);
 export const monatKurz = t => new Date(t).toLocaleDateString('de-DE', {month: 'short', year: '2-digit', timeZone: 'UTC'});
 
 /* Ein Bild als Element: ehrlich, wenn es fehlt oder nicht lädt */
