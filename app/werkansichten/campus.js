@@ -419,7 +419,7 @@ export function starte(flaeche, K){
     if(L.ohneWeg.length){ const p = el('details', 'cohneweg');
       p.append(el('summary', '', n(L.ohneWeg.length, 'weitere Fassung', 'weitere Fassungen') + ' dieses Werks ohne gespeicherten Weg'));
       const l = el('div', 'cfassreihe'); for(const f of L.ohneWeg.slice(0, 60)) l.append(station(f, L, null, true));
-      if(L.ohneWeg.length > 60) l.append(el('p', 'klein', 'und ' + (L.ohneWeg.length - 60) + ' weitere in „Zelle und Text“'));
+      if(L.ohneWeg.length > 60) l.append(el('p', 'klein', 'und ' + (L.ohneWeg.length - 60) + ' weitere im Lesepult'));
       p.append(el('p', 'klein', 'Nach belegter Zeit geordnet; eine Verbindung zwischen ihnen ist nicht gespeichert.'), l); bel.append(p); }
     teile.push(bel);
 
@@ -453,7 +453,7 @@ export function starte(flaeche, K){
     if(Q.length){ const q = el('section', 'cquer'); q.append(el('h3', '', 'Weitere belegte Bezüge · ohne Wegrichtung'));
       const c = el('div', 'cchips');
       for(const r of Q.slice(0, 24)){ const b = knopf('cchip belegt', null, () => folge(r.andere)); b.append(el('small', '', BELEGT[r.art] ? (r.aus ? BELEGT[r.art].wort : BELEGT[r.art].rueck) : r.art), el('span', '', r.andere.name)); c.append(b); }
-      q.append(c); if(Q.length > 24) q.append(el('p', 'klein', 'und ' + (Q.length - 24) + ' weitere in der Galaxie'));
+      q.append(c); if(Q.length > 24) q.append(el('p', 'klein', 'und ' + (Q.length - 24) + ' weitere im Bezugsnetz'));
       teile.push(q); }
     return teile;
   }

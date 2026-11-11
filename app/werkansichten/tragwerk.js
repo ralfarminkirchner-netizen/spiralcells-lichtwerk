@@ -26,7 +26,7 @@ Das <b>Gerüst</b> neben dem Erdgeschoss trägt, was noch zur Prüfung liegt.</p
 belegten Zeit; ihre Breite folgt nur der Zahl ihrer Werke.</p>
 <p><b>Stützen</b> (links, senkrecht): dasselbe Werk liegt belegt an mehreren Orten. Ein Quadrat an jedem Geschoss, in dem es liegt.</p>
 <p><b>Streben</b> (blau) erscheinen erst, wenn du einen Raum oder ein Werk wählst: jede im Fundus gespeicherte Beziehung,
-mit Art und Zahl. Berechnete Nähe steht nicht im Tragwerk, sondern in der Galaxie.</p>
+mit Art und Zahl. Berechnete Nähe steht nicht im Geschossplan, sondern im Bezugsnetz.</p>
 <p>Ein Tipp öffnet einen Raum oder ein Werk im Bau: alle Fassungen in Zeitfolge, die ohne belegte Zeit am Ende.
 Ein zweiter Tipp auf eine gewählte Fassung öffnet sie zum Lesen.</p>`;
 
@@ -344,7 +344,7 @@ export function starte(flaeche, K){
         const o = ortVon(r.andere); b.append(el('span', 'tw-szname', r.andere.name), el('span', 'tw-smeta', [r.andere.eltern && r.andere.eltern.art !== 'ort' ? r.andere.eltern.name : '', o ? o.name : ''].filter(Boolean).join(' · ')));
         if(o) b.style.setProperty('--ziel', farbe(o).f);
         li.append(b); ul.append(li); }
-      if(rs.length > 60){ const li = el('li'); li.append(knopf('tw-owegteil', 'und ' + (rs.length - 60) + ' weitere in der Galaxie', () => K.wechsle('galaxie', beh))); ul.append(li); }
+      if(rs.length > 60){ const li = el('li'); li.append(knopf('tw-owegteil', 'und ' + (rs.length - 60) + ' weitere im Bezugsnetz', () => K.wechsle('galaxie', beh))); ul.append(li); }
       d.append(ul); t.append(d);
     }
     return t;

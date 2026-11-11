@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#020308">
+<title>Lichtgrund · Galaxie</title>
+<link rel="icon" href="data:,">
+<style>
+:root{
+  --nacht:#020308; --glas:rgba(10,12,22,.72); --glas2:rgba(16,19,34,.86); --linie:rgba(214,222,255,.14);
+  --text:#eef0f7; --leise:#a9afc4; --still:#767c93; --gold:#ffd9a0; --fokus:#ffd9a0;
+  --schrift:"Avenir Next","Segoe UI",system-ui,-apple-system,sans-serif; --lese:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--nacht);color:var(--text);font:15px/1.45 var(--schrift);overflow:hidden;-webkit-font-smoothing:antialiased;touch-action:none}
+canvas#welt{position:fixed;inset:0;width:100%;height:100%;display:block;outline:none}
+button,input{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--fokus);outline-offset:2px}
+
+/* Leiste oben */
+#leiste{position:fixed;top:max(12px,env(safe-area-inset-top));left:16px;right:16px;display:flex;gap:10px;align-items:center;pointer-events:none;z-index:5}
+#leiste>*{pointer-events:auto}
+#marke{display:flex;flex-direction:column;line-height:1.1;background:none;border:0;padding:6px 4px;text-align:left}
+#marke b{font-weight:600;letter-spacing:.16em;font-size:11px;color:var(--leise)}
+#marke span{font-size:21px;font-weight:500;letter-spacing:.01em}
+#weg{flex:1;min-width:0;display:flex;gap:4px;align-items:center;overflow:hidden;white-space:nowrap;font-size:13px;color:var(--leise)}
+#weg button{background:none;border:0;padding:4px 6px;border-radius:8px;color:var(--leise);max-width:220px;overflow:hidden;text-overflow:ellipsis}
+#weg button:hover{color:var(--text);background:rgba(255,255,255,.06)}
+#weg i{font-style:normal;color:var(--still)}
+.feld{display:flex;align-items:center;gap:8px;background:var(--glas);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid var(--linie);border-radius:999px;padding:0 6px 0 14px;height:40px}
+#suche{background:none;border:0;outline:none;width:220px;min-width:0}
+#suche::placeholder{color:var(--still)}
+.knopf{background:var(--glas);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid var(--linie);border-radius:999px;height:40px;padding:0 15px;white-space:nowrap}
+.knopf:hover{background:var(--glas2)}
+a.knopf{display:flex;align-items:center;text-decoration:none}
+.knopf[aria-pressed="true"]{border-color:rgba(255,217,160,.6);color:var(--gold)}
+#treffer{position:fixed;z-index:6;top:calc(max(12px,env(safe-area-inset-top)) + 46px);right:16px;width:min(380px,calc(100vw - 32px));max-height:60vh;overflow:auto;background:var(--glas2);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border:1px solid var(--linie);border-radius:16px;padding:6px}
+#treffer button{display:block;width:100%;text-align:left;background:none;border:0;border-radius:10px;padding:8px 10px}
+#treffer button:hover,#treffer button.an{background:rgba(255,255,255,.07)}
+#treffer small{display:block;color:var(--still);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* Namen im Raum */
+#namen{position:fixed;inset:0;pointer-events:none;z-index:2;overflow:hidden}
+.nm{position:absolute;left:0;top:0;white-space:nowrap;transform-origin:0 0;color:#f4f1ea;text-shadow:0 1px 2px rgba(0,0,0,.95),0 0 8px rgba(0,0,0,.8);background:rgba(3,5,12,.38);padding:1px 6px;border-radius:6px;font-size:12px;letter-spacing:.02em;opacity:0;transition:opacity .35s}
+.nm.da{opacity:.92}
+.nm.sonne{font-size:14px;letter-spacing:.18em;text-transform:none;font-weight:500}
+.nm.sonne small,.nm.kern small{display:block;font-size:10px;letter-spacing:.12em;color:var(--leise);font-weight:400}
+.nm.kern{font-size:15px;letter-spacing:.2em;color:#fff3dc}
+.nm.gew{color:var(--gold);font-size:13px}
+.nm.mond{font-size:11px;color:#dfe3f0}
+
+/* Blatt: das Gewählte */
+#blatt{position:fixed;z-index:4;right:16px;bottom:16px;width:min(380px,calc(100vw - 32px));max-height:calc(100vh - 110px);overflow:auto;background:var(--glas);backdrop-filter:blur(20px) saturate(1.2);-webkit-backdrop-filter:blur(20px) saturate(1.2);border:1px solid var(--linie);border-radius:20px;transition:transform .45s cubic-bezier(.2,.8,.2,1),opacity .35s}
+#blatt[hidden]{display:block;opacity:0;transform:translateY(24px);pointer-events:none}
+#blatt .bild{display:block;width:100%;aspect-ratio:16/10;object-fit:cover;border-radius:20px 20px 0 0;background:#0b0d16}
+#blatt .mosaik{display:grid;grid-template-columns:1fr 1fr;gap:2px;border-radius:20px 20px 0 0;overflow:hidden}
+#blatt .mosaik img{width:100%;aspect-ratio:16/10;object-fit:cover;display:block;background:#0b0d16}
+#blatt .ohne{aspect-ratio:16/6;display:flex;align-items:center;justify-content:center;color:var(--still);font-size:13px;border-radius:20px 20px 0 0;background:radial-gradient(circle at 50% 120%,rgba(255,217,160,.12),transparent 60%)}
+#blatt .leib{padding:14px 18px 16px}
+#blatt .art{font-size:11px;letter-spacing:.16em;color:var(--leise);text-transform:uppercase}
+#blatt h2{margin:2px 0 6px;font:500 21px/1.2 var(--schrift)}
+#blatt p{margin:4px 0;color:var(--leise);font-size:13px}
+#blatt .stimmen{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}
+#blatt .stimme{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--leise)}
+#blatt .stimme i{width:9px;height:9px;border-radius:50%}
+#blatt .tun{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+#blatt .tun .knopf{height:36px;font-size:14px}
+#blatt .tun .haupt{background:rgba(255,217,160,.16);border-color:rgba(255,217,160,.45);color:#fff1da}
+#blatt h3{font-size:11px;letter-spacing:.14em;color:var(--still);font-weight:500;margin:16px 0 6px;text-transform:uppercase}
+#blatt .liste button{display:flex;gap:10px;align-items:center;width:100%;text-align:left;background:none;border:0;border-radius:10px;padding:6px 6px;color:var(--text)}
+#blatt .liste button:hover{background:rgba(255,255,255,.06)}
+#blatt .liste img,#blatt .liste .leer{width:44px;height:30px;border-radius:6px;object-fit:cover;flex:none;background:#151827}
+#blatt .liste span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px}
+#blatt .liste small{color:var(--still);font-size:11px;flex:none}
+#blatt .bez{font-size:12.5px;color:var(--leise);padding:3px 0}
+#blatt .bez b{font-weight:500;color:var(--text)}
+#blatt .zu{position:absolute;top:10px;right:10px;width:34px;height:34px;border-radius:50%;background:rgba(0,0,0,.45);border:1px solid var(--linie);display:flex;align-items:center;justify-content:center}
+
+/* Unten: eine leise Zeile */
+#satz{position:fixed;z-index:3;left:50%;transform:translateX(-50%);bottom:max(18px,env(safe-area-inset-bottom));color:var(--leise);font-size:13px;letter-spacing:.02em;text-shadow:0 0 10px #000;transition:opacity .8s;text-align:center;max-width:calc(100vw - 32px);pointer-events:none}
+#satz.weg{opacity:0}
+#fahrt{position:fixed;z-index:5;left:16px;bottom:max(16px,env(safe-area-inset-bottom))}
+#fahrt[hidden]{display:none}
+#legende{position:fixed;z-index:3;left:16px;bottom:max(16px,env(safe-area-inset-bottom));font-size:12px;color:var(--leise);display:flex;flex-direction:column;gap:4px;pointer-events:none;text-shadow:0 0 8px #000}
+#legende span{display:flex;gap:8px;align-items:center}
+#legende i{width:22px;height:2px;border-radius:2px}
+#legende[hidden]{display:none}
+
+@media (max-width:760px){
+  #weg{display:none}
+  #marke span{font-size:18px}
+  #suche{width:100%}
+  .feld{order:3;flex:1 1 100%}
+  #leiste{flex-wrap:wrap;row-gap:8px}
+  #marke{flex:1}
+  #knNaehe{height:36px;padding:0 12px;font-size:13px}
+  #knKarten{height:36px;padding:0 12px;font-size:13px}
+  #treffer{top:calc(max(12px,env(safe-area-inset-top)) + 104px)}
+  #blatt{left:8px;right:8px;width:auto;bottom:8px;max-height:52vh;border-radius:18px}
+  #blatt .bild{aspect-ratio:16/8}
+  #legende{display:none}
+}
+@media (prefers-reduced-motion:reduce){ *{transition:none!important} }
+</style>
+</head>
+<body>
+<canvas id="welt" tabindex="0" aria-label="Galaxie des Werkbestands. Ziehen dreht, Kneifen oder Rad zoomt, Tippen wählt."></canvas>
+<div id="namen" aria-hidden="true"></div>
+<header id="leiste">
+  <button id="marke" title="Zur ganzen Galaxie"><b>LICHTGRUND</b><span>Galaxie</span></button>
+  <nav id="weg" aria-label="Weg zum Gewählten"></nav>
+  <label class="feld"><span aria-hidden="true" style="color:var(--still)">⌕</span><input id="suche" type="search" placeholder="Suchen in allen Werken" autocomplete="off" aria-label="Suchen in allen Werken"></label>
+  <button class="knopf" id="knNaehe" aria-pressed="false" title="Berechnete Nähe zeigen: gleiche Themen, gleicher Quellbestand">Berechnete Nähe</button>
+  <a class="knopf" id="knKarten" href="werkansichten.html" title="Dieselbe Wahl in den flachen Karten">Karten</a>
+</header>
+<div id="treffer" hidden role="listbox" aria-label="Treffer"></div>
+<aside id="blatt" hidden aria-live="polite"></aside>
+<div id="legende" hidden>
+  <span><i style="background:linear-gradient(90deg,#ffe7b8,#fff)"></i>belegte Beziehung</span>
+  <span><i style="background:repeating-linear-gradient(90deg,#7fa7ff 0 4px,transparent 4px 8px)"></i>berechnete Nähe</span>
+  <span><i style="background:repeating-linear-gradient(90deg,#d8dce8 0 2px,transparent 2px 5px)"></i>dasselbe Werk an anderem Ort</span>
+</div>
+<button class="knopf" id="fahrt" hidden>Einflug überspringen</button>
+<div id="satz">Die Galaxie entsteht …</div>
+<script type="module" src="welten3d/galaxie.bundle.js"></script>
+</body>
+</html>

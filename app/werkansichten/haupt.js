@@ -13,15 +13,15 @@ import {el, knopf, farbe, titelBild, bildEl, n, tagWort, ruhig} from './gemein.j
 const $ = s => document.querySelector(s);
 
 export const ANSICHTEN = [
-  {id: 'baum',     name: 'Baum',     frage: 'Woraus ist es gewachsen?',          modul: () => import('./baum.js')},
-  {id: 'tragwerk', name: 'Tragwerk', frage: 'Was trägt, was verbindet?',         modul: () => import('./tragwerk.js')},
-  {id: 'kosmos',   name: 'Kosmos',   frage: 'Wie groß ist das Ganze, wo bin ich?', modul: () => import('./kosmos.js')},
-  {id: 'galaxie',  name: 'Galaxie',  frage: 'Was hängt womit zusammen?',         modul: () => import('./galaxie.js')},
-  {id: 'garten',   name: 'Garten',   frage: 'Wie hat es sich entwickelt?',        modul: () => import('./garten.js')},
-  {id: 'dorf',     name: 'Dorf',     frage: 'Wer wohnt wo?',                      modul: () => import('./dorf.js')},
-  {id: 'campus',   name: 'Campus',   frage: 'Was kann ich hier lernen?',          modul: () => import('./campus.js')},
-  {id: 'buero',    name: 'Büro',     frage: 'Womit arbeite ich gerade?',          modul: () => import('./buero.js')},
-  {id: 'zelle',    name: 'Zelle und Text', kurz: 'Text', frage: 'Was steht genau da?', modul: () => import('./zelle.js')}
+  {id: 'baum',     name: 'Wuchskarte',     frage: 'Woraus ist es gewachsen?',          modul: () => import('./baum.js')},
+  {id: 'tragwerk', name: 'Geschossplan', frage: 'Was trägt, was verbindet?',         modul: () => import('./tragwerk.js')},
+  {id: 'kosmos',   name: 'Mengenkreise',   frage: 'Wie groß ist das Ganze, wo bin ich?', modul: () => import('./kosmos.js')},
+  {id: 'galaxie',  name: 'Bezugsnetz',  frage: 'Was hängt womit zusammen?',         modul: () => import('./galaxie.js')},
+  {id: 'garten',   name: 'Zeitbeete',   frage: 'Wie hat es sich entwickelt?',        modul: () => import('./garten.js')},
+  {id: 'dorf',     name: 'Lageplan',     frage: 'Wer wohnt wo?',                      modul: () => import('./dorf.js')},
+  {id: 'campus',   name: 'Gebietskarte',   frage: 'Was kann ich hier lernen?',          modul: () => import('./campus.js')},
+  {id: 'buero',    name: 'Arbeitstisch',     frage: 'Womit arbeite ich gerade?',          modul: () => import('./buero.js')},
+  {id: 'zelle',    name: 'Lesepult', kurz: 'Lesen', frage: 'Was steht genau da?', modul: () => import('./zelle.js')}
 ];
 const ZEICHEN = {
   baum: '<path d="M12 21v-7"/><path d="M12 14 7.5 9.5M12 14l4.5-4.5M12 11V5"/><circle cx="6.5" cy="8.5" r="2.2"/><circle cx="17.5" cy="8.5" r="2.2"/><circle cx="12" cy="4" r="2.2"/>',
@@ -109,7 +109,7 @@ function waehle(k, o = {}){
   if(Z.laeuft && Z.laeuft.zeige && !o.vonAnsicht) Z.laeuft.zeige(k, o.sofort);
   else if(Z.laeuft && Z.laeuft.zeige && o.vonAnsicht) Z.laeuft.zeige(k, true, true);
 }
-/* Öffnen heißt lesen: Fassungen und Gespräche in „Zelle und Text“; sonst näher heran */
+/* Öffnen heißt lesen: Fassungen und Gespräche im Lesepult; sonst näher heran */
 function oeffne(k){
   if(k.art === 'fassung' || k.art === 'gespraech'){
     if(Z.ansicht !== 'zelle') Z.vorige = {ansicht: Z.ansicht, k: Z.gewaehlt};
@@ -223,7 +223,7 @@ function zeichneBlatt(){
         const art = BELEGT[r.art] ? (r.aus ? BELEGT[r.art].wort : BELEGT[r.art].rueck) : BERECHNET[r.art].wort;
         b.append(el('span', 'rart ' + (r.belegt ? 'belegt' : 'berechnet'), art), el('span', 'rname', r.andere.name), el('small', '', r.andere.eltern ? r.andere.eltern.name : ''));
         li.append(b); ul.append(li); }
-      if(l.length > 40) ul.append(el('li', 'klein', 'und ' + (l.length - 40) + ' weitere in der Galaxie'));
+      if(l.length > 40) ul.append(el('li', 'klein', 'und ' + (l.length - 40) + ' weitere im Bezugsnetz'));
       sek.append(ul); };
     gruppe('Belegt im Fundus', bz.filter(r => r.belegt)); gruppe('Berechnet, nur Nähe', bz.filter(r => !r.belegt));
     leib.append(sek); }
@@ -250,7 +250,7 @@ export const TISCH = 'werkansichten.tisch';
 function legeAufTisch(k){
   let t = []; try { t = JSON.parse(localStorage.getItem(TISCH) || '[]'); } catch(e){ t = []; }
   const a = adresse(k);
-  if(!t.includes(a)){ t.push(a); try { localStorage.setItem(TISCH, JSON.stringify(t)); sage('„' + k.name + '“ liegt jetzt auf dem Tisch im Büro (in diesem Browser gespeichert).'); } catch(e){ sage('Der Tisch kann in diesem Browser nicht gespeichert werden.'); } }
+  if(!t.includes(a)){ t.push(a); try { localStorage.setItem(TISCH, JSON.stringify(t)); sage('„' + k.name + '“ liegt jetzt auf dem Arbeitstisch (in diesem Browser gespeichert).'); } catch(e){ sage('Der Tisch kann in diesem Browser nicht gespeichert werden.'); } }
   else sage('„' + k.name + '“ liegt schon auf dem Tisch.');
 }
 

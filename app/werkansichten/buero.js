@@ -12,7 +12,7 @@ import {adresse, wegZu, mengenWort, zeitWort, ARTWORT} from './inhalt.js';
 import {lesetext} from './lesen.js';
 
 export const legende = `<p><b>Finden</b> links: Suchwort, Ort, Art, nur mit Bild, nur mit belegter Zeit. Ein Tipp wählt; „Auf den Tisch“ legt dazu.</p>
-<p><b>Tisch</b>: bis zu vier Stücke nebeneinander, mit Bild, Daten, Wortlaut und Beziehungen. Lesen öffnet „Zelle und Text“.</p>
+<p><b>Tisch</b>: bis zu vier Stücke nebeneinander, mit Bild, Daten, Wortlaut und Beziehungen. Lesen öffnet das Lesepult.</p>
 <p><b>Mappen</b> halten eine Zusammenstellung unter einem Namen. Tisch und Mappen liegen nur in diesem Browser und verändern nichts am Fundus.</p>`;
 
 const TISCH = 'werkansichten.tisch', MAPPEN = 'werkansichten.mappen';

@@ -1,4 +1,4 @@
-/* Zelle und Text — genau hinsehen und verstehen.
+/* Lesepult (bis 11.11. „Zelle und Text“) — genau hinsehen und verstehen.
 
    Links die Fassungen des Werks in ihrer Folge (belegte Zeit zuerst, unbelegte darunter, als solche benannt)
    und die Gliederung des Textes. In der Mitte der Wortlaut in ruhiger Satzbreite, mit Bildern.
@@ -62,7 +62,7 @@ export function starte(flaeche, K){
 
   function zeichneWerkzeug(){
     werkzeug.replaceChildren();
-    if(K.vorige){ werkzeug.append(knopf('knopf zurueckzu', '← Zurück zu ' + ({baum:'Baum',tragwerk:'Tragwerk',kosmos:'Kosmos',galaxie:'Galaxie',garten:'Garten',dorf:'Dorf',campus:'Campus',buero:'Büro'}[K.vorige.ansicht] || 'vorher'), () => K.zurueck())); }
+    if(K.vorige){ werkzeug.append(knopf('knopf zurueckzu', '← Zurück zu ' + ({baum:'Wuchskarte',tragwerk:'Geschossplan',kosmos:'Mengenkreise',galaxie:'Bezugsnetz',garten:'Zeitbeete',dorf:'Lageplan',campus:'Gebietskarte',buero:'Arbeitstisch'}[K.vorige.ansicht] || 'vorher'), () => K.zurueck())); }
     const such = el('div', 'zsuche'); const f = el('input'); f.type = 'search'; f.placeholder = 'Im Text suchen'; f.setAttribute('aria-label', 'Im Text suchen');
     const zahl = el('span', 'klein zzahl'); const vor = knopf('knopf klein2', '↑', () => springe(-1), 'Vorige Stelle'), nach = knopf('knopf klein2', '↓', () => springe(1), 'Nächste Stelle');
     f.oninput = () => markiere(f.value, zahl); f.onkeydown = e => { if(e.key === 'Enter'){ springe(e.shiftKey ? -1 : 1); e.preventDefault(); } if(e.key === 'Escape'){ f.value = ''; markiere('', zahl); e.stopPropagation(); } };
