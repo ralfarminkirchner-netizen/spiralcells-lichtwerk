@@ -197,7 +197,7 @@ function zeichneBlatt(){
   else if(k.kinder && k.kinder.length && k.art !== 'wurzel') tun.append(knopf('knopf', 'Fassungen lesen', () => { const f0 = erstesBlatt(k); if(f0) oeffne(f0); }));
   if(k.art !== 'wurzel') tun.append(knopf('knopf', 'Auf den Tisch', () => { legeAufTisch(k); }));
   const bz = k.art !== 'wurzel' && k.art !== 'ort' ? Z.bezug.von(k) : [];
-  if(bz.length && Z.ansicht !== 'galaxie') tun.append(knopf('knopf', 'Beziehungen (' + bz.length + ')', () => wechsle('galaxie', k)));
+  if(bz.length && Z.ansicht !== 'galaxie') { const b1 = bz.filter(r => r.belegt).length; tun.append(knopf('knopf', b1 ? `Beziehungen: ${b1} belegt` + (bz.length > b1 ? `, ${bz.length - b1} berechnet` : '') : `Nähe: ${bz.length} berechnet`, () => wechsle('galaxie', k))); }
   kopf.append(tun);
   const leib = el('div', 'blattleib');
   // auch an anderen Orten: dasselbe Werk

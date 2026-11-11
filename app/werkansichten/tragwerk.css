@@ -1,0 +1,218 @@
+/* Tragwerk — Holzbau bei Tageslicht, im Schnitt.
+   Holz trägt (Decken, Stiele, Stützen), Papier ist Raum, Farbe gehört den Orten, Blau den belegten Streben,
+   Rostrot der Wahl. Keine Füllflächen: was Fläche hat, hat Inhalt. */
+
+.flaeche-tragwerk{
+  --holz: #c79a63; --holz-d: #8d6337; --holz-h: #ead3ad; --holz-s: #6f4d2a;
+  --raum: #fdfaf3; --tag: #f6f0e4; --erde: #e6dac4;
+}
+.tw-bau{position: absolute; inset: 0; overflow-y: auto; overflow-x: hidden; background: var(--tag); --band: 0px; scroll-behavior: auto}
+.tw-bau:focus{outline: none}
+.tw-inhalt{position: relative; margin-left: var(--band); padding: 0 14px 0 0; min-height: 100%}
+.tw-band{position: absolute; left: 0; top: 0; width: var(--band); z-index: 3}
+.tw-bandsvg{position: absolute; left: 0; top: 0; display: block}
+.tw-streben{position: absolute; left: 0; top: 0; pointer-events: none; z-index: 6; overflow: visible}
+.flaeche-tragwerk button{font: inherit; color: inherit}
+.flaeche-tragwerk .matt{opacity: .28}
+.flaeche-tragwerk .matt:hover, .flaeche-tragwerk .matt:focus-visible{opacity: .8}
+
+/* ---- Dach und Gelände ---- */
+.tw-dach{position: relative; text-align: center; padding: 30px 12px 14px; margin-left: 2px}
+.tw-dach::before{content: ""; position: absolute; left: 6%; right: 6%; top: 6px; bottom: 0; background: linear-gradient(180deg, #e2c697, #cfa774); clip-path: polygon(50% 0, 100% 100%, 0 100%); opacity: .55}
+.tw-dach > *{position: relative}
+.tw-dachname{margin: 0; font: 600 22px/1.15 var(--serif)}
+.tw-dachmenge{margin: 2px 0 0; font-size: 12.5px; color: var(--tinte2)}
+.tw-gelaende{height: 24px; border-top: 3px solid #6b5a43; background: repeating-linear-gradient(135deg, rgba(107,90,67,.22) 0 1.5px, transparent 1.5px 8px), var(--erde); padding: 3px 12px; margin-top: 0}
+.tw-gelaende span{font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: #5a4a35}
+
+/* ---- Geschoss ---- */
+.tw-geschoss{position: relative; display: grid; grid-template-columns: 164px minmax(0, 1fr); grid-template-areas: "kopf gang" "offen offen" "decke decke"; background: var(--tag)}
+.tw-kopf{grid-area: kopf; align-self: stretch; padding: 14px 10px 14px 12px; border-left: 6px solid var(--ort); background: linear-gradient(90deg, var(--ort-h), transparent 92%); min-width: 0}
+.tw-kopfinnen{position: sticky; top: 8px}
+.tw-stufe{margin: 0 0 2px; font-size: 12px; color: var(--tinte2); letter-spacing: .02em}
+.tw-ortname{display: block; border: 0; background: none; padding: 2px 0; text-align: left; font: 600 19px/1.12 var(--serif) !important; color: var(--ort-d) !important; overflow-wrap: normal; word-break: normal; border-radius: 4px}
+.tw-ortname:hover{text-decoration: underline; text-underline-offset: 3px}
+.tw-menge, .tw-kzeit{margin: 4px 0 0; font-size: 12px; color: var(--tinte2); line-height: 1.35}
+.tw-kzeit{color: var(--tinte3)}
+.tw-decke{grid-area: decke; height: 12px; background: repeating-linear-gradient(90deg, rgba(255,255,255,.07) 0 2px, transparent 2px 29px), linear-gradient(180deg, #d3a66c, #a87a46 70%, #8d6337); border-top: 2px solid var(--ort)}
+
+/* ---- Gang mit Räumen: waagrecht, scrollt statt zu quetschen ---- */
+.tw-gang{grid-area: gang; display: flex; align-items: stretch; overflow-x: auto; overflow-y: hidden; padding: 12px 6px 12px 0; scrollbar-width: thin; scrollbar-color: var(--holz) transparent; min-width: 0}
+.tw-raum{flex: none; position: relative; display: flex; flex-direction: column; min-width: 150px; background: var(--raum); padding: 8px 10px 9px; border-right: 7px solid var(--holz); box-shadow: inset 0 -1px 0 var(--linie)}
+.tw-gang > .tw-raum:first-child, .tw-fraeume > .tw-raum:first-child{border-left: 7px solid var(--holz)}
+.tw-raumname{display: flex; flex-direction: column; align-items: flex-start; border: 0; background: none; padding: 2px 4px 6px; margin: 0 -4px; text-align: left; border-radius: 5px; max-width: 100%}
+.tw-raumname:hover .tw-rname{text-decoration: underline; text-underline-offset: 3px}
+.tw-rart{font-size: 12px; color: var(--tinte3); line-height: 1.2}
+.tw-rname{font: 600 15.5px/1.2 var(--serif); color: var(--tinte); overflow-wrap: break-word; hyphens: auto}
+.tw-ohneapp{margin: 0; font: italic 14px/1.25 var(--serif); color: var(--tinte2); padding: 2px 0 8px}
+.tw-raummeta{margin: auto 0 0; padding-top: 7px; font-size: 12px; color: var(--tinte2); border-top: 1px solid var(--linie); line-height: 1.35}
+.tw-leer{margin: 6px 0; font-size: 12.5px; color: var(--tinte3); font-style: italic}
+
+/* Werkfolge: zwei Reihen, die Folge läuft nach rechts */
+.tw-folge{display: grid; grid-template-rows: repeat(2, auto); grid-auto-flow: column; grid-auto-columns: 118px; gap: 8px 8px; align-items: start; margin-bottom: 8px}
+.tw-folge.eins{grid-template-rows: auto; grid-auto-columns: 236px}
+.tw-stueck{position: relative; display: flex; flex-direction: column; gap: 3px; border: 0; background: none; padding: 4px; text-align: left; border-radius: 6px; min-width: 0}
+.tw-stueck:hover{background: rgba(199,154,99,.14)}
+.tw-sbild, .tw-papier.tw-sbild{width: 100%; aspect-ratio: 4/3; border-radius: 3px; box-shadow: 0 1px 2px rgba(40,30,20,.16)}
+.tw-sname{font: 13px/1.25 var(--serif); color: var(--tinte); overflow-wrap: break-word; hyphens: auto}
+.tw-stueck.gross .tw-sname{font-size: 14.5px}
+.tw-smeta{font-size: 12px; color: var(--tinte3); line-height: 1.3}
+.tw-weiter, .tw-mehr{display: flex; flex-direction: column; justify-content: center; align-items: flex-start; gap: 2px; border: 1.5px dashed var(--holz-d); background: rgba(234,211,173,.35); border-radius: 6px; padding: 10px; text-align: left; min-height: 88px}
+.tw-weiter:hover, .tw-mehr:hover{background: rgba(234,211,173,.7)}
+.tw-wzahl{font: 600 19px/1 var(--serif); color: var(--holz-s)}
+.tw-wwort{font-size: 12.5px; color: var(--tinte2)}
+
+/* Papierblatt statt Bild: ehrlich, mit Linien und Eselsohr */
+.tw-papier{position: relative; display: block; background: linear-gradient(225deg, transparent 13px, #fffdf8 13px); border: 1px solid rgba(60,45,30,.22); border-radius: 2px}
+.tw-papier::before{content: ""; position: absolute; right: -1px; top: -1px; width: 18px; height: 18px; background: linear-gradient(225deg, var(--raum) 50%, #e8dfcd 50%); border-left: 1px solid rgba(60,45,30,.18); border-bottom: 1px solid rgba(60,45,30,.18)}
+.tw-zeilen{position: absolute; left: 14%; right: 18%; top: 28%; height: 34%; background: repeating-linear-gradient(180deg, rgba(60,45,30,.2) 0 1.5px, transparent 1.5px 9px)}
+.tw-ohne{position: absolute; left: 0; right: 0; bottom: 9%; text-align: center; font: italic 12px var(--serif); color: var(--tinte3)}
+
+/* „auch in“: dasselbe Werk an einem anderen Ort */
+.tw-auch{margin: 3px 0 0; font-size: 12px; line-height: 1.3; color: var(--tinte2)}
+.tw-auchwort{color: var(--tinte3)}
+.tw-stuetzt{color: var(--holz-s)}
+.tw-stuetzt .tw-auchwort{color: var(--holz-s); font-weight: 600}
+.tw-stuetzt::before{content: ""; display: inline-block; width: 4px; height: 11px; background: var(--holz-d); margin-right: 5px; vertical-align: -1px; border-radius: 1px}
+
+/* Flügel: ein Bereich mit eigenen Räumen */
+.tw-fluegel{flex: none; display: flex; flex-direction: column; background: var(--ort-h); border-top: 3px solid var(--ort); border-right: 7px solid var(--holz); padding: 4px 0 0}
+.tw-gang > .tw-fluegel:first-child{border-left: 7px solid var(--holz)}
+.tw-fluegelname{display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 8px; border: 0; background: none; padding: 4px 10px 8px; text-align: left; border-radius: 5px}
+.tw-flname{font: 600 17px/1.15 var(--serif); color: var(--ort-d)}
+.tw-fmenge{font-size: 12px; color: var(--tinte2)}
+.tw-fraeume{display: flex; align-items: stretch; flex: 1}
+.tw-fraeume > .tw-raum:last-child{border-right: 0}
+
+/* ---- Fundament: Blöcke unter dem Gelände ---- */
+.tw-fundament{background: repeating-linear-gradient(135deg, rgba(107,90,67,.10) 0 1.5px, transparent 1.5px 9px), var(--erde)}
+.tw-fundament .tw-kopf{background: linear-gradient(90deg, rgba(239,230,214,.9), transparent 95%)}
+.tw-bloecke{grid-area: gang; display: grid; grid-template-columns: repeat(auto-fill, minmax(196px, 1fr)); align-content: start; gap: 8px; padding: 12px 0 14px}
+.tw-block{position: relative; display: grid; grid-template-columns: 76px minmax(0, 1fr); gap: 8px; align-items: start; border: 1px solid rgba(90,74,53,.3); border-bottom: 4px solid #8a7356; background: #f8f2e6; padding: 6px; text-align: left; border-radius: 3px}
+.tw-block:hover{background: #fffaf0}
+.tw-bbild, .tw-papier.tw-bbild{width: 76px; height: 57px; border-radius: 2px}
+.tw-btext{display: flex; flex-direction: column; gap: 2px; min-width: 0}
+.tw-bname{font: 600 13.5px/1.2 var(--serif); overflow-wrap: break-word; hyphens: auto}
+.tw-bgruppe{grid-column: 1 / -1; display: flex; flex-direction: column; border: 1.5px dashed #8a7356; border-radius: 4px; padding: 2px 6px 6px; background: rgba(248,242,230,.6)}
+.tw-binnen{display: grid; grid-template-columns: repeat(auto-fill, minmax(196px, 1fr)); gap: 8px}
+
+/* ---- Gerüst neben dem Erdgeschoss: Zur Prüfung ---- */
+.tw-erdreihe{display: flex; align-items: stretch; gap: 14px}
+.tw-erdreihe > .tw-geschoss:first-child{flex: 1; min-width: 0}
+.tw-anbau{flex: 0 0 272px; min-width: 0; grid-template-columns: minmax(0, 1fr); grid-template-areas: "kopf" "gang" "offen";
+  background: repeating-linear-gradient(45deg, transparent 0 22px, rgba(143,134,118,.28) 22px 24px), repeating-linear-gradient(-45deg, transparent 0 22px, rgba(143,134,118,.28) 22px 24px), var(--tag);
+  border-left: 4px solid #8f8676; border-right: 4px solid #8f8676; align-self: end}
+.tw-anbau .tw-kopf{border-left: 0; border-top: 4px solid #8f8676; border-bottom: 2px dashed #8f8676; background: #f3efe6; padding: 10px 12px}
+.tw-anbau .tw-ortname{font-size: 18px !important}
+.tw-anbau .tw-gang{padding: 10px 8px}
+.tw-anbau .tw-raum{border-color: #b7ad9a}
+.tw-anbau .tw-folge.eins{grid-auto-columns: 128px}
+.tw-anbau .tw-offen{grid-template-columns: minmax(0, 1fr); grid-template-areas: "seite" "haupt" "fuss"; grid-template-rows: auto}
+
+/* ---- Der geöffnete Raum im Geschoss ---- */
+.tw-offen{grid-area: offen; display: grid; grid-template-columns: 272px minmax(0, 1fr); grid-template-areas: "seite haupt" "fuss haupt"; grid-template-rows: auto 1fr; gap: 0 18px; padding: 14px 16px 16px; background: #fffcf5; border-top: 1px solid var(--linie); box-shadow: inset 4px 0 0 var(--ort); min-width: 0}
+.tw-oseite{grid-area: seite; min-width: 0}
+.tw-ohaupt{grid-area: haupt; min-width: 0}
+.tw-ofuss{grid-area: fuss; min-width: 0}
+.tw-oweg{margin: 0 0 4px; font-size: 12.5px; color: var(--tinte3); line-height: 1.6}
+.tw-owegstufe{font-weight: 600; color: var(--ort-d)}
+.tw-stueck.tw-pfad{box-shadow: inset 0 0 0 2px rgba(194,65,12,.45)}
+.tw-owegteil{border: 0; background: none; padding: 2px 3px; border-radius: 4px; color: var(--tinte2); text-decoration: underline; text-decoration-color: var(--linie2); text-underline-offset: 3px; text-align: left}
+.tw-owegteil:hover{color: var(--tinte)}
+.tw-otitel{margin: 0; font: 600 21px/1.18 var(--serif); color: var(--tinte); overflow-wrap: break-word; hyphens: auto}
+.tw-omenge{margin: 4px 0 6px; font-size: 12.5px; color: var(--tinte2)}
+.tw-ozeile{display: flex; flex-wrap: wrap; gap: 2px 10px; align-items: baseline; margin: 10px 0 6px; font-size: 12.5px; font-weight: 600; color: var(--tinte2); letter-spacing: .01em}
+.tw-ozahl{font-weight: 400; color: var(--tinte3)}
+.tw-still{margin: 0; font-size: 12.5px; color: var(--tinte3)}
+.tw-zu{margin-top: 12px; border: 1px solid var(--linie2); background: var(--karton); border-radius: 18px; padding: 6px 14px; font-size: 13px}
+.tw-zu:hover{background: #fff}
+.tw-werkreihe{display: flex; gap: 6px; overflow-x: auto; padding-bottom: 6px; scrollbar-width: thin; scrollbar-color: var(--holz) transparent}
+.tw-werkreihe .tw-stueck{flex: none; width: 118px}
+
+/* Zeitfolge: Monate als Pfosten, ohne Zeit am Ende */
+.tw-zeit{display: flex; align-items: flex-start; gap: 8px; overflow-x: auto; padding: 2px 2px 10px; scrollbar-width: thin; scrollbar-color: var(--holz) transparent; border-bottom: 3px solid var(--holz-h)}
+.tw-fwrap{flex: none}
+.tw-fass{position: relative; display: flex; flex-direction: column; gap: 3px; width: 152px; border: 0; background: none; padding: 4px; text-align: left; border-radius: 6px}
+.tw-fass:hover{background: rgba(199,154,99,.14)}
+.tw-fdatum{font-size: 12px; color: var(--tinte2); font-variant-numeric: tabular-nums}
+.tw-fbild, .tw-papier.tw-fbild{width: 100%; aspect-ratio: 4/3; border-radius: 3px; box-shadow: 0 1px 2px rgba(40,30,20,.16)}
+.tw-fname{font: 13px/1.25 var(--serif); overflow-wrap: break-word; hyphens: auto}
+.tw-trenn{flex: none; align-self: stretch; width: 74px; border-left: 3px solid var(--holz); padding: 2px 0 0 7px; font: 600 12.5px/1.25 var(--serif); color: var(--holz-s)}
+.tw-ohnezeit{width: 96px; border-left: 3px dashed var(--tinte3); color: var(--tinte2)}
+.tw-trenn small{display: block; margin-top: 3px; font: 12px var(--sans); color: var(--tinte3)}
+.tw-mehr{flex: none; width: 140px; align-self: stretch}
+
+/* Streben: belegte Beziehungen */
+.tw-strebtafel{margin-top: 4px}
+.tw-strebart{border-top: 1px solid var(--linie)}
+.tw-strebart summary{display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 7px 2px; cursor: pointer; font-size: 13px; list-style: none}
+.tw-strebart summary::-webkit-details-marker{display: none}
+.tw-strebart summary::before{content: "▸"; color: var(--tinte3); margin-right: -2px}
+.tw-strebart[open] summary::before{content: "▾"}
+.tw-strebwort{flex: 1; color: var(--belegt); font-weight: 600}
+.tw-strebzahl{font-variant-numeric: tabular-nums; background: var(--belegt); color: #fff; border-radius: 10px; padding: 0 8px; font-size: 12px; line-height: 20px}
+.tw-streblist{list-style: none; margin: 0 0 6px; padding: 0; max-height: 248px; overflow-y: auto}
+.tw-strebziel{display: flex; flex-direction: column; width: 100%; border: 0; border-left: 4px solid var(--ziel, var(--linie2)); background: none; text-align: left; padding: 4px 8px; margin: 2px 0; border-radius: 0 5px 5px 0}
+.tw-strebziel:hover{background: rgba(44,79,124,.07)}
+.tw-szname{font: 13px/1.25 var(--serif); overflow-wrap: break-word}
+.tw-strebe{stroke: var(--belegt); stroke-width: 1.8; opacity: .8}
+.tw-strebe.fern{stroke-dasharray: 5 5; opacity: .6}
+.tw-strebfuss{fill: var(--belegt)}
+.tw-strebfuss.fern{fill: #fff; stroke: var(--belegt); stroke-width: 1.5}
+.tw-strebkopf{fill: var(--wahl)}
+.tw-strebt{outline: 2px dashed var(--belegt); outline-offset: 1px}
+.tw-strebmarke{position: absolute; left: 4px; right: 4px; bottom: 4px; background: rgba(44,79,124,.94); color: #fff; font: 600 12px/1.3 var(--sans); padding: 2px 6px; border-radius: 3px; pointer-events: none; z-index: 2; box-shadow: 0 1px 3px rgba(0,0,0,.25)}
+
+/* ---- Stützen im Band ---- */
+.tw-bbalken{fill: #b98a54}
+.tw-stuetze{fill: var(--holz-d)}
+.tw-stuetze.an{fill: var(--wahl)}
+.tw-stuetze.matt{opacity: .25}
+.tw-gelenk{position: absolute; width: 16px; height: 16px; transform: translate(-50%, -50%); padding: 0; border: 2px solid var(--tag); background: var(--holz-s); border-radius: 2px; z-index: 2}
+.tw-gelenk::before{content: ""; position: absolute; inset: -6px}
+.tw-gelenk:hover{background: var(--tinte)}
+.tw-gelenk.an{background: var(--wahl)}
+.tw-gelenk.hier{box-shadow: 0 0 0 3px rgba(194,65,12,.35)}
+.tw-slabel{position: absolute; writing-mode: vertical-rl; transform: translate(-50%, -100%) rotate(180deg); font: 12px/1 var(--serif); color: var(--holz-s); background: var(--tag); padding: 3px 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; pointer-events: none; z-index: 1}
+.tw-slabel.an{color: var(--wahl); font-weight: 600}
+.tw-slabel.matt{opacity: .3}
+
+/* ---- Wahl ---- */
+.flaeche-tragwerk .tw-an{outline: 3px solid var(--wahl) !important; outline-offset: 2px; background: rgba(194,65,12,.07)}
+.tw-raum.tw-pfad, .tw-fluegel.tw-pfad{box-shadow: inset 0 0 0 2px rgba(194,65,12,.45)}
+.tw-geschoss.auf > .tw-decke{border-top-color: var(--wahl)}
+.flaeche-tragwerk :focus-visible{outline: 2.5px solid var(--fokus); outline-offset: 2px}
+
+/* ---- Handy: eigene Komposition ---- */
+@media (max-width: 759px){
+  .tw-inhalt{margin-left: 0; padding: 0}
+  .tw-band{display: none}
+  .tw-dach{padding: 22px 12px 10px}
+  .tw-dachname{font-size: 20px}
+  .tw-geschoss{grid-template-columns: minmax(0, 1fr); grid-template-areas: "kopf" "gang" "offen" "decke"}
+  .tw-kopf{display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 10px; padding: 14px 16px 4px; border-left: 0; border-top: 5px solid var(--ort); background: var(--ort-h)}
+  .tw-stufe{flex-basis: 100%}
+  .tw-ortname{font-size: 27px !important; min-height: 40px}
+  .tw-menge, .tw-kzeit{margin: 0 0 6px}
+  .tw-gang{padding: 10px 0 12px 0; scroll-padding-left: 16px}
+  .tw-gang > .tw-raum:first-child, .tw-gang > .tw-fluegel:first-child{margin-left: 10px}
+  .tw-raum{min-width: 140px; padding: 8px 8px 8px}
+  .tw-folge{grid-auto-columns: 112px}
+  .tw-folge.eins{grid-auto-columns: 200px}
+  .tw-raumname, .tw-fluegelname{min-height: 40px}
+  .tw-erdreihe{flex-direction: column; gap: 0}
+  .tw-anbau{flex: none; align-self: stretch; margin: 8px 10px 0; border-width: 0 3px}
+  .tw-offen{grid-template-columns: minmax(0, 1fr); grid-template-areas: "seite" "haupt" "fuss"; grid-template-rows: auto; gap: 4px; padding: 12px 12px 14px}
+  .tw-otitel{font-size: 20px}
+  .tw-owegteil{min-height: 40px}
+  .tw-zu{min-height: 40px}
+  .tw-strebart summary{min-height: 40px}
+  .tw-strebziel{min-height: 40px}
+  .tw-fass{width: 140px}
+  .tw-bloecke{display: grid; grid-template-rows: repeat(3, auto); grid-auto-flow: column; grid-auto-columns: 220px; overflow-x: auto; padding: 10px 12px 14px; flex-wrap: nowrap}
+  .tw-bgruppe{grid-row: span 3}
+  .tw-binnen{flex-direction: column}
+  .tw-block{width: 214px}
+}
+
+@media (prefers-reduced-motion: reduce){ .tw-bau, .tw-gang, .tw-zeit{scroll-behavior: auto} }
