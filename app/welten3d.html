@@ -26,6 +26,9 @@ button{cursor:pointer}
 #marke{display:flex;flex-direction:column;line-height:1.1;background:none;border:0;padding:6px 4px;text-align:left}
 #marke b{font-weight:600;letter-spacing:.16em;font-size:11px;color:var(--leise)}
 #marke span{font-size:21px;font-weight:500;letter-spacing:.01em}
+#welten{display:flex;gap:2px;background:var(--glas);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid var(--linie);border-radius:999px;padding:3px}
+#welten button{background:none;border:0;border-radius:999px;height:32px;padding:0 13px;color:var(--leise);font-size:14px}
+#welten button[aria-pressed="true"]{background:rgba(255,255,255,.12);color:var(--text)}
 #weg{flex:1;min-width:0;display:flex;gap:4px;align-items:center;overflow:hidden;white-space:nowrap;font-size:13px;color:var(--leise)}
 #weg button{background:none;border:0;padding:4px 6px;border-radius:8px;color:var(--leise);max-width:220px;overflow:hidden;text-overflow:ellipsis}
 #weg button:hover{color:var(--text);background:rgba(255,255,255,.06)}
@@ -96,8 +99,11 @@ a.knopf{display:flex;align-items:center;text-decoration:none}
   .feld{order:3;flex:1 1 100%}
   #leiste{flex-wrap:wrap;row-gap:8px}
   #marke{flex:1}
+  #welten button{height:30px;padding:0 10px;font-size:13px}
   #knNaehe{height:36px;padding:0 12px;font-size:13px}
-  #knKarten{height:36px;padding:0 12px;font-size:13px}
+  #knKarten{display:none}
+  .lang{display:none}
+  #knWelt{height:36px;padding:0 12px;font-size:13px}
   #treffer{top:calc(max(12px,env(safe-area-inset-top)) + 104px)}
   #blatt{left:8px;right:8px;width:auto;bottom:8px;max-height:52vh;border-radius:18px}
   #blatt .bild{aspect-ratio:16/8}
@@ -111,9 +117,11 @@ a.knopf{display:flex;align-items:center;text-decoration:none}
 <div id="namen" aria-hidden="true"></div>
 <header id="leiste">
   <button id="marke" title="Zur ganzen Galaxie"><b>LICHTGRUND</b><span>Galaxie</span></button>
+  <nav id="welten" aria-label="Welten"></nav>
   <nav id="weg" aria-label="Weg zum Gewählten"></nav>
   <label class="feld"><span aria-hidden="true" style="color:var(--still)">⌕</span><input id="suche" type="search" placeholder="Suchen in allen Werken" autocomplete="off" aria-label="Suchen in allen Werken"></label>
-  <button class="knopf" id="knNaehe" aria-pressed="false" title="Berechnete Nähe zeigen: gleiche Themen, gleicher Quellbestand">Berechnete Nähe</button>
+  <button class="knopf" id="knWelt" hidden aria-pressed="false"></button>
+  <button class="knopf" id="knNaehe" aria-pressed="false" title="Berechnete Nähe zeigen: gleiche Themen, gleicher Quellbestand"><span class="lang">Berechnete </span>Nähe</button>
   <a class="knopf" id="knKarten" href="werkansichten.html" title="Dieselbe Wahl in den flachen Karten">Karten</a>
 </header>
 <div id="treffer" hidden role="listbox" aria-label="Treffer"></div>
@@ -125,6 +133,6 @@ a.knopf{display:flex;align-items:center;text-decoration:none}
 </div>
 <button class="knopf" id="fahrt" hidden>Einflug überspringen</button>
 <div id="satz">Die Galaxie entsteht …</div>
-<script type="module" src="welten3d/galaxie.bundle.js"></script>
+<script type="module" src="welten3d/start.js"></script>
 </body>
 </html>

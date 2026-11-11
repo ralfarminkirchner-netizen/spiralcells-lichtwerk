@@ -439,6 +439,7 @@ function namen(){
   }
   kand.sort((a, b) => b.prio - a.prio);
   const boxen = [], w = innerWidth, h = innerHeight, sichtbar = new Set(), grenze = klein ? 16 : 34;
+  for(const id of ['leiste', 'blatt']){ const e = document.getElementById(id); if(e && !e.hidden){ for(const c of e.children){ const r = c.getBoundingClientRect(); if(r.width) boxen.push([r.left - 4, r.top - 4, r.right + 4, r.bottom + 4]); } } }
   for(const c of kand){
     if(sichtbar.size >= grenze) break;
     V3.copy(c.b.welt).project(camera); if(V3.z > 1 || V3.z < -1) continue; const x = (V3.x * 0.5 + 0.5) * w, y = (-V3.y * 0.5 + 0.5) * h; if(x < -40 || x > w + 40 || y < -20 || y > h + 20) continue;
