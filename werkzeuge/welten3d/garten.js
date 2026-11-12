@@ -19,6 +19,7 @@ import {HDRLoader} from 'three/addons/loaders/HDRLoader.js';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 import {mergeGeometries} from 'three/addons/utils/BufferGeometryUtils.js';
 import {Tree} from '@dgreenheck/ez-tree';
+import {ego} from './ego.js';
 import {$, rahmen, ladeBestand, sage, klein, tablet, ruhig, bildUrl, stimmeVon, ORTFARBE, ortVon, fassungenVon, mengenWort, OFFEN, TRAGEND} from './rahmen.js';
 
 const canvas = $('#welt'), T0 = performance.now(), messung = {erstesBild: 0, bestand: 0, fps: 0};
@@ -357,12 +358,13 @@ function treffe(x, y, rad){
 const TL = new THREE.TextureLoader(); let schildFrame = 0;
 function schilder(){ if(++schildFrame % 20) return; for(const p of PFLANZEN){ const s = p.schild; if(s.geladen || !p.k.bild || camera.position.distanceTo(s.pos) > 26) continue; s.geladen = true; TL.load(bildUrl(p.k.bild, 240), t => { t.colorSpace = THREE.SRGBColorSpace; const bildM = new THREE.MeshStandardMaterial({map: t, roughness: 0.55, emissive: 0xffffff, emissiveMap: t, emissiveIntensity: 0.18}), holz = s.tafel.material; s.tafel.material = [holz, holz, holz, holz, bildM, holz]; }); } }
 
+const Ego = ego({camera, canvas, steuer, boden: hoehe, augen: 1.65, tempo: 7, schnell: 24, knopf: $('#knEgo'), sage, beiStart: () => { fahrt = null; einflug = false; $('#fahrt').hidden = true; }});
 /* ---------- Lauf ---------- */
 let letzte = performance.now(), zeit = 0, fz = 0, ft = 0, erstes = true;
 const versatz = {x: 0, y: 0}, blattEl = $('#blatt');
 function lauf(){
   const jetzt = performance.now(), dt = Math.min(0.05, (jetzt - letzte) / 1000); letzte = jetzt; zeit += ruhig ? 0 : dt; U.zeit.value = zeit;
-  const fliegt = fahrtSchritt(dt); steuer.enabled = !fliegt; steuer.update();
+  const fliegt = Ego.an ? false : fahrtSchritt(dt); if(Ego.an) Ego.schritt(dt); else { steuer.enabled = !fliegt; steuer.update(); }
   const boden = hoehe(camera.position.x, camera.position.z) + 0.35; if(camera.position.y < boden) camera.position.y = boden;
   const td = camera.position.distanceTo(steuer.target); camera.near = THREE.MathUtils.clamp(td * 0.01, 0.03, 1.5);
   const offen = !blattEl.hidden, schmal = innerWidth <= 760, zx = offen && !schmal ? (blattEl.offsetWidth + 16) / 2 : 0, zy = offen && schmal ? blattEl.offsetHeight / 2 : 0;

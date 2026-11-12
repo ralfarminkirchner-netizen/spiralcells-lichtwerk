@@ -6,7 +6,7 @@ import {baueBezuege, BELEGT, BERECHNET} from '../../app/werkansichten/bezug.js';
 export {wegZu, adresse, mengenWort, zeitWort, OFFEN, TRAGEND, BELEGT, BERECHNET};
 
 export const $ = s => document.querySelector(s);
-export const WELTEN = [{id: 'galaxie', name: 'Galaxie'}, {id: 'garten', name: 'Garten'}];
+export const WELTEN = [{id: 'galaxie', name: 'Galaxie'}, {id: 'garten', name: 'Garten'}, {id: 'dorf', name: 'Dorf'}];
 export const klein = Math.min(innerWidth, innerHeight) < 700;
 export const tablet = !klein && (navigator.maxTouchPoints > 1 || /iPad/.test(navigator.userAgent));
 export const ruhig = matchMedia('(prefers-reduced-motion: reduce)').matches;

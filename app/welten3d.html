@@ -103,7 +103,7 @@ a.knopf{display:flex;align-items:center;text-decoration:none}
   #knNaehe{height:36px;padding:0 12px;font-size:13px}
   #knKarten{display:none}
   .lang{display:none}
-  #knWelt{height:36px;padding:0 12px;font-size:13px}
+  #knWelt,#knEgo{height:36px;padding:0 12px;font-size:13px}
   #treffer{top:calc(max(12px,env(safe-area-inset-top)) + 104px)}
   #blatt{left:8px;right:8px;width:auto;bottom:8px;max-height:52vh;border-radius:18px}
   #blatt .bild{aspect-ratio:16/8}
@@ -120,6 +120,7 @@ a.knopf{display:flex;align-items:center;text-decoration:none}
   <nav id="welten" aria-label="Welten"></nav>
   <nav id="weg" aria-label="Weg zum Gewählten"></nav>
   <label class="feld"><span aria-hidden="true" style="color:var(--still)">⌕</span><input id="suche" type="search" placeholder="Suchen in allen Werken" autocomplete="off" aria-label="Suchen in allen Werken"></label>
+  <button class="knopf" id="knEgo" hidden aria-pressed="false">Gehen</button>
   <button class="knopf" id="knWelt" hidden aria-pressed="false"></button>
   <button class="knopf" id="knNaehe" aria-pressed="false" title="Berechnete Nähe zeigen: gleiche Themen, gleicher Quellbestand"><span class="lang">Berechnete </span>Nähe</button>
   <a class="knopf" id="knKarten" href="werkansichten.html" title="Dieselbe Wahl in den flachen Karten">Karten</a>

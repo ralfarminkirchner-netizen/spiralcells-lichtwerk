@@ -12,6 +12,7 @@ import {uniform, vec2, vec3, vec4, float, uv, mix, smoothstep, exp, max, clamp, 
   positionGeometry, positionWorld, normalWorld, normalView, cameraPosition, modelViewMatrix, instancedBufferAttribute,
   instancedDynamicBufferAttribute, varying, mx_fractal_noise_float, mx_noise_float, atan, pass, texture, length, log} from 'three/tsl';
 import {bloom} from 'three/addons/tsl/display/BloomNode.js';
+import {ego} from './ego.js';
 import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
 import {baueInhalt, wegZu, adresse, bisherigeAdresse, mengenWort, zeitWort, OFFEN, TRAGEND, ARTWORT} from '../../app/werkansichten/inhalt.js';
 import {baueBezuege, BELEGT, BERECHNET} from '../../app/werkansichten/bezug.js';
@@ -570,14 +571,15 @@ function treffe(x, y, rad){
 
 /* ---------- Lauf ---------- */
 const versatz = {x: 0, y: 0}; let letzte = performance.now(), zeit = 0, fpsZ = 0, fpsT = 0, ersterFrame = true;
+const Ego = ego({camera, canvas, steuer, fliegen: true, tempo: 45, schnell: 320, knopf: document.getElementById('knEgo'), sage: typeof sage === 'function' ? sage : null, beiStart: () => { fahrt = null; if(typeof beendeEinflug === 'function') beendeEinflug(); }});
 function lauf(){
   const jetzt = performance.now(), dt = Math.min(0.05, (jetzt - letzte) / 1000); letzte = jetzt; zeit += ruhig ? 0 : dt;
   galDreh = zeit * DREH; galaxie.rotation.y = galDreh; U.zeit.value = zeit;
   const alt = gewKoerper ? gewKoerper.welt.clone() : null;
   if(bereit){ lagen(zeit); }
-  const fliegt = fahrtSchritt(dt);
-  if(!fliegt && gewKoerper && alt){ V3.copy(gewKoerper.welt).sub(alt); camera.position.add(V3); steuer.target.add(V3); }   // mitfliegen
-  steuer.enabled = !fliegt; steuer.update();
+  const fliegt = Ego.an ? false : fahrtSchritt(dt);
+  if(!fliegt && !Ego.an && gewKoerper && alt){ V3.copy(gewKoerper.welt).sub(alt); camera.position.add(V3); steuer.target.add(V3); }   // mitfliegen
+  if(Ego.an) Ego.schritt(dt); else { steuer.enabled = !fliegt; steuer.update(); }
   // Auge: nah am Kern wird die Belichtung zurückgenommen
   const kd = camera.position.length(), td = camera.position.distanceTo(steuer.target);
   U.kernGlanz.value = THREE.MathUtils.clamp(Math.pow(kd / 1300, 1.4), 0.06, 1); U.scheibe.value = THREE.MathUtils.clamp(td / 600, 0.25, 1); U.grund.value = THREE.MathUtils.clamp(0.3 + td / 700, 0.3, 1);
