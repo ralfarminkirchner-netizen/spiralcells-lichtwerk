@@ -3,6 +3,7 @@
    Mitgenommen wird zwischen den Welten nur die Wahl und die Suche (Adresse #welt/weg?q=…). */
 import {baueInhalt, wegZu, adresse, bisherigeAdresse, mengenWort, zeitWort, OFFEN, TRAGEND, ARTWORT} from '../../app/werkansichten/inhalt.js';
 import {baueBezuege, BELEGT, BERECHNET} from '../../app/werkansichten/bezug.js';
+import {lesetext} from '../../app/werkansichten/lesen.js';
 export {wegZu, adresse, mengenWort, zeitWort, OFFEN, TRAGEND, BELEGT, BERECHNET};
 
 export const $ = s => document.querySelector(s);
@@ -33,7 +34,8 @@ export async function ladeBestand(){
   const bilderDa = fetch('/lichtwerk/bilder').then(r => r.ok ? r.json() : {}).catch(() => ({}));
   const [g, gespraeche] = await Promise.all([holeBestand('/api/graph'), holeBestand('/lichtwerk/gespraeche').catch(() => [])]);
   const I = baueInhalt(g, (await bilderDa) || {}, gespraeche || []);
-  return {I, bezug: baueBezuege(g, I)};
+  const texte = new Map((g.variants || []).map(v => [v.id, v.content || '']));
+  return {I, bezug: baueBezuege(g, I), texte};
 }
 
 /* ---------- Der Rahmen ---------- */
@@ -55,7 +57,25 @@ export function rahmen({welt, artName, waehleInWelt, zusatz, blattTitel}){
     waehleInWelt(R.gewaehlt, flug);
     zeichneBlatt(); zeichneWeg(); if(mitAdresse) inAdresse(true);
   }
-  const lesen = k => { location.href = 'werkansichten.html#zelle/' + adresse(k); };
+  /* Lesen bleibt in der Welt: eine ruhige Lesefläche über dem Bild, kein 3D. Der Lesestand ist derselbe wie in den Karten. */
+  const stand = {hole: s => { try{ return (JSON.parse(sessionStorage.getItem('werkansichten.lesestand') || '{}') || {})[s] || 0; }catch(e){ return 0; } }, setze: (s, y) => { try{ const o = JSON.parse(sessionStorage.getItem('werkansichten.lesestand') || '{}') || {}; o[s] = Math.round(y); sessionStorage.setItem('werkansichten.lesestand', JSON.stringify(o)); }catch(e){ /* dann ohne Lesestand */ } }};
+  let leseEl = null, leseK = null;
+  function leseZu(){ if(!leseEl || leseEl.hidden) return false; if(leseK) stand.setze(leseK.schluessel, leseEl.querySelector('.rolle').scrollTop); leseEl.hidden = true; leseK = null; R.beiLesen && R.beiLesen(false); return true; }
+  async function lesen(k){
+    if(!R.texte){ location.href = 'werkansichten.html#zelle/' + adresse(k); return; }
+    if(k.art === 'app' || k.art === 'werk'){ const f = fassungenVon(k).filter(q => q.art === 'fassung'); if(!f.length){ sage('Hier liegt noch kein Text.'); return; } k = f[f.length - 1]; }
+    if(!leseEl){ leseEl = document.createElement('div'); leseEl.id = 'lese'; leseEl.hidden = true; leseEl.innerHTML = '<div class="rolle"><article></article></div><button class="knopf zu" aria-label="Lesen beenden">Zurück in die Welt</button>'; document.body.append(leseEl); leseEl.querySelector('.zu').onclick = leseZu;
+      for(const t of ['wheel', 'pointerdown', 'pointermove', 'touchmove', 'keydown']) leseEl.addEventListener(t, e => e.stopPropagation()); }
+    leseK = k; R.beiLesen && R.beiLesen(true); if(document.pointerLockElement) document.exitPointerLock();
+    const A = leseEl.querySelector('article'), s = stimmeVon(k.stimme), w = wegZu(k).slice(1, -1).map(q => q.name).join(' › '); A.replaceChildren();
+    const kopf = document.createElement('header'); kopf.innerHTML = '<small></small><h1></h1><p></p>'; kopf.querySelector('small').textContent = w; kopf.querySelector('h1').textContent = k.name; const pm = kopf.querySelector('p');
+    if(k.art === 'fassung'){ const i = document.createElement('i'); i.style.background = s.f; pm.append(i, s.n + ' · '); } pm.append(zeitWort(k) + (k.zeichen ? ' · ' + k.zeichen.toLocaleString('de-DE') + ' Zeichen' : '')); A.append(kopf);
+    if(k.bild){ const im = new Image(); im.alt = k.bild.text || ('Bild aus ' + k.name); im.src = bildUrl(k.bild, 960); im.className = 'gross'; A.append(im); }
+    const leib = document.createElement('div'); leib.className = 'text'; leib.textContent = 'Der Text wird geholt …'; A.append(leib); leseEl.hidden = false; leseEl.querySelector('.rolle').scrollTop = 0;
+    try{ const h = await lesetext(k, R.texte, bildUrl); if(leseK !== k) return; leib.innerHTML = h || '<p class="klein">Zu dieser Fassung liegt kein Text vor.</p>'; leseEl.querySelector('.rolle').scrollTop = stand.hole(k.schluessel); }
+    catch(e){ if(leseK === k) leib.textContent = 'Der Text ließ sich nicht holen.'; }
+  }
+  addEventListener('keydown', e => { if(e.key === 'Escape' && leseZu()){ e.stopImmediatePropagation(); e.preventDefault(); } }, true);
 
   function zeichneWeg(){
     const nav = $('#weg'); nav.replaceChildren(); if(!R.gewaehlt) return;
@@ -163,8 +183,9 @@ export function rahmen({welt, artName, waehleInWelt, zusatz, blattTitel}){
   };
 
   R.waehle = waehle; R.lesen = lesen; R.zeichneBlatt = zeichneBlatt;
-  R.start = (I, bezug) => {
-    R.I = I; R.bezug = bezug; const a = ausAdresse(); if(a.q){ sucheEl.value = a.q; suche(a.q, false); }
+  R.leseZu = leseZu; R.liest = () => !!leseK;
+  R.start = (I, bezug, texte) => {
+    R.I = I; R.bezug = bezug; R.texte = texte || null; const a = ausAdresse(); if(a.q){ sucheEl.value = a.q; suche(a.q, false); }
     const k0 = nachPfad(a.pfad); if(a.pfad && !k0) sage('Die Adresse führt zu keinem Werk mehr. Hier ist alles.');
     history.replaceState({w: 1}, '', hashJetzt()); return k0;
   };

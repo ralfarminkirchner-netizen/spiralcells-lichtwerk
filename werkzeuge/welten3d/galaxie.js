@@ -12,6 +12,7 @@ import {uniform, vec2, vec3, vec4, float, uv, mix, smoothstep, exp, max, clamp, 
   positionGeometry, positionWorld, normalWorld, normalView, cameraPosition, modelViewMatrix, instancedBufferAttribute,
   instancedDynamicBufferAttribute, varying, mx_fractal_noise_float, mx_noise_float, atan, pass, texture, length, log} from 'three/tsl';
 import {bloom} from 'three/addons/tsl/display/BloomNode.js';
+import {dof} from 'three/addons/tsl/display/DepthOfFieldNode.js';
 import {ego} from './ego.js';
 import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
 import {baueInhalt, wegZu, adresse, bisherigeAdresse, mengenWort, zeitWort, OFFEN, TRAGEND, ARTWORT} from '../../app/werkansichten/inhalt.js';
@@ -45,19 +46,20 @@ try{ await renderer.init(); }catch(e){ sage('Diese Welt braucht WebGPU oder WebG
 const scene = new THREE.Scene(); scene.background = new THREE.Color(0x010207);
 const camera = new THREE.PerspectiveCamera(klein && innerHeight > innerWidth ? 58 : 44, innerWidth / innerHeight, 0.05, 60000);
 const galaxie = new THREE.Group(); scene.add(galaxie);
-const U = {zeit: uniform(0), pxWelt: uniform(0.001), kernGlanz: uniform(1), scheibe: uniform(1), grund: uniform(1)};
+const U = {zeit: uniform(0), pxWelt: uniform(0.001), kernGlanz: uniform(1), scheibe: uniform(1), grund: uniform(1), flach: uniform(0), fokus: uniform(100), bokeh: uniform(0)};
 const setzePx = () => { U.pxWelt.value = 2 * Math.tan(camera.fov * Math.PI / 360) / innerHeight; };
 setzePx();
 
 /* Leuchtpunkt: ein Bild-Teilchen in Weltgröße, nie kleiner als ein paar Pixel; was dafür vergrößert wird, wird dunkler.
    Nahe der Kamera tritt es zurück, damit man durch die Galaxie fliegen kann */
-function leuchtpunkte({lage, farbe, zahl, dynamisch = false, minPx = 1.6, nah = [4, 22], form = 'stern', mischung = THREE.AdditiveBlending, deckung = 1, glanz = null}){
+function leuchtpunkte({lage, farbe, zahl, dynamisch = false, minPx = 1.6, nah = [4, 22], form = 'stern', mischung = THREE.AdditiveBlending, deckung = 1, glanz = null, bahn = null}){
   const A = new THREE.InstancedBufferAttribute(lage, 4), F = new THREE.InstancedBufferAttribute(farbe, 4);
   if(dynamisch){ A.setUsage(THREE.DynamicDrawUsage); }
   const p = dynamisch ? instancedDynamicBufferAttribute(A) : instancedBufferAttribute(A), f = dynamisch ? instancedDynamicBufferAttribute(F) : instancedBufferAttribute(F);
   const m = new THREE.SpriteNodeMaterial({transparent: true, depthWrite: false, blending: mischung});
-  m.positionNode = p.xyz;
-  const tiefe = modelViewMatrix.mul(vec4(p.xyz, 1)).z.negate(), s = max(p.w, tiefe.mul(U.pxWelt).mul(minPx));
+  const B = bahn ? bahn(p, f) : null, ort = B ? B.ort : p.xyz, fv = B ? varying(B.ton) : f;   // bahn: Ort und Ton je Bild auf der Grafikkarte gerechnet
+  m.positionNode = ort;
+  const tiefe = modelViewMatrix.mul(vec4(ort, 1)).z.negate(), s = max(p.w, tiefe.mul(U.pxWelt).mul(minPx));
   m.scaleNode = s;
   const dimm = varying(p.w.div(s).pow(2).mul(smoothstep(nah[0], nah[1], tiefe)));
   const d = uv().sub(0.5).length().mul(2), rand = clamp(float(1).sub(d), 0, 1);
@@ -65,8 +67,8 @@ function leuchtpunkte({lage, farbe, zahl, dynamisch = false, minPx = 1.6, nah = 
   if(form === 'stern') hell = exp(d.mul(d).mul(-14)).mul(1.6).add(exp(d.mul(-4.5)).mul(0.35)).mul(rand);      // heller Kern, weicher Saum
   else if(form === 'wolke') hell = exp(d.mul(d).mul(-3.2)).mul(rand).mul(mx_noise_float(vec3(uv().mul(3.2), f.w.mul(17))).mul(0.45).add(0.75));
   else hell = exp(d.mul(d).mul(-5)).mul(rand);
-  m.colorNode = f.rgb;
-  m.opacityNode = hell.mul(dimm).mul(mischung === THREE.AdditiveBlending ? f.w : f.w.mul(deckung)).mul(glanz || float(1));
+  m.colorNode = fv.rgb;
+  m.opacityNode = hell.mul(dimm).mul(mischung === THREE.AdditiveBlending ? fv.w : fv.w.mul(deckung)).mul(glanz || float(1));
   const sp = new THREE.Sprite(m); sp.count = zahl; sp.frustumCulled = false;
   return {sp, A, F};
 }
@@ -77,29 +79,33 @@ const SF = {alt: farbeLin('#ffd6a0'), mittel: farbeLin('#fff1dc'), jung: farbeLi
 const mische = (a, b, t) => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t];
 const leerUmSonne = (x, z) => { let k = 1; for(const p of PLAETZE){ const d = Math.hypot(x - p.x, z - p.z); if(d < 95) k = Math.min(k, Math.max(0, (d - 40) / 55)); } return k; };
 
+/* Die Sterne laufen wirklich um: je Stern stehen nur Bahnradius, Phase, Höhe und Wellenstärke fest, der Ort wird in jedem Bild
+   auf der Grafikkarte gerechnet. Dichtewelle: ein Stern verweilt im Arm und zieht rasch durch die Lücke, so bleiben die Arme stehen,
+   obwohl jeder Stern weiterzieht. Im Arm leuchten die jungen blauen Sterne auf. Innen läuft alles schneller als außen. */
 function baueSterne(){
-  const N = klein ? 150000 : tablet ? 190000 : 340000, lage = new Float32Array(N * 4), farbe = new Float32Array(N * 4); let i = 0;
-  const lege = (x, y, z, gr, c, h) => { lage.set([x, y, z, gr], i * 4); farbe.set([c[0], c[1], c[2], h], i * 4); i++; };
+  const N = klein ? 180000 : tablet ? 260000 : 620000, lage = new Float32Array(N * 4), farbe = new Float32Array(N * 4), welle = new Float32Array(N * 4); let i = 0;
+  const lege = (r, u, y, gr, c, h, w, versatz, streu, scheibe) => { lage.set([r, u, y, gr], i * 4); farbe.set([c[0], c[1], c[2], h], i * 4); welle.set([w, versatz, streu, scheibe], i * 4); i++; };
   while(i < N){
     const w = rnd();
-    if(w < 0.16){   // Bulge: alte, warme Sterne, abgeplattet
-      const r = Math.abs(gauss()) * 95 + Math.abs(gauss()) * 25, a = rnd() * Math.PI * 2, c = Math.acos(2 * rnd() - 1), x = Math.sin(c) * Math.cos(a) * r, z = Math.sin(c) * Math.sin(a) * r, y = Math.cos(c) * r * 0.55;
-      lege(x, y, z, 0.9 + rnd() * 1.4, mische(SF.kern, SF.alt, rnd()), 0.22 + Math.pow(rnd(), 6) * 1.6);
-    } else if(w < 0.2){   // Halo: wenige, schwach
-      const r = 300 + Math.pow(rnd(), 0.7) * 1500, a = rnd() * Math.PI * 2, c = Math.acos(2 * rnd() - 1);
-      lege(Math.sin(c) * Math.cos(a) * r, Math.cos(c) * r * 0.7, Math.sin(c) * Math.sin(a) * r, 1 + rnd(), SF.alt, 0.12 + rnd() * 0.25);
-    } else {   // Scheibe mit Armen
-      let r = -310 * Math.log(rnd() * rnd() + 1e-6) * 0.62 + 40; if(r > R * 1.35){ continue; }
-      const imArm = rnd() < 0.72, haupt = rnd() < 0.78, arm = haupt ? (rnd() < 0.5 ? 0 : 1) : (rnd() < 0.5 ? 0.5 : 1.5);
-      const breite = (0.16 + 0.22 * Math.min(1, r / R)) * (haupt ? 1 : 1.5);
-      const a = imArm ? armWinkel(r, arm) + gauss() * breite + Math.sin(r * 0.031 + arm * 7) * 0.08 : rnd() * Math.PI * 2;
-      r *= 1 + gauss() * 0.03; const x = Math.cos(a) * r, z = Math.sin(a) * r, k = leerUmSonne(x, z); if(k < 1 && rnd() > k) continue;
-      const nahArm = imArm ? Math.exp(-Math.pow((a - armWinkel(r, arm)) / breite, 2)) : 0, y = gauss() * (7 + 14 * r / R) * (imArm ? 0.8 : 1.2);
-      const c = nahArm > 0.55 && rnd() < 0.6 ? mische(SF.jung, SF.weiss, rnd() * 0.6) : mische(SF.mittel, SF.alt, rnd());
-      lege(x, y, z, 0.8 + rnd() * 1.6 + (nahArm > 0.7 && rnd() < 0.04 ? 3 : 0), c, (0.22 + Math.pow(rnd(), 9) * 3.6) * (0.45 + nahArm * 1.1));
+    if(w < 0.15){   // Bulge: alte, warme Sterne, abgeplattet
+      const r = Math.abs(gauss()) * 95 + Math.abs(gauss()) * 25, c = Math.acos(2 * rnd() - 1);
+      lege(Math.sin(c) * r, rnd() * Math.PI * 2, Math.cos(c) * r * 0.55, 0.9 + rnd() * 1.4, mische(SF.kern, SF.alt, rnd()), 0.22 + Math.pow(rnd(), 6) * 1.6, 0, 0, 0, 0);
+    } else if(w < 0.185){   // Halo: wenige, schwach
+      const r = 300 + Math.pow(rnd(), 0.7) * 1500, c = Math.acos(2 * rnd() - 1);
+      lege(Math.sin(c) * r, rnd() * Math.PI * 2, Math.cos(c) * r * 0.7, 1 + rnd(), SF.alt, 0.12 + rnd() * 0.25, 0, 0, 0, 0);
+    } else {   // Scheibe mit zwei Hauptarmen und zwei schwächeren Nebenarmen
+      let r = -310 * Math.log(rnd() * rnd() + 1e-6) * 0.62 + 40; if(r > R * 1.35) continue;
+      const imArm = rnd() < 0.76, haupt = rnd() < 0.76, staerke = imArm ? (haupt ? 0.5 + rnd() * 0.42 : 0.42 + rnd() * 0.36) * Math.min(1, Math.max(0, (r - 90) / 160)) : 0;
+      r *= 1 + gauss() * 0.03;
+      lege(r, rnd() * Math.PI * 2, gauss() * (7 + 14 * r / R) * (imArm ? 0.8 : 1.2), 0.8 + rnd() * 1.6 + (imArm && rnd() < 0.03 ? 3 : 0), mische(SF.mittel, SF.alt, rnd()), 0.2 + Math.pow(rnd(), 9) * 3.4, staerke, haupt ? 0 : Math.PI / 2, gauss() * 0.05 + Math.sin(r * 0.031) * 0.07, 1);
     }
   }
-  return leuchtpunkte({lage, farbe, zahl: N, minPx: klein ? 1.3 : 1.5, nah: [3, 18], glanz: U.grund});
+  const W = instancedBufferAttribute(new THREE.InstancedBufferAttribute(welle, 4));
+  return leuchtpunkte({lage, farbe, zahl: N, minPx: klein ? 1.3 : 1.5, nah: [3, 18], glanz: U.grund, bahn: (p, f) => {
+    const r = p.x, u = p.y.add(float(500).div(r.add(80)).sub(0.62).mul(0.009).mul(U.zeit)), th = log(max(r, 30).div(R0)).mul(STEIG).mul(W.w).add(W.y).add(u).sub(sin(u.mul(2)).mul(W.x).mul(0.5)).add(W.z);
+    const ort = vec3(cos(th).mul(r), p.z, sin(th).mul(r)), imArm = pow(cos(u.mul(2)).mul(0.5).add(0.5), 3).mul(smoothstep(0, 0.5, W.x)), jung = imArm.mul(smoothstep(0.35, 0.6, p.w.mul(37.7).fract()));
+    let leer = float(1); for(const q of PLAETZE) leer = leer.mul(smoothstep(40, 95, length(ort.xz.sub(vec2(q.x, q.z)))));   // um die Sonnen bleibt es ruhig, damit ihre Planeten zu sehen sind
+    return {ort, ton: vec4(mix(f.rgb, vec3(0.42, 0.56, 1.0), jung.mul(0.85)), f.w.mul(imArm.mul(1.25).add(mix(float(1), float(0.5), smoothstep(0, 0.4, W.x)))).mul(leer).mul(0.6))}; }});
 }
 /* Sternentstehung: rosa leuchtende Gebiete und junge blaue Haufen an den Armen */
 function baueNebel(){
@@ -142,6 +148,17 @@ function baueKern(){
   const k = leuchtpunkte({lage, farbe, zahl: 3, form: 'weich', minPx: 0, nah: [1, 3]});
   k.sp.material.opacityNode = k.sp.material.opacityNode.mul(U.kernGlanz); return k;
 }
+/* Flacher Blick über die Scheibe: von der Kante gesehen sammelt sich das Licht aller Sterne zu einem Band mit leuchtendem Kern
+   und der dunklen Staubbahn davor. Sichtbar nur, wenn man nahe der Scheibenebene schaut; von oben trägt die Scheibe selbst */
+function baueFlachglanz(){
+  const g = new THREE.Group(), mk = (b, h, bau) => { const m = new THREE.SpriteNodeMaterial({transparent: true, depthWrite: false, depthTest: false, blending: THREE.AdditiveBlending}), q = uv().sub(0.5).mul(2); const [c, o] = bau(q); m.colorNode = c; m.opacityNode = o.mul(U.flach); const sp = new THREE.Sprite(m); sp.scale.set(b, h, 1); sp.renderOrder = 2; sp.frustumCulled = false; g.add(sp); };
+  mk(R * 3.0, R * 0.62, q => { const x = abs(q.x), y = q.y, koernig = mx_noise_float(vec3(q.x.mul(9), q.y.mul(3), 4.2)).mul(0.25).add(0.85), dick = mix(float(0.2), float(0.085), smoothstep(0.02, 0.4, x));
+    const band = exp(y.mul(y).div(dick.mul(dick)).negate()).mul(exp(x.mul(-3.4))).mul(smoothstep(1, 0.72, x)), bahn = exp(y.add(0.012).mul(y.add(0.012)).div(0.0011).negate()).mul(smoothstep(0.04, 0.16, x)).mul(0.86).mul(mx_noise_float(vec3(q.x.mul(22), 1.7, 0)).mul(0.3).add(0.8)).min(1);
+    return [mix(vec3(1.0, 0.8, 0.56), vec3(0.5, 0.62, 0.98), smoothstep(0.08, 0.55, x)), band.mul(koernig).mul(bahn.oneMinus()).mul(0.8)]; });
+  mk(R * 0.95, R * 0.72, q => { const d = length(q); return [vec3(1.0, 0.8, 0.54), exp(d.mul(d).mul(-6.5)).mul(d.oneMinus().max(0)).mul(0.62).mul(exp(q.y.add(0.01).mul(q.y.add(0.01)).div(0.0016).negate()).mul(smoothstep(0.1, 0.3, abs(q.x))).mul(0.8).oneMinus())]; });
+  mk(R * 0.2, R * 0.2, q => { const d = length(q); return [vec3(1.0, 0.93, 0.8), exp(d.mul(d).mul(-9)).mul(d.oneMinus().max(0)).mul(1.5)]; });
+  return g;
+}
 /* Ferne Sterne als Himmel */
 function baueHimmel(){
   const N = klein ? 5000 : 9000, lage = new Float32Array(N * 4), farbe = new Float32Array(N * 4);
@@ -149,11 +166,20 @@ function baueHimmel(){
   return leuchtpunkte({lage, farbe, zahl: N, minPx: 1.3, nah: [0, 1]});
 }
 const grund = {sterne: baueSterne(), nebel: baueNebel(), staub: baueStaub(), kern: baueKern()};
-galaxie.add(baueScheibe(), grund.sterne.sp, grund.nebel.sp, grund.staub.sp, grund.kern.sp); scene.add(baueHimmel().sp);
+galaxie.add(baueScheibe(), grund.sterne.sp, grund.nebel.sp, grund.staub.sp, grund.kern.sp); scene.add(baueHimmel().sp, baueFlachglanz());
 
 /* ---------- Nachbearbeitung: Glühen nur an hellen Stellen ---------- */
 const Pipe = THREE.RenderPipeline || THREE.PostProcessing, pipe = new Pipe(renderer), szene = pass(scene, camera), bild = szene.getTextureNode('output');
-pipe.outputNode = bild.add(bloom(bild, klein ? 0.75 : 0.9, 0.62, 0.22));
+const mitGlut = q => q.add(bloom(q, klein ? 0.75 : 0.9, 0.62, 0.22));
+pipe.outputNode = mitGlut(bild);
+/* Tiefenschärfe am Ziel: was man gewählt hat, steht scharf, der Sternengrund dahinter löst sich in weiche Lichter auf.
+   Erst beim ersten Ziel eingerichtet; danach regelt nur die Stärke, damit beim Wechsel nichts ruckt */
+let dofDa = false;
+function tiefenschaerfe(soll, abstand, dt){
+  if(klein || forceWebGL || /[?&]ohne=[^&]*schaerfe/.test(location.search)) return;
+  if(soll && !dofDa){ dofDa = true; pipe.outputNode = mitGlut(dof(bild, szene.getViewZNode(), U.fokus, U.fokus.mul(12), U.bokeh)); pipe.needsUpdate = true; }
+  if(!dofDa) return; if(soll) U.fokus.value = abstand; U.bokeh.value += ((soll ? 0.9 : 0) - U.bokeh.value) * Math.min(1, dt * 1.6);
+}
 
 /* ---------- Kamera und Steuerung ---------- */
 const steuer = new OrbitControls(camera, canvas); steuer.enableDamping = true; steuer.dampingFactor = 0.075; steuer.rotateSpeed = 0.55; steuer.zoomSpeed = 0.9; steuer.minDistance = 0.4; steuer.maxDistance = 9000; steuer.listenToKeyEvents(window); steuer.keyPanSpeed = 18;
@@ -350,7 +376,7 @@ function zeigeTafeln(b){
   const monde = (b.monde || []).concat(...(b.kinder || []).map(c => c.monde)).filter(q => q.k.bild).slice(0, klein ? 18 : 36);
   for(const q of monde){
     const tex = TL.load(bildUrl(q.k.bild, 240)); tex.colorSpace = THREE.SRGBColorSpace;
-    const m = new THREE.SpriteNodeMaterial({transparent: true, depthWrite: false}), d = uv().sub(0.5), ecke = smoothstep(0.5, 0.47, abs(d.x)).mul(smoothstep(0.5, 0.45, abs(d.y)));
+    const m = new THREE.SpriteNodeMaterial({transparent: true, depthWrite: true, alphaTest: 0.5}), d = uv().sub(0.5), ecke = smoothstep(0.5, 0.47, abs(d.x)).mul(smoothstep(0.5, 0.45, abs(d.y)));   // schreibt Tiefe: die Bilder bleiben in der Tiefenschärfe scharf
     m.colorNode = texture(tex, uv()).rgb.mul(1.15); m.opacityNode = ecke.mul(0.95);
     const sp = new THREE.Sprite(m); sp.center.set(0.5, -0.25); tafelGruppe.add(sp); tafeln.push({sp, tex, q});
   }
@@ -571,7 +597,7 @@ function treffe(x, y, rad){
 
 /* ---------- Lauf ---------- */
 const versatz = {x: 0, y: 0}; let letzte = performance.now(), zeit = 0, fpsZ = 0, fpsT = 0, ersterFrame = true;
-const Ego = ego({camera, canvas, steuer, fliegen: true, tempo: 45, schnell: 320, knopf: document.getElementById('knEgo'), sage: typeof sage === 'function' ? sage : null, beiStart: () => { fahrt = null; if(typeof beendeEinflug === 'function') beendeEinflug(); }});
+const Ego = ego({camera, canvas, steuer, fliegen: true, tempo: 140, schnell: 1100, knopf: document.getElementById('knEgo'), sage: typeof sage === 'function' ? sage : null, beiStart: () => { fahrt = null; if(typeof beendeEinflug === 'function') beendeEinflug(); }});
 function lauf(){
   const jetzt = performance.now(), dt = Math.min(0.05, (jetzt - letzte) / 1000); letzte = jetzt; zeit += ruhig ? 0 : dt;
   galDreh = zeit * DREH; galaxie.rotation.y = galDreh; U.zeit.value = zeit;
@@ -583,6 +609,8 @@ function lauf(){
   // Auge: nah am Kern wird die Belichtung zurückgenommen
   const kd = camera.position.length(), td = camera.position.distanceTo(steuer.target);
   U.kernGlanz.value = THREE.MathUtils.clamp(Math.pow(kd / 1300, 1.4), 0.06, 1); U.scheibe.value = THREE.MathUtils.clamp(td / 600, 0.25, 1); U.grund.value = THREE.MathUtils.clamp(0.3 + td / 700, 0.3, 1);
+  { const hoch = Math.abs(camera.position.y) / (kd || 1); U.flach.value = (1 - THREE.MathUtils.smoothstep(hoch, 0.05, 0.2)) * THREE.MathUtils.clamp((kd - 350) / 700, 0, 1); }
+  tiefenschaerfe(!Ego.an && !fliegt && !!gewKoerper && gewKoerper.typ !== 'kern', td, dt);
   camera.near = THREE.MathUtils.clamp(td * 0.004, 0.01, 4); camera.far = 60000;
   // Das Blatt verdeckt nichts: die Mitte des Bilds rückt in den freien Teil
   const offen = !blattEl.hidden, schmal = innerWidth <= 760, zx = offen && !schmal ? (blattEl.offsetWidth + 16) / 2 : 0, zy = offen && schmal ? blattEl.offsetHeight / 2 : 0;
@@ -614,4 +642,4 @@ try{
 }catch(e){ console.error(e); sage('Der Bestand ist gerade nicht erreichbar. Die Galaxie bleibt ohne Werke. Läuft der Lichtwerk-Dienst?', 0); }
 
 /* Für Prüfungen im Browser, ohne Kennungen in der Oberfläche */
-window.__galaxie = {messung, get gewaehlt(){ return gewaehlt && gewaehlt.name; }, fliege: name => { const k = I && I.alle.find(x => x.name === name); if(k) waehle(k); return !!k; }, uebersicht: () => waehle(null), zahlen: () => ({sonnen: SONNEN.length, planeten: planetenListe.length, monde: MONDE.length, sterne: grund.sterne.sp.count, webgl: forceWebGL || !renderer.backend.isWebGPUBackend}), ueberspringe: () => fahrtKnopf.onclick()};
+window.__galaxie = {messung, get gewaehlt(){ return gewaehlt && gewaehlt.name; }, fliege: name => { const k = I && I.alle.find(x => x.name === name); if(k) waehle(k); return !!k; }, uebersicht: () => waehle(null), zahlen: () => ({sonnen: SONNEN.length, planeten: planetenListe.length, monde: MONDE.length, sterne: grund.sterne.sp.count, webgl: forceWebGL || !renderer.backend.isWebGPUBackend}), ueberspringe: () => fahrtKnopf.onclick(), camera, steuer, schaerfe: () => ({an: dofDa, bokeh: U.bokeh.value, fokus: U.fokus.value, flach: U.flach.value})};

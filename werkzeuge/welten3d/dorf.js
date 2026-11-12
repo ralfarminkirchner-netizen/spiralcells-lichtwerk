@@ -18,6 +18,8 @@ import {Sammler, farbe, toene, zufall, hashS} from './dorf/bau.js';
 import {entwirf, baue} from './dorf/haeuser.js';
 import {FUNKTIONEN, NACH_TITEL, NACH_BEREICH} from '../../app/js/funktion.js';
 import {ego} from './ego.js';
+import {richteInnen} from './dorf/innen.js';
+import {mengenWort, zeitWort, BELEGT} from './rahmen.js';
 
 const canvas = $('#welt'), T0 = performance.now(), messung = {erstesBild: 0, bestand: 0, fps: 0};
 const NEU = 'neu/';
@@ -28,6 +30,10 @@ const renderer = new THREE.WebGPURenderer({canvas, antialias: true, forceWebGL, 
 renderer.setPixelRatio(Math.min(devicePixelRatio, klein ? 1.5 : tablet ? 1.4 : 1.6)); renderer.setSize(innerWidth, innerHeight);
 renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.55; renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 try{ await renderer.init(); }catch(e){ sage('Diese Welt braucht WebGPU oder WebGL 2.', 0); throw e; }
+/* Bricht der Grafiktreiber ab, bleibt das Bild nicht schwarz stehen: einmal von selbst neu laden, danach ehrlich sagen, was los ist */
+renderer.onDeviceLost = () => { let n = 0; try{ n = +sessionStorage.getItem('welten3d.abbruch') || 0; sessionStorage.setItem('welten3d.abbruch', n + 1); }catch(e){ n = 9; }
+  if(n < 1){ sage('Die Grafik ist abgebrochen. Die Welt wird neu geladen …', 0); setTimeout(() => location.reload(), 1200); } else sage('Die Grafik ist wieder abgebrochen. Bitte andere 3D-Fenster schließen und die Seite neu laden.', 0); };
+setTimeout(() => { try{ sessionStorage.removeItem('welten3d.abbruch'); }catch(e){ /* ohne Ablage */ } }, 60000);
 const scene = new THREE.Scene(), camera = new THREE.PerspectiveCamera(klein && innerHeight > innerWidth ? 58 : 40, innerWidth / innerHeight, 0.15, 6000);
 const U = {zeit: uniform(0), selA: uniform(-1), selB: uniform(-1), selAn: uniform(0), fokus: uniform(60)};
 const R = rahmen({welt: 'dorf', artName, waehleInWelt, zusatz, blattTitel});
@@ -62,7 +68,8 @@ const steuer = new OrbitControls(camera, canvas); steuer.enableDamping = true; s
 camera.position.set(260, 150, 420); steuer.target.set(0, 6, 0);
 
 /* ---------- Stoffe: echte Oberflächen von Poly Haven, Maße in Metern ---------- */
-const lader = new THREE.TextureLoader(), bildT = (pfad, srgb) => { const t = lader.load(pfad); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = 8; if(srgb) t.colorSpace = THREE.SRGBColorSpace; return t; };
+/* jede Stoffdatei nur einmal auf die Grafikkarte: Häuser außen und innen teilen sich Texturen und Stoffe */
+const lader = new THREE.TextureLoader(), texLager = new Map(), bildT = (pfad, srgb) => { if(texLager.has(pfad)) return texLager.get(pfad); const t = lader.load(pfad); texLager.set(pfad, t); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = 8; if(srgb) t.colorSpace = THREE.SRGBColorSpace; return t; };
 const farbV = attribute('color', 'vec4');
 function stoff(ordner, mass, {grau = 0, rauh = 1, metall = null} = {}){
   const m = new THREE.MeshStandardNodeMaterial(), u = uv().div(mass), p = NEU + 'stoffe/' + ordner + '/'; let f = texture(bildT(p + 'farbe.jpg', true), u).rgb;
@@ -93,7 +100,7 @@ const karteT = new THREE.CanvasTexture(karte); karteT.colorSpace = THREE.NoColor
   const boden3 = new THREE.Mesh(g, m); boden3.receiveShadow = true; scene.add(boden3); }
 
 /* ---------- Der Ortsplan aus dem Inhalt ---------- */
-const HAEUSER = [], VIERTEL = [], LATERNEN = [], jeKnoten = new Map(), FENSTER = [];
+const HAEUSER = [], VIERTEL = [], LATERNEN = [], jeKnoten = new Map(), FENSTER = [], LICHTER = [];
 const ZUSATZ_TITEL = [[/racer|Racing|TAXi|Taxi|Rally|Rush/, 'garage'], [/Einhorn|Märchen|Hörni|RAiNBOW|KiRi|Briefgarten/, 'maerchen'], [/Kleben|KLEBEN/, 'bastel'], [/Studio|MUSiC|KLANG|Klang|Music|KiNMiX|Narben/, 'musik'], [/ARCHiV|Archiv/, 'bibliothek'],
   [/atlas|Atlas|verstehen/, 'museum'], [/SEiN\b|Sadho/, 'kapelle'], [/TiSCH|Tisch|Begegnung/, 'saal'], [/Writer|Leser|REiM|honetic|Wort|Text|TXT|Passage|WORTEN/, 'schreibstube'], [/Deutsch|deutsch|Begleitraum/, 'schule'],
   [/Lichtwerk|KiNFORMER|WERK|Werk|deck|DECK|Pult/, 'werkstatt'], [/ZEIT|Lebensspirale|Denkentwicklung/, 'aussicht'], [/Spiral|SPiRAL|MiNDLAXY|Variantenfeld|Musterraum/, 'sternwarte'], [/GARDEN|Fugenland|Dazwischen|Rote Fäden/, 'heilhaus'], [/KiNTEGRiTY|iNVARiANT|Wirkgefüge/, 'post'], [/FUNKEN|ENTFALT|ENTDECK/, 'spielhof']];
@@ -169,7 +176,7 @@ function baueDorf(I){
     S.drehkoerper('zink', 0, 0, [[0.14, 0], [0.09, 0.5], [0.05, 0.7], [0.045, 3.7]], 8, Z); S.balken('zink', [0, 3.65, 0], [0, 3.85, 0.75], 0.045, 0.045, Z); S.drehkoerper('zink', 0, 0.75, [[0.2, 3.8], [0.03, 3.98]], 6, Z); S.drehkoerper('lampe', 0, 0.75, [[0.07, 3.48], [0.15, 3.78]], 6, [1, 1, 1]); l.y = 3.6; }); }
   // Brunnen auf dem Markt
   S.fuss = 0; S.drehkoerper('stein', 0, 0, [[3.4, -0.3], [3.4, 0.75], [3.1, 0.75], [3.1, 0.45], [0, 0.45]], 24, [0.8, 0.78, 0.74]); S.drehkoerper('stein', 0, 0, [[0.45, 0.4], [0.35, 2.2], [1.1, 2.4], [1.15, 2.55], [0.2, 2.6], [0.14, 3.3], [0, 3.4]], 16, [0.8, 0.78, 0.74]);
-  for(const [name, mk] of Object.entries(STOFFE)){ const g = S.geometrie(name); if(!g) continue; const m = new THREE.Mesh(g, mk()); m.castShadow = name !== 'lampe' && name !== 'uhr'; m.receiveShadow = true; m.frustumCulled = false; scene.add(m); }
+  for(const name of Object.keys(STOFFE)){ const g = S.geometrie(name); if(!g) continue; const m = new THREE.Mesh(g, stoffVon(name)); m.castShadow = name !== 'lampe' && name !== 'uhr'; m.receiveShadow = true; m.frustumCulled = false; scene.add(m); }
   // Fensterscheiben: das echte Bild der Fassung als Licht
   { const g = S.scheibenGeometrie(), m = new THREE.MeshBasicNodeMaterial(), feld = attribute('feld', 'vec4'), nr = attribute('nummer', 'float'), hat = step(0.00001, feld.z);
     const bild = texture(atlasT, feld.xy.add(uv().mul(feld.zw))).rgb, da = smoothstep(0.0, 0.04, max(bild.r, max(bild.g, bild.b))).mul(hat), z = hash(nr.add(3.7));
@@ -180,7 +187,7 @@ function baueDorf(I){
   { const p = [], u = [], ix = []; LATERNEN.forEach((l, n) => { const r = l.tuer ? 3.2 : 9, i0 = n * 4, cx = l.x, cz = l.z; for(const [a, b] of [[-1, -1], [1, -1], [1, 1], [-1, 1]]){ p.push(cx + a * r, 0.05, cz + b * r); u.push(a, b); } ix.push(i0, i0 + 2, i0 + 1, i0, i0 + 3, i0 + 2); });
     const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(p, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(u, 2)); g.setIndex(ix);
     const m = new THREE.MeshBasicNodeMaterial({transparent: true, blending: THREE.AdditiveBlending, depthWrite: false}); const rr = length(uv()); m.colorNode = vec3(1.0, 0.55, 0.22).mul(pow(rr.oneMinus().max(0), 2.2)).mul(0.5); const k = new THREE.Mesh(g, m); k.frustumCulled = false; k.renderOrder = 2; scene.add(k); }
-  const naechste = AUS('licht') ? [] : LATERNEN.filter(l => l.markt).slice(0, klein ? 4 : 10); for(const l of naechste){ const pl = new THREE.PointLight(0xffb060, 90, 34, 2); pl.position.set(l.x * 0.97, 3.5, l.z * 0.97); scene.add(pl); }
+  const naechste = AUS('licht') ? [] : LATERNEN.filter(l => l.markt).slice(0, klein ? 4 : 10); for(const l of naechste){ const pl = new THREE.PointLight(0xffb060, 90, 34, 2); pl.position.set(l.x * 0.97, 3.5, l.z * 0.97); scene.add(pl); LICHTER.push(pl); }
   ladeBilder(mitBild); pflanze();
 }
 async function ladeBilder(liste){ let i = 0, offen = 0, neu = false; const zeit = setInterval(() => { if(neu){ atlasT.needsUpdate = true; neu = false; } if(i >= liste.length && !offen) { clearInterval(zeit); atlasT.needsUpdate = true; } }, 2600);
@@ -201,14 +208,16 @@ async function pflanze(){ const gl = new GLTFLoader(), z = zufall(77), frei = (x
     baeume.forEach((b, n) => { const hh = 4.5 * b[2] + 1.5; d.rotation.set(0, 0, 0); d.position.set(b[0], hh * 0.3, b[1]); d.scale.set(1, hh * 0.6, 1); d.updateMatrix(); staemme.setMatrixAt(n, d.matrix);
       for(let q = 0; q < 3; q++){ const r = (1.5 + z() * 0.9) * b[2]; d.position.set(b[0] + (z() - 0.5) * 1.6 * b[2], hh * (0.62 + q * 0.16), b[1] + (z() - 0.5) * 1.6 * b[2]); d.scale.set(r, r * (0.8 + z() * 0.3), r); d.rotation.set(z(), z() * 6, 0); d.updateMatrix(); kronen.setMatrixAt(n * 3 + q, d.matrix); } });
     for(const im of [kronen, staemme]){ im.castShadow = true; im.receiveShadow = true; im.frustumCulled = false; scene.add(im); } }
-  await setze('tree_small_02.glb', 9, [[-12, 10, 1, 1]]); await setze('shrub_02.glb', 1.5, buesche.slice(0, klein ? 40 : 110)); }
+  await setze('tree_small_02.glb', 9, [[-12, 10, 1, 1]]); await setze('shrub_02.glb', 1.5, buesche.slice(0, klein ? 40 : 110));
+  /* Das Dorf steht still: der Mondschatten wird einmal gerechnet und bleibt, statt in jedem Bild das ganze Dorf neu zu zeichnen */
+  if(!AUS('standschatten')) setTimeout(() => { mond.shadow.autoUpdate = false; mond.shadow.needsUpdate = true; }, 2500); }
 
 /* ---------- Wahl, Kamera, Namen ---------- */
 const hausVon = k => { for(let q = k; q; q = q.eltern) if(jeKnoten.has(q)) return jeKnoten.get(q); return null; };
 function artName(k){ if(k.art === 'ort') return TRAGEND.has(k.name) ? 'Marktplatz · Zentrale' : OFFEN.has(k.name) ? 'Baustelle · noch ohne Ort' : 'Viertel'; if(k.art === 'bereich') return 'Hof'; const h = jeKnoten.get(k); if(h) return 'Haus · ' + (FUNKTIONEN[h.funktion] || {name: ''}).name; if(k.art === 'fassung') return k.von == null ? 'Fenster · Dachboden' : 'Fenster'; return ''; }
 function blattTitel(k){ const h = jeKnoten.get(k); if(h){ const t = h.zeiten.map((z, i) => z ? `${i === 0 ? 'unten' : i === h.zeiten.length - 1 ? 'oben' : 'Mitte'} ${z[0] === z[1] ? monatsWort(z[0]) : monatsWort(z[0]) + ' bis ' + monatsWort(z[1])}` : '').filter(Boolean); return (t.length ? 'Stockwerke: ' + t.join(', ') + '. ' : '') + (h.dach.length ? `Unter dem Dach: ${h.dach.length} ${h.dach.length === 1 ? 'Fassung' : 'Fassungen'} ohne belegtes Datum.` : ''); }
   if(k.art === 'fassung') return k.von == null ? 'Sitzt unter dem Dach, weil kein Datum belegt ist.' : ''; return ''; }
-function zusatz(k, kn){ if(k.art !== 'ort') kn('Hingehen', () => egoStart(k)); }
+function zusatz(k, kn){ const h = jeKnoten.get(k); if(h && offenFuer(h)) kn(Innen && Innen.haus === h ? 'Hinausgehen' : 'Hineingehen', () => Innen && Innen.haus === h ? hinaus(false) : betritt(h), true); if(k.art !== 'ort' && !(Innen && Innen.an)) kn('Hingehen', () => egoStart(k)); }
 let flug = null;
 function fliege(pos, ziel, dauer = 2.4){ if(ruhig){ camera.position.copy(pos); steuer.target.copy(ziel); return; } flug = {p0: camera.position.clone(), z0: steuer.target.clone(), p1: pos, z1: ziel, t: 0, dauer}; }
 function sichtAuf(k){ const h = hausVon(k);
@@ -220,7 +229,7 @@ function sichtAuf(k){ const h = hausVon(k);
 function waehleInWelt(k, mitFlug){ if(!HAEUSER.length) return; if(k && k._a != null){ U.selA.value = k._a - 0.5; U.selB.value = k._b + 0.5; U.selAn.value = 1; } else if(k && (k.art === 'ort' || k.art === 'bereich')){ const hs = HAEUSER.filter(h => h.ort === k || h.bereich === k); if(hs.length){ U.selA.value = Math.min(...hs.map(h => h.k._a)) - 0.5; U.selB.value = Math.max(...hs.map(h => h.k._b)) + 0.5; U.selAn.value = 0.6; } } else U.selAn.value = 0;
   if(mitFlug && !Ego.an){ const [p, z] = sichtAuf(k); fliege(p, z); } }
 const strahl = new THREE.Raycaster(), maus = new THREE.Vector2(), lo = new THREE.Vector3(), ld = new THREE.Vector3(), v3 = new THREE.Vector3();
-function treffe(x, y, radius){ maus.set(x / innerWidth * 2 - 1, -(y / innerHeight) * 2 + 1); strahl.setFromCamera(maus, camera); let best = null, bt = Infinity;
+function treffe(x, y, radius){ if(document.pointerLockElement === canvas) maus.set(0, 0); else maus.set(x / innerWidth * 2 - 1, -(y / innerHeight) * 2 + 1); strahl.setFromCamera(maus, camera); if(Innen && Innen.an) return Innen.treffe(strahl.ray); let best = null, bt = Infinity;
   for(const h of HAEUSER){ lo.copy(strahl.ray.origin).applyMatrix4(h.invers); ld.copy(strahl.ray.direction).transformDirection(h.invers); const mn = [-h.E.breite / 2 - 0.5, 0, -h.E.tiefe / 2 - 0.5], mx = [h.E.breite / 2 + 0.5, h.E.hoehe, h.E.tiefe / 2 + 0.5], o = [lo.x, lo.y, lo.z], d = [ld.x, ld.y, ld.z]; let t0 = 0, t1 = Infinity;
     for(let a = 0; a < 3; a++){ const i = 1 / d[a]; let n = (mn[a] - o[a]) * i, f = (mx[a] - o[a]) * i; if(n > f) [n, f] = [f, n]; t0 = Math.max(t0, n); t1 = Math.min(t1, f); } if(t0 <= t1 && t0 < bt){ bt = t0; best = h; } }
   if(!best) return null; if(bt > 70) return best.k; let bw = null, bd = radius * 1.6;
@@ -237,16 +246,36 @@ function fahrtStart(){ if(ruhig || R.gewaehlt){ const [p, z] = sichtAuf(R.gewaeh
   fahrt = {P, Z, t: 0, dauer: 15}; fahrtKn.hidden = false; }
 
 /* Ich-Ansicht: zu Fuß durchs Dorf */
-const Ego = ego({camera, canvas, steuer, boden: hoehe, augen: 1.7, tempo: 9, schnell: 28, knopf: $('#knEgo'), sage,
-  sperre: (x, z) => { for(const h of HAEUSER){ if(Math.abs(h.x - x) > 40 || Math.abs(h.z - z) > 40) continue; const c = Math.cos(h.dreh), s = Math.sin(h.dreh), lx = c * (x - h.x) - s * (z - h.z), lz = s * (x - h.x) + c * (z - h.z); if(Math.abs(lx) < h.E.breite / 2 + 0.5 && Math.abs(lz) < h.E.tiefe / 2 + 0.5) return true; } return Math.hypot(x, z) < 3.8; },
-  beiStart: () => { flug = null; fahrtAus(); }});
-function egoStart(k){ const h = hausVon(k); if(h){ const f = new THREE.Vector3(Math.sin(h.dreh), 0, Math.cos(h.dreh)), ab = h.E.tiefe / 2 + 9; Ego.start(new THREE.Vector3(h.x, 0, h.z).addScaledVector(f, ab), new THREE.Vector3(h.x, h.E.hoehe * 0.4, h.z)); } else Ego.start(); }
+const Ego = ego({camera, canvas, steuer, boden: (x, z) => Innen && Innen.an ? Innen.boden(x, z) : hoehe(x, z), augen: 1.7, tempo: 17, schnell: 68, knopf: $('#knEgo'), sage,
+  sperre: (x, z) => { if(Innen && Innen.an) return Innen.sperre(x, z); for(const h of HAEUSER){ if(Math.abs(h.x - x) > 40 || Math.abs(h.z - z) > 40) continue; const c = Math.cos(h.dreh), s = Math.sin(h.dreh), lx = c * (x - h.x) - s * (z - h.z), lz = s * (x - h.x) + c * (z - h.z); if(Math.abs(lx) < h.E.breite / 2 + 0.5 && Math.abs(lz) < h.E.tiefe / 2 + 0.5) return true; } return Math.hypot(x, z) < 3.8; },
+  beiStart: () => { flug = null; fahrtAus(); }, beiEnde: () => { if(Innen && Innen.an) hinaus(true); }});
+function egoStart(k){ if(Innen && Innen.an) hinaus(true); const h = hausVon(k); if(h){ const f = new THREE.Vector3(Math.sin(h.dreh), 0, Math.cos(h.dreh)), ab = h.E.tiefe / 2 + 9; Ego.start(new THREE.Vector3(h.x, 0, h.z).addScaledVector(f, ab), new THREE.Vector3(h.x, h.E.hoehe * 0.4, h.z)); } else Ego.start(); }
+
+/* ---------- Häuser von innen ---------- */
+let Innen = null, wechsel = false, versteckt = []; const schwarz = $('#schwarz'), kreuz = $('#kreuz');
+const stoffLager = new Map(), stoffVon = n => { if(!stoffLager.has(n)) stoffLager.set(n, STOFFE[n]()); return stoffLager.get(n); };
+/* Jedes Haus ist offen. Wo der Bau keine Haustür meldet, gilt die Mitte der Vorderseite als Eingang */
+const tuerVon = h => { if(h.bau && h.bau.tuer) return h.bau.tuer; if(!h._tuer){ const f = new THREE.Vector3(Math.sin(h.dreh), 0, Math.cos(h.dreh)), m = new THREE.Vector3(h.x, 0, h.z); h._tuer = {pos: m.clone().addScaledVector(f, h.E.tiefe / 2 + 0.7), innen: m, hoehe: 2.2}; } return h._tuer; };
+const offenFuer = h => !!(h && h.bau) && fassungenVon(h.k).length > 0;
+function drinnen(an){ /* drinnen gibt es weder Mond noch Abendrot: beide Lichter und der Mondschatten werden ganz abgeschaltet, das entlastet die Grafikkarte */ mond.visible = !an; glut.visible = !an; if(!an) mond.shadow.needsUpdate = true;
+  /* das Dorf wird nicht mitgezeichnet, solange man im Haus ist */ if(an){ const g = Innen.gruppe(); if(!versteckt.length) versteckt = scene.children.filter(o => o !== g && !o.isLight && o.visible); for(const o of versteckt) o.visible = false; } else { for(const o of versteckt) o.visible = true; versteckt = []; } scene.environmentIntensity = an ? 0.6 : 3.2; kreuz.hidden = !an; Ego.drossel = an ? 0.3 : 1; if(an){ R.namen([], () => null, 0); R.namen([], () => null, 0); } }
+function blende(fn){ if(wechsel) return; wechsel = true; schwarz.classList.add('an'); setTimeout(() => { try{ fn(); } finally { schwarz.classList.remove('an'); wechsel = false; } }, 240); }
+function betritt(h){ if(!offenFuer(h) || wechsel) return; blende(() => {
+  if(!Innen) Innen = richteInnen({scene, camera, stoffVon, atlasT, lichter: LICHTER, bildUrl, stimmeVon, fassungenVon, mengenWort, zeitWort, bezug: R.bezug, BELEGT, texte: R.texte, funktionsName: q => 'Haus · ' + (FUNKTIONEN[q.funktion] || {name: ''}).name, beiHinaus: () => blende(() => hinaus(false)),
+    atlasFeld: f => { const w = f._fenster; if(!w || !w.feld) return null; const pad = 3; return [(w.feld[0] + pad) / ATLAS, 1 - (w.feld[1] + KH_B - pad) / ATLAS_H, (KW_B - 2 * pad) / ATLAS, (KH_B - 2 * pad) / ATLAS_H]; }});
+  if(Innen.an) Innen.schliesse(); if(!Innen.oeffne(h)){ sage('In diesem Haus liegt noch nichts.'); return; }
+  drinnen(true); Ego.start(Innen.start.pos, Innen.start.blick); if(R.gewaehlt !== h.k) R.waehle(h.k, true, false); $('#blatt').hidden = true;
+  const z = Innen.zahlen(); sage(`${h.k.name} von innen: ${z.zimmer} Zimmer auf ${z.ebenen.length} ${z.ebenen.length === 1 ? 'Stockwerk' : 'Stockwerken'}. Jede Tür ist ein Werk · antippen wählt · zweimal antippen liest · durch die Haustür geht es hinaus`, 12000); }); }
+function hinaus(nurSchauen){ if(!Innen || !Innen.an) return; const h = Innen.haus, t = tuerVon(h), aus = new THREE.Vector3().subVectors(t.pos, t.innen).setY(0).normalize(); Innen.schliesse(); drinnen(false);
+  if(nurSchauen){ if(Ego.an) Ego.ende(); const [p, z] = sichtAuf(h.k); camera.position.copy(p); steuer.target.copy(z); } else Ego.start(t.pos.clone().addScaledVector(aus, 2.8), t.pos.clone().addScaledVector(aus, 30).setY(3)); R.zeichneBlatt(); }
+function tuerPruefen(){ const p = camera.position; for(const h of HAEUSER){ if(Math.abs(h.x - p.x) > 45 || Math.abs(h.z - p.z) > 45 || !offenFuer(h)) continue; const t = tuerVon(h); if(Math.hypot(p.x - t.pos.x, p.z - t.pos.z) < 1.5){ betritt(h); return; } } }
+addEventListener('keydown', e => { if(Innen && Innen.an && e.key === 'Enter' && R.gewaehlt && !R.liest() && /^(fassung|gespraech)$/.test(R.gewaehlt.art)){ e.preventDefault(); R.lesen(R.gewaehlt); } });
 
 const proj = new THREE.Vector3();
 function namen(){ const kand = [], cp = camera.position;
   for(const v of VIERTEL){ const d = cp.distanceTo(v3.set(v.x, 0, v.z)); kand.push({text: v.markt ? 'Marktplatz' : v.name, unter: v.markt ? 'Zentrale · Tragwerk System' : OFFEN.has(v.name) ? 'Baustelle · noch ohne Ort' : `${HAEUSER.filter(h => h.ort === v.k).length} Häuser`, klasse: v.markt ? 'kern' : 'sonne', prio: 900 - d * 0.1, p: [v.x, v.markt ? 16 : 14, v.z]}); }
   for(const p of PLAN.plaetze) if(p.name) kand.push({text: p.name, unter: 'Hof', klasse: 'sonne', prio: 700, p: [p.x, 12, p.z]});
-  for(const h of HAEUSER){ const d = Math.hypot(cp.x - h.x, cp.z - h.z, cp.y - h.E.hoehe); if(d > 230 && R.gewaehlt !== h.k) continue; kand.push({text: h.k.name, klasse: R.gewaehlt === h.k ? 'gew' : '', prio: (R.gewaehlt === h.k ? 2000 : 500) - d + Math.min(40, h.k.fassungen), p: [h.x, h.E.hoehe + 1.2, h.z]}); }
+  for(const h of HAEUSER){ const d = Math.hypot(cp.x - h.x, cp.z - h.z, cp.y - h.E.hoehe); if(offenFuer(h) && d < 26){ const t = tuerVon(h); kand.push({text: 'Eingang', unter: 'hier geht es hinein', klasse: 'sonne', prio: 1500 - d, p: [t.pos.x, t.hoehe + 0.5, t.pos.z]}); } if(d > 230 && R.gewaehlt !== h.k) continue; kand.push({text: h.k.name, klasse: R.gewaehlt === h.k ? 'gew' : '', prio: (R.gewaehlt === h.k ? 2000 : 500) - d + Math.min(40, h.k.fassungen), p: [h.x, h.E.hoehe + 1.2, h.z]}); }
   const g = R.gewaehlt; if(g && g.art === 'fassung' && g._fenster) kand.push({text: g.name, klasse: 'gew', prio: 3000, p: [g._fenster.mitte.x, g._fenster.mitte.y + 1, g._fenster.mitte.z]});
   R.namen(kand, c => { proj.set(c.p[0], c.p[1], c.p[2]).project(camera); return proj.z > 1 ? null : [(proj.x + 1) / 2 * innerWidth, (1 - proj.y) / 2 * innerHeight, 4]; }, klein ? 14 : 34); }
 
@@ -254,16 +283,17 @@ let letzte = performance.now(), bilder = 0, fpsZeit = performance.now();
 function lauf(){ const jetzt = performance.now(), dt = Math.min(0.05, (jetzt - letzte) / 1000); letzte = jetzt; U.zeit.value += dt;
   if(fahrt){ fahrt.t += dt / fahrt.dauer; const t = Math.min(1, fahrt.t), e = t * t * (3 - 2 * t); camera.position.copy(fahrt.P.getPoint(e)); steuer.target.copy(fahrt.Z.getPoint(e)); camera.lookAt(steuer.target); if(t >= 1) fahrtAus(); }
   else if(flug){ flug.t += dt / flug.dauer; const t = Math.min(1, flug.t), e = t * t * t * (t * (6 * t - 15) + 10); camera.position.lerpVectors(flug.p0, flug.p1, e); camera.position.y += Math.sin(e * Math.PI) * Math.min(30, flug.p0.distanceTo(flug.p1) * 0.12); steuer.target.lerpVectors(flug.z0, flug.z1, e); camera.lookAt(steuer.target); if(t >= 1) flug = null; }
-  else if(Ego.an) Ego.schritt(dt); else steuer.update();
+  else if(Ego.an){ Ego.schritt(dt); if(Innen && Innen.an) Innen.schritt(dt); else if(!wechsel) tuerPruefen(); } else steuer.update();
   if(!Ego.an) camera.position.y = Math.max(camera.position.y, hoehe(camera.position.x, camera.position.z) + 1.2);
-  if(HAEUSER.length) namen(); pipe.render();
+  if(HAEUSER.length && !(Innen && Innen.an)) namen(); pipe.render();
   if(!messung.erstesBild) messung.erstesBild = Math.round(jetzt - T0); bilder++; if(jetzt - fpsZeit > 1000){ messung.fps = Math.round(bilder * 1000 / (jetzt - fpsZeit)); bilder = 0; fpsZeit = jetzt; } }
 renderer.setAnimationLoop(lauf);
 addEventListener('resize', () => { camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth, innerHeight); });
 
 /* ---------- Der Bestand ---------- */
-try{ const {I, bezug} = await ladeBestand(); const k0 = R.start(I, bezug); baueDorf(I); messung.bestand = Math.round(performance.now() - T0);
+try{ const {I, bezug, texte} = await ladeBestand(); const k0 = R.start(I, bezug, texte); baueDorf(I); messung.bestand = Math.round(performance.now() - T0);
   if(k0) R.waehle(k0, false, false); fahrtStart();
   sage(`${HAEUSER.length} Häuser, ${FENSTER.length} Fenster, jedes eine Fassung. Ziehen dreht · Tippen wählt · zweimal tippen liest · „Gehen“ führt zu Fuß hindurch`, 9000);
 }catch(e){ console.error(e); sage('Der Bestand ließ sich nicht lesen. Läuft der Dienst?', 0); }
-window.__dorf = {messung, renderer, get gewaehlt(){ return R.gewaehlt && R.gewaehlt.name; }, fliege: name => { const k = R.I && R.I.alle.find(x => x.name === name); if(k) R.waehle(k); return !!k; }, ueberspringe: () => fahrtKn.onclick(), zahlen: () => ({haeuser: HAEUSER.length, fenster: FENSTER.length, mitBild: FENSTER.filter(w => w.feld).length, arten: [...new Set(HAEUSER.map(h => h.funktion))].length}), ego: Ego, camera, steuer, HAEUSER};
+window.__dorf = {messung, renderer, get gewaehlt(){ return R.gewaehlt && R.gewaehlt.name; }, fliege: name => { const k = R.I && R.I.alle.find(x => x.name === name); if(k) R.waehle(k); return !!k; }, ueberspringe: () => fahrtKn.onclick(), zahlen: () => ({haeuser: HAEUSER.length, fenster: FENSTER.length, mitBild: FENSTER.filter(w => w.feld).length, arten: [...new Set(HAEUSER.map(h => h.funktion))].length}), ego: Ego, camera, steuer, HAEUSER, betritt: name => { const h = HAEUSER.find(q => q.k.name === name); if(h) betritt(h); return !!h && offenFuer(h); }, hinaus, betrittNr: i => { const h = HAEUSER[i]; if(h && offenFuer(h)) betritt(h); return h ? h.k.name : null; }, get innen(){ return Innen; }};
+R.beiLesen = an => { Ego.pause = an; };

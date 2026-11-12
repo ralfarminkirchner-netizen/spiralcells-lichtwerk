@@ -358,7 +358,7 @@ function treffe(x, y, rad){
 const TL = new THREE.TextureLoader(); let schildFrame = 0;
 function schilder(){ if(++schildFrame % 20) return; for(const p of PFLANZEN){ const s = p.schild; if(s.geladen || !p.k.bild || camera.position.distanceTo(s.pos) > 26) continue; s.geladen = true; TL.load(bildUrl(p.k.bild, 240), t => { t.colorSpace = THREE.SRGBColorSpace; const bildM = new THREE.MeshStandardMaterial({map: t, roughness: 0.55, emissive: 0xffffff, emissiveMap: t, emissiveIntensity: 0.18}), holz = s.tafel.material; s.tafel.material = [holz, holz, holz, holz, bildM, holz]; }); } }
 
-const Ego = ego({camera, canvas, steuer, boden: hoehe, augen: 1.65, tempo: 7, schnell: 24, knopf: $('#knEgo'), sage, beiStart: () => { fahrt = null; einflug = false; $('#fahrt').hidden = true; }});
+const Ego = ego({camera, canvas, steuer, boden: hoehe, augen: 1.65, tempo: 15, schnell: 55, knopf: $('#knEgo'), sage, beiStart: () => { fahrt = null; einflug = false; $('#fahrt').hidden = true; }});
 /* ---------- Lauf ---------- */
 let letzte = performance.now(), zeit = 0, fz = 0, ft = 0, erstes = true;
 const versatz = {x: 0, y: 0}, blattEl = $('#blatt');
@@ -387,10 +387,10 @@ knW.onclick = () => { abend = !abend; knW.setAttribute('aria-pressed', abend); U
 
 /* ---------- Start ---------- */
 try{
-  const {I, bezug} = await ladeBestand(); R.I = I; R.bezug = bezug;
+  const {I, bezug, texte} = await ladeBestand(); R.I = I; R.bezug = bezug;
   plane(I); baueGelaende(); baueGras(); baueGestalt(); baueMyzel();
   messung.bestand = performance.now() - T0;
-  const u = UEBER(); const k0 = R.start(I, bezug);
+  const u = UEBER(); const k0 = R.start(I, bezug, texte);
   if(einflug && !k0){ $('#fahrt').hidden = false; camera.position.set(RG * 2.6, RG * 2.2, -RG * 2.4); fliege(u.ziel, u.pos, 8); $('#fahrt').onclick = () => { fahrt = null; einflug = false; $('#fahrt').hidden = true; camera.position.copy(u.pos); steuer.target.copy(u.ziel); }; }
   else if(!k0){ camera.position.copy(u.pos); }
   if(k0) R.waehle(k0, false, false);
